@@ -1,7 +1,7 @@
 # smart_close.py
 import sys
 
-# Kitty的 kittens 是内置的、不直接显现在文件系统中的工具。
+# Kitty 的 kittens 是内置的、不直接显现在文件系统中的工具。
 from kittens.tui.handler import result_handler
 
 def main(args):

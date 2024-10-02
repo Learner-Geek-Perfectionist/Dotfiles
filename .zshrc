@@ -33,8 +33,6 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-[[ ! -f "${ZDOTDIR/.config/zsh:-$HOME}/.p10k.zsh" ]] || source "${ZDOTDIR/.config/zsh:-$HOME}/.p10k.zsh"
-
 
 # Plugins
 source "$ZPLUGINDIR/colorful_print.zsh"

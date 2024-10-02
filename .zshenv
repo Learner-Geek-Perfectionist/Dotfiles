@@ -13,4 +13,4 @@ export XDG_STATE_HOME="$HOME/.local/state"
 export ZDOTDIR="$XDG_CONFIG_HOME/zsh" # zsh shell 专用的环境变量，用来指定 .zshrc 配置文件的存放路径。
 export ZPLUGINDIR="$ZDOTDIR/plugins"
 export ZSCRIPTDIR="$ZDOTDIR/scripts"
-export HISTFILE="$ZDOTDIR/.zsh_history" # HISTFILE  也是 zsh 内置的环境变量
+export HISTFILE="$ZDOTDIR/.zsh_history" # HISTFILE 也是 zsh 内置的环境变量

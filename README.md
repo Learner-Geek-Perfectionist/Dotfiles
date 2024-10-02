@@ -1,1 +1,1 @@
- Dotfiles for Linux machine
+ Dotfiles for macOS and Linux machine

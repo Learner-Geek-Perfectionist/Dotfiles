@@ -33,7 +33,7 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-[[ ! -f "${ZDOTDIR:-$HOME}/.p10k.zsh" ]] || source "${ZDOTDIR:-$HOME}/.p10k.zsh"
+[[ ! -f "${ZDOTDIR/.config/zsh:-$HOME}/.p10k.zsh" ]] || source "${ZDOTDIR/.config/zsh:-$HOME}/.p10k.zsh"
 
 
 # Plugins

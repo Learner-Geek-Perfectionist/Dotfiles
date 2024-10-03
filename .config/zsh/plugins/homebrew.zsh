@@ -1,14 +1,25 @@
-# 检测操作系统
+# 检测操作系统类型
 OS_TYPE=$(uname -s)
 
-# 仅在macOS上执行Homebrew相关命令
+# 仅在 macOS 上执行
 if [ "$OS_TYPE" = "Darwin" ]; then
-  if type brew &>/dev/null; then
-    # 设置zsh的FPATH环境变量，加入brew提供的site-functions
-    FPATH="$(brew --prefix)/share/zsh/site-functions:$FPATH"
+    # 设置 Homebrew 镜像源
+    export HOMEBREW_BOTTLE_DOMAIN=https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles
+    export HOMEBREW_API_DOMAIN=https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles/api
+    export HOMEBREW_PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple
 
-    # 加载并执行zsh的compinit初始化，用于命令行补全
-    autoload -Uz compinit
-    compinit
-  fi
+    # 检测 Homebrew 是否安装在默认位置，并执行环境变量设置
+    if [ -x "/opt/homebrew/bin/brew" ]; then
+        eval $(/opt/homebrew/bin/brew shellenv) # 加载 Homebrew 环境变量
+    fi
+
+    # 检查 'brew' 命令是否存在
+    if type brew &>/dev/null; then
+        # 设置 zsh 的 FPATH 环境变量，加入 brew 提供的 site-functions
+        FPATH="$(brew --prefix)/share/zsh/site-functions:$FPATH"
+
+        # 加载并执行 zsh 的 compinit 初始化，用于命令行补全
+        autoload -Uz compinit
+        compinit
+    fi
 fi

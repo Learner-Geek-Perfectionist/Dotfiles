@@ -15,12 +15,15 @@ if command -v git &>/dev/null; then
       print -P "%F{33} %F{34}Installation successful.%f%b" || \
       print -P "%F{160} The clone has failed.%f%b"
   fi
-  # 源Zinit脚本
+
+  echo $ZSH_COMPDUMP
+  # 执行 zinit.zsh，加载 zinit 插件管理器本身，将 zinit 命令引入 zsh 中。
+
   source "$ZINIT_HOME/zinit.zsh"
   autoload -Uz _zinit
   (( ${+_comps} )) && _comps[zinit]=_zinit
 
-  # OMZ迁移和插件配置
+  # OMZ 迁移和插件配置
   HYPHEN_INSENSITIVE='true'
   COMPLETION_WAITING_DOTS='true'
   zinit ice wait lucid depth=1
@@ -37,12 +40,16 @@ if command -v git &>/dev/null; then
 
   zinit ice wait lucid depth=1 atload'unalias g grv ghh'
   zinit ice depth=1
+  # 加载 p10k 主题
+  zinit light romkatv/powerlevel10k
   zinit light zsh-users/zsh-autosuggestions
+
+  # 加载 zsh 的自动补全系统
   zinit wait lucid for \
-      atinit"zicompinit; zicdreplay" \
-      zdharma-continuum/fast-syntax-highlighting \
-      blockf \
-      zsh-users/zsh-completions
+    atinit"zicompinit -d $ZSH_COMPDUMP; zicdreplay" \
+    zdharma-continuum/fast-syntax-highlighting \
+    blockf \
+    zsh-users/zsh-completions
 else
   echo "git is not installed, zinit installation skipped."
 fi

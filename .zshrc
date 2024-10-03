@@ -33,6 +33,9 @@ source "$ZPLUGINDIR/colorful_print.zsh"
 source "$ZPLUGINDIR/homebrew.zsh"
 source "$ZPLUGINDIR/zinit.zsh"
 
+# 加载 p10k 主题
+# To customize prompt, run `p10k configure` or edit ~ /.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 
 # p10k 的 prompt
@@ -55,5 +58,4 @@ else
 fi
 
 
-# To customize prompt, run `p10k configure` or edit ~ /.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+

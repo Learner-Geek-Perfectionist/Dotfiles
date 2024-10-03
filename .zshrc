@@ -28,18 +28,24 @@ function unproxy() {
     echo "Proxy disabled"
 }
 
-###zsh主题
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
-fi
-
-
 # Plugins
 source "$ZPLUGINDIR/colorful_print.zsh"
 source "$ZPLUGINDIR/homebrew.zsh"
 source "$ZPLUGINDIR/zinit.zsh"
 
+
+
+# p10k 的 prompt
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
+
+
 # 清除整个屏幕
 alias clear='clear && printf '\''\e[3J'\'''
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh

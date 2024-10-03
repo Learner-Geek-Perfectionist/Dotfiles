@@ -2,12 +2,12 @@
 # ======== Zinit
 # =============================================
 
-# 检测是否安装了git
+# 检测是否安装了 git
 if command -v git &>/dev/null; then
   # 定义 Zinit 安装目录
   ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
 
-  # 检查Zinit是否已安装
+  # 检查 Zinit 是否已安装
   if [[ ! -f "$ZINIT_HOME/zinit.zsh" ]]; then
     print -P "%F{33} %F{220}Installing %F{33}ZDHARMA-CONTINUUM%F{220} Initiative Plugin Manager (%F{33}zdharma-continuum/zinit%F{220})…%f"
     mkdir -p "$(dirname $ZINIT_HOME)" && chmod g-rwX "$(dirname $ZINIT_HOME)"

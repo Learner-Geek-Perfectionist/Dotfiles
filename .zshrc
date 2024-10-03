@@ -89,6 +89,3 @@ if command -v fzf >/dev/null 2>&1; then
 else
     echo "fzf is not installed. Please install fzf to enable its features."
 fi
-
-echo "Final ZSH_COMPDUMP: $ZSH_COMPDUMP"
-

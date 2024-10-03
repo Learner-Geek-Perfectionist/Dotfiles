@@ -1,3 +1,36 @@
+# -----------------------------------
+# -------- XDG Base Directory
+# -----------------------------------
+export XDG_CONFIG_HOME="$HOME/.config"
+export XDG_CACHE_HOME="$HOME/.cache"
+export XDG_DATA_HOME="$HOME/.local/share"
+export XDG_STATE_HOME="$HOME/.local/state"
+
+# Ensure XDG base directories exist
+ mkdir -p "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME" "$XDG_DATA_HOME" "$XDG_STATE_HOME"
+
+# -----------------------------------
+# -------- Zsh Directory
+# -----------------------------------
+export ZDOTDIR="$HOME"
+export ZPLUGINDIR="$ZDOTDIR/.config/zsh/plugins"
+export ZSCRIPTDIR="$ZDOTDIR/.config/zsh/scripts"
+export HISTFILE="$XDG_CACHE_HOME/zsh/.zsh_history" # HISTFILE 也是 zsh 内置的环境变量
+
+# Ensure Zsh directories exist
+ mkdir -p "$ZPLUGINDIR" "$ZSCRIPTDIR"
+
+
+# Set the location for the zcompdump file to be in the cache directory
+ export ZSH_COMPDUMP="$XDG_CACHE_HOME/zsh/.zcompdump"
+
+# Ensure the directory for zcompdump exists
+ mkdir -p "$(dirname "$ZSH_COMPDUMP")"
+
+
+
+
+
 # 判断操作系统
 if [[ "$(uname)" == "Darwin" ]]; then
   # macOS specific settings
@@ -35,7 +68,7 @@ source "$ZPLUGINDIR/zinit.zsh"
 
 # 加载 p10k 主题
 # To customize prompt, run `p10k configure` or edit ~ /.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+[[ ! -f ~/.config/zsh/.p10k.zsh ]] || source ~/.config/zsh/.p10k.zsh
 
 
 # p10k 的 prompt
@@ -57,5 +90,5 @@ else
     echo "fzf is not installed. Please install fzf to enable its features."
 fi
 
-
+echo "Final ZSH_COMPDUMP: $ZSH_COMPDUMP"
 

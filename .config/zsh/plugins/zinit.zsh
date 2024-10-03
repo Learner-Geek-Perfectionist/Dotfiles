@@ -16,7 +16,6 @@ if command -v git &>/dev/null; then
       print -P "%F{160} The clone has failed.%f%b"
   fi
 
-  echo $ZSH_COMPDUMP
   # 执行 zinit.zsh，加载 zinit 插件管理器本身，将 zinit 命令引入 zsh 中。
 
   source "$ZINIT_HOME/zinit.zsh"

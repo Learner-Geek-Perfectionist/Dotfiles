@@ -37,7 +37,6 @@ if command -v git &>/dev/null; then
 
   zinit ice wait lucid depth=1 atload'unalias g grv ghh'
   zinit ice depth=1
-  zinit light romkatv/powerlevel10k
   zinit light zsh-users/zsh-autosuggestions
   zinit wait lucid for \
       atinit"zicompinit; zicdreplay" \

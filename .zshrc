@@ -45,7 +45,15 @@ fi
 # 清除整个屏幕
 alias clear='clear && printf '\''\e[3J'\'''
 
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+# 检查 fzf 是否已安装
+if command -v fzf >/dev/null 2>&1; then
+    # 如果 fzf 存在，则加载 fzf 的 zsh 配置
+    source <(fzf --zsh)
+else
+    echo "fzf is not installed. Please install fzf to enable its features."
+fi
+
+
+# To customize prompt, run `p10k configure` or edit ~ /.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh

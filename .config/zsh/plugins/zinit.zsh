@@ -17,9 +17,10 @@ if command -v git &>/dev/null; then
   fi
 
   # 执行 zinit.zsh，加载 zinit 插件管理器本身，将 zinit 命令引入 zsh 中。
-
   source "$ZINIT_HOME/zinit.zsh"
+  # 延迟加载 zinit 补全函数。
   autoload -Uz _zinit
+  # 将 _zinit 补全函数绑定到 zinit 命令，从而获得 zinit 命令的补全功能。
   (( ${+_comps} )) && _comps[zinit]=_zinit
 
   # OMZ 迁移和插件配置

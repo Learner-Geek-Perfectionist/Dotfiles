@@ -1,9 +1,7 @@
 #!/bin/bash
 
-
 # 获取当前操作系统类型
 OS_TYPE=$(uname)
-
 
 if [[ "$OS_TYPE" == "Darwin" ]]; then
     # macOS 逻辑
@@ -15,13 +13,12 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
         echo "Xcode 命令行工具未安装，现在将进行安装..."
         xcode-select --install
         # 等待用户完成 Xcode 命令行工具的安装
-        read -p "请按回车继续..."
+        read -p "请按回车继续..." < /dev/tty
     fi
 
     # 检查 Git 是否已安装
     if ! type git &>/dev/null; then
         echo "Git 未安装，现在将通过 Xcode 命令行工具安装 Git..."
-        # 使用 Xcode 自带的 Git
         xcode-select --reset
     fi
 
@@ -33,11 +30,11 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
     echo "检测到 Linux 系统"
 
     # 首先询问是否要创建用户
-    read -p "是否需要创建用户？(y/n): " create_confirm
+    read -p "是否需要创建用户？(y/n): " create_confirm < /dev/tty
 
     if [[ $create_confirm == 'y' ]]; then
         # 提示输入用户名
-        read -p "请输入你想创建的用户名: " username
+        read -p "请输入你想创建的用户名: " username < /dev/tty
 
         # 检查用户是否存在
         if id "$username" &>/dev/null; then
@@ -62,7 +59,8 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
     else
         echo "不创建用户，脚本结束。"
     fi
-
+    
+    sudo -v
     # 安装必要的软件
     sudo dnf update -y && \
     sudo dnf install -y \
@@ -89,51 +87,12 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
     zsh && \
     sudo dnf group install -y "C Development Tools and Libraries" && \
     sudo dnf clean all
-
-    
-    # 仓库的 URL
-    REPO_URL="https://github.com/Learner-Geek-Perfectionist/dotfiles/archive/refs/heads/master.zip"
-
-    # 检查 zip 文件是否存在
-    if [ ! -f "master.zip" ]; then
-        echo "压缩包不存在，开始下载..."
-        # 下载压缩包
-        curl -L -o master.zip $REPO_URL
-    else
-        echo "压缩包已存在，跳过下载。"
-    fi
-
-    # 检查 zip 文件是否存在再解压
-    if [ -f "master.zip" ]; then
-        echo "开始解压缩..."
-        unzip -o master.zip
-    else
-        echo "压缩包不存在，无法解压。"
-    fi
-    
-    # 设置环境变量
-    sudo sh -c 'export TZ=Asia/Shanghai'
-
-    # 设置时区
-    sudo sh -c 'echo Asia/Shanghai > /etc/timezone && ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime'
-
-    # 设置中科大镜像
-    sudo sed -e 's|^metalink=|#metalink=|g' \
-         -e 's|^#baseurl=http://download.example/pub/fedora/linux|baseurl=https://mirrors.ustc.edu.cn/fedora|g' \
-         -i.bak \
-         /etc/yum.repos.d/fedora.repo \
-         /etc/yum.repos.d/fedora-updates.repo
-
-    # 更新软件源缓存
-    sudo dnf makecache
-
-
 else
     echo "未知的操作系统类型"
 fi
 
 echo "操作完成，请按任意键继续。"
-read -n 1  # 等待用户按任意键
+read -n 1 < /dev/tty  # 等待用户按任意键
 
 cd ./dotfiles-master
 
@@ -167,23 +126,9 @@ if [ ! -d "$font_source" ]; then
     exit 1
 fi
 
-
-if [ "$OS_TYPE" = "Darwin" ]; then
-    # macOS
-    font_dest="$HOME/Library/Fonts"
-elif [ "$OS_TYPE" = "Linux" ]; then
-    # Linux
-    font_dest="$HOME/.local/share/fonts"
-    # 确保目标目录存在
-    mkdir -p "$font_dest"
-else
-    echo "不支持的操作系统: $OS_TYPE"
-    exit 1
-fi
-
 # 复制字体文件到目标目录
-echo "正在复制字体文件到 $font_dest..."
-cp -v "$font_source"/* "$font_dest"
+echo "正在复制字体文件到 $destination..."
+cp -v "$font_source"/* "$destination"
 
 # 更新字体缓存
 echo "更新字体缓存..."

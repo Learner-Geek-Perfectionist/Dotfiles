@@ -60,6 +60,21 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
         echo "不创建用户，脚本结束。"
     fi
     
+     # 设置环境变量
+    sudo sh -c 'export TZ=Asia/Shanghai'
+
+    # 设置时区
+    sudo sh -c 'echo Asia/Shanghai > /etc/timezone && ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime'
+
+    # 设置中科大镜像
+    sudo sed -e 's|^metalink=|#metalink=|g' \
+         -e 's|^#baseurl=http://download.example/pub/fedora/linux|baseurl=https://mirrors.ustc.edu.cn/fedora|g' \
+         -i.bak \
+         /etc/yum.repos.d/fedora.repo \
+         /etc/yum.repos.d/fedora-updates.repo
+
+    # 更新软件源缓存
+    sudo dnf makecache
     sudo -v
     # 安装必要的软件
     sudo dnf update -y && \
@@ -91,10 +106,51 @@ else
     echo "未知的操作系统类型"
 fi
 
-echo "操作完成，请按任意键继续。"
-read -n 1 < /dev/tty  # 等待用户按任意键
+# 打印提示消息
+message="操作完成，请按任意键继续。"
+width=40  # 框的宽度
 
-cd ./dotfiles-master
+# 获取终端宽度
+term_width=$(tput cols)
+
+# 计算居中位置
+center=$(( (term_width - width) / 2 ))
+
+# 打印上边框
+printf "%*s\n" $((center + width)) "" | tr ' ' '*'  
+# 打印居中消息
+printf "%*s\n" $((center + width / 2)) "$message"
+# 打印下边框
+printf "%*s\n" $((center + width)) "" | tr ' ' '*'
+
+
+# 仓库的 URL
+REPO_URL="https://github.com/Learner-Geek-Perfectionist/dotfiles/archive/refs/heads/master.zip"
+
+# 检查 zip 文件是否存在
+if [ ! -f "master.zip" ]; then
+    echo "压缩包不存在，开始下载..."
+    # 下载压缩包
+    curl -L -o master.zip "$REPO_URL"
+else
+    echo "压缩包已存在，跳过下载。"
+fi
+
+# 检查目录是否存在
+if [ -d "dotfiles-master" ]; then
+    echo "目录 'dotfiles-master' 已存在，跳过解压。"
+else
+    # 检查 zip 文件是否存在再解压
+    if [ -f "master.zip" ]; then
+        echo "开始解压缩..."
+        unzip -o master.zip
+    else
+        echo "压缩包不存在，无法解压。"
+    fi
+fi
+
+
+[ -d "dotfiles-master" ] && cd ./dotfiles-master && echo "已进入 'dotfiles-master' 目录。" || { echo "目录 'dotfiles-master' 不存在，无法进入。" && exit 1; }
 
 # 定义需要复制的文件和目录
 files_to_copy=(".zshrc" ".zprofile" ".config")
@@ -114,7 +170,25 @@ for item in "${files_to_copy[@]}"; do
     fi
 done
 
-echo "复制完成。"
+
+
+
+message="复制完成。"
+width=40  # 框的宽度
+
+# 获取终端宽度
+term_width=$(tput cols)
+
+# 计算居中位置
+center=$(( (term_width - width) / 2 ))
+
+# 打印上边框
+printf "%*s\n" $((center + width)) "" | tr ' ' '*'  
+# 打印居中消息
+printf "%*s\n" $((center + width / 2)) "$message"
+# 打印下边框
+printf "%*s\n" $((center + width)) "" | tr ' ' '*'
+
 
 
 # 字体源目录
@@ -140,8 +214,40 @@ else
     fc-cache -fv
 fi
 
-echo "字体安装完成。"
+# 打印提示消息
+message="字体安装完成。"
+width=40  # 框的宽度
+
+# 获取终端宽度
+term_width=$(tput cols)
+
+# 计算居中位置
+center=$(( (term_width - width) / 2 ))
+
+# 打印上边框
+printf "%*s\n" $((center + width)) "" | tr ' ' '*'  
+# 打印居中消息
+printf "%*s\n" $((center + width / 2)) "$message"
+# 打印下边框
+printf "%*s\n" $((center + width)) "" | tr ' ' '*'
 
 
-echo "配置 zsh ......"
-zsh
+
+
+message="配置 zsh ......"
+width=40  # 框的宽度
+
+# 获取终端宽度
+term_width=$(tput cols)
+
+# 计算居中位置
+center=$(( (term_width - width) / 2 ))
+
+# 打印上边框
+printf "%*s\n" $((center + width)) "" | tr ' ' '*'  
+# 打印居中消息
+printf "%*s\n" $((center + width / 2)) "$message"
+# 打印下边框
+printf "%*s\n" $((center + width)) "" | tr ' ' '*'
+
+exec zsh

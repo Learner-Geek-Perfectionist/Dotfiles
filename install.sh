@@ -130,11 +130,11 @@ timeout=60  # 设置倒计时时间
 # 开始倒计时
 for ((i=timeout; i>0; i--)); do
     echo -ne "\r ${message} (timeout in $i seconds): "
-    read -t 1 -r name < /dev/tty && break  # 如果用户提前输入，则跳出循环，从终端设备读取
+    read -t 1 -r str < /dev/tty && break  # 如果用户提前输入，则跳出循环，从终端设备读取
     echo -ne "\r"  # 清除当前行
 done
 
-if [[ -n $name ]]; then
+if [[ -n $str ]]; then
     echo "\n准备配置zsh...\n"
 else
     echo "Time out."

@@ -22,4 +22,4 @@ if [ "$OS" = "Darwin" ]; then
 elif [ "$OS" = "Linux" ]; then
     echo "检测到 Linux 系统。"
     # Linux 特定命令
-    if ! type git &>/dev​⬤
+    

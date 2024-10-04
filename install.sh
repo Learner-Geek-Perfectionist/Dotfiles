@@ -134,10 +134,10 @@ for ((i=timeout; i>0; i--)); do
     echo -ne "\r"  # 清除当前行
 done
 
-if [[ -n $str ]]; then
-    echo "\n准备配置zsh...\n"
+if [[ -n $str || $str == "" ]]; then
+    echo -e "\n准备配置zsh...\n"
 else
-    echo "Time out."
+    echo "\nTime out.\n"
 fi
 
 # 打印间距

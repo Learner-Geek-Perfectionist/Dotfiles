@@ -41,7 +41,7 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
             echo "用户 $username 已存在。"
             # 检查密码是否已设置
             if ! sudo passwd -S "$username" | grep -q ' P ' ; then
-                echo "用户 $username 的密码未设置，现在将设置密码为 1 "
+                echo "用户 $username 的密码未设置，现在将密码设置为 1 "
                 echo "$username:1" | sudo chpasswd
                 echo "密码已设置。"
             else

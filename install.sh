@@ -1,12 +1,20 @@
 #!/bin/bash
 
 
-# 判断操作系统
+# 仓库的 URL
+REPO_URL="https://github.com/Learner-Geek-Perfectionist/dotfiles/archive/refs/heads/master.zip"
+
+# 下载压缩包
+curl -L -o master.zip $REPO_URL
+
+# 获取当前操作系统类型
 OS_TYPE=$(uname)
+
+
 if [[ "$OS_TYPE" == "Darwin" ]]; then
     # macOS 逻辑
     echo "检测到 macOS 系统"
-
+    unzip master.zip
     # 检查 Xcode 命令行工具是否已安装
     xcode-select --print-path &>/dev/null
     if [[ $? -ne 0 ]]; then
@@ -30,6 +38,8 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
     # Linux 逻辑
     echo "检测到 Linux 系统"
 
+    tar -xf master.zip
+    
     # 设置环境变量
     sudo sh -c 'export TZ=Asia/Shanghai'
 
@@ -109,6 +119,7 @@ fi
 echo "操作完成，请按任意键继续。"
 read -n 1  # 等待用户按任意键
 
+cd ./dotfiles-master
 
 # 定义需要复制的文件和目录
 files_to_copy=(".zshrc" ".zprofile" ".config")

@@ -44,12 +44,14 @@ if command -v git &>/dev/null; then
   zinit light romkatv/powerlevel10k
   zinit light zsh-users/zsh-autosuggestions
 
-  # 加载 zsh 的自动补全系统
+  # 使用 Zinit Turbo 模式加载补全插件，并初始化补全系统
   zinit wait lucid for \
-    atinit"zicompinit -d $ZSH_COMPDUMP; zicdreplay" \
-    zdharma-continuum/fast-syntax-highlighting \
-    blockf \
-    zsh-users/zsh-completions
+   atinit"autoload -Uz compinit; compinit -d '$ZSH_COMPDUMP'; zicdreplay" \
+      zdharma-continuum/fast-syntax-highlighting \
+   blockf \
+      zsh-users/zsh-completions \
+   atload"!_zsh_autosuggest_start" \
+      zsh-users/zsh-autosuggestions
 else
   echo "git is not installed, zinit installation skipped."
 fi

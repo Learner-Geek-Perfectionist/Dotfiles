@@ -284,4 +284,4 @@ printf "\n"
 # 打印下边框
 printf "%s\n" "$(printf "%*s" $width | tr ' ' '*')"
 
-exec zsh
+zsh

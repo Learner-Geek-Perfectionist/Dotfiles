@@ -37,11 +37,11 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
     sudo sh -c 'echo Asia/Shanghai > /etc/timezone && ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime'
 
     # 设置中科大镜像
-    sed -e 's|^metalink=|#metalink=|g' \
-        -e 's|^#baseurl=http://download.example/pub/fedora/linux|baseurl=https://mirrors.ustc.edu.cn/fedora|g' \
-        -i.bak \
-        /etc/yum.repos.d/fedora.repo \
-        /etc/yum.repos.d/fedora-updates.repo
+    sudo sed -e 's|^metalink=|#metalink=|g' \
+         -e 's|^#baseurl=http://download.example/pub/fedora/linux|baseurl=https://mirrors.ustc.edu.cn/fedora|g' \
+         -i.bak \
+         /etc/yum.repos.d/fedora.repo \
+         /etc/yum.repos.d/fedora-updates.repo
 
     # 更新软件源缓存
     dnf makecache

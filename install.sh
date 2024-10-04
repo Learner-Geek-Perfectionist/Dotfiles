@@ -1,4 +1,5 @@
-#!/usr/bin/env sh
+#!/bin/bash
+
 
 # 判断操作系统
 OS_TYPE=$(uname)
@@ -129,10 +130,6 @@ done
 
 echo "复制完成。"
 
-
-
-
-#!/bin/bash
 
 # 字体源目录
 font_source="./fonts"

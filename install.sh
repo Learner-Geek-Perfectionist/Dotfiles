@@ -57,8 +57,8 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
     dnf makecache
 
     # 安装必要的软件
-    dnf update -y && \
-    dnf install -y \
+    sudo dnf update -y && \
+    sudo dnf install -y \
     openssh-server \
     iproute \
     net-tools \
@@ -78,8 +78,8 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
     fastfetch \
     tree \
     zsh && \
-    dnf group install -y "C Development Tools and Libraries" && \
-    dnf clean all
+    sudo dnf group install -y "C Development Tools and Libraries" && \
+    sudo dnf clean all
 
     # 首先询问是否要创建用户
     read -p "是否需要创建用户？(y/n): " create_confirm

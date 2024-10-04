@@ -54,7 +54,7 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
          /etc/yum.repos.d/fedora-updates.repo
 
     # 更新软件源缓存
-    dnf makecache
+    sudo dnf makecache
 
     # 安装必要的软件
     sudo dnf update -y && \

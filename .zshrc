@@ -81,7 +81,7 @@ fi
 alias clear='clear && printf '\''\e[3J'\'''
 
 # 感叹号「!」是 zsh 中特殊的前缀，用于历史扩展，禁止它。
-$ setopt NO_HIST_VERIFY
+setopt NO_HIST_VERIFY
 
 # 检查 fzf 是否已安装
 if command -v fzf >/dev/null 2>&1; then

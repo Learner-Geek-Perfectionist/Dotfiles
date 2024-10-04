@@ -32,10 +32,38 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
     # 首先询问是否要创建用户
     read -p "是否需要创建用户？(y/n): " create_confirm < /dev/tty
 
+    # if [[ $create_confirm == 'y' ]]; then
+    #     # 提示输入用户名
+    #     read -p "请输入你想创建的用户名: " username < /dev/tty
+
+    #     # 检查用户是否存在
+    #     if id "$username" &>/dev/null; then
+    #         echo "用户 $username 已存在。"
+    #         # 检查密码是否已设置
+    #         if ! sudo passwd -S "$username" | grep -q ' P ' ; then
+    #             echo "用户 $username 的密码未设置，现在将密码设置为 1 "
+    #             echo "$username:1" | sudo chpasswd
+    #             echo "密码已设置。"
+    #         else
+    #             echo "用户 $username 的密码已经存在。"
+    #         fi
+    #     else
+    #         sudo useradd -m "$username"  # 创建用户
+    #         echo "$username:1" | sudo chpasswd  # 设置密码
+    #         echo "用户 $username 已创建，密码设置为 1 "
+    #         # 配置用户无需 sudo 密码
+    #         sudo usermod -aG wheel "$username"
+    #         echo "$username ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+    #         echo "已配置用户 $username 无需 sudo 密码。"
+    #     fi
+    # else
+    #     echo "不创建用户"
+    # fi
+
     if [[ $create_confirm == 'y' ]]; then
         # 提示输入用户名
         read -p "请输入你想创建的用户名: " username < /dev/tty
-
+    
         # 检查用户是否存在
         if id "$username" &>/dev/null; then
             echo "用户 $username 已存在。"
@@ -51,15 +79,21 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
             sudo useradd -m "$username"  # 创建用户
             echo "$username:1" | sudo chpasswd  # 设置密码
             echo "用户 $username 已创建，密码设置为 1 "
-            # 配置用户无需 sudo 密码
-            sudo usermod -aG wheel "$username"
-            echo "$username ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-            echo "已配置用户 $username 无需 sudo 密码。"
         fi
     else
-        echo "不创建用户"
+        # 直接检查当前登录用户的密码是否设置
+        if ! sudo passwd -S "$USER" | grep -q ' P ' ; then
+            echo "您的密码未设置，现在将密码设置为 1 "
+            echo "$USER:1" | sudo chpasswd
+            echo "密码已设置。"
+        else
+            echo "您的密码已经存在。"
+        fi
     fi
-
+        
+   # 配置用户无需 sudo 密码
+    echo "$username ALL=(ALL) NOPASSWD: ALL" | sudo EDITOR='tee -a' visudo
+    echo "已配置用户 $username 无需 sudo 密码。"
 
     sudo -v
      # 设置环境变量
@@ -130,7 +164,7 @@ timeout=60  # 设置倒计时时间
 
 # 开始倒计时
 for ((i=timeout; i>0; i--)); do
-    echo -ne "\r ${message} (timeout in $i seconds): "
+    echo -ne "\r${message} (timeout in $i seconds): "
     read -t 1 -r str < /dev/tty && break  # 如果用户提前输入，则跳出循环，从终端设备读取
     echo -ne "\r"  # 清除当前行
 done

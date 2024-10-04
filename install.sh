@@ -32,57 +32,6 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
     # Linux 逻辑
     echo "检测到 Linux 系统"
 
-    # 安装必要的软件
-    sudo dnf update -y && \
-    sudo dnf install -y \
-    openssh-server \
-    iproute \
-    net-tools \
-    fd-find \
-    unzip \
-    ripgrep \
-    fzf \
-    ninja-build \
-    neovim \
-    ruby \
-    kitty \
-    cmake \
-    nodejs \
-    iputils \
-    procps-ng \
-    htop \
-    traceroute \
-    fastfetch \
-    tree \
-    zsh && \
-    sudo dnf group install -y "C Development Tools and Libraries" && \
-    sudo dnf clean all
-
-    # 仓库的 URL
-    REPO_URL="https://github.com/Learner-Geek-Perfectionist/dotfiles/archive/refs/heads/master.zip"
-
-    # 下载压缩包
-    curl -L -o master.zip $REPO_URL
-    
-    unzip master.zip
-    
-    # 设置环境变量
-    sudo sh -c 'export TZ=Asia/Shanghai'
-
-    # 设置时区
-    sudo sh -c 'echo Asia/Shanghai > /etc/timezone && ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime'
-
-    # 设置中科大镜像
-    sudo sed -e 's|^metalink=|#metalink=|g' \
-         -e 's|^#baseurl=http://download.example/pub/fedora/linux|baseurl=https://mirrors.ustc.edu.cn/fedora|g' \
-         -i.bak \
-         /etc/yum.repos.d/fedora.repo \
-         /etc/yum.repos.d/fedora-updates.repo
-
-    # 更新软件源缓存
-    sudo dnf makecache
-
-
     # 首先询问是否要创建用户
     read -p "是否需要创建用户？(y/n): " create_confirm
 
@@ -113,6 +62,58 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
     else
         echo "不创建用户，脚本结束。"
     fi
+
+    # 安装必要的软件
+    sudo dnf update -y && \
+    sudo dnf install -y \
+    openssh-server \
+    iproute \
+    net-tools \
+    fd-find \
+    unzip \
+    ripgrep \
+    fzf \
+    ninja-build \
+    neovim \
+    ruby \
+    kitty \
+    cmake \
+    nodejs \
+    iputils \
+    procps-ng \
+    htop \
+    traceroute \
+    fastfetch \
+    tree \
+    zsh && \
+    sudo dnf group install -y "C Development Tools and Libraries" && \
+    sudo dnf clean all
+
+    
+    # 仓库的 URL
+    REPO_URL="https://github.com/Learner-Geek-Perfectionist/dotfiles/archive/refs/heads/master.zip"
+
+    # 下载压缩包
+    curl -L -o master.zip $REPO_URL
+    
+    unzip master.zip
+    
+    # 设置环境变量
+    sudo sh -c 'export TZ=Asia/Shanghai'
+
+    # 设置时区
+    sudo sh -c 'echo Asia/Shanghai > /etc/timezone && ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime'
+
+    # 设置中科大镜像
+    sudo sed -e 's|^metalink=|#metalink=|g' \
+         -e 's|^#baseurl=http://download.example/pub/fedora/linux|baseurl=https://mirrors.ustc.edu.cn/fedora|g' \
+         -i.bak \
+         /etc/yum.repos.d/fedora.repo \
+         /etc/yum.repos.d/fedora-updates.repo
+
+    # 更新软件源缓存
+    sudo dnf makecache
+
 
 else
     echo "未知的操作系统类型"

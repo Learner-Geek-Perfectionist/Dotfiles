@@ -44,7 +44,7 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
             echo "用户 $username 已存在。"
             # 检查密码是否已设置
             if ! sudo passwd -S "$username" | grep -q ' P ' ; then
-                echo "用户 $username 的密码未设置，现在将设置密码为 '1'。"
+                echo "用户 $username 的密码未设置，现在将设置密码为 1 "
                 echo "$username:1" | sudo chpasswd
                 echo "密码已设置。"
             else
@@ -53,7 +53,7 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
         else
             sudo useradd -m "$username"  # 创建用户
             echo "$username:1" | sudo chpasswd  # 设置密码
-            echo "用户 $username 已创建，密码设置为 '1'。"
+            echo "用户 $username 已创建，密码设置为 1 "
             # 配置用户无需 sudo 密码
             sudo usermod -aG wheel "$username"
             echo "$username ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
@@ -70,6 +70,7 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
     iproute \
     net-tools \
     fd-find \
+    git \
     unzip \
     ripgrep \
     fzf \
@@ -102,8 +103,13 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
         echo "压缩包已存在，跳过下载。"
     fi
 
-    # 解压压缩包
-    unzip -o master.zip
+    # 检查 zip 文件是否存在再解压
+    if [ -f "master.zip" ]; then
+        echo "开始解压缩..."
+        unzip -o master.zip
+    else
+        echo "压缩包不存在，无法解压。"
+    fi
     
     # 设置环境变量
     sudo sh -c 'export TZ=Asia/Shanghai'
@@ -190,3 +196,7 @@ else
 fi
 
 echo "字体安装完成。"
+
+
+echo "配置 zsh ......"
+zsh

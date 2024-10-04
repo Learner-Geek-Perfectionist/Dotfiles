@@ -57,7 +57,7 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
             echo "已配置用户 $username 无需 sudo 密码。"
         fi
     else
-        echo "不创建用户，脚本结束。"
+        echo "不创建用户"
     fi
 
 

@@ -93,10 +93,17 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
     # 仓库的 URL
     REPO_URL="https://github.com/Learner-Geek-Perfectionist/dotfiles/archive/refs/heads/master.zip"
 
-    # 下载压缩包
-    curl -L -o master.zip $REPO_URL
-    
-    unzip master.zip
+    # 检查 zip 文件是否存在
+    if [ ! -f "master.zip" ]; then
+        echo "压缩包不存在，开始下载..."
+        # 下载压缩包
+        curl -L -o master.zip $REPO_URL
+    else
+        echo "压缩包已存在，跳过下载。"
+    fi
+
+    # 解压压缩包
+    unzip -o master.zip
     
     # 设置环境变量
     sudo sh -c 'export TZ=Asia/Shanghai'

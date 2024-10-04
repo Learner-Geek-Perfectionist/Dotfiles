@@ -108,7 +108,7 @@ else
 fi
 
 # 打印提示消息
-message="按任意键继续 (45秒后自动继续)... "
+message="按任意键继续，否则超时停止"
 padding=4  # 设置消息两侧的填充空间
 
 # 获取终端宽度
@@ -124,18 +124,29 @@ center=$(( (term_width - width) / 2 ))
 printf "%s\n" "$(printf "%*s" $width | tr ' ' '*')"
 # 打印间距
 printf "\n"
-# 打印居中消息
-printf "%*s\n" $((center + ${#message} / 2)) "$message"
+
+timeout=60  # 设置倒计时时间
+
+# 开始倒计时
+for ((i=timeout; i>0; i--)); do
+    echo -ne "\r ${message} (timeout in $i seconds): "
+    read -t 1 -r name < /dev/tty && break  # 如果用户提前输入，则跳出循环，从终端设备读取
+    echo -ne "\r"  # 清除当前行
+done
+
+if [[ -n $name ]]; then
+    echo "\n准备配置zsh...\n"
+else
+    echo "Time out."
+fi
+
 # 打印间距
 printf "\n"
 # 打印下边框
 printf "%s\n" "$(printf "%*s" $width | tr ' ' '*')"
 
-# 提示用户按下任意键或等待 45 秒
-timeout 45 bash -c 'read -n 1 -s -r -p "" </dev/tty'
 
-# 清理输出
-printf "\n准备配置zsh...\n"
+
 
 
 # 仓库的 URL

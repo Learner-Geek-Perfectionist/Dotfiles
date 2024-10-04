@@ -7,3 +7,9 @@
  ./install.sh
 ```
 
+2.
+```
+curl -sSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/dotfiles/master/install.sh | bash
+```
+
+

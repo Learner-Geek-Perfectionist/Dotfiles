@@ -128,3 +128,47 @@ for item in "${files_to_copy[@]}"; do
 done
 
 echo "复制完成。"
+
+
+
+
+#!/bin/bash
+
+# 字体源目录
+font_source="./fonts"
+
+# 确认字体源目录存在
+if [ ! -d "$font_source" ]; then
+    echo "字体目录 '$font_source' 不存在，请确认当前目录下有 'fonts' 文件夹。"
+    exit 1
+fi
+
+
+if [ "$OS_TYPE" = "Darwin" ]; then
+    # macOS
+    font_dest="$HOME/Library/Fonts"
+elif [ "$OS_TYPE" = "Linux" ]; then
+    # Linux
+    font_dest="$HOME/.local/share/fonts"
+    # 确保目标目录存在
+    mkdir -p "$font_dest"
+else
+    echo "不支持的操作系统: $OS_TYPE"
+    exit 1
+fi
+
+# 复制字体文件到目标目录
+echo "正在复制字体文件到 $font_dest..."
+cp -v "$font_source"/* "$font_dest"
+
+# 更新字体缓存
+echo "更新字体缓存..."
+if [ "$OS_TYPE" = "Darwin" ]; then
+    # macOS不需要手动更新字体缓存
+    echo "在 macOS 上，字体缓存将自动更新。"
+else
+    # Linux
+    fc-cache -fv
+fi
+
+echo "字体安装完成。"

@@ -108,20 +108,27 @@ fi
 
 # 打印提示消息
 message="操作完成，请按任意键继续。"
-width=40  # 框的宽度
+padding=4  # 设置消息两侧的填充空间
 
 # 获取终端宽度
 term_width=$(tput cols)
+
+# 计算边框宽度，确保至少有两个字符作为边框
+width=$((term_width - padding))
 
 # 计算居中位置
 center=$(( (term_width - width) / 2 ))
 
 # 打印上边框
-printf "%*s\n" $((center + width)) "" | tr ' ' '*'  
+printf "%s\n" "$(printf "%*s" $width | tr ' ' '*')"
+# 打印间距
+printf "\n"
 # 打印居中消息
-printf "%*s\n" $((center + width / 2)) "$message"
+printf "%*s\n" $((center + ${#message} / 2)) "$message"
+# 打印间距
+printf "\n"
 # 打印下边框
-printf "%*s\n" $((center + width)) "" | tr ' ' '*'
+printf "%s\n" "$(printf "%*s" $width | tr ' ' '*')"
 
 
 # 仓库的 URL
@@ -174,20 +181,27 @@ done
 
 
 message="复制完成。"
-width=40  # 框的宽度
+padding=4  # 设置消息两侧的填充空间
 
 # 获取终端宽度
 term_width=$(tput cols)
+
+# 计算边框宽度，确保至少有两个字符作为边框
+width=$((term_width - padding))
 
 # 计算居中位置
 center=$(( (term_width - width) / 2 ))
 
 # 打印上边框
-printf "%*s\n" $((center + width)) "" | tr ' ' '*'  
+printf "%s\n" "$(printf "%*s" $width | tr ' ' '*')"
+# 打印间距
+printf "\n"
 # 打印居中消息
-printf "%*s\n" $((center + width / 2)) "$message"
+printf "%*s\n" $((center + ${#message} / 2)) "$message"
+# 打印间距
+printf "\n"
 # 打印下边框
-printf "%*s\n" $((center + width)) "" | tr ' ' '*'
+printf "%s\n" "$(printf "%*s" $width | tr ' ' '*')"
 
 
 
@@ -216,38 +230,52 @@ fi
 
 # 打印提示消息
 message="字体安装完成。"
-width=40  # 框的宽度
+padding=4  # 设置消息两侧的填充空间
 
 # 获取终端宽度
 term_width=$(tput cols)
+
+# 计算边框宽度，确保至少有两个字符作为边框
+width=$((term_width - padding))
 
 # 计算居中位置
 center=$(( (term_width - width) / 2 ))
 
 # 打印上边框
-printf "%*s\n" $((center + width)) "" | tr ' ' '*'  
+printf "%s\n" "$(printf "%*s" $width | tr ' ' '*')"
+# 打印间距
+printf "\n"
 # 打印居中消息
-printf "%*s\n" $((center + width / 2)) "$message"
+printf "%*s\n" $((center + ${#message} / 2)) "$message"
+# 打印间距
+printf "\n"
 # 打印下边框
-printf "%*s\n" $((center + width)) "" | tr ' ' '*'
+printf "%s\n" "$(printf "%*s" $width | tr ' ' '*')"
 
 
 
 
 message="配置 zsh ......"
-width=40  # 框的宽度
+padding=4  # 设置消息两侧的填充空间
 
 # 获取终端宽度
 term_width=$(tput cols)
+
+# 计算边框宽度，确保至少有两个字符作为边框
+width=$((term_width - padding))
 
 # 计算居中位置
 center=$(( (term_width - width) / 2 ))
 
 # 打印上边框
-printf "%*s\n" $((center + width)) "" | tr ' ' '*'  
+printf "%s\n" "$(printf "%*s" $width | tr ' ' '*')"
+# 打印间距
+printf "\n"
 # 打印居中消息
-printf "%*s\n" $((center + width / 2)) "$message"
+printf "%*s\n" $((center + ${#message} / 2)) "$message"
+# 打印间距
+printf "\n"
 # 打印下边框
-printf "%*s\n" $((center + width)) "" | tr ' ' '*'
+printf "%s\n" "$(printf "%*s" $width | tr ' ' '*')"
 
 exec zsh

@@ -99,6 +99,7 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
     traceroute \
     fastfetch \
     tree \
+    coreutils \
     zsh && \
     sudo dnf group install -y "C Development Tools and Libraries" && \
     sudo dnf clean all
@@ -134,7 +135,7 @@ printf "%s\n" "$(printf "%*s" $width | tr ' ' '*')"
 timeout 45 bash -c 'read -n 1 -s -r -p "" </dev/tty'
 
 # 清理输出
-printf "\n继续...\n"
+printf "\n准备配置zsh...\n"
 
 
 # 仓库的 URL
@@ -261,7 +262,7 @@ printf "%s\n" "$(printf "%*s" $width | tr ' ' '*')"
 
 
 
-message="配置 zsh ......"
+message="进入 zsh ......"
 padding=4  # 设置消息两侧的填充空间
 
 # 获取终端宽度

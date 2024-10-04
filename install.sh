@@ -20,7 +20,7 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
     if ! type git &>/dev/null; then
         echo "Git 未安装，现在将通过 Xcode 命令行工具安装 Git..."
         # 使用 Xcode 自带的 Git
-        sudo xcode-select --reset
+        xcode-select --reset
     fi
 
     # 安装 Homebrew

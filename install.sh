@@ -107,7 +107,7 @@ else
 fi
 
 # 打印提示消息
-message="操作完成，请按任意键继续。"
+message="按任意键继续 (45秒后自动继续)... "
 padding=4  # 设置消息两侧的填充空间
 
 # 获取终端宽度
@@ -131,8 +131,7 @@ printf "\n"
 printf "%s\n" "$(printf "%*s" $width | tr ' ' '*')"
 
 # 提示用户按下任意键或等待 45 秒
-echo -n "按任意键继续 (45秒后自动继续)... "
-timeout 45 bash -c 'read -n 1 -s -r -p ""'
+timeout 45 bash -c 'read -n 1 -s -r -p "" </dev/tty'
 
 # 清理输出
 printf "\n继续...\n"

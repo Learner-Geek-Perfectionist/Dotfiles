@@ -92,7 +92,7 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
     fi
         
    # 配置用户无需 sudo 密码
-    echo "$username ALL=(ALL) NOPASSWD: ALL" | sudo EDITOR='tee -a' visudo
+    echo "$username ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
     echo "已配置用户 $username 无需 sudo 密码。"
 
     sudo -v

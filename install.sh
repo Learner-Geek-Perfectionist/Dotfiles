@@ -107,3 +107,24 @@ fi
 
 echo "操作完成，请按任意键继续。"
 read -n 1  # 等待用户按任意键
+
+
+# 定义需要复制的文件和目录
+files_to_copy=(".zshrc" ".zprofile" ".config")
+
+# 获取用户的 home 目录路径
+destination="$HOME"
+
+# 循环遍历每个文件和目录
+for item in "${files_to_copy[@]}"; do
+    # 检查当前目录中文件或目录是否存在
+    if [ -e "$item" ]; then
+        echo "正在复制 $item 到 $destination"
+        # 复制文件或目录到 home 目录，如果存在则替换
+        cp -r "$item" "$destination"
+    else
+        echo "$item 不存在，跳过复制。"
+    fi
+done
+
+echo "复制完成。"

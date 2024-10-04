@@ -59,7 +59,9 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
     else
         echo "不创建用户，脚本结束。"
     fi
-    
+
+
+    sudo -v
      # 设置环境变量
     sudo sh -c 'export TZ=Asia/Shanghai'
 
@@ -75,7 +77,6 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
 
     # 更新软件源缓存
     sudo dnf makecache
-    sudo -v
     # 安装必要的软件
     sudo dnf update -y && \
     sudo dnf install -y \

@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 # 判断操作系统
 OS_TYPE=$(uname)
 if [[ "$OS_TYPE" == "Darwin" ]]; then
@@ -10,7 +11,7 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
     xcode-select --print-path &>/dev/null
     if [[ $? -ne 0 ]]; then
         echo "Xcode 命令行工具未安装，现在将进行安装..."
-        sudo xcode-select --install
+        xcode-select --install
         # 等待用户完成 Xcode 命令行工具的安装
         read -p "请按回车继续..."
     fi
@@ -24,30 +25,30 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
 
     # 安装 Homebrew
     echo "正在安装 Homebrew..."
-    sudo /bin/zsh -c "$(curl -fsSL https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh)"
+    /bin/zsh -c "$(curl -fsSL https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh)"
 elif [[ "$OS_TYPE" == "Linux" ]]; then
     # Linux 逻辑
     echo "检测到 Linux 系统"
 
     # 设置环境变量
-    export TZ=Asia/Shanghai
+    sudo sh -c 'export TZ=Asia/Shanghai'
 
     # 设置时区
-    sudo echo $TZ > /etc/timezone && sudo ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
+    sudo sh -c 'echo Asia/Shanghai > /etc/timezone && ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime'
 
     # 设置中科大镜像
-    sudo sed -e 's|^metalink=|#metalink=|g' \
+    sed -e 's|^metalink=|#metalink=|g' \
         -e 's|^#baseurl=http://download.example/pub/fedora/linux|baseurl=https://mirrors.ustc.edu.cn/fedora|g' \
         -i.bak \
         /etc/yum.repos.d/fedora.repo \
         /etc/yum.repos.d/fedora-updates.repo
 
     # 更新软件源缓存
-    sudo dnf makecache
+    dnf makecache
 
     # 安装必要的软件
-    sudo dnf update -y && \
-    sudo dnf install -y \
+    dnf update -y && \
+    dnf install -y \
     openssh-server \
     iproute \
     net-tools \
@@ -67,8 +68,8 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
     fastfetch \
     tree \
     zsh && \
-    sudo dnf group install -y "C Development Tools and Libraries" && \
-    sudo dnf clean all
+    dnf group install -y "C Development Tools and Libraries" && \
+    dnf clean all
 
     # 首先询问是否要创建用户
     read -p "是否需要创建用户？(y/n): " create_confirm
@@ -108,6 +109,7 @@ fi
 echo "操作完成，请按任意键继续。"
 read -n 1  # 等待用户按任意键
 
+
 # 定义需要复制的文件和目录
 files_to_copy=(".zshrc" ".zprofile" ".config")
 
@@ -120,13 +122,14 @@ for item in "${files_to_copy[@]}"; do
     if [ -e "$item" ]; then
         echo "正在复制 $item 到 $destination"
         # 复制文件或目录到 home 目录，如果存在则替换
-        sudo cp -r "$item" "$destination"
+        cp -r "$item" "$destination"
     else
         echo "$item 不存在，跳过复制。"
     fi
 done
 
 echo "复制完成。"
+
 
 # 字体源目录
 font_source="./fonts"
@@ -137,6 +140,7 @@ if [ ! -d "$font_source" ]; then
     exit 1
 fi
 
+
 if [ "$OS_TYPE" = "Darwin" ]; then
     # macOS
     font_dest="$HOME/Library/Fonts"
@@ -144,7 +148,7 @@ elif [ "$OS_TYPE" = "Linux" ]; then
     # Linux
     font_dest="$HOME/.local/share/fonts"
     # 确保目标目录存在
-    sudo mkdir -p "$font_dest"
+    mkdir -p "$font_dest"
 else
     echo "不支持的操作系统: $OS_TYPE"
     exit 1
@@ -152,7 +156,7 @@ fi
 
 # 复制字体文件到目标目录
 echo "正在复制字体文件到 $font_dest..."
-sudo cp -v "$font_source"/* "$font_dest"
+cp -v "$font_source"/* "$font_dest"
 
 # 更新字体缓存
 echo "更新字体缓存..."
@@ -161,7 +165,7 @@ if [ "$OS_TYPE" = "Darwin" ]; then
     echo "在 macOS 上，字体缓存将自动更新。"
 else
     # Linux
-    sudo fc-cache -fv
+    fc-cache -fv
 fi
 
 echo "字体安装完成。"

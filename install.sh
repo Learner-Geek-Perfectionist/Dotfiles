@@ -166,20 +166,24 @@ countdown() {
     local timeout=${1:-60}  # 默认倒计时时间为60秒，可通过函数参数定制
     local message=${2:-"Waiting for input"}  # 默认提示信息
     local str  # 用户输入的字符串
-
+    local key_pressed=0  # 标志是否有按键被按下
+    
     # 开始倒计时
     for ((i=timeout; i>0; i--)); do
         echo -ne "\r${message} (timeout in $i seconds): "
-        read -t 1 -r str < /dev/tty && break  # 如果用户提前输入，则跳出循环
+        if read -t 1 -r -n1 str < /dev/tty; then
+            key_pressed=1  # 如果用户提前输入，则设置标志并跳出循环
+            break
+        fi
         echo -ne "\r"  # 清除当前行
     done
-
+    
     # 检查用户是否输入了内容或者时间是否超时
-    if [[ -z $str ]]; then
+    if [[ $key_pressed -eq 0 ]]; then
         echo -e "\nTime out. No input received.\n"
         exit 1  # 使用 exit 1 终止脚本，表示因超时而结束
     else
-        echo -e "\nUser input received: $str\n"
+        echo -e "\nUser input received: '$str'\n"
         return 0  # 返回 0 表示成功接收到用户输入
     fi
 }

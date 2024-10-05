@@ -50,7 +50,10 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
     if [[ $create_confirm == 'y' ]]; then
         read -p "请输入你想创建的用户名: " username < /dev/tty
         read -p "请输入默认密码（将用于新用户）: " default_password < /dev/tty
-    
+        
+        # 如果 username 变量未设置或为空，则默认为当前登录用户的用户名
+        username="${username:-$(whoami)}"
+        
         if id "$username" &>/dev/null; then
             echo "用户 $username 已存在。"
             set_password_if_needed "$username"
@@ -72,8 +75,7 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
     fi
 
 
-    # 如果 username 变量未设置或为空，则默认为当前登录用户的用户名
-    username="${username:-$(whoami)}"
+
     
     # 将用户添加到 sudoers 文件以免输入密码
     echo "$username ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers

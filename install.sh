@@ -44,7 +44,7 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
 
     # 定义用户名
     username=""
-    
+    default_password=1
     # 检查并设置密码的函数
     set_password_if_needed() {
         if ! sudo passwd -S "$1" | grep -q ' P '; then

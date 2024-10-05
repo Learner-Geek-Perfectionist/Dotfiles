@@ -70,7 +70,12 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
     elif [[ $os_type == "fedora" ]]; then
         sudo usermod -aG wheel "$username"
     fi
+
+
+    # 如果 username 变量未设置或为空，则默认为当前登录用户的用户名
+    username="${username:-$(whoami)}"
     
+    # 将用户添加到 sudoers 文件以免输入密码
     echo "$username ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers
     echo "已配置用户 $username 无需 sudo 密码。"
     

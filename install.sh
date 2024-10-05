@@ -188,11 +188,14 @@ countdown() {
 countdown "按任意键继续，否则超时停止"
 
 
-# 字体链接
-Dotfiles_REPO_URL="https://github.com/Learner-Geek-Perfectionist/dotfiles/archive/refs/heads/master.zip"
-Fonts_REPO_URL="https://github.com/Learner-Geek-Perfectionist/Fonts/archive/refs/heads/master.zip"
+# Dotfiles 链接
+Dotfiles_REPO_URL="https://github.com/Learner-Geek-Perfectionist/dotfiles/archive/refs/heads/master_Dotfiles.zip"
 
-zip_file="master.zip"
+# 字体链接
+Fonts_REPO_URL="https://github.com/Learner-Geek-Perfectionist/Fonts/archive/refs/heads/master_Fonts.zip"
+
+zip_Fonts_file="master_Fonts.zip"
+zip_Dotfiles_file="master_Dotfiles.zip"
 
 # 定义一个函数来处理压缩包的下载和解压
 handle_zip_file() {
@@ -240,7 +243,7 @@ prompt_download_fonts() {
 }
 
 # 下载 Dotfiles
-curl -L -o "$zip_file" "$Dotfiles_REPO_URL"
+curl -L -o "$zip_Dotfiles_file" "$Dotfiles_REPO_URL"
 
 
 

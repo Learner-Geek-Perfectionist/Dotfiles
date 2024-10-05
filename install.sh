@@ -189,18 +189,20 @@ countdown "按任意键继续，否则超时停止"
 
 
 # 字体链接
-REPO_URL="https://github.com/Learner-Geek-Perfectionist/dotfiles/archive/refs/heads/master.zip"
+Dotfiles_REPO_URL="https://github.com/Learner-Geek-Perfectionist/dotfiles/archive/refs/heads/master.zip"
+Fonts_REPO_URL="https://github.com/Learner-Geek-Perfectionist/Fonts/archive/refs/heads/master.zip"
+
+zip_file="master.zip"
 
 # 定义一个函数来处理压缩包的下载和解压
 handle_zip_file() {
-    local zip_file="master.zip"
-    local dest_dir="dotfiles-master"
+    local dest_dir="Fonts-master"
 
     # 检查 zip 文件是否存在
     if [ ! -f "$zip_file" ]; then
         echo "压缩包不存在，开始下载..."
         # 下载压缩包
-        curl -L -o "$zip_file" "$REPO_URL"
+        curl -L -o "$zip_file" "$Fonts_REPO_URL"
     else
         echo "压缩包已存在，跳过下载。"
     fi
@@ -236,6 +238,10 @@ prompt_download_fonts() {
         echo "跳过字体下载。"
     fi
 }
+
+# 下载 Dotfiles
+curl -L -o "$zip_file" "$Dotfiles_REPO_URL"
+
 
 
 destination="$HOME"

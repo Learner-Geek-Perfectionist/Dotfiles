@@ -201,6 +201,8 @@ Fonts_REPO_URL="https://github.com/Learner-Geek-Perfectionist/Fonts/archive/refs
 zip_Fonts_file="master_Fonts.zip"
 zip_Dotfiles_file="master_Dotfiles.zip"
 dest_dir="master_Fonts"
+
+
 # 定义一个函数来处理压缩包的下载和解压
 handle_zip_file() {
 
@@ -229,6 +231,7 @@ handle_zip_file() {
 
 
 
+install_flag=false;
 
 # 提示用户是否需要下载字体
 prompt_download_fonts() {
@@ -240,8 +243,9 @@ prompt_download_fonts() {
     read -p "是否需要下载字体以支持终端模拟器的渲染？(y/n): " download_confirm < /dev/tty
     if [[ $download_confirm == 'y' ]]; then
         handle_zip_file
+        install_flag=true;
     else
-        echo "跳过字体下载。"
+        echo "\n跳过字体下载。\n"
     fi
 }
 
@@ -255,8 +259,11 @@ curl -L -o "$zip_Dotfiles_file" "$Dotfiles_REPO_URL"
 
 destination="$HOME"
 
+
+
 # 进入目录并复制配置文件到用户的 home 目录的函数
 copy_config_files_to_home() {
+    echo "\n下载 Dotfiles\n"
     local dir_name="${dest_dir}"
     local files_to_copy=(".zshrc" ".zprofile" ".config")
 
@@ -287,15 +294,22 @@ print_centered_message "复制完成。"
 
 
 
-font_source="./fonts"
+font_source="./${dest_dir}"
 
+# 定义一个函数来复制字体文件并更新字体缓存
 # 定义一个函数来复制字体文件并更新字体缓存
 install_fonts() {
     local os_type="$1"      # 从函数调用中传入操作系统类型作为参数
 
+    # 检查是否执行安装
+    if [ "$install_flag" != "true" ]; then
+        echo "安装标志设置为 'false'，跳过安装。"
+        return 0  # 如果不安装，则正常退出
+    fi
+
     # 确认字体源目录存在
     if [ ! -d "$font_source" ]; then
-        echo "字体目录 '$font_source' 不存在，请确认当前目录下有 'fonts' 文件夹。"
+        echo "字体目录 '$font_source' 不存在，请确认当前目录下有 ${dest_dir} 文件夹。"
         exit 1
     fi
 
@@ -307,14 +321,15 @@ install_fonts() {
     echo "更新字体缓存..."
     if [ "$os_type" = "Darwin" ]; then
         # macOS不需要手动更新字体缓存
-        echo "在 macOS 上，字体缓存将自动更新。"
+        echo "\n在 macOS 上，字体缓存将自动更新。\n"
     else
         # Linux
+        echo "\n在 Linux 上，刷新字体缓存\n"
         fc-cache -fv
     fi
 }
 
-install_fonts "${OS_TYPE}"
+install_fonts "${OS_TYPE}" 
 
 # 打印提示消息
 

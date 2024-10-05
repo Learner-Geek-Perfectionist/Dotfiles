@@ -98,7 +98,7 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
     echo "已配置用户 $username 无需 sudo 密码。"
     
     
-        # 设置时区和环境变量
+    # 设置时区和环境变量
     sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
     sudo sh -c 'echo "Asia/Shanghai" > /etc/timezone'
     sudo sh -c 'echo "export TZ=Asia/Shanghai" >> /etc/profile'

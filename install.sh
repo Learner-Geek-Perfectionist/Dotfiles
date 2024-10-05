@@ -61,6 +61,7 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
             echo "密码已设置。"
         else
             echo "用户 $username 的密码已经存在。"
+        fi    
     fi
 
     # 配置用户无需 sudo 密码

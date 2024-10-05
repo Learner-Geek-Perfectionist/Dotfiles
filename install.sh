@@ -53,6 +53,9 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
     if [[ $create_confirm == 'y' ]]; then
         read -p "请输入你想创建的用户名: " username < /dev/tty
         read -p "请输入默认密码（将用于新用户）: " default_password < /dev/tty
+
+        # 如果 username 变量未设置或为空，则默认为当前登录用户的用户名
+        username="${username:-$(whoami)}"
         
         if id "$username" &>/dev/null; then
             echo "用户 $username 已存在。"
@@ -64,12 +67,15 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
         fi
     else
         echo "不创建用户"
+        
+        # 如果 username 变量未设置或为空，则默认为当前登录用户的用户名
+        username="${username:-$(whoami)}"
+        
         set_password_if_needed "$username"
     fi
 
 
-    # 如果 username 变量未设置或为空，则默认为当前登录用户的用户名
-    username="${username:-$(whoami)}"
+    
     
     # 配置用户无需 sudo 密码
     if [[ $os_type == "ubuntu" ]]; then

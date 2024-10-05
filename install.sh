@@ -181,6 +181,7 @@ countdown() {
     else
         echo -e "\nUser input received: $str\n"
         return 0  # 返回 0 表示成功接收到用户输入
+    fi
 }
 
 # 打印倒计时提示

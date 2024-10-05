@@ -256,6 +256,9 @@ else
     echo "压缩包已存在，跳过下载。"
 fi
 
+
+# 确保压缩包一定存在
+
 # 检查目录是否存在
 if [ -d "dotfiles-master" ]; then
     echo "目录 'dotfiles-master' 已存在，跳过解压。"

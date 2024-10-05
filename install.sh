@@ -66,14 +66,15 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
         echo "不创建用户"
         set_password_if_needed "$username"
     fi
-    
+
+    echo "1232121231231231231231231231231231231231212312312312"
     # 配置用户无需 sudo 密码
     if [[ $os_type == "ubuntu" ]]; then
         sudo usermod -aG sudo "$username"
     elif [[ $os_type == "fedora" ]]; then
         sudo usermod -aG wheel "$username"
     fi
-
+    
     # 如果 username 变量未设置或为空，则默认为当前登录用户的用户名
     username="${username:-$(whoami)}"
     echo "testtesttest"

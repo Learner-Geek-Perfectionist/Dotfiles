@@ -109,10 +109,12 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
         sudo apt update && sudo apt upgrade -y
         sudo apt install -y openssh-server net-tools git unzip fzf ninja-build neovim ruby-full cmake nodejs iputils-ping procps htop traceroute tree coreutils zsh fontconfig
     elif [[ $os_type == "fedora" ]]; then
-        sudo sed -i.bak -e 's|^metalink=|#metalink=|g' \
-            -e 's|^#baseurl=https://download.example.com/pub/fedora/linux|baseurl=https://mirrors.ustc.edu.cn/fedora/|g' \
-            /etc/yum.repos.d/fedora.repo \
-            /etc/yum.repos.d/fedora-updates.repo
+        sudo sed -e 's|^metalink=|#metalink=|g' \
+                 -e 's|^#baseurl=http://download.example/pub/fedora/linux|baseurl=https://mirrors.ustc.edu.cn/fedora|g' \
+                 -i.bak \
+                 /etc/yum.repos.d/fedora.repo \
+                 /etc/yum.repos.d/fedora-updates.repo
+         
         sudo dnf makecache
         sudo dnf update -y && sudo dnf install -y openssh-server iproute net-tools fd-find git unzip ripgrep fzf ninja-build neovim ruby kitty cmake nodejs iputils procps-ng htop traceroute fastfetch tree coreutils zsh fontconfig
         sudo dnf group install -y "C Development Tools and Libraries"

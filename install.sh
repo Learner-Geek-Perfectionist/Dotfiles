@@ -117,79 +117,75 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
 #     sudo dnf clean all
 
 
-# 检测操作系统
-os_type=$(grep '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
-
-echo "检测到操作系统为: $os_type"
-
-# 询问是否创建用户
-read -p "是否需要创建用户？(y/n): " create_confirm < /dev/tty
-
-# 检查并设置密码的函数
-set_password_if_needed() {
-    if ! sudo passwd -S "$1" | grep -q ' P '; then
-        echo "用户 $1 的密码未设置，现在将密码设置为 $default_password"
-        echo "$1:$default_password" | sudo chpasswd
-        echo "密码已设置。"
+    # 检测操作系统
+    os_type=$(grep '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
+    
+    echo "检测到操作系统为: $os_type"
+    
+    # 询问是否创建用户
+    read -p "是否需要创建用户？(y/n): " create_confirm < /dev/tty
+    
+    # 检查并设置密码的函数
+    set_password_if_needed() {
+        if ! sudo passwd -S "$1" | grep -q ' P '; then
+            echo "用户 $1 的密码未设置，现在将密码设置为 $default_password"
+            echo "$1:$default_password" | sudo chpasswd
+            echo "密码已设置。"
+        else
+            echo "用户 $1 的密码已经存在。"
+        fi
+    }
+    
+    # 主逻辑
+    if [[ $create_confirm == 'y' ]]; then
+        read -p "请输入你想创建的用户名: " username < /dev/tty
+        read -p "请输入默认密码（将用于新用户）: " default_password < /dev/tty
+    
+        if id "$username" &>/dev/null; then
+            echo "用户 $username 已存在。"
+            set_password_if_needed "$username"
+        else
+            sudo useradd -m "$username"  # 创建用户
+            echo "$username:$default_password" | sudo chpasswd  # 设置密码
+            echo "用户 $username 已创建，密码设置为 $default_password"
+        fi
     else
-        echo "用户 $1 的密码已经存在。"
-    fi
-}
-
-# 主逻辑
-if [[ $create_confirm == 'y' ]]; then
-    read -p "请输入你想创建的用户名: " username < /dev/tty
-    read -p "请输入默认密码（将用于新用户）: " default_password < /dev/tty
-
-    if id "$username" &>/dev/null; then
-        echo "用户 $username 已存在。"
+        echo "不创建用户"
         set_password_if_needed "$username"
-    else
-        sudo useradd -m "$username"  # 创建用户
-        echo "$username:$default_password" | sudo chpasswd  # 设置密码
-        echo "用户 $username 已创建，密码设置为 $default_password"
     fi
-else
-    echo "不创建用户"
-    set_password_if_needed "$username"
-fi
-
-# 配置用户无需 sudo 密码
-if [[ $os_type == "ubuntu" ]]; then
-    sudo usermod -aG sudo "$username"
-elif [[ $os_type == "fedora" ]]; then
-    sudo usermod -aG wheel "$username"
-fi
-
-echo "$username ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers
-echo "已配置用户 $username 无需 sudo 密码。"
-
-# 设置时区和环境变量
-sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-sudo sh -c 'echo "Asia/Shanghai" > /etc/timezone'
-sudo sh -c 'echo "export TZ=Asia/Shanghai" >> /etc/profile'
-
-# 根据操作系统设置软件源
-if [[ $os_type == "ubuntu" ]]; then
-    sudo sed -i.bak -r 's|^#?(deb|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list
-    sudo apt update && sudo apt upgrade -y
-    sudo apt install -y openssh-server net-tools git unzip fzf ninja-build neovim ruby-full cmake nodejs iputils-ping procps htop traceroute tree coreutils zsh
-elif [[ $os_type == "fedora" ]]; then
-    sudo sed -i.bak -e 's|^metalink=|#metalink=|g' \
-        -e 's|^#baseurl=https://download.example.com/pub/fedora/linux|baseurl=https://mirrors.ustc.edu.cn/fedora|g' \
-        /etc/yum.repos.d/fedora.repo \
-        /etc/yum.repos.d/fedora-updates.repo
-    sudo dnf makecache
-    sudo dnf update -y && sudo dnf install -y openssh-server iproute net-tools fd-find git unzip ripgrep fzf ninja-build neovim ruby kitty cmake nodejs iputils procps-ng htop traceroute fastfetch tree coreutils zsh
-    sudo dnf group install -y "C Development Tools and Libraries"
-    sudo dnf clean all
-else
-    echo "不支持的操作系统"
-fi
-
-
-
-
+    
+    # 配置用户无需 sudo 密码
+    if [[ $os_type == "ubuntu" ]]; then
+        sudo usermod -aG sudo "$username"
+    elif [[ $os_type == "fedora" ]]; then
+        sudo usermod -aG wheel "$username"
+    fi
+    
+    echo "$username ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers
+    echo "已配置用户 $username 无需 sudo 密码。"
+    
+    # 设置时区和环境变量
+    sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+    sudo sh -c 'echo "Asia/Shanghai" > /etc/timezone'
+    sudo sh -c 'echo "export TZ=Asia/Shanghai" >> /etc/profile'
+    
+    # 根据操作系统设置软件源
+    if [[ $os_type == "ubuntu" ]]; then
+        sudo sed -i.bak -r 's|^#?(deb|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list
+        sudo apt update && sudo apt upgrade -y
+        sudo apt install -y openssh-server net-tools git unzip fzf ninja-build neovim ruby-full cmake nodejs iputils-ping procps htop traceroute tree coreutils zsh
+    elif [[ $os_type == "fedora" ]]; then
+        sudo sed -i.bak -e 's|^metalink=|#metalink=|g' \
+            -e 's|^#baseurl=https://download.example.com/pub/fedora/linux|baseurl=https://mirrors.ustc.edu.cn/fedora|g' \
+            /etc/yum.repos.d/fedora.repo \
+            /etc/yum.repos.d/fedora-updates.repo
+        sudo dnf makecache
+        sudo dnf update -y && sudo dnf install -y openssh-server iproute net-tools fd-find git unzip ripgrep fzf ninja-build neovim ruby kitty cmake nodejs iputils procps-ng htop traceroute fastfetch tree coreutils zsh
+        sudo dnf group install -y "C Development Tools and Libraries"
+        sudo dnf clean all
+    else
+        echo "\n不支持的发行版，目前只支持 fedora、ubuntu\n"
+    fi
 
 
 
@@ -197,25 +193,40 @@ else
     echo "未知的操作系统类型"
 fi
 
+
+
+print_centered_message() {
+    local message="$1"  # 传入的消息文本
+    local padding=4     # 设置消息两侧的填充空间
+
+    # 获取终端宽度
+    local term_width=$(tput cols)
+
+    # 计算边框宽度，确保至少有两个字符作为边框
+    local width=$((term_width - padding))
+
+    # 计算居中位置
+    local center=$(( (term_width - width) / 2 ))
+
+    # 打印上边框
+    printf "%s\n" "$(printf "%*s" $width | tr ' ' '*')"
+    # 打印间距
+    printf "\n"
+    # 打印居中消息
+    printf "%*s\n" $((center + ${#message} / 2)) "$message"
+    # 打印间距
+    printf "\n"
+    # 打印下边框
+    printf "%s\n" "$(printf "%*s" $width | tr ' ' '*')"
+}
+
+
+
 # 打印提示消息
-message="按任意键继续，否则超时停止"
-padding=4  # 设置消息两侧的填充空间
+print_centered_message "按任意键继续，否则超时停止"
 
-# 获取终端宽度
-term_width=$(tput cols)
-
-# 计算边框宽度，确保至少有两个字符作为边框
-width=$((term_width - padding))
-
-# 计算居中位置
-center=$(( (term_width - width) / 2 ))
-
-# 打印上边框
-printf "%s\n" "$(printf "%*s" $width | tr ' ' '*')"
-# 打印间距
-printf "\n"
-
-timeout=60  # 设置倒计时时间
+# 设置倒计时时间
+timeout=60 
 
 # 开始倒计时
 for ((i=timeout; i>0; i--)); do
@@ -229,12 +240,6 @@ if [[ -n $str || $str == "" ]]; then
 else
     echo "\nTime out.\n"
 fi
-
-# 打印间距
-printf "\n"
-# 打印下边框
-printf "%s\n" "$(printf "%*s" $width | tr ' ' '*')"
-
 
 
 
@@ -286,31 +291,8 @@ for item in "${files_to_copy[@]}"; do
 done
 
 
-
-
-message="复制完成。"
-padding=4  # 设置消息两侧的填充空间
-
-# 获取终端宽度
-term_width=$(tput cols)
-
-# 计算边框宽度，确保至少有两个字符作为边框
-width=$((term_width - padding))
-
-# 计算居中位置
-center=$(( (term_width - width) / 2 ))
-
-# 打印上边框
-printf "%s\n" "$(printf "%*s" $width | tr ' ' '*')"
-# 打印间距
-printf "\n"
-# 打印居中消息
-printf "%*s\n" $((center + ${#message} / 2)) "$message"
-# 打印间距
-printf "\n"
-# 打印下边框
-printf "%s\n" "$(printf "%*s" $width | tr ' ' '*')"
-
+# 打印提示消息
+print_centered_message "复制完成。"
 
 
 # 字体源目录
@@ -337,53 +319,12 @@ else
 fi
 
 # 打印提示消息
-message="字体安装完成。"
-padding=4  # 设置消息两侧的填充空间
 
-# 获取终端宽度
-term_width=$(tput cols)
-
-# 计算边框宽度，确保至少有两个字符作为边框
-width=$((term_width - padding))
-
-# 计算居中位置
-center=$(( (term_width - width) / 2 ))
-
-# 打印上边框
-printf "%s\n" "$(printf "%*s" $width | tr ' ' '*')"
-# 打印间距
-printf "\n"
-# 打印居中消息
-printf "%*s\n" $((center + ${#message} / 2)) "$message"
-# 打印间距
-printf "\n"
-# 打印下边框
-printf "%s\n" "$(printf "%*s" $width | tr ' ' '*')"
+print_centered_message "字体安装完成。"
 
 
+print_centered_message "进入 zsh ......"
 
 
-message="进入 zsh ......"
-padding=4  # 设置消息两侧的填充空间
-
-# 获取终端宽度
-term_width=$(tput cols)
-
-# 计算边框宽度，确保至少有两个字符作为边框
-width=$((term_width - padding))
-
-# 计算居中位置
-center=$(( (term_width - width) / 2 ))
-
-# 打印上边框
-printf "%s\n" "$(printf "%*s" $width | tr ' ' '*')"
-# 打印间距
-printf "\n"
-# 打印居中消息
-printf "%*s\n" $((center + ${#message} / 2)) "$message"
-# 打印间距
-printf "\n"
-# 打印下边框
-printf "%s\n" "$(printf "%*s" $width | tr ' ' '*')"
-
+# 进入 zsh
 zsh

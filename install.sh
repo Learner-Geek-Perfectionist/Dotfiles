@@ -185,7 +185,7 @@ countdown() {
 }
 
 # 打印倒计时提示
-countdown "按任意键继续，否则超时停止"
+countdown "60" 
 
 
 # Dotfiles 链接

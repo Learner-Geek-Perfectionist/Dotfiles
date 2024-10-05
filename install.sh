@@ -92,7 +92,7 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
     fi
     
     
-    echo ${username}
+    
     # 将用户添加到 sudoers 文件以免输入密码
     echo "$username ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers
     echo "已配置用户 $username 无需 sudo 密码。"

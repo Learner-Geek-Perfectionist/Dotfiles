@@ -202,10 +202,10 @@ handle_zip_file() {
     local dest_dir="Fonts-master"
 
     # 检查 zip 文件是否存在
-    if [ ! -f "$zip_file" ]; then
+    if [ ! -f "$zip_Fonts_file" ]; then
         echo "压缩包不存在，开始下载..."
         # 下载压缩包
-        curl -L -o "$zip_file" "$Fonts_REPO_URL"
+        curl -L -o "$zip_Fonts_file" "$Fonts_REPO_URL"
     else
         echo "压缩包已存在，跳过下载。"
     fi
@@ -215,9 +215,9 @@ handle_zip_file() {
         echo "目录 '$dest_dir' 已存在，跳过解压。"
     else
         # 检查 zip 文件是否存在再解压
-        if [ -f "$zip_file" ]; then
+        if [ -f "$zip_Fonts_file" ]; then
             echo "开始解压缩..."
-            unzip -o "$zip_file"
+            unzip -o "$zip_Fonts_file"
         else
             echo "压缩包不存在，无法解压。"
         fi

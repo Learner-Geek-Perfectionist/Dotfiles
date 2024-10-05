@@ -76,15 +76,12 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
 
     # 如果 username 变量未设置或为空，则默认为当前登录用户的用户名
     username="${username:-$(whoami)}"
-    echo $username
-    echo $username
-    echo $username
-    echo $username
-    echo $username
-    echo $username
+    echo "testtesttest"
     # 将用户添加到 sudoers 文件以免输入密码
     echo "$username ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers
     echo "已配置用户 $username 无需 sudo 密码。"
+    
+    echo "testtesttest"
     
     # 设置时区和环境变量
     sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime

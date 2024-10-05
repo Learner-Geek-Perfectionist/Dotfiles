@@ -26,95 +26,173 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
     echo "正在安装 Homebrew..."
     /bin/zsh -c "$(curl -fsSL https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh)"
 elif [[ "$OS_TYPE" == "Linux" ]]; then
-    # Linux 逻辑
-    echo "检测到 Linux 系统"
+#     # Linux 逻辑
+#     echo "检测到 Linux 系统"
 
-    # 首先询问是否要创建用户
-    read -p "是否需要创建用户？(y/n): " create_confirm < /dev/tty
+#     # 首先询问是否要创建用户
+#     read -p "是否需要创建用户？(y/n): " create_confirm < /dev/tty
     
-    # 检查并设置密码
-    set_password_if_needed() {
-        if ! sudo passwd -S "$1" | grep -q ' P '; then
-            echo "用户 $1 的密码未设置，现在将密码设置为 $default_password"
-            echo "$1:$default_password" | sudo chpasswd
-            echo "密码已设置。"
-        else
-            echo "用户 $1 的密码已经存在。"
-        fi
-    }
+#     # 检查并设置密码
+#     set_password_if_needed() {
+#         if ! sudo passwd -S "$1" | grep -q ' P '; then
+#             echo "用户 $1 的密码未设置，现在将密码设置为 $default_password"
+#             echo "$1:$default_password" | sudo chpasswd
+#             echo "密码已设置。"
+#         else
+#             echo "用户 $1 的密码已经存在。"
+#         fi
+#     }
     
-    # 主逻辑
-    if [[ $create_confirm == 'y' ]]; then
-        read -p "请输入你想创建的用户名: " username < /dev/tty
-        read -p "请输入默认密码（将用于新用户）: " default_password < /dev/tty
+#     # 主逻辑
+#     if [[ $create_confirm == 'y' ]]; then
+#         read -p "请输入你想创建的用户名: " username < /dev/tty
+#         read -p "请输入默认密码（将用于新用户）: " default_password < /dev/tty
     
-        if id "$username" &>/dev/null; then
-            echo "用户 $username 已存在。"
-            set_password_if_needed "$username"
-        else
-            sudo useradd -m "$username"  # 创建用户
-            echo "$username:$default_password" | sudo chpasswd  # 设置密码
-            echo "用户 $username 已创建，密码设置为 $default_password"
-        fi
-    else
-        echo "不创建用户"
-        set_password_if_needed "$username"
-    fi
+#         if id "$username" &>/dev/null; then
+#             echo "用户 $username 已存在。"
+#             set_password_if_needed "$username"
+#         else
+#             sudo useradd -m "$username"  # 创建用户
+#             echo "$username:$default_password" | sudo chpasswd  # 设置密码
+#             echo "用户 $username 已创建，密码设置为 $default_password"
+#         fi
+#     else
+#         echo "不创建用户"
+#         set_password_if_needed "$username"
+#     fi
 
     
-    # 配置用户无需 sudo 密码
-    sudo usermod -aG wheel "$username"
-    echo "$username ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-    echo "已配置用户 $username 无需 sudo 密码。"
+#     # 配置用户无需 sudo 密码
+#     sudo usermod -aG wheel "$username"
+#     echo "$username ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+#     echo "已配置用户 $username 无需 sudo 密码。"
 
         
-   # 配置用户无需 sudo 密码
-    echo "$username ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-    echo "已配置用户 $username 无需 sudo 密码。"
+#    # 配置用户无需 sudo 密码
+#     echo "$username ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+#     echo "已配置用户 $username 无需 sudo 密码。"
 
-    sudo -v
-     # 设置环境变量
-    sudo sh -c 'export TZ=Asia/Shanghai'
+#     sudo -v
+#      # 设置环境变量
+#     sudo sh -c 'export TZ=Asia/Shanghai'
 
-    # 设置时区
-    sudo sh -c 'echo Asia/Shanghai > /etc/timezone && ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime'
+#     # 设置时区
+#     sudo sh -c 'echo Asia/Shanghai > /etc/timezone && ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime'
 
-    # 设置中科大镜像
-    sudo sed -e 's|^metalink=|#metalink=|g' \
-         -e 's|^#baseurl=http://download.example/pub/fedora/linux|baseurl=https://mirrors.ustc.edu.cn/fedora|g' \
-         -i.bak \
-         /etc/yum.repos.d/fedora.repo \
-         /etc/yum.repos.d/fedora-updates.repo
+#     # 设置中科大镜像
+#     sudo sed -e 's|^metalink=|#metalink=|g' \
+#          -e 's|^#baseurl=http://download.example/pub/fedora/linux|baseurl=https://mirrors.ustc.edu.cn/fedora|g' \
+#          -i.bak \
+#          /etc/yum.repos.d/fedora.repo \
+#          /etc/yum.repos.d/fedora-updates.repo
 
-    # 更新软件源缓存
+#     # 更新软件源缓存
+#     sudo dnf makecache
+#     # 安装必要的软件
+#     sudo dnf update -y && \
+#     sudo dnf install -y \
+#     openssh-server \
+#     iproute \
+#     net-tools \
+#     fd-find \
+#     git \
+#     unzip \
+#     ripgrep \
+#     fzf \
+#     ninja-build \
+#     neovim \
+#     ruby \
+#     kitty \
+#     cmake \
+#     nodejs \
+#     iputils \
+#     procps-ng \
+#     htop \
+#     traceroute \
+#     fastfetch \
+#     tree \
+#     coreutils \
+#     zsh && \
+#     sudo dnf group install -y "C Development Tools and Libraries" && \
+#     sudo dnf clean all
+
+
+# 检测操作系统
+os_type=$(grep '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
+
+echo "检测到操作系统为: $os_type"
+
+# 询问是否创建用户
+read -p "是否需要创建用户？(y/n): " create_confirm < /dev/tty
+
+# 检查并设置密码的函数
+set_password_if_needed() {
+    if ! sudo passwd -S "$1" | grep -q ' P '; then
+        echo "用户 $1 的密码未设置，现在将密码设置为 $default_password"
+        echo "$1:$default_password" | sudo chpasswd
+        echo "密码已设置。"
+    else
+        echo "用户 $1 的密码已经存在。"
+    fi
+}
+
+# 主逻辑
+if [[ $create_confirm == 'y' ]]; then
+    read -p "请输入你想创建的用户名: " username < /dev/tty
+    read -p "请输入默认密码（将用于新用户）: " default_password < /dev/tty
+
+    if id "$username" &>/dev/null; then
+        echo "用户 $username 已存在。"
+        set_password_if_needed "$username"
+    else
+        sudo useradd -m "$username"  # 创建用户
+        echo "$username:$default_password" | sudo chpasswd  # 设置密码
+        echo "用户 $username 已创建，密码设置为 $default_password"
+    fi
+else
+    echo "不创建用户"
+    set_password_if_needed "$username"
+fi
+
+# 配置用户无需 sudo 密码
+if [[ $os_type == "ubuntu" ]]; then
+    sudo usermod -aG sudo "$username"
+elif [[ $os_type == "fedora" ]]; then
+    sudo usermod -aG wheel "$username"
+fi
+
+echo "$username ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers
+echo "已配置用户 $username 无需 sudo 密码。"
+
+# 设置时区和环境变量
+sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+sudo sh -c 'echo "Asia/Shanghai" > /etc/timezone'
+sudo sh -c 'echo "export TZ=Asia/Shanghai" >> /etc/profile'
+
+# 根据操作系统设置软件源
+if [[ $os_type == "ubuntu" ]]; then
+    sudo sed -i.bak -r 's|^#?(deb|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list
+    sudo apt update && sudo apt upgrade -y
+    sudo apt install -y openssh-server net-tools git unzip fzf ninja-build neovim ruby-full cmake nodejs iputils-ping procps htop traceroute tree coreutils zsh
+elif [[ $os_type == "fedora" ]]; then
+    sudo sed -i.bak -e 's|^metalink=|#metalink=|g' \
+        -e 's|^#baseurl=https://download.example.com/pub/fedora/linux|baseurl=https://mirrors.ustc.edu.cn/fedora|g' \
+        /etc/yum.repos.d/fedora.repo \
+        /etc/yum.repos.d/fedora-updates.repo
     sudo dnf makecache
-    # 安装必要的软件
-    sudo dnf update -y && \
-    sudo dnf install -y \
-    openssh-server \
-    iproute \
-    net-tools \
-    fd-find \
-    git \
-    unzip \
-    ripgrep \
-    fzf \
-    ninja-build \
-    neovim \
-    ruby \
-    kitty \
-    cmake \
-    nodejs \
-    iputils \
-    procps-ng \
-    htop \
-    traceroute \
-    fastfetch \
-    tree \
-    coreutils \
-    zsh && \
-    sudo dnf group install -y "C Development Tools and Libraries" && \
+    sudo dnf update -y && sudo dnf install -y openssh-server iproute net-tools fd-find git unzip ripgrep fzf ninja-build neovim ruby kitty cmake nodejs iputils procps-ng htop traceroute fastfetch tree coreutils zsh
+    sudo dnf group install -y "C Development Tools and Libraries"
     sudo dnf clean all
+else
+    echo "不支持的操作系统"
+fi
+
+
+
+
+
+
+
 else
     echo "未知的操作系统类型"
 fi
@@ -186,7 +264,7 @@ else
     fi
 fi
 
-
+# 进入仓库目录
 [ -d "dotfiles-master" ] && cd ./dotfiles-master && echo "已进入 'dotfiles-master' 目录。" || { echo "目录 'dotfiles-master' 不存在，无法进入。" && exit 1; }
 
 # 定义需要复制的文件和目录

@@ -245,6 +245,9 @@ prompt_download_fonts() {
     fi
 }
 
+# 加载提示头
+prompt_download_fonts
+
 # 下载 Dotfiles
 curl -L -o "$zip_Dotfiles_file" "$Dotfiles_REPO_URL"
 

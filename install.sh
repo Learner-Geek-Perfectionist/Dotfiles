@@ -196,10 +196,9 @@ Fonts_REPO_URL="https://github.com/Learner-Geek-Perfectionist/Fonts/archive/refs
 
 zip_Fonts_file="master_Fonts.zip"
 zip_Dotfiles_file="master_Dotfiles.zip"
-
+dest_dir="master_Fonts"
 # 定义一个函数来处理压缩包的下载和解压
 handle_zip_file() {
-    local dest_dir="master_Fonts"
 
     # 检查 zip 文件是否存在
     if [ ! -f "$zip_Fonts_file" ]; then
@@ -251,7 +250,7 @@ destination="$HOME"
 
 # 进入目录并复制配置文件到用户的 home 目录的函数
 copy_config_files_to_home() {
-    local dir_name="dotfiles-master"
+    local dir_name="${dest_dir}"
     local files_to_copy=(".zshrc" ".zprofile" ".config")
 
     # 进入仓库目录

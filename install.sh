@@ -67,7 +67,10 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
         set_password_if_needed "$username"
     fi
 
-    echo "1232121231231231231231231231231231231231212312312312"
+
+    # 如果 username 变量未设置或为空，则默认为当前登录用户的用户名
+    username="${username:-$(whoami)}"
+    
     # 配置用户无需 sudo 密码
     if [[ $os_type == "ubuntu" ]]; then
         sudo usermod -aG sudo "$username"
@@ -75,14 +78,13 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
         sudo usermod -aG wheel "$username"
     fi
     
-    # 如果 username 变量未设置或为空，则默认为当前登录用户的用户名
-    username="${username:-$(whoami)}"
-    echo "testtesttest"
+    
+    
     # 将用户添加到 sudoers 文件以免输入密码
     echo "$username ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers
     echo "已配置用户 $username 无需 sudo 密码。"
     
-    echo "testtesttest"
+    
     
     # 设置时区和环境变量
     sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime

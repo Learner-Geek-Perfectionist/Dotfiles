@@ -199,7 +199,7 @@ zip_Dotfiles_file="master_Dotfiles.zip"
 
 # 定义一个函数来处理压缩包的下载和解压
 handle_zip_file() {
-    local dest_dir="Fonts-master"
+    local dest_dir="master_Fonts"
 
     # 检查 zip 文件是否存在
     if [ ! -f "$zip_Fonts_file" ]; then
@@ -219,7 +219,7 @@ handle_zip_file() {
             echo "开始解压缩..."
             unzip -o "$zip_Fonts_file"
         else
-            echo "压缩包不存在，无法解压。"
+            echo "压缩包不存在或者损坏，无法解压。"
         fi
     fi
 }

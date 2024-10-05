@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# 当脚本出现错误时，打印出错误信息和发生错误的行号
+trap 'echo "Error at line $LINENO: $BASH_COMMAND"' ERR
+
+# 设置脚本在运行中遇到错误时立即退出
+set -e
+
+
 # 获取当前操作系统类型
 OS_TYPE=$(uname)
 

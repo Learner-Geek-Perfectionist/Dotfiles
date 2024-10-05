@@ -200,24 +200,27 @@ Fonts_REPO_URL="https://github.com/Learner-Geek-Perfectionist/Fonts/archive/refs
 
 zip_Fonts_file="master_Fonts.zip"
 zip_Dotfiles_file="master_Dotfiles.zip"
-dest_dir="master_Fonts"
+
+dest_Fonts="master_Fonts"
+dest_Dotfiles="master_Dotfiles"
 
 
 # 定义一个函数来处理压缩包的下载和解压
 handle_zip_file() {
 
+    ########### 处理 Fonts 压缩包 ###########
     # 检查 zip 文件是否存在
     if [ ! -f "$zip_Fonts_file" ]; then
         echo "压缩包不存在，开始下载..."
-        # 下载压缩包
+        # 下载字体压缩包
         curl -L -o "$zip_Fonts_file" "$Fonts_REPO_URL"
     else
         echo "压缩包已存在，跳过下载。"
     fi
 
     # 确保压缩包一定存在后，检查目录是否存在
-    if [ -d "$dest_dir" ]; then
-        echo "目录 '$dest_dir' 已存在，跳过解压。"
+    if [ -d "$dest_Fonts" ]; then
+        echo "目录 '$dest_Fonts' 已存在，跳过解压。"
     else
         # 检查 zip 文件是否存在再解压
         if [ -f "$zip_Fonts_file" ]; then
@@ -227,6 +230,31 @@ handle_zip_file() {
             echo "压缩包不存在或者损坏，无法解压。"
         fi
     fi
+
+    ########### 处理 Dotfiles 压缩包 ###########
+    # 检查 zip 文件是否存在
+    if [ ! -f "$zip_Dotfiles_file" ]; then
+        echo "压缩包不存在，开始下载..."
+        # 下载字体压缩包
+        curl -L -o "$zip_Dotfiles_file" "$Dotfiles_REPO_URL"
+    else
+        echo "压缩包已存在，跳过下载。"
+    fi
+
+    # 确保压缩包一定存在后，检查目录是否存在
+    if [ -d "$dest_Dotfiles" ]; then
+        echo "目录 '$dest_Dotfiles' 已存在，跳过解压。"
+    else
+        # 检查 zip 文件是否存在再解压
+        if [ -f "$zip_Dotfiles_file" ]; then
+            echo "开始解压缩..."
+            unzip -o "$zip_Dotfiles_file"
+        else
+            echo "压缩包不存在或者损坏，无法解压。"
+        fi
+    fi
+
+    
 }
 
 
@@ -242,6 +270,7 @@ prompt_download_fonts() {
     echo "宿主机一般需要良好的字体支持来确保所有应用和终端模拟器都能正常渲染字符。"
     read -p "是否需要下载字体以支持终端模拟器的渲染？(y/n): " download_confirm < /dev/tty
     if [[ $download_confirm == 'y' ]]; then
+        echo "\下载字体。\n"
         handle_zip_file
         install_flag=true;
     else

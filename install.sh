@@ -161,21 +161,31 @@ print_centered_message() {
 # 打印提示消息
 print_centered_message "按任意键继续，否则超时停止"
 
-# 设置倒计时时间
-timeout=60 
 
-# 开始倒计时
-for ((i=timeout; i>0; i--)); do
-    echo -ne "\r${message} (timeout in $i seconds): "
-    read -t 1 -r str < /dev/tty && break  # 如果用户提前输入，则跳出循环，从终端设备读取
-    echo -ne "\r"  # 清除当前行
-done
+countdown() {
+    local timeout=${1:-60}  # 默认倒计时时间为60秒，可通过函数参数定制
+    local message=${2:-"Waiting for input"}  # 默认提示信息
+    local str  # 用户输入的字符串
 
-if [[ -n $str || $str == "" ]]; then
-    echo -e "\n准备配置zsh...\n"
-else
-    echo "\nTime out.\n"
-fi
+    # 开始倒计时
+    for ((i=timeout; i>0; i--)); do
+        echo -ne "\r${message} (timeout in $i seconds): "
+        read -t 1 -r str < /dev/tty && break  # 如果用户提前输入，则跳出循环
+        echo -ne "\r"  # 清除当前行
+    done
+
+    # 检查用户是否输入了内容或者时间是否超时
+    if [[ -n $str || $str == "" ]]; then
+        echo -e "\nUser input received: $str\n"
+        return 0  # 返回 0 表示成功接收到用户输入
+    else
+        echo -e "\nTime out. No input received.\n"
+        exit 1  # 使用 exit 1 终止脚本，表示因超时而结束
+    fi
+}
+
+# 打印倒计时提示
+countdown "按任意键继续，否则超时停止"
 
 
 # 字体链接

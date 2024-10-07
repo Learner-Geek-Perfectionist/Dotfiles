@@ -192,6 +192,7 @@ countdown() {
 countdown "60" 
 
 
+install_flag=false
 
 # 提示用户是否需要下载字体
 prompt_download_fonts() {
@@ -281,8 +282,8 @@ destination="$HOME"
 
 # 进入目录并复制配置文件到用户的 home 目录的函数
 copy_config_files_to_home() {
-    echo -e "\n下载 Dotfiles\n"
-    local dir_name="${dest_dir}"
+    print_centered_message "下载 Dotfiles"
+    local dir_name="${dest_Dotfiles}"
     local files_to_copy=(".zshrc" ".zprofile" ".config")
 
     # 进入仓库目录

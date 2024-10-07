@@ -146,7 +146,7 @@ print_centered_message() {
     local center=$(( (term_width - width) / 2 ))
 
     # 打印上边框
-    printf "%s\n" "$(printf "%*s" $width | tr ' ' '*')"
+    printf "\n%s\n" "$(printf "%*s" $width | tr ' ' '*')"
     # 打印间距
     printf "\n"
     # 打印居中消息
@@ -154,7 +154,7 @@ print_centered_message() {
     # 打印间距
     printf "\n"
     # 打印下边框
-    printf "%s\n" "$(printf "%*s" $width | tr ' ' '*')"
+    printf "%s\n" "$(printf "%*s" $width | tr ' ' '*')\n    "
 }
 
 

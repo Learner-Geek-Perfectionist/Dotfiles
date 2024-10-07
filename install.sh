@@ -14,7 +14,6 @@ OS_TYPE=$(uname)
 if [[ "$OS_TYPE" == "Darwin" ]]; then
     # macOS 逻辑
     echo "检测到 macOS 系统"
-    unzip master.zip
     # 检查 Xcode 命令行工具是否已安装
     xcode-select --print-path &>/dev/null
     if [[ $? -ne 0 ]]; then

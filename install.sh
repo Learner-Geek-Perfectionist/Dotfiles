@@ -279,7 +279,7 @@ prompt_download_fonts() {
     fi
 }
 
-
+# 下载字体压缩包和 zsh 配置文件
 handle_zip_file
 
 
@@ -322,6 +322,8 @@ copy_config_files_to_home() {
     done
 }
 
+
+# 对 zsh 进行配置
 copy_config_files_to_home
 
 # 打印提示消息
@@ -341,7 +343,6 @@ fi
 
 
 # 定义一个函数来复制字体文件并更新字体缓存
-
 install_fonts() {
     # 检查是否执行安装
     if [ "$install_flag" != "true" ]; then

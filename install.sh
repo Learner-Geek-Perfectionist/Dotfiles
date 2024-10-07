@@ -58,8 +58,13 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
 
     brew_PACKAGES=(
       alfred
+      videofusion
+      wpsoffice
+      tencent-meeting
       google-chrome
       orbstack
+      dingtalk
+      baidunetdisk
       anaconda
       iina
       pycharm
@@ -84,7 +89,7 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
       microsoft-edge
     )
 
-    for package in "${brew_packages[@]}"; do
+    for package in "${brew_PACKAGES[@]}"; do
       if ! brew list --formula | grep -q "^$package\$"; then
         brew install "$package"
       else

@@ -95,7 +95,7 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
       else
         echo "$package is already installed via Homebrew."
       fi
-    done
+    
 
 
     print_centered_message "开发工具安装完成✅"

@@ -264,9 +264,9 @@ print_centered_message "Dotfile 完成下载和解压"
 
 
 # 对Fonts的处理，只在ZIP文件不存在时下载
-if [[ $install_flag==true ]]; then
+if [[ "$install_flag" == "true" ]]; then
     download_and_extract "$zip_Fonts_file" "$dest_Fonts" "$Fonts_REPO_URL" 
-elif [[  $install_flag==true ]]; then
+elif [[  "$install_flag" == "true" ]]; then
     print_centered_message "Fonts ZIP 文件已存在，不需要下载。"
     if [ ! -d "$dest_Fonts" ]; then
         if [ -f "$zip_Fonts_file" ]; then

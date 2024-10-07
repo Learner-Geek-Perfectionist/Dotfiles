@@ -200,7 +200,7 @@ prompt_download_fonts() {
         print_centered_message "正在下载字体......"
         install_flag=true;
     else
-        echo -e "\n跳过字体下载。\n"
+        print_centered_message "跳过字体下载。"
     fi
 }
 
@@ -231,7 +231,7 @@ download_and_extract() {
     # 检查ZIP文件是否存在，如果不存在则下载
     if [ ! -f "$zip_file" ]; then
         print_centered_message "ZIP文件 '$zip_file' 不存在，开始下载..."
-        curl  -O  "$repo_url"
+        curl  -o "${zip_file}"  "$repo_url"
         if [  -f "$zip_file" ]; then
         print_centered_message "ZIP文件 '$zip_file' 下载完成"
         else print_centered_message "ZIP文件 '$zip_file' 下载失败"

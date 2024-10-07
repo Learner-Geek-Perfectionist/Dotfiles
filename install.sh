@@ -269,11 +269,11 @@ prompt_download_fonts() {
     echo "宿主机一般需要良好的字体支持来确保所有应用和终端模拟器都能正常渲染字符。"
     read -p "是否需要下载字体以支持终端模拟器的渲染？(y/n): " download_confirm < /dev/tty
     if [[ $download_confirm == 'y' ]]; then
-        echo "\下载字体。\n"
+        echo "\n 下载字体。\n"
         handle_zip_file
         install_flag=true;
     else
-        echo "\n跳过字体下载。\n"
+        echo "\n 跳过字体下载。\n"
     fi
 }
 

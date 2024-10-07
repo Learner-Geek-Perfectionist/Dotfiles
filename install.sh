@@ -75,11 +75,17 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
         gcc ninja wget
     )
 
-    for package in "${brew_formulas[@]}"; do
+    for package in "${brew_casks[@]}"; do
+      # 检查是否已通过 Homebrew 安装
       if ! brew list  | grep -q "^$package\$"; then
-        brew install "$package"
+        # 检查应用是否已存在于 /Applications 目录
+        if [ ! -d "/Applications/${package}.app" ]; then
+          brew install "$package"
+        else
+          echo "$package is already installed at /Applications."
+        fi
       else
-        echo "$package is already installed."
+        echo "$package is already installed via Homebrew."
       fi
     done
 
@@ -95,10 +101,16 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
     )
 
     for package in "${brew_casks[@]}"; do
+      # 检查是否已通过 Homebrew 安装
       if ! brew list  | grep -q "^$package\$"; then
-        brew install "$package"
+        # 检查应用是否已存在于 /Applications 目录
+        if [ ! -d "/Applications/${package}.app" ]; then
+          brew install "$package"
+        else
+          echo "$package is already installed at /Applications."
+        fi
       else
-        echo "$package is already installed."
+        echo "$package is already installed via Homebrew."
       fi
     done
 

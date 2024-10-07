@@ -87,7 +87,7 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
         # 检查应用是否已存在于 /Applications 目录，忽略大小写
         if [ ! -d "/Applications/${normalized_name}.app" ]; then
           echo "$package" >> "$uninstalled_packages"
-          brew install --cask "$package"
+          brew install  "$package"
         else
           echo "$package is already installed at /Applications."
         fi
@@ -118,7 +118,7 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
         # 检查应用是否已存在于 /Applications 目录，忽略大小写
         if [ ! -d "/Applications/${normalized_name}.app" ]; then
           echo "$package" >> "$uninstalled_packages"
-          brew install --cask "$package"
+          brew install  "$package"
         else
           echo "$package is already installed at /Applications."
         fi

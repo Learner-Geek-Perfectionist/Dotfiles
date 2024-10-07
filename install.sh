@@ -83,7 +83,7 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
     for package in "${brew_formulas[@]}"; do
       normalized_name="${package%-*}" # 假设名称可能有后缀，移除尾部的 '-rev', '-ce' 等
       # 检查是否已通过 Homebrew 安装
-      if ! brew list --cask | grep -iq "^${normalized_name}$"; then
+      if ! brew list  | grep -iq "^${normalized_name}$"; then
         # 检查应用是否已存在于 /Applications 目录，忽略大小写
         if [ ! -d "/Applications/${normalized_name}.app" ]; then
           echo "$package" >> "$uninstalled_packages"
@@ -97,7 +97,7 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
     done
 
 
-    print_centered_message "安装完成✅"
+    print_centered_message "开发工具安装完成✅"
     
     print_centered_message "正在安装 macOS 常用的带图形用户界面的应用程序......"
     
@@ -114,7 +114,7 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
     for package in "${brew_casks[@]}"; do
       normalized_name="${package%-*}" # 假设名称可能有后缀，移除尾部的 '-rev', '-ce' 等
       # 检查是否已通过 Homebrew 安装
-      if ! brew list --cask | grep -iq "^${normalized_name}$"; then
+      if ! brew list  | grep -iq "^${normalized_name}$"; then
         # 检查应用是否已存在于 /Applications 目录，忽略大小写
         if [ ! -d "/Applications/${normalized_name}.app" ]; then
           echo "$package" >> "$uninstalled_packages"
@@ -128,7 +128,7 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
     done
 
     
-    print_centered_message "安装完成✅"
+    print_centered_message "图形界面安装完成✅"
 
 
     print_centered_message "检查完成。未安装的软件包列表已写入到 $uninstalled_packages 文件中。"

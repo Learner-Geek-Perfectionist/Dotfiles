@@ -213,8 +213,8 @@ Dotfiles_REPO_URL="https://github.com/Learner-Geek-Perfectionist/dotfiles/archiv
 Fonts_REPO_URL="https://github.com/Learner-Geek-Perfectionist/Fonts/archive/refs/heads/master.zip"
 
 # 定义文件和目标目录名称
-zip_Fonts_file="Fonts_master.zip"
-zip_Dotfiles_file="Dotfiles_master.zip"
+zip_Fonts_file="Fonts-master.zip"
+zip_Dotfiles_file="Dotfiles-master.zip"
 
 dest_Fonts="Fonts_master"
 dest_Dotfiles="Dotfiles_master"

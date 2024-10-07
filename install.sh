@@ -34,20 +34,20 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
     echo "正在安装 Homebrew..."
     /bin/zsh -c "$(curl -fsSL https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh)"
 
-    brew_packages=(
-      bash gettext llvm msgpack ruby
-      brotli git lpeg ncurses sqlite jordanbaird-ice
-      c-ares htop lua neovim tree-sitter
-      ca-certificates icu4c luajit node unibilium
-      cmake libnghttp2 luv openssl@3 vim
-      cmake-docs libsodium lz4 pcre2 xz
-      fastfetch libuv lzip python@3.12 z3
-      fd libvterm make readline zstd
-      fzf libyaml mpdecimal ripgrep
-      gcc ninja
+    brew_formulas=(
+        bash gettext llvm msgpack ruby
+        brotli git lpeg ncurses sqlite
+        c-ares htop lua neovim tree-sitter
+        ca-certificates icu4c luajit node unibilium
+        cmake libnghttp2 luv openssl@3 vim
+        cmake-docs libsodium lz4 pcre2 xz
+        fastfetch libuv lzip python@3.12 z3
+        fd libvterm make readline zstd
+        fzf libyaml mpdecimal ripgrep
+        gcc ninja
     )
 
-    for package in "${brew_packages[@]}"; do
+    for package in "${brew_formulas[@]}"; do
       if ! brew list --formula | grep -q "^$package\$"; then
         brew install "$package"
       else
@@ -56,46 +56,44 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
     done
 
 
-    brew_PACKAGES=(
-      alfred
-      videofusion
-      wpsoffice
-      tencent-meeting
-      google-chrome
-      orbstack
-      dingtalk
-      baidunetdisk
-      anaconda
-      iina
-      pycharm
-      android-studio
-      input-source-pro
-      qq
-      chatgpt
-      intellij-idea
-      qqmusic	
-      clash-verge-rev
-      jetbrains-gateway
-      telegram
-      clion
-      jordanbaird-ice
-      visual-studio-code
-      discord
-      keycastr
-      wechat
-      douyin
-      kitty
-      feishu
-      microsoft-edge
+    brew_casks=(
+        alfred videofusion wpsoffice tencent-meeting google-chrome
+        orbstack dingtalk baidunetdisk anaconda iina
+        pycharm android-studio input-source-pro qq chatgpt
+        intellij-idea qqmusic clash-verge-rev jetbrains-gateway telegram
+        clion jordanbaird-ice visual-studio-code discord keycastr wechat
+        douyin kitty feishu microsoft-edge
     )
 
-    for package in "${brew_PACKAGES[@]}"; do
+    for package in "${brew_casks[@]}"; do
       if ! brew list --formula | grep -q "^$package\$"; then
         brew install "$package"
       else
         echo "$package is already installed."
       fi
     done
+
+
+
+    # 创建一个文件用来存储未安装的软件包
+    uninstalled_packages="uninstalled_packages.txt"
+    > "$uninstalled_packages"  # 清空文件内容
+    
+    # 检查 formula 包是否已安装
+    for package in "${brew_formulas[@]}"; do
+        if ! brew list --formula | grep -q "^$package\$"; then
+            echo "$package is not installed." >> "$uninstalled_packages"
+        fi
+    done
+    
+    # 检查 cask 包是否已安装
+    for package in "${brew_casks[@]}"; do
+        if ! brew list --cask | grep -q "^$package\$"; then
+            echo "$package is not installed." >> "$uninstalled_packages"
+        fi
+    done
+
+    echo "检查完成。未安装的软件包列表已写入到 $uninstalled_packages 文件中。"
     
 elif [[ "$OS_TYPE" == "Linux" ]]; then
 

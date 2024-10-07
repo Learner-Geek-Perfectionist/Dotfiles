@@ -299,7 +299,7 @@ fi
 install_fonts() {
     # 检查是否执行安装
     if [ "$install_flag" != "true" ]; then
-        echo "安装标志设置为 'false'，跳过字体安装。"
+        print_centered_message "安装标志设置为 'false'，跳过字体安装。"
         return 0  # 如果不安装，则正常退出
     fi
 
@@ -349,7 +349,7 @@ destination="$HOME"
 
 # 进入目录并复制配置文件到用户的 home 目录的函数
 copy_config_files_to_home() {
-    print_centered_message "正在下载 Dotfiles......"
+    print_centered_message "正在配置......"
     local dir_name="${dest_Dotfiles}"
     local files_to_copy=(".zshrc" ".zprofile" ".config")
 
@@ -380,64 +380,6 @@ copy_config_files_to_home
 
 # 打印提示消息
 print_centered_message "zsh 配置文件已配置到 Home 目录"
-
-
-# # 定义字体的源目录 
-# font_source="./${dest_Fonts}"
-# # 根据操作系统设置字体的安装目录
-# if [[ "$(uname)" == "Darwin" ]]; then
-#     # macOS 用户目录，通常不需要sudo权限
-#     font_dest="$HOME/Library/Fonts"
-# else
-#     # Linux 用户目录，通常不需要sudo权限    
-#     font_dest="$HOME/.local/share/fonts"
-# fi
-
-
-# # 定义一个函数来复制字体文件并更新字体缓存
-# install_fonts() {
-#     # 检查是否执行安装
-#     if [ "$install_flag" != "true" ]; then
-#         echo "安装标志设置为 'false'，跳过字体安装。"
-#         return 0  # 如果不安装，则正常退出
-#     fi
-
-#     # 打印提示消息
-#     print_centered_message "正在安装字体......"
-
-#     # 确认字体源目录存在
-#     if [ ! -d "$font_source" ]; then
-#         echo "字体目录 '$font_source' 不存在，请确认当前目录下有 ${dest_Fonts} 文件夹。"
-#         exit 1
-#     fi
-
-#     # 创建目标目录如果它不存在
-#     mkdir -p "$font_dest"
-
-#     # 复制字体文件到目标目录
-#     echo "正在复制字体文件到 $font_dest..."
-#     cp -v "$font_source"/* "$font_dest"
-
-#     # 更新字体缓存
-#     echo "更新字体缓存..."
-#     if [ "$OS_TYPE" = "Darwin" ]; then
-#         # macOS不需要手动更新字体缓存
-#         echo -e "\n在 macOS 上，字体缓存将自动更新。\n"
-#     else
-#         # Linux
-#         echo -e "\n在 Linux 上，刷新字体缓存\n"
-#         fc-cache -fv
-#     fi
-# }
-
-
-# # 安装字体
-# install_fonts 
-
-
-# # 打印提示消息
-# print_centered_message "字体安装完成。"
-
 
 print_centered_message "进入 zsh，准备下载 zsh 插件......"
 

@@ -134,29 +134,24 @@ fi
 
 print_centered_message() {
     local message="$1"  # 传入的消息文本
-    local padding=0     # 设置消息两侧的填充空间
 
     # 获取终端宽度
     local term_width=$(tput cols)
 
-    # 计算边框宽度，确保至少有两个字符作为边框
-    local width=$((term_width - padding))
-
-    # 计算居中位置
-    local center=$(( (term_width - width) / 2 ))
+    # 计算消息开始的位置
+    local center=$(( (term_width - ${#message}) / 2 ))
 
     # 打印上边框
-    printf "\n%s\n" "$(printf "%*s" $width | tr ' ' '*')"
+    printf "\n%s\n" "$(printf "%*s" $term_width | tr ' ' '*')"
     # 打印间距
     printf "\n"
     # 打印居中消息
-    printf "%*s\n" $((center + ${#message} / 2)) "$message"
+    printf "%*s\n" $center "$message"
     # 打印间距
     printf "\n"
     # 打印下边框
-    printf "%s\n" "$(printf "%*s" $width | tr ' ' '*')\n    "
+    printf "%s\n" "$(printf "%*s" $term_width | tr ' ' '*')\n"
 }
-
 
 
 # 打印提示消息

@@ -59,8 +59,6 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
         /bin/zsh -c "$(curl -fsSL https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh)"
     fi
 
-    # 提前生成应用列表，仅执行一次
-    app_list=$(find /Applications /System/Applications "${HOME}/Library/Application Support" -mindepth 1 -type f)   
     
     # 创建一个文件用来存储未安装的软件包
     uninstalled_packages="uninstalled_packages.txt"
@@ -82,20 +80,13 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
     )
 
       # 检查 formulas 包是否已安装
-      if ! brew list  | grep -iq "^${normalized_name}$"; then
-        # 使用 fzf 进行模糊匹配，确认应用是否在 /Applications 目录中
-        app_match=$(echo "$app_list" | fzf -q "$normalized_name" -1 -0)
-    
-        if [ -z "$app_match" ]; then
-          echo "$package not found, installing..."
-          brew install "$package" || echo "$package" >> "$uninstalled_packages"
-        else
-          echo "$package is already installed but not recognized by Homebrew."
-        fi
-      else
+    if ! brew info "$normalized_name" | grep -q "Not installed"; then
         echo "$package is already installed via Homebrew."
-      fi
-    
+    else
+        echo "$package not found, installing..."
+        brew install "$package" || echo "$package" >> "$uninstalled_packages"
+    fi
+        
 
 
     print_centered_message "开发工具安装完成✅"
@@ -112,22 +103,13 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
     )
 
     
-    for package in "${brew_casks[@]}"; do    
-      # 检查是否已通过 Homebrew 安装
-      if ! brew list  | grep -iq "^${normalized_name}$"; then
-        # 使用 fzf 进行模糊匹配，确认应用是否在 /Applications 目录中
-        app_match=$(echo "$app_list" | fzf -q "$normalized_name" -1 -0)
-    
-        if [ -z "$app_match" ]; then
-          echo "$package not found, installing..."
-          brew install "$package" || echo "$package" >> "$uninstalled_packages"
-        else
-          echo "$package is already installed but not recognized by Homebrew."
-        fi
-      else
+    # 检查 formulas 包是否已安装
+    if ! brew info "$normalized_name" | grep -q "Not installed"; then
         echo "$package is already installed via Homebrew."
-      fi
-    done
+    else
+        echo "$package not found, installing..."
+        brew install "$package" || echo "$package" >> "$uninstalled_packages"
+    fi
 
     
     print_centered_message "图形界面安装完成✅"

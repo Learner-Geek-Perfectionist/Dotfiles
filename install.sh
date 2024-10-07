@@ -81,7 +81,7 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
 
     # 检查 formulas 包是否已安装
     for package in "${brew_formulas[@]}"; do
-      normalized_name="${package%-*}" # 假设名称可能有后缀，移除尾部的 '-rev', '-ce' 等
+      normalized_name=$(echo "$package" | sed -E 's/-(rev|ce)$//' | tr '-' ' ' | sed 's/ /\\ /g')
       # 检查是否已通过 Homebrew 安装
       if ! brew list  | grep -iq "^${normalized_name}$"; then
         # 检查应用是否已存在于 /Applications 目录，忽略大小写
@@ -113,7 +113,7 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
 
     for package in "${brew_casks[@]}"; do
       # 使用 sed 来更精确地处理应用名
-      normalized_name=$(echo "$package" | sed -E 's/-(rev|ce)$//' | tr '-' ' ')
+      normalized_name=$(echo "$package" | sed -E 's/-(rev|ce)$//' | tr '-' ' ' | sed 's/ /\\ /g')
       # 检查是否已通过 Homebrew 安装
       if ! brew list | grep -iq "^${normalized_name}$"; then
         # 检查应用是否已存在于 /Applications 目录，忽略大小写

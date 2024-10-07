@@ -133,26 +133,25 @@ fi
 
 
 print_centered_message() {
-    local message="$1"  # 传入的消息文本
-
-    # 获取终端宽度
-    local term_width=$(tput cols)
-
-    # 计算消息开始的位置
-    local center=$(( (term_width - ${#message}) / 2 ))
-
+    local message="$1"
+    local cols=$(tput cols)
+    local line=''
+    
+    # 创建横线，长度与终端宽度相等
+    for (( i=0; i<cols; i++ )); do
+    line+='-'
+    done
+    
     # 打印上边框
-    printf "\n%s\n" "$(printf "%*s" $term_width | tr ' ' '*')"
-    # 打印间距
-    printf "\n"
-    # 打印居中消息
-    printf "%*s\n" $center "$message"
-    # 打印间距
-    printf "\n"
+    echo "$line"
+    
+    # 计算并居中打印消息
+    local padded_message="$(printf '%*s' $(( (cols + ${#message}) / 2 )) "$message")"
+    echo "$padded_message"
+    
     # 打印下边框
-    printf "%s\n\n" "$(printf "%*s" $term_width | tr ' ' '*')"
+    echo "$line"
 }
-
 
 # 打印提示消息
 print_centered_message "按任意键继续，否则超时停止"

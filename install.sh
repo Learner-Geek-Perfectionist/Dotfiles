@@ -257,25 +257,25 @@ download_and_extract "$zip_Dotfiles_file" "$dest_Dotfiles" "$Dotfiles_REPO_URL"
 
 # 对Fonts的处理，只在ZIP文件不存在时下载
 if [ ! -f "$zip_Fonts_file" ]; then
-    download_and_extract "$zip_Dotfiles_file" "$dest_Dotfiles" "$Dotfiles_REPO_URL" 
+    download_and_extract "$zip_Fonts_file" "$dest_Fonts" "$Fonts_REPO_URL" 
 else
-    echo "Fonts ZIP文件已存在，不需要下载。"
+    print_centered_message "Fonts ZIP文件已存在，不需要下载。"
     if [ ! -d "$dest_Fonts" ]; then
         if [ -f "$zip_Fonts_file" ]; then
-            echo "开始解压已存在的Fonts ZIP文件..."
+            print_centered_message "开始解压已存在的Fonts ZIP文件..."
             unzip -o "$zip_Fonts_file"
         else
-            echo "Fonts ZIP文件不存在或损坏，无法进行解压。"
+            print_centered_message "Fonts ZIP文件不存在或损坏，无法进行解压。"
         fi
     else
-        echo "Fonts目录已存在，跳过解压。"
+        print_centered_message "Fonts目录已存在，跳过解压。"
     fi
 fi
 
 
 
 # 打印提示消息
-print_centered_message "正在配置zsh......"
+print_centered_message "接下来配置zsh......"
 
 
 # 定义 zsh 的配置文件目录
@@ -283,7 +283,7 @@ destination="$HOME"
 
 # 进入目录并复制配置文件到用户的 home 目录的函数
 copy_config_files_to_home() {
-    print_centered_message "下载 Dotfiles"
+    print_centered_message "正在下载 Dotfiles......"
     local dir_name="${dest_Dotfiles}"
     local files_to_copy=(".zshrc" ".zprofile" ".config")
 

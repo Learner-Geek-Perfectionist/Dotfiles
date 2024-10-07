@@ -273,7 +273,7 @@ prompt_download_fonts() {
         handle_zip_file
         install_flag=true;
     else
-        echo -e"\n 跳过字体下载。\n"
+        echo -e "\n 跳过字体下载。\n"
     fi
 }
 

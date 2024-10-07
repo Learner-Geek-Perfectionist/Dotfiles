@@ -324,13 +324,13 @@ install_fonts() {
     find "$font_source" -type f \( -iname "*.ttf" -o -iname "*.otf" \) ! -iname "README*" -exec cp -v {} "$font_dest" \;
 
     # 更新字体缓存
-    echo "更新字体缓存..."
+    print_centered_message "更新字体缓存..."
     if [ "$OS_TYPE" = "Darwin" ]; then
         # macOS不需要手动更新字体缓存
-        echo -e "\n在 macOS 上，字体缓存将自动更新。\n"
+        print_centered_message -e "\n在 macOS 上，字体缓存将自动更新。\n"
     else
         # Linux
-        echo -e "\n在 Linux 上，刷新字体缓存\n"
+        print_centered_message -e "\n在 Linux 上，刷新字体缓存\n"
         fc-cache -fv
     fi
 

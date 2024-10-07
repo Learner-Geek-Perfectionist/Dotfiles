@@ -191,76 +191,62 @@ countdown() {
 # 打印倒计时提示
 countdown "60" 
 
-# 定义Dotfiles 链接
+# 定义 Dotfiles 和 Fonts 链接
 Dotfiles_REPO_URL="https://github.com/Learner-Geek-Perfectionist/dotfiles/archive/refs/heads/master_Dotfiles.zip"
-# 定义字体链接
 Fonts_REPO_URL="https://github.com/Learner-Geek-Perfectionist/Fonts/archive/refs/heads/master_Fonts.zip"
 
-
+# 定义文件和目标目录名称
 zip_Fonts_file="master_Fonts.zip"
 zip_Dotfiles_file="master_Dotfiles.zip"
-
 dest_Fonts="master_Fonts"
 dest_Dotfiles="master_Dotfiles"
 
+# 定义下载和解压函数
+download_and_extract() {
+    local zip_file="$1"
+    local repo_url="$2"
+    local dest_dir="$3"
 
-install_flag=false;
-
-# 定义一个函数来处理压缩包的下载和解压
-handle_zip_file() {
-
-    ########### 处理 Fonts 压缩包 ###########
-
-    if [[ "$install_flag" == true ]]; then
-        # 检查 zip 文件是否存在
-        if [ ! -f "$zip_Fonts_file" ]; then
-            echo "压缩包不存在，开始下载..."
-            # 下载字体压缩包
-            curl -L -o "$zip_Fonts_file" "$Fonts_REPO_URL"
-        else
-            echo "压缩包已存在，跳过下载。"
-        fi
-    
-        # 确保压缩包一定存在后，检查目录是否存在
-        if [ -d "$dest_Fonts" ]; then
-            echo "目录 '$dest_Fonts' 已存在，跳过解压。"
-        else
-            # 检查 zip 文件是否存在再解压
-            if [ -f "$zip_Fonts_file" ]; then
-                echo "开始解压缩..."
-                unzip -o "$zip_Fonts_file"
-            else
-                echo "压缩包不存在或者损坏，无法解压。"
-            fi
-        fi
-    fi
-    
-    ########### 处理 Dotfiles 压缩包 ###########
-    
-    # 检查 zip 文件是否存在
-    if [ ! -f "$zip_Dotfiles_file" ]; then
-        echo "压缩包不存在，开始下载..."
-        # 下载字体压缩包
-        curl -L -o "$zip_Dotfiles_file" "$Dotfiles_REPO_URL"
+    # 检查ZIP文件是否存在，如果不存在则下载
+    if [ ! -f "$zip_file" ]; then
+        echo "ZIP文件 '$zip_file' 不存在，开始下载..."
+        curl -L -o "$zip_file" "$repo_url"
     else
-        echo "压缩包已存在，跳过下载。"
+        echo "ZIP文件 '$zip_file' 已存在，跳过下载。"
     fi
 
-    # 确保压缩包一定存在后，检查目录是否存在
-    if [ -d "$dest_Dotfiles" ]; then
-        echo "目录 '$dest_Dotfiles' 已存在，跳过解压。"
-    else
-        # 检查 zip 文件是否存在再解压
-        if [ -f "$zip_Dotfiles_file" ]; then
-            echo "开始解压缩..."
-            unzip -o "$zip_Dotfiles_file"
+    # 解压ZIP文件
+    if [ -f "$zip_file" ]; then
+        if [ ! -d "$dest_dir" ]; then
+            echo "开始解压ZIP文件 '$zip_file' 到目录 '$dest_dir'..."
+            unzip -o "$zip_file"
         else
-            echo "压缩包不存在或者损坏，无法解压。"
+            echo "目录 '$dest_dir' 已存在，跳过解压。"
         fi
+    else
+        echo "ZIP文件 '$zip_file' 不存在或损坏，无法进行解压。"
     fi
-    
 }
 
+# 总是下载和解压Dotfiles
+download_and_extract "$zip_Dotfiles_file" "$Dotfiles_REPO_URL" "$dest_Dotfiles"
+
+# 对Fonts的处理，只在ZIP文件不存在时下载
+if [ ! -f "$zip_Fonts_file" ]; then
+    download_and_extract "$zip_Fonts_file" "$Fonts_REPO_URL" "$dest_Fonts"
+else
+    echo "Fonts ZIP文件已存在，不需要下载。"
+    if [ ! -d "$dest_Fonts" ]; then
+        if [ -f "$zip_Fonts_file" ]; then
+            echo "开始解压已存在的Fonts ZIP文件..."
+            unzip -o "$zip_Fonts_file"
+        else
+            echo "Fonts ZIP文件不存在或损坏，无法进行解压。"
+        fi
+    else
+        echo "Fonts目录已存在，跳过解压。"
+    fi
+fi
 
 
 # 提示用户是否需要下载字体
@@ -279,17 +265,12 @@ prompt_download_fonts() {
     fi
 }
 
-# 下载字体压缩包和 zsh 配置文件
-handle_zip_file
-
-
 # 加载提示头
 prompt_download_fonts
 
 
 # 打印提示消息
 print_centered_message "正在配置zsh......"
-
 
 
 # 定义 zsh 的配置文件目录
@@ -379,13 +360,11 @@ install_fonts() {
 }
 
 
-
-
 # 安装字体
 install_fonts 
 
-# 打印提示消息
 
+# 打印提示消息
 print_centered_message "字体安装完成。"
 
 

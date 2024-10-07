@@ -79,15 +79,15 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
         gcc ninja wget
     )
 
-      # 检查 formulas 包是否已安装
-    if ! brew info "$normalized_name" | grep -q "Not installed"; then
-        echo "$package is already installed via Homebrew."
-    else
-        echo "$package not found, installing..."
-        brew install "$package" || echo "$package" >> "$uninstalled_packages"
-    fi
-        
-
+     # 检查 formulas 包是否已安装
+     for package in "${brew_formulas[@]}"; do
+        if ! brew info "$package" | grep -q "Not installed"; then
+            echo "$package is already installed via Homebrew."
+        else
+            echo "$package not found, installing..."
+            brew install "$package" || echo "$package" >> "$uninstalled_packages"
+        fi
+    done
 
     print_centered_message "开发工具安装完成✅"
     
@@ -103,13 +103,15 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
     )
 
     
-    # 检查 formulas 包是否已安装
-    if ! brew info "$normalized_name" | grep -q "Not installed"; then
-        echo "$package is already installed via Homebrew."
-    else
-        echo "$package not found, installing..."
-        brew install "$package" || echo "$package" >> "$uninstalled_packages"
-    fi
+     # 检查 casks 包是否已安装
+     for package in "${brew_casks[@]}"; do
+        if ! brew info "$package" | grep -q "Not installed"; then
+            echo "$package is already installed via Homebrew."
+        else
+            echo "$package not found, installing..."
+            brew install "$package" || echo "$package" >> "$uninstalled_packages"
+        fi
+    done
 
     
     print_centered_message "图形界面安装完成✅"

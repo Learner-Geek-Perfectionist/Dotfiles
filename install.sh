@@ -33,6 +33,65 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
     # 安装 Homebrew
     echo "正在安装 Homebrew..."
     /bin/zsh -c "$(curl -fsSL https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh)"
+
+    brew_packages=(
+      bash gettext llvm msgpack ruby
+      brotli git lpeg ncurses sqlite jordanbaird-ice
+      c-ares htop lua neovim tree-sitter
+      ca-certificates icu4c luajit node unibilium
+      cmake libnghttp2 luv openssl@3 vim
+      cmake-docs libsodium lz4 pcre2 xz
+      fastfetch libuv lzip python@3.12 z3
+      fd libvterm make readline zstd
+      fzf libyaml mpdecimal ripgrep
+      gcc ninja
+    )
+
+    for package in "${brew_packages[@]}"; do
+      if ! brew list --formula | grep -q "^$package\$"; then
+        brew install "$package"
+      else
+        echo "$package is already installed."
+      fi
+    done
+
+
+    brew_PACKAGES=(
+      alfred
+      google-chrome
+      orbstack
+      anaconda
+      iina
+      pycharm
+      android-studio
+      input-source-pro
+      qq
+      chatgpt
+      intellij-idea
+      qqmusic	
+      clash-verge-rev
+      jetbrains-gateway
+      telegram
+      clion
+      jordanbaird-ice
+      visual-studio-code
+      discord
+      keycastr
+      wechat
+      douyin
+      kitty
+      feishu
+      microsoft-edge
+    )
+
+    for package in "${brew_packages[@]}"; do
+      if ! brew list --formula | grep -q "^$package\$"; then
+        brew install "$package"
+      else
+        echo "$package is already installed."
+      fi
+    done
+    
 elif [[ "$OS_TYPE" == "Linux" ]]; then
 
     # 检测操作系统

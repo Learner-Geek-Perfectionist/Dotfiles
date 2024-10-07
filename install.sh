@@ -253,16 +253,20 @@ download_and_extract() {
     fi
 }
 
-# 总是下载和解压Dotfiles
-download_and_extract "$zip_Dotfiles_file" "$dest_Dotfiles" "$Dotfiles_REPO_URL" 
+if [[ install_flag=true ]]; then
+    # 总是下载和解压Dotfiles
+    download_and_extract "$zip_Dotfiles_file" "$dest_Dotfiles" "$Dotfiles_REPO_URL" 
+fi
+
 
 # 打印提示消息
-print_centered_message "Dotfile 解压完成    "
+print_centered_message "Dotfile 完成下载和解压"
+
 
 # 对Fonts的处理，只在ZIP文件不存在时下载
-if [[ ! -f "$zip_Fonts_file" &&  install_flag=true ]]; then
+if [[ install_flag=true ]]; then
     download_and_extract "$zip_Fonts_file" "$dest_Fonts" "$Fonts_REPO_URL" 
-elif [[  -f "$zip_Fonts_file" &&  install_flag=true ]]; then
+elif [[  install_flag=true ]]; then
     print_centered_message "Fonts ZIP 文件已存在，不需要下载。"
     if [ ! -d "$dest_Fonts" ]; then
         if [ -f "$zip_Fonts_file" ]; then
@@ -277,47 +281,6 @@ elif [[  -f "$zip_Fonts_file" &&  install_flag=true ]]; then
 fi
 
 
-
-# 打印提示消息
-print_centered_message "接下来配置 zsh......"
-
-
-# 定义 zsh 的配置文件目录
-destination="$HOME"
-
-# 进入目录并复制配置文件到用户的 home 目录的函数
-copy_config_files_to_home() {
-    print_centered_message "正在下载 Dotfiles......"
-    local dir_name="${dest_Dotfiles}"
-    local files_to_copy=(".zshrc" ".zprofile" ".config")
-
-    # 进入仓库目录
-    if [ -d "$dir_name" ]; then
-        echo "已进入 '$dir_name' 目录。"
-        cd "$dir_name"
-    else
-        echo "目录 '$dir_name' 不存在，无法进入。"
-        return 1  # 返回非零状态表示失败
-    fi
-
-    # 循环遍历每个文件和目录
-    for item in "${files_to_copy[@]}"; do
-        if [ -e "$item" ]; then
-            echo "正在复制 $item 到 $destination"
-            # 复制文件或目录到 home 目录，如果存在则替换
-            cp -r "$item" "$destination"
-        else
-            echo "$item 不存在，跳过复制。"
-        fi
-    done
-}
-
-
-# 对 zsh 进行配置
-copy_config_files_to_home
-
-# 打印提示消息
-print_centered_message "zsh 配置文件已配置到 Home 目录"
 
 
 # 定义字体的源目录 
@@ -366,6 +329,9 @@ install_fonts() {
         echo -e "\n在 Linux 上，刷新字体缓存\n"
         fc-cache -fv
     fi
+
+    # 打印提示消息
+    print_centered_message "字体安装完成。"
 }
 
 
@@ -373,8 +339,104 @@ install_fonts() {
 install_fonts 
 
 
+
 # 打印提示消息
-print_centered_message "字体安装完成。"
+print_centered_message "接下来配置 zsh......"
+
+
+# 定义 zsh 的配置文件目录
+destination="$HOME"
+
+# 进入目录并复制配置文件到用户的 home 目录的函数
+copy_config_files_to_home() {
+    print_centered_message "正在下载 Dotfiles......"
+    local dir_name="${dest_Dotfiles}"
+    local files_to_copy=(".zshrc" ".zprofile" ".config")
+
+    # 进入仓库目录
+    if [ -d "$dir_name" ]; then
+        echo "已进入 '$dir_name' 目录。"
+        cd "$dir_name"
+    else
+        echo "目录 '$dir_name' 不存在，无法进入。"
+        return 1  # 返回非零状态表示失败
+    fi
+
+    # 循环遍历每个文件和目录
+    for item in "${files_to_copy[@]}"; do
+        if [ -e "$item" ]; then
+            echo "正在复制 $item 到 $destination"
+            # 复制文件或目录到 home 目录，如果存在则替换
+            cp -r "$item" "$destination"
+        else
+            echo "$item 不存在，跳过复制。"
+        fi
+    done
+}
+
+
+# 对 zsh 进行配置
+copy_config_files_to_home
+
+# 打印提示消息
+print_centered_message "zsh 配置文件已配置到 Home 目录"
+
+
+# # 定义字体的源目录 
+# font_source="./${dest_Fonts}"
+# # 根据操作系统设置字体的安装目录
+# if [[ "$(uname)" == "Darwin" ]]; then
+#     # macOS 用户目录，通常不需要sudo权限
+#     font_dest="$HOME/Library/Fonts"
+# else
+#     # Linux 用户目录，通常不需要sudo权限    
+#     font_dest="$HOME/.local/share/fonts"
+# fi
+
+
+# # 定义一个函数来复制字体文件并更新字体缓存
+# install_fonts() {
+#     # 检查是否执行安装
+#     if [ "$install_flag" != "true" ]; then
+#         echo "安装标志设置为 'false'，跳过字体安装。"
+#         return 0  # 如果不安装，则正常退出
+#     fi
+
+#     # 打印提示消息
+#     print_centered_message "正在安装字体......"
+
+#     # 确认字体源目录存在
+#     if [ ! -d "$font_source" ]; then
+#         echo "字体目录 '$font_source' 不存在，请确认当前目录下有 ${dest_Fonts} 文件夹。"
+#         exit 1
+#     fi
+
+#     # 创建目标目录如果它不存在
+#     mkdir -p "$font_dest"
+
+#     # 复制字体文件到目标目录
+#     echo "正在复制字体文件到 $font_dest..."
+#     cp -v "$font_source"/* "$font_dest"
+
+#     # 更新字体缓存
+#     echo "更新字体缓存..."
+#     if [ "$OS_TYPE" = "Darwin" ]; then
+#         # macOS不需要手动更新字体缓存
+#         echo -e "\n在 macOS 上，字体缓存将自动更新。\n"
+#     else
+#         # Linux
+#         echo -e "\n在 Linux 上，刷新字体缓存\n"
+#         fc-cache -fv
+#     fi
+# }
+
+
+# # 安装字体
+# install_fonts 
+
+
+# # 打印提示消息
+# print_centered_message "字体安装完成。"
 
 
 print_centered_message "进入 zsh，准备下载 zsh 插件......"

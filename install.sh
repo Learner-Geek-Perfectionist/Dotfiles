@@ -192,8 +192,8 @@ countdown() {
 countdown "60" 
 
 # 定义 Dotfiles 和 Fonts 链接
-Dotfiles_REPO_URL="https://github.com/Learner-Geek-Perfectionist/dotfiles/archive/refs/heads/master_Dotfiles.zip"
-Fonts_REPO_URL="https://github.com/Learner-Geek-Perfectionist/Fonts/archive/refs/heads/master_Fonts.zip"
+Dotfiles_REPO_URL="https://github.com/Learner-Geek-Perfectionist/Fonts/archive/refs/heads/master.zip"
+Fonts_REPO_URL="https://github.com/Learner-Geek-Perfectionist/dotfiles/archive/refs/heads/master.zip"
 
 # 定义文件和目标目录名称
 zip_Fonts_file="master_Fonts.zip"

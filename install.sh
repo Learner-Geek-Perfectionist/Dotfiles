@@ -318,7 +318,7 @@ copy_config_files_to_home() {
 
 
 # 打印提示消息
-print_centered_message "zsh 配置完成"
+print_centered_message " zsh 配置文件已复制到 Home 目录"
 
 
 # 定义字体的源目录 
@@ -338,9 +338,12 @@ fi
 install_fonts() {
     # 检查是否执行安装
     if [ "$install_flag" != "true" ]; then
-        echo "安装标志设置为 false，跳过安装。"
+        echo "安装标志设置为 false，跳过字体安装。"
         return 0  # 如果不安装，则正常退出
     fi
+
+    # 打印提示消息
+    print_centered_message "正在安装字体......"
 
     # 确认字体源目录存在
     if [ ! -d "$font_source" ]; then
@@ -367,6 +370,10 @@ install_fonts() {
     fi
 }
 
+
+
+
+# 安装字体
 install_fonts 
 
 # 打印提示消息
@@ -374,7 +381,7 @@ install_fonts
 print_centered_message "字体安装完成。"
 
 
-print_centered_message "进入 zsh ......"
+print_centered_message "进入 zsh，准备下载 zsh 插件......"
 
 
 # 进入 zsh

@@ -61,7 +61,7 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
     # 主逻辑
     if [[ $create_confirm == 'y' ]]; then
         read -p "请输入你想创建的用户名: " username < /dev/tty
-        read -p "请输入默认密码（将用于新用户，按下 Enter ，密码默认为 1）: " default_password < /dev/tty
+        read -p "请输入默认密码（将用于新用户，若按下 Enter ，密码默认为 1）: " default_password < /dev/tty
         # 如果未输入任何内容，则默认密码为 1
         default_password="${default_password:-1}" 
 

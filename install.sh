@@ -59,7 +59,9 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
         /bin/zsh -c "$(curl -fsSL https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh)"
     fi
 
-
+    # 提前生成应用列表，仅执行一次
+    app_list=$(find . -type f)   
+    
     # 创建一个文件用来存储未安装的软件包
     uninstalled_packages="uninstalled_packages.txt"
     > "$uninstalled_packages"  # 清空文件内容
@@ -80,16 +82,16 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
     )
 
     # 检查 formulas 包是否已安装
-    for package in "${brew_formulas[@]}"; do
-      normalized_name=$(echo "$package" | sed -E 's/-(rev|ce)$//' | tr '-' ' ' | sed 's/ /\\ /g')
       # 检查是否已通过 Homebrew 安装
       if ! brew list  | grep -iq "^${normalized_name}$"; then
-        # 检查应用是否已存在于 /Applications 目录，忽略大小写
-        if [ ! -d "/Applications/${normalized_name}.app" ]; then
-          echo "$package" >> "$uninstalled_packages"
+        # 使用 fzf 进行模糊匹配，确认应用是否在 /Applications 目录中
+        app_match=$(echo "$app_list" | fzf -q "$normalized_name" -1 -0)
+    
+        if [ -z "$app_match" ]; then
+          echo "$package not found, installing..."
           brew install  "$package"
         else
-          echo "$package is already installed at /Applications."
+          echo "$package is already installed but not recognized by Homebrew."
         fi
       else
         echo "$package is already installed via Homebrew."
@@ -110,18 +112,18 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
         douyin kitty feishu microsoft-edge
     )
 
-
-    for package in "${brew_casks[@]}"; do
-      # 使用 sed 来更精确地处理应用名
-      normalized_name=$(echo "$package" | sed -E 's/-(rev|ce)$//' | tr '-' ' ' | sed 's/ /\\ /g')
+    
+    for package in "${brew_casks[@]}"; do    
       # 检查是否已通过 Homebrew 安装
-      if ! brew list | grep -iq "^${normalized_name}$"; then
-        # 检查应用是否已存在于 /Applications 目录，忽略大小写
-        if [ ! -d "/Applications/${normalized_name}.app" ]; then
-          echo "$package" >> "$uninstalled_packages"
-          brew install "$package"
+      if ! brew list  | grep -iq "^${normalized_name}$"; then
+        # 使用 fzf 进行模糊匹配，确认应用是否在 /Applications 目录中
+        app_match=$(echo "$app_list" | fzf -q "$normalized_name" -1 -0)
+    
+        if [ -z "$app_match" ]; then
+          echo "$package not found, installing..."
+          brew install  "$package"
         else
-          echo "$package is already installed at /Applications."
+          echo "$package is already installed but not recognized by Homebrew."
         fi
       else
         echo "$package is already installed via Homebrew."

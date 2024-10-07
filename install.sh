@@ -193,7 +193,7 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
 
     
     
-    # 配置用户无需 sudo 密码
+    # 赋予用户 sudo 权限
     if [[ $os_type == "ubuntu" ]]; then
         sudo usermod -aG sudo "$username"
     elif [[ $os_type == "fedora" ]]; then
@@ -204,7 +204,7 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
     
     # 将用户添加到 sudoers 文件以免输入密码
     echo "$username ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers
-    echo "已配置用户 $username 无需 sudo 密码。"
+    print_centered_message "已配置用户 $username 无需 sudo 密码。"
     
     
     # 设置时区和环境变量
@@ -229,7 +229,7 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
         sudo dnf group install -y "C Development Tools and Libraries"
         sudo dnf clean all
     else
-        echo -e "\n不支持的发行版，目前只支持 fedora、ubuntu\n"
+        print_centered_message -e "\n不支持的发行版，目前只支持 fedora、ubuntu\n"
     fi
 
 

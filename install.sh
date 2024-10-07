@@ -51,9 +51,13 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
         xcode-select --reset
     fi
 
-    # 安装 Homebrew
-    print_centered_message "正在安装 Homebrew..."
-    /bin/zsh -c "$(curl -fsSL https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh)"
+    # 检查 Homebrew 是否已安装
+    if command -v brew >/dev/null 2>&1; then
+        print_centered_message "Homebrew 已经安装，跳过安装步骤。"
+    else
+        print_centered_message "正在安装 Homebrew..."
+        /bin/zsh -c "$(curl -fsSL https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh)"
+    fi
 
     
     print_centered_message "正在安装 macOS 常用的开发工具......"

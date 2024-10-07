@@ -1,14 +1,14 @@
 #!/bin/bash
 
-# 当脚本出现错误时，打印出错误信息和发生错误的行号
-trap 'echo "Error at line $LINENO: $BASH_COMMAND"' ERR
+# # 当脚本出现错误时，打印出错误信息和发生错误的行号
+# trap 'echo "Error at line $LINENO: $BASH_COMMAND"' ERR
 
 # 开启 DeBug 模式，单步调试脚本
 trap 'read -p "DEBUG: Press [Enter] key to continue..."' DEBUG
 
 
-# 设置脚本在运行中遇到错误时立即退出
-set -e
+# # 设置脚本在运行中遇到错误时立即退出
+# set -e
 
 
 # 获取当前操作系统类型
@@ -400,5 +400,3 @@ print_centered_message "进入 zsh，准备下载 zsh 插件......"
 zsh
 
 
-# Disable DEBUG trap if no longer needed
-trap - DEBUG

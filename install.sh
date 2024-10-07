@@ -221,8 +221,8 @@ Fonts_REPO_URL="https://github.com/Learner-Geek-Perfectionist/Fonts/archive/refs
 # 定义文件和目标目录名称
 zip_Fonts_file="master_Fonts.zip"
 zip_Dotfiles_file="master_Dotfiles.zip"
-dest_Fonts="master_Fonts"
-dest_Dotfiles="master_Dotfiles"
+dest_Fonts="Dotfiles-master"
+dest_Dotfiles="Fonts-master"
 
 # 定义下载和解压函数
 download_and_extract() {

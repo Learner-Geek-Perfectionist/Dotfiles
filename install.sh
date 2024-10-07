@@ -175,7 +175,6 @@ countdown() {
             key_pressed=1  # 如果用户提前输入，则设置标志并跳出循环
             break
         fi
-        echo -ne "\r"  # 清除当前行
     done
     
     # 检查用户是否输入了内容或者时间是否超时

@@ -8,16 +8,38 @@ trap 'echo "Error at line $LINENO: $BASH_COMMAND"' ERR
 set -e
 
 
+
+print_centered_message() {
+    local message="$1"
+    local cols=$(tput cols)
+    local line=''
+    
+    # 创建横线，长度与终端宽度相等
+    for (( i=0; i<cols; i++ )); do
+    line+='-'
+    done
+    
+    # 打印上边框
+    echo "$line"
+    
+    # 计算并居中打印消息
+    local padded_message="$(printf '%*s' $(( (cols + ${#message}) / 2 )) "$message")"
+    echo -e "$padded_message"
+    
+    # 打印下边框
+    echo "$line"
+}
+
 # 获取当前操作系统类型
 OS_TYPE=$(uname)
 
 if [[ "$OS_TYPE" == "Darwin" ]]; then
     # macOS 逻辑
-    echo "检测到 macOS 系统"
+    print_centered_message "检测到 macOS 系统"
     # 检查 Xcode 命令行工具是否已安装
     xcode-select --print-path &>/dev/null
     if [[ $? -ne 0 ]]; then
-        echo "Xcode 命令行工具未安装，现在将进行安装..."
+        print_centered_message "Xcode 命令行工具未安装，现在将进行安装..."
         xcode-select --install
         # 等待用户完成 Xcode 命令行工具的安装
         read -p "请按回车继续..." < /dev/tty
@@ -30,7 +52,7 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
     fi
 
     # 安装 Homebrew
-    echo "正在安装 Homebrew..."
+    print_centered_message "正在安装 Homebrew..."
     /bin/zsh -c "$(curl -fsSL https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh)"
 
     brew_formulas=(
@@ -195,26 +217,7 @@ fi
 
 
 
-print_centered_message() {
-    local message="$1"
-    local cols=$(tput cols)
-    local line=''
-    
-    # 创建横线，长度与终端宽度相等
-    for (( i=0; i<cols; i++ )); do
-    line+='-'
-    done
-    
-    # 打印上边框
-    echo "$line"
-    
-    # 计算并居中打印消息
-    local padded_message="$(printf '%*s' $(( (cols + ${#message}) / 2 )) "$message")"
-    echo -e "$padded_message"
-    
-    # 打印下边框
-    echo "$line"
-}
+
 
 # 打印提示消息
 print_centered_message "按任意键继续，否则超时停止"

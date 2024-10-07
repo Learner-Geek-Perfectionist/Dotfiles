@@ -285,7 +285,7 @@ fi
 
 
 # 定义字体的源目录 
-font_source="./${dest_Fonts}"
+font_source="./fonts/${dest_Fonts}"
 # 根据操作系统设置字体的安装目录
 if [[ "$(uname)" == "Darwin" ]]; then
     # macOS 用户目录，通常不需要sudo权限

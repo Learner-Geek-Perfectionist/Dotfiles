@@ -108,7 +108,7 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
     if [[ $os_type == "ubuntu" ]]; then
         sudo sed -i.bak -r 's|^#?(deb|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list
         sudo apt update && sudo apt upgrade -y
-        sudo apt install -y openssh-server net-tools git unzip fzf ninja-build neovim ruby-full cmake nodejs iputils-ping procps htop traceroute tree coreutils zsh fontconfig python3 iproute2
+        sudo apt install -y openssh-server net-tools git unzip fzf ninja-build neovim ruby-full cmake nodejs iputils-ping procps htop traceroute tree coreutils zsh fontconfig python3 iproute2 
     elif [[ $os_type == "fedora" ]]; then
         sudo sed -e 's|^metalink=|#metalink=|g' \
                  -e 's|^#baseurl=http://download.example/pub/fedora/linux|baseurl=https://mirrors.ustc.edu.cn/fedora|g' \
@@ -117,7 +117,7 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
                  /etc/yum.repos.d/fedora-updates.repo
          
         sudo dnf makecache
-        sudo dnf update -y && sudo dnf install -y openssh-server iproute net-tools fd-find git unzip ripgrep fzf ninja-build neovim ruby kitty cmake nodejs iputils procps-ng htop traceroute fastfetch tree coreutils zsh fontconfig python3
+        sudo dnf update -y && sudo dnf install -y openssh-server iproute net-tools fd-find git unzip ripgrep fzf ninja-build neovim ruby kitty cmake nodejs iputils procps-ng htop traceroute fastfetch tree coreutils zsh fontconfig python3 [ouyangzhaoxin@fedora]~% dnf info wget2
         sudo dnf group install -y "C Development Tools and Libraries"
         sudo dnf clean all
     else
@@ -190,8 +190,6 @@ countdown() {
 
 # 打印倒计时提示
 countdown "60" 
-trap 'read -p "DEBUG: Press [Enter] key to continue..."' DEBUG
-
 
 # 定义Dotfiles 链接
 Dotfiles_REPO_URL="https://github.com/Learner-Geek-Perfectionist/dotfiles/archive/refs/heads/master_Dotfiles.zip"

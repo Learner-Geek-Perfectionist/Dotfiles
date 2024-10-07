@@ -2,14 +2,9 @@
 
 # 当脚本出现错误时，打印出错误信息和发生错误的行号
 trap 'echo "Error at line $LINENO: $BASH_COMMAND"' ERR
+
+# 开启 DeBUg 模式，单步调试脚本
 trap 'read -p "DEBUG: Press [Enter] key to continue..."' DEBUG
-
-# Your script's commands go here
-
-# Disable DEBUG trap if no longer needed
-trap - DEBUGtrap 'read -p "DEBUG: Press [Enter] key to continue..."' DEBUG
-
-# Your script's commands go here
 
 # Disable DEBUG trap if no longer needed
 trap - DEBUG

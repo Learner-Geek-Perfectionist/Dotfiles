@@ -89,6 +89,9 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
       fi
     done
 
+
+    print_centered_message "安装完成✅"
+    
     print_centered_message "正在安装 macOS 常用的带图形用户界面的应用程序......"
     
     brew_casks=(
@@ -114,7 +117,7 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
       fi
     done
 
-
+    print_centered_message "安装完成✅"
 
     # 创建一个文件用来存储未安装的软件包
     uninstalled_packages="uninstalled_packages.txt"
@@ -123,25 +126,25 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
     # 检查 formula 包是否已安装
     for package in "${brew_formulas[@]}"; do
         if ! brew list --formula | grep -q "^$package\$"; then
-            echo "$package is not installed." >> "$uninstalled_packages"
+            print_centered_message "$package is not installed." >> "$uninstalled_packages"
         fi
     done
     
     # 检查 cask 包是否已安装
     for package in "${brew_casks[@]}"; do
         if ! brew list --cask | grep -q "^$package\$"; then
-            echo "$package is not installed." >> "$uninstalled_packages"
+            print_centered_message "$package is not installed." >> "$uninstalled_packages"
         fi
     done
 
-    echo "检查完成。未安装的软件包列表已写入到 $uninstalled_packages 文件中。"
+    print_centered_message "检查完成。未安装的软件包列表已写入到 $uninstalled_packages 文件中。"
     
 elif [[ "$OS_TYPE" == "Linux" ]]; then
 
     # 检测操作系统
     os_type=$(grep '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
     
-    echo "检测到操作系统为: $os_type"
+    print_centered_message "检测到操作系统为: $os_type"
     
     # 询问是否创建用户
     read -p "是否需要创建用户？(y/n): " create_confirm < /dev/tty

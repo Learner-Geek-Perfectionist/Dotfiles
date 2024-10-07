@@ -211,7 +211,7 @@ handle_zip_file() {
 
     ########### 处理 Fonts 压缩包 ###########
 
-    if [[ $install_flag == 'y' ]]; then
+    if [[ $install_flag ]]; then
         # 检查 zip 文件是否存在
         if [ ! -f "$zip_Fonts_file" ]; then
             echo "压缩包不存在，开始下载..."

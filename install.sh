@@ -117,7 +117,7 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
                  /etc/yum.repos.d/fedora-updates.repo
          
         sudo dnf makecache
-        sudo dnf update -y && sudo dnf install -y openssh-server iproute net-tools fd-find git unzip ripgrep fzf ninja-build neovim ruby kitty cmake nodejs iputils procps-ng htop traceroute fastfetch tree coreutils zsh fontconfig python3 [ouyangzhaoxin@fedora]~% dnf info wget2
+        sudo dnf update -y && sudo dnf install -y openssh-server iproute net-tools fd-find git unzip ripgrep fzf ninja-build neovim ruby kitty cmake nodejs iputils procps-ng htop traceroute fastfetch tree coreutils zsh fontconfig python3 wget2
         sudo dnf group install -y "C Development Tools and Libraries"
         sudo dnf clean all
     else

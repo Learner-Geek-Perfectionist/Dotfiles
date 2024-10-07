@@ -257,9 +257,9 @@ download_and_extract() {
 download_and_extract "$zip_Dotfiles_file" "$dest_Dotfiles" "$Dotfiles_REPO_URL" 
 
 # 对Fonts的处理，只在ZIP文件不存在时下载
-if [ ! -f "$zip_Fonts_file" &&  install_flag=true ]; then
+if [[ ! -f "$zip_Fonts_file" &&  install_flag=true ]]; then
     download_and_extract "$zip_Fonts_file" "$dest_Fonts" "$Fonts_REPO_URL" 
-elif [  -f "$zip_Fonts_file" &&  install_flag=true ]; then
+elif [[  -f "$zip_Fonts_file" &&  install_flag=true ]]; then
     print_centered_message "Fonts ZIP 文件已存在，不需要下载。"
     if [ ! -d "$dest_Fonts" ]; then
         if [ -f "$zip_Fonts_file" ]; then

@@ -317,8 +317,11 @@ install_fonts() {
     mkdir -p "$font_dest"
 
     # 复制字体文件到目标目录
-    echo "正在复制字体文件到 $font_dest..."
-    cp -v "$font_source"/* "$font_dest"
+    print_centered_message "正在复制字体文件到 $font_dest..."
+    
+
+    # 使用 find 来查找字体源目录中的字体文件，排除 README 文件
+    find "$font_source" -type f \( -iname "*.ttf" -o -iname "*.otf" \) ! -iname "README*" -exec cp -v {} "$font_dest" \;
 
     # 更新字体缓存
     echo "更新字体缓存..."

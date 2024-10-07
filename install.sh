@@ -191,11 +191,11 @@ countdown() {
 countdown "60" 
 
 
-# Dotfiles 链接
+# 定义Dotfiles 链接
 Dotfiles_REPO_URL="https://github.com/Learner-Geek-Perfectionist/dotfiles/archive/refs/heads/master_Dotfiles.zip"
-
-# 字体链接
+# 定义字体链接
 Fonts_REPO_URL="https://github.com/Learner-Geek-Perfectionist/Fonts/archive/refs/heads/master_Fonts.zip"
+
 
 zip_Fonts_file="master_Fonts.zip"
 zip_Dotfiles_file="master_Dotfiles.zip"
@@ -269,7 +269,7 @@ prompt_download_fonts() {
     echo -e "\n‼️ 宿主机一般需要良好的字体支持来确保所有应用和终端模拟器都能正常渲染字符。\n"
     read -p "是否需要下载字体以支持终端模拟器的渲染？(y/n): " download_confirm < /dev/tty
     if [[ $download_confirm == 'y' ]]; then
-        echo "\n 下载字体。\n"
+        print_centered_message "正在下载字体......"
         handle_zip_file
         install_flag=true;
     else
@@ -280,9 +280,14 @@ prompt_download_fonts() {
 # 加载提示头
 prompt_download_fonts
 
+
+# 打印提示消息
+print_centered_message "正在配置zsh......"
+
+
+
+# 定义 zsh 的配置文件目录
 destination="$HOME"
-
-
 
 # 进入目录并复制配置文件到用户的 home 目录的函数
 copy_config_files_to_home() {
@@ -313,46 +318,56 @@ copy_config_files_to_home() {
 
 
 # 打印提示消息
-print_centered_message "复制完成。"
+print_centered_message "zsh 配置完成"
 
 
+# 定义字体的源目录 
+font_source="./${dest_Fonts}"
+# 根据操作系统设置字体的安装目录
+if [[ "$(uname)" == "Darwin" ]]; then
+    # macOS 用户目录，通常不需要sudo权限
+    font_dest="$HOME/Library/Fonts"
+else
+    # Linux 用户目录，通常不需要sudo权限    
+    font_dest="$HOME/.local/share/fonts"
+fi
 
-font_source="./${dest_dir}"
 
 # 定义一个函数来复制字体文件并更新字体缓存
-# 定义一个函数来复制字体文件并更新字体缓存
+
 install_fonts() {
-    local os_type="$1"      # 从函数调用中传入操作系统类型作为参数
-
     # 检查是否执行安装
     if [ "$install_flag" != "true" ]; then
-        echo "安装标志设置为 'false'，跳过安装。"
+        echo "安装标志设置为 false，跳过安装。"
         return 0  # 如果不安装，则正常退出
     fi
 
     # 确认字体源目录存在
     if [ ! -d "$font_source" ]; then
-        echo "字体目录 '$font_source' 不存在，请确认当前目录下有 ${dest_dir} 文件夹。"
+        echo "字体目录 '$font_source' 不存在，请确认当前目录下有 ${dest_Fonts} 文件夹。"
         exit 1
     fi
 
+    # 创建目标目录如果它不存在
+    mkdir -p "$font_dest"
+
     # 复制字体文件到目标目录
-    echo "正在复制字体文件到 $destination..."
-    cp -v "$font_source"/* "$destination"
+    echo "正在复制字体文件到 $font_dest..."
+    cp -v "$font_source"/* "$font_dest"
 
     # 更新字体缓存
     echo "更新字体缓存..."
-    if [ "$os_type" = "Darwin" ]; then
+    if [ "$OS_TYPE" = "Darwin" ]; then
         # macOS不需要手动更新字体缓存
-        echo "\n在 macOS 上，字体缓存将自动更新。\n"
+        echo -e "\n在 macOS 上，字体缓存将自动更新。\n"
     else
         # Linux
-        echo "\n在 Linux 上，刷新字体缓存\n"
+        echo -e "\n在 Linux 上，刷新字体缓存\n"
         fc-cache -fv
     fi
 }
 
-install_fonts "${OS_TYPE}" 
+install_fonts 
 
 # 打印提示消息
 

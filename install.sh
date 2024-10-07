@@ -232,8 +232,12 @@ download_and_extract() {
 
     # 检查ZIP文件是否存在，如果不存在则下载
     if [ ! -f "$zip_file" ]; then
-        echo "ZIP文件 '$zip_file' 不存在，开始下载..."
+        print_centered_message "ZIP文件 '$zip_file' 不存在，开始下载..."
         curl -L -o "$zip_file" "$repo_url"
+        if [  -f "$zip_file" ]; then
+        print_centered_message "ZIP文件 '$zip_file' 下载完成"
+        else print_centered_message "ZIP文件 '$zip_file' 下载失败"
+        fi
     else
         echo "ZIP文件 '$zip_file' 已存在，跳过下载。"
     fi

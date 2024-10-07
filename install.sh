@@ -150,7 +150,7 @@ print_centered_message() {
     # 打印间距
     printf "\n"
     # 打印下边框
-    printf "%s\n" "$(printf "%*s" $term_width | tr ' ' '*')\n"
+    printf "%s\n\n" "$(printf "%*s" $term_width | tr ' ' '*')"
 }
 
 

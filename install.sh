@@ -83,7 +83,7 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
 
     
     # 遍历 formulas 包数组
-    for package in "${brew_casks[@]}"; do
+    for package in "${brew_formulas[@]}"; do
         # 使用 brew list  检查 formulas 是否已安装
         if brew list  | grep -q "^${package}$"; then
             echo "$package is already installed via Homebrew."

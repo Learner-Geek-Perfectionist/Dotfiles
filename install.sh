@@ -231,7 +231,7 @@ download_and_extract() {
     # 检查ZIP文件是否存在，如果不存在则下载
     if [ ! -f "$zip_file" ]; then
         print_centered_message "ZIP文件 '$zip_file' 不存在，开始下载..."
-        curl  -o "${zip_file}"  "$repo_url"
+        curl -L -f -o "${zip_file}" --progress-bar "$repo_url"
         if [  -f "$zip_file" ]; then
         print_centered_message "ZIP文件 '$zip_file' 下载完成"
         else print_centered_message "ZIP文件 '$zip_file' 下载失败"
@@ -257,26 +257,26 @@ download_and_extract() {
 download_and_extract "$zip_Dotfiles_file" "$dest_Dotfiles" "$Dotfiles_REPO_URL" 
 
 # 对Fonts的处理，只在ZIP文件不存在时下载
-if [ ! -f "$zip_Fonts_file" ]; then
+if [ ! -f "$zip_Fonts_file" &&  install_flag=true ]; then
     download_and_extract "$zip_Fonts_file" "$dest_Fonts" "$Fonts_REPO_URL" 
-else
-    print_centered_message "Fonts ZIP文件已存在，不需要下载。"
+elif [  -f "$zip_Fonts_file" &&  install_flag=true ]; then
+    print_centered_message "Fonts ZIP 文件已存在，不需要下载。"
     if [ ! -d "$dest_Fonts" ]; then
         if [ -f "$zip_Fonts_file" ]; then
-            print_centered_message "开始解压已存在的Fonts ZIP文件..."
+            print_centered_message "开始解压已存在的 Fonts ZIP文件..."
             unzip -o "$zip_Fonts_file"
         else
-            print_centered_message "Fonts ZIP文件不存在或损坏，无法进行解压。"
+            print_centered_message "Fonts ZIP 文件不存在或损坏，无法进行解压。"
         fi
-    else
-        print_centered_message "Fonts目录已存在，跳过解压。"
+    else 
+        print_centered_message "Fonts 目录已存在，跳过解压。"
     fi
 fi
 
 
 
 # 打印提示消息
-print_centered_message "接下来配置zsh......"
+print_centered_message "接下来配置 zsh......"
 
 
 # 定义 zsh 的配置文件目录

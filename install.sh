@@ -72,7 +72,7 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
     )
 
     for package in "${brew_formulas[@]}"; do
-      if ! brew list --formula | grep -q "^$package\$"; then
+      if ! brew list  | grep -q "^$package\$"; then
         brew install "$package"
       else
         echo "$package is already installed."
@@ -80,6 +80,7 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
     done
 
     print_centered_message "正在安装 macOS 常用的带图形用户界面的应用程序......"
+    
     brew_casks=(
         alfred videofusion wpsoffice tencent-meeting google-chrome
         orbstack dingtalk baidunetdisk anaconda iina
@@ -90,7 +91,7 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
     )
 
     for package in "${brew_casks[@]}"; do
-      if ! brew list --formula | grep -q "^$package\$"; then
+      if ! brew list  | grep -q "^$package\$"; then
         brew install "$package"
       else
         echo "$package is already installed."

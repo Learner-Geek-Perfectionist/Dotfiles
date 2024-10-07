@@ -120,7 +120,7 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
         sudo dnf group install -y "C Development Tools and Libraries"
         sudo dnf clean all
     else
-        echo "\n不支持的发行版，目前只支持 fedora、ubuntu\n"
+        echo -e "\n不支持的发行版，目前只支持 fedora、ubuntu\n"
     fi
 
 

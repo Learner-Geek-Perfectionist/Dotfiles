@@ -9,26 +9,6 @@ set -e
 
 
 
-print_centered_message() {
-    local message="$1"
-    local cols=$(tput cols)
-    local line=''
-    
-    # 创建横线，长度与终端宽度相等
-    for (( i=0; i<cols; i++ )); do
-    line+='-'
-    done
-    
-    # 打印上边框
-    echo "$line"
-    
-    # 计算并居中打印消息
-    local padded_message="$(printf '%*s' $(( (cols + ${#message}) / 2 )) "$message")"
-    echo -e "$padded_message"
-    
-    # 打印下边框
-    echo "$line"
-}
 
 # 获取当前操作系统类型
 OS_TYPE=$(uname)
@@ -59,6 +39,32 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
         /bin/zsh -c "$(curl -fsSL https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh)"
     fi
 
+    # 定义打印 message 的函数
+    print_centered_message() {
+        local message="$1"
+        local cols=$(tput cols)
+        local line=''
+        
+        # 创建横线，长度与终端宽度相等
+        for (( i=0; i<cols; i++ )); do
+        line+='-'
+        done
+        
+        # 打印上边框
+        echo "$line"
+        
+        # 计算并居中打印消息
+        local padded_message="$(printf '%*s' $(( (cols + ${#message}) / 2 )) "$message")"
+        echo -e "$padded_message"
+        
+        # 打印下边框
+        echo "$line"
+    }
+
+
+    # 创建一个文件用来存储未安装的软件包
+    uninstalled_packages="uninstalled_packages.txt"
+    > "$uninstalled_packages"  # 清空文件内容
     
     print_centered_message "正在安装 macOS 常用的开发工具......"
     
@@ -75,12 +81,15 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
         gcc ninja wget
     )
 
-    for package in "${brew_casks[@]}"; do
+    # 检查 formulas 包是否已安装
+    for package in "${brew_formulas[@]}"; do
+      normalized_name="${package%-*}" # 假设名称可能有后缀，移除尾部的 '-rev', '-ce' 等
       # 检查是否已通过 Homebrew 安装
-      if ! brew list  | grep -q "^$package\$"; then
-        # 检查应用是否已存在于 /Applications 目录
-        if [ ! -d "/Applications/${package}.app" ]; then
-          brew install "$package"
+      if ! brew list --cask | grep -iq "^${normalized_name}$"; then
+        # 检查应用是否已存在于 /Applications 目录，忽略大小写
+        if [ ! -d "/Applications/${normalized_name}.app" ]; then
+          echo "$package" >> "$uninstalled_packages"
+          brew install --cask "$package"
         else
           echo "$package is already installed at /Applications."
         fi
@@ -103,12 +112,15 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
         douyin kitty feishu microsoft-edge
     )
 
+    # 检查 casks 包是否已安装
     for package in "${brew_casks[@]}"; do
+      normalized_name="${package%-*}" # 假设名称可能有后缀，移除尾部的 '-rev', '-ce' 等
       # 检查是否已通过 Homebrew 安装
-      if ! brew list  | grep -q "^$package\$"; then
-        # 检查应用是否已存在于 /Applications 目录
-        if [ ! -d "/Applications/${package}.app" ]; then
-          brew install "$package"
+      if ! brew list --cask | grep -iq "^${normalized_name}$"; then
+        # 检查应用是否已存在于 /Applications 目录，忽略大小写
+        if [ ! -d "/Applications/${normalized_name}.app" ]; then
+          echo "$package" >> "$uninstalled_packages"
+          brew install --cask "$package"
         else
           echo "$package is already installed at /Applications."
         fi
@@ -117,25 +129,9 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
       fi
     done
 
+    
     print_centered_message "安装完成✅"
 
-    # 创建一个文件用来存储未安装的软件包
-    uninstalled_packages="uninstalled_packages.txt"
-    > "$uninstalled_packages"  # 清空文件内容
-    
-    # 检查 formula 包是否已安装
-    for package in "${brew_formulas[@]}"; do
-        if ! brew list --formula | grep -q "^$package\$"; then
-            print_centered_message "$package is not installed." >> "$uninstalled_packages"
-        fi
-    done
-    
-    # 检查 cask 包是否已安装
-    for package in "${brew_casks[@]}"; do
-        if ! brew list --cask | grep -q "^$package\$"; then
-            print_centered_message "$package is not installed." >> "$uninstalled_packages"
-        fi
-    done
 
     print_centered_message "检查完成。未安装的软件包列表已写入到 $uninstalled_packages 文件中。"
     

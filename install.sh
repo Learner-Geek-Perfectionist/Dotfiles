@@ -385,4 +385,4 @@ print_centered_message "进入 zsh，准备下载 zsh 插件......"
 
 
 # 进入 zsh
-zsh
+# zsh

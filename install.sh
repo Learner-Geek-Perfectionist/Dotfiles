@@ -216,8 +216,8 @@ Fonts_REPO_URL="https://github.com/Learner-Geek-Perfectionist/Fonts/archive/refs
 zip_Fonts_file="Fonts-master.zip"
 zip_Dotfiles_file="Dotfiles-master.zip"
 
-dest_Fonts="Fonts_master"
-dest_Dotfiles="Dotfiles_master"
+dest_Fonts="Fonts-master"
+dest_Dotfiles="Dotfiles-master"
 
 # 定义下载和解压函数
 download_and_extract() {
@@ -231,7 +231,7 @@ download_and_extract() {
     # 检查ZIP文件是否存在，如果不存在则下载
     if [ ! -f "$zip_file" ]; then
         print_centered_message "ZIP文件 '$zip_file' 不存在，开始下载..."
-        curl -L -f -o "${zip_file}" --progress-bar "$repo_url"
+        curl -L -f -o "${zip_file}" "$repo_url"
         if [  -f "$zip_file" ]; then
         print_centered_message "ZIP文件 '$zip_file' 下载完成"
         else print_centered_message "ZIP文件 '$zip_file' 下载失败"

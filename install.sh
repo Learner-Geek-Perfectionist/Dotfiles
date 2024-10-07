@@ -43,43 +43,43 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
     # 询问是否创建用户
     read -p "是否需要创建用户？(y/n): " create_confirm < /dev/tty
 
-    # 定义用户名
-    username=""
-    default_password=1
+    
+    
     # 检查并设置密码的函数
     set_password_if_needed() {
-        if ! sudo passwd -S "$1" | grep -q ' P '; then
-            echo "用户 $1 的密码未设置，现在将密码设置为 $default_password"
-            echo "$1:$default_password" | sudo chpasswd
+        local user=$1
+        local default_password=$2
+        if ! sudo passwd -S "$user" | grep -q ' P '; then
+            echo "用户 $user 的密码未设置，现在将密码设置为 $default_password"
+            echo "$user:$default_password" | sudo chpasswd
             echo "密码已设置。"
         else
-            echo "用户 $1 的密码已经存在。"
+            echo "用户 $user 的密码已经存在。"
         fi
     }
     
     # 主逻辑
     if [[ $create_confirm == 'y' ]]; then
         read -p "请输入你想创建的用户名: " username < /dev/tty
-        read -p "请输入默认密码（将用于新用户）: " default_password < /dev/tty
+        read -p "请输入默认密码（将用于新用户，按下 Enter ，密码默认为 1）: " default_password < /dev/tty
+        # 如果未输入任何内容，则默认密码为 1
+        default_password="${default_password:-1}" 
 
-        # 如果 username 变量未设置或为空，则默认为当前登录用户的用户名
-        username="${username:-$(whoami)}"
+        
         
         if id "$username" &>/dev/null; then
             echo "用户 $username 已存在。"
-            set_password_if_needed "$username"
+            set_password_if_needed "$username" "$default_password"
         else
             sudo useradd -m "$username"  # 创建用户
-            echo "$username:$default_password" | sudo chpasswd  # 设置密码
+            echo "$username:$default_password" | sudo chpasswd
             echo "用户 $username 已创建，密码设置为 $default_password"
         fi
     else
-        echo "不创建用户"
-        
+        echo "不创建用户"    
         # 如果 username 变量未设置或为空，则默认为当前登录用户的用户名
         username="${username:-$(whoami)}"
-        
-        set_password_if_needed "$username"
+        set_password_if_needed "$username" "$default_password"
     fi
 
 

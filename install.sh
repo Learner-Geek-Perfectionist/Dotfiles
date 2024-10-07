@@ -204,33 +204,39 @@ dest_Fonts="master_Fonts"
 dest_Dotfiles="master_Dotfiles"
 
 
+install_flag=false;
+
 # 定义一个函数来处理压缩包的下载和解压
 handle_zip_file() {
 
     ########### 处理 Fonts 压缩包 ###########
-    # 检查 zip 文件是否存在
-    if [ ! -f "$zip_Fonts_file" ]; then
-        echo "压缩包不存在，开始下载..."
-        # 下载字体压缩包
-        curl -L -o "$zip_Fonts_file" "$Fonts_REPO_URL"
-    else
-        echo "压缩包已存在，跳过下载。"
-    fi
 
-    # 确保压缩包一定存在后，检查目录是否存在
-    if [ -d "$dest_Fonts" ]; then
-        echo "目录 '$dest_Fonts' 已存在，跳过解压。"
-    else
-        # 检查 zip 文件是否存在再解压
-        if [ -f "$zip_Fonts_file" ]; then
-            echo "开始解压缩..."
-            unzip -o "$zip_Fonts_file"
+    if [[ $install_flag == 'y' ]]; then
+        # 检查 zip 文件是否存在
+        if [ ! -f "$zip_Fonts_file" ]; then
+            echo "压缩包不存在，开始下载..."
+            # 下载字体压缩包
+            curl -L -o "$zip_Fonts_file" "$Fonts_REPO_URL"
         else
-            echo "压缩包不存在或者损坏，无法解压。"
+            echo "压缩包已存在，跳过下载。"
+        fi
+    
+        # 确保压缩包一定存在后，检查目录是否存在
+        if [ -d "$dest_Fonts" ]; then
+            echo "目录 '$dest_Fonts' 已存在，跳过解压。"
+        else
+            # 检查 zip 文件是否存在再解压
+            if [ -f "$zip_Fonts_file" ]; then
+                echo "开始解压缩..."
+                unzip -o "$zip_Fonts_file"
+            else
+                echo "压缩包不存在或者损坏，无法解压。"
+            fi
         fi
     fi
-
+    
     ########### 处理 Dotfiles 压缩包 ###########
+    
     # 检查 zip 文件是否存在
     if [ ! -f "$zip_Dotfiles_file" ]; then
         echo "压缩包不存在，开始下载..."
@@ -252,13 +258,10 @@ handle_zip_file() {
             echo "压缩包不存在或者损坏，无法解压。"
         fi
     fi
-
     
 }
 
 
-
-install_flag=false;
 
 # 提示用户是否需要下载字体
 prompt_download_fonts() {
@@ -270,12 +273,15 @@ prompt_download_fonts() {
     read -p "是否需要下载字体以支持终端模拟器的渲染？(y/n): " download_confirm < /dev/tty
     if [[ $download_confirm == 'y' ]]; then
         print_centered_message "正在下载字体......"
-        handle_zip_file
         install_flag=true;
     else
         echo -e "\n跳过字体下载。\n"
     fi
 }
+
+
+handle_zip_file
+
 
 # 加载提示头
 prompt_download_fonts

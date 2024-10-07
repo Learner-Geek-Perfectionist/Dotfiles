@@ -60,7 +60,7 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
     fi
 
     # 提前生成应用列表，仅执行一次
-    app_list=$(find /Applications /System/Applications ${HOME}/Library/Application Support -mindepth 1 -type f)   
+    app_list=$(find /Applications /System/Applications '${HOME}/Library/Application Support' -mindepth 1 -type f)   
     
     # 创建一个文件用来存储未安装的软件包
     uninstalled_packages="uninstalled_packages.txt"

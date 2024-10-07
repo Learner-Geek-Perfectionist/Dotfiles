@@ -321,8 +321,8 @@ download_and_extract() {
         print_centered_message "ZIP文件 '$zip_file' 不存在，开始下载..."
         curl -L -f -o "${zip_file}" "$repo_url"
         if [  -f "$zip_file" ]; then
-        print_centered_message "ZIP文件 '$zip_file' 下载完成"
-        else print_centered_message "ZIP文件 '$zip_file' 下载失败"
+        print_centered_message "ZIP文件 '$zip_file' 下载完成✅"
+        else print_centered_message "ZIP文件 '$zip_file' 下载失败☹️"
         fi
     else
         echo "ZIP文件 '$zip_file' 已存在，跳过下载。"
@@ -422,7 +422,7 @@ install_fonts() {
     fi
 
     # 打印提示消息
-    print_centered_message "字体安装完成。"
+    print_centered_message "字体安装完成。✅"
 }
 
 

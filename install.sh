@@ -134,7 +134,7 @@ fi
 
 print_centered_message() {
     local message="$1"  # 传入的消息文本
-    local padding=4     # 设置消息两侧的填充空间
+    local padding=0     # 设置消息两侧的填充空间
 
     # 获取终端宽度
     local term_width=$(tput cols)

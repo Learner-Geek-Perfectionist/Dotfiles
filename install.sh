@@ -79,13 +79,26 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
         gcc ninja wget
     )
 
-     # 检查 formulas 包是否已安装
-     for package in "${brew_formulas[@]}"; do
-        if ! brew info "$package" | grep -q "Not installed"; then
+ 
+
+    
+    # 遍历 formulas 包数组
+    for package in "${brew_casks[@]}"; do
+        # 使用 brew list  检查 formulas 是否已安装
+        if brew list  | grep -q "^${package}$"; then
             echo "$package is already installed via Homebrew."
         else
-            echo "$package not found, installing..."
-            brew install "$package" || echo "$package" >> "$uninstalled_packages"
+            # 如果 brew list 没找到，使用 brew info 作为二次验证
+            if brew info  "$package" | grep -q "Not installed"; then
+                echo "$package not found, attempting to install..."
+                # 尝试安装未安装的 formulas
+                if ! brew install  "$package"; then
+                    echo "Failed to install $package."
+                    uninstalled_packages+=("$package")  # 记录安装失败的包
+                fi
+            else
+                echo "$package is already installed but was not listed initially."
+            fi
         fi
     done
 
@@ -103,13 +116,23 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
     )
 
     
-     # 检查 casks 包是否已安装
-     for package in "${brew_casks[@]}"; do
-        if ! brew info "$package" | grep -q "Not installed"; then
+    # 遍历 casks 包数组
+    for package in "${brew_casks[@]}"; do
+        # 使用 brew list  检查 casks 是否已安装
+        if brew list  | grep -q "^${package}$"; then
             echo "$package is already installed via Homebrew."
         else
-            echo "$package not found, installing..."
-            brew install "$package" || echo "$package" >> "$uninstalled_packages"
+            # 如果 brew list 没找到，使用 brew info 作为二次验证
+            if brew info  "$package" | grep -q "Not installed"; then
+                echo "$package not found, attempting to install..."
+                # 尝试安装未安装的 cask
+                if ! brew install  "$package"; then
+                    echo "Failed to install $package."
+                    uninstalled_packages+=("$package")  # 记录安装失败的包
+                fi
+            else
+                echo "$package is already installed but was not listed initially."
+            fi
         fi
     done
 

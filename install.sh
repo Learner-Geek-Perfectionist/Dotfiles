@@ -214,16 +214,19 @@ Dotfiles_REPO_URL="https://github.com/Learner-Geek-Perfectionist/dotfiles/archiv
 Fonts_REPO_URL="https://github.com/Learner-Geek-Perfectionist/Fonts/archive/refs/heads/master.zip"
 
 # 定义文件和目标目录名称
-zip_Fonts_file="master_Fonts.zip"
-zip_Dotfiles_file="master_Dotfiles.zip"
+zip_Fonts_file="Dotfiles-master.zip"
+zip_Dotfiles_file="Fonts-master.zip"
 dest_Fonts="Dotfiles-master"
 dest_Dotfiles="Fonts-master"
 
 # 定义下载和解压函数
 download_and_extract() {
+    # 压缩包名字
     local zip_file="$1"
-    local repo_url="$2"
-    local dest_dir="$3"
+    # 目录
+    local dest_dir="$2"
+    # 压缩包 URL
+    local repo_url="$3"
 
     # 检查ZIP文件是否存在，如果不存在则下载
     if [ ! -f "$zip_file" ]; then
@@ -251,7 +254,7 @@ download_and_extract() {
 }
 
 # 总是下载和解压Dotfiles
-download_and_extract "$zip_Dotfiles_file" "$Dotfiles_REPO_URL" "$dest_Dotfiles"
+download_and_extract "$zip_Dotfiles_file" "$dest_Dotfiles" "$Dotfiles_REPO_URL" 
 
 # 对Fonts的处理，只在ZIP文件不存在时下载
 if [ ! -f "$zip_Fonts_file" ]; then

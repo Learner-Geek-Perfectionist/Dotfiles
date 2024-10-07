@@ -147,7 +147,7 @@ print_centered_message() {
     
     # 计算并居中打印消息
     local padded_message="$(printf '%*s' $(( (cols + ${#message}) / 2 )) "$message")"
-    echo "$padded_message"
+    echo -e "$padded_message"
     
     # 打印下边框
     echo "$line"

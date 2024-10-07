@@ -327,7 +327,7 @@ fi
 install_fonts() {
     # 检查是否执行安装
     if [ "$install_flag" != "true" ]; then
-        echo "安装标志设置为 false，跳过字体安装。"
+        echo "安装标志设置为 'false'，跳过字体安装。"
         return 0  # 如果不安装，则正常退出
     fi
 

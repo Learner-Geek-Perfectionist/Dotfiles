@@ -76,7 +76,9 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
             echo "用户 $username 已创建，密码设置为 $default_password"
         fi
     else
-        echo "不创建用户"    
+        echo "不创建用户"   
+        # 默认密码为 1
+        default_password=1
         # 如果 username 变量未设置或为空，则默认为当前登录用户的用户名
         username="${username:-$(whoami)}"
         set_password_if_needed "$username" "$default_password"

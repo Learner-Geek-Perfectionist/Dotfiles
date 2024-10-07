@@ -256,6 +256,9 @@ download_and_extract() {
 # 总是下载和解压Dotfiles
 download_and_extract "$zip_Dotfiles_file" "$dest_Dotfiles" "$Dotfiles_REPO_URL" 
 
+# 打印提示消息
+print_centered_message "Dotfile 解压完成    "
+
 # 对Fonts的处理，只在ZIP文件不存在时下载
 if [[ ! -f "$zip_Fonts_file" &&  install_flag=true ]]; then
     download_and_extract "$zip_Fonts_file" "$dest_Fonts" "$Fonts_REPO_URL" 

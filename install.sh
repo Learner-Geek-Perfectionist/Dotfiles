@@ -8,7 +8,27 @@ trap 'echo "Error at line $LINENO: $BASH_COMMAND"' ERR
 set -e
 
 
-
+# 定义打印 message 的函数
+print_centered_message() {
+    local message="$1"
+    local cols=$(tput cols)
+    local line=''
+    
+    # 创建横线，长度与终端宽度相等
+    for (( i=0; i<cols; i++ )); do
+    line+='-'
+    done
+    
+    # 打印上边框
+    echo "$line"
+    
+    # 计算并居中打印消息
+    local padded_message="$(printf '%*s' $(( (cols + ${#message}) / 2 )) "$message")"
+    echo -e "$padded_message"
+    
+    # 打印下边框
+    echo "$line"
+}
 
 # 获取当前操作系统类型
 OS_TYPE=$(uname)
@@ -38,28 +58,6 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
         print_centered_message "正在安装 Homebrew..."
         /bin/zsh -c "$(curl -fsSL https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh)"
     fi
-
-    # 定义打印 message 的函数
-    print_centered_message() {
-        local message="$1"
-        local cols=$(tput cols)
-        local line=''
-        
-        # 创建横线，长度与终端宽度相等
-        for (( i=0; i<cols; i++ )); do
-        line+='-'
-        done
-        
-        # 打印上边框
-        echo "$line"
-        
-        # 计算并居中打印消息
-        local padded_message="$(printf '%*s' $(( (cols + ${#message}) / 2 )) "$message")"
-        echo -e "$padded_message"
-        
-        # 打印下边框
-        echo "$line"
-    }
 
 
     # 创建一个文件用来存储未安装的软件包

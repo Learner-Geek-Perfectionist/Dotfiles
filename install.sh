@@ -81,15 +81,14 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
         gcc ninja wget
     )
 
-    # 检查 formulas 包是否已安装
-      # 检查是否已通过 Homebrew 安装
+      # 检查 formulas 包是否已安装
       if ! brew list  | grep -iq "^${normalized_name}$"; then
         # 使用 fzf 进行模糊匹配，确认应用是否在 /Applications 目录中
         app_match=$(echo "$app_list" | fzf -q "$normalized_name" -1 -0)
     
         if [ -z "$app_match" ]; then
           echo "$package not found, installing..."
-          brew install  "$package"
+          brew install "$package" || echo "$package" >> "$uninstalled_packages"
         else
           echo "$package is already installed but not recognized by Homebrew."
         fi
@@ -121,7 +120,7 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
     
         if [ -z "$app_match" ]; then
           echo "$package not found, installing..."
-          brew install  "$package"
+          brew install "$package" || echo "$package" >> "$uninstalled_packages"
         else
           echo "$package is already installed but not recognized by Homebrew."
         fi

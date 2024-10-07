@@ -55,6 +55,9 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
     print_centered_message "正在安装 Homebrew..."
     /bin/zsh -c "$(curl -fsSL https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh)"
 
+    
+    print_centered_message "正在安装 macOS 常用的开发工具......"
+    
     brew_formulas=(
         bash gettext llvm msgpack ruby
         brotli git lpeg ncurses sqlite
@@ -76,7 +79,7 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
       fi
     done
 
-
+    print_centered_message "正在安装 macOS 常用的带图形用户界面的应用程序......"
     brew_casks=(
         alfred videofusion wpsoffice tencent-meeting google-chrome
         orbstack dingtalk baidunetdisk anaconda iina

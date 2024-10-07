@@ -369,4 +369,4 @@ print_centered_message "进入 zsh ......"
 
 
 # 进入 zsh
-zsh
+# zsh

@@ -2,7 +2,7 @@
 
 1.
 ```
- git clone git@github.com:Learner-Geek-Perfectionist/dotfiles.git
+ git clone --depth 1 git@github.com:Learner-Geek-Perfectionist/dotfiles.git
  cd dotfiles
  ./install.sh
 ```

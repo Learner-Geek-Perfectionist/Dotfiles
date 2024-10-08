@@ -353,6 +353,9 @@ download_and_extract() {
     fi
 }
 
+if [ "$install_flag" = true ]; then
+    echo "The installation has been successfully completed.12312323123123123333333333333"
+fi
 if [[ $install_flag==true ]]; then
     # 总是下载和解压Dotfiles
     download_and_extract "$zip_Dotfiles_file" "$dest_Dotfiles" "$Dotfiles_REPO_URL" 

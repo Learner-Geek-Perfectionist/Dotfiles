@@ -413,7 +413,6 @@ destination="$HOME"
 
 # 进入目录并复制配置文件到用户的 home 目录的函数
 copy_config_files_to_home() {
-  print_centered_message "正在配置......"
   local dir_name="${dest_Dotfiles}"
   local files_to_copy=(".zshrc" ".zprofile" ".config")
 

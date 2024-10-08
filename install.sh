@@ -69,7 +69,10 @@ if [[ $OS_TYPE == "Darwin" ]]; then
 
     # 生成时间戳和日志文件名
     timestamp=$(date +"%Y%m%d_%H%M%S")
-    log_file="failed_to_install_$timestamp.txt"
+    log_file="~/brew_install_logs/failed_to_install_$timestamp.txt" # 指定日志文件路径
+
+    # 确保日志文件目录存在
+    mkdir -p ~/brew_install_logs
 
     # 使用间接扩展访问数组
     eval "packages=(\"\${${package_group_name}[@]}\")"
@@ -83,19 +86,34 @@ if [[ $OS_TYPE == "Darwin" ]]; then
     for package in "${packages[@]}"; do
       echo "检查是否已安装 $package ..."
 
-      # 使用 brew info 检查是否安装
-      if brew info "$package" | grep "Not installed" &>/dev/null; then
-        echo "$package 未通过 Homebrew 安装，尝试安装..."
-        if brew install "$package"; then
-          echo "$package 安装成功。"
-          installed_brew_packages["$package"]=1
+      if [[ -n ${installed_brew_packages["$package"]} ]]; then
+        echo "$package 已通过 Homebrew 安装。"
+        continue
+      fi
+
+      echo "$package 未通过 Homebrew 安装，正在检查 Homebrew 信息..."
+      if brew info "$package" | grep -q "Not installed"; then
+        echo "使用 Spotlight 搜索 $package ..."
+        # 使用 Spotlight 搜索程序路径
+        found_path=$(mdfind "kMDItemDisplayName == '$package'wc" | head -n 1)
+        if [[ -n $found_path ]]; then
+          echo "$package 已通过系统中的 Spotlight 找到，路径为: $found_path"
         else
-          echo "通过 Homebrew 安装 $package 失败。"
-          uninstalled_packages+=("$package")
-          echo "$package 安装失败。" >>"$log_file"
+          echo "$package 未通过 Spotlight 找到，尝试通过 Homebrew 安装..."
+          if brew install "$package"; then
+            echo "$package 安装成功。"
+            # 更新已安装包列表
+            installed_brew_packages["$package"]=1
+          else
+            echo "通过 Homebrew 安装 $package 失败。"
+            uninstalled_packages+=("$package")
+            echo "$package 安装失败。" >>"$log_file"
+          fi
         fi
       else
-        echo "$package 已通过 Homebrew 安装。"
+        echo "Homebrew 中没有 $package 的信息，无法安装。"
+        uninstalled_packages+=("$package")
+        echo "$package 无法通过 Homebrew 安装。" >>"$log_file"
       fi
     done
 
@@ -115,7 +133,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
     ca-certificates icu4c luajit node unibilium
     cmake libnghttp2 luv openssl@3 vim
     cmake-docs libsodium lz4 pcre2 xz
-    fastfetch libuv lzip python z3 pkg-config
+    fastfetch libuv lzip python@3.12 z3
     fd libvterm make readline zstd
     fzf libyaml mpdecimal ripgrep
     gcc ninja wget
@@ -325,6 +343,8 @@ download_and_extract() {
   fi
 }
 
+# 打印提示消息
+print_centered_message "Dotfile 完成下载和解压"
 
 # 对 Fonts 的处理，只在 ZIP 文件不存在时下载
 if [[ $install_flag == "true" ]]; then
@@ -343,12 +363,8 @@ elif [[ $install_flag == "true" ]]; then
   fi
 fi
 
-
 # 总是下载和解压Dotfiles
 download_and_extract "$zip_Dotfiles_file" "$dest_Dotfiles" "$Dotfiles_REPO_URL"
-
-# 打印提示消息
-print_centered_message "Dotfiles 完成下载和解压"
 
 # 定义字体的源目录
 font_source="./${dest_Fonts}/fonts"
@@ -413,6 +429,7 @@ destination="$HOME"
 
 # 进入目录并复制配置文件到用户的 home 目录的函数
 copy_config_files_to_home() {
+  print_centered_message "正在配置......"
   local dir_name="${dest_Dotfiles}"
   local files_to_copy=(".zshrc" ".zprofile" ".config")
 
@@ -443,4 +460,4 @@ copy_config_files_to_home
 # 打印提示消息
 print_centered_message "zsh 配置文件已配置到 Home 目录"
 
-print_centered_message "准备进入 zsh，下载 zsh 插件......"
+print_centered_message "进入 zsh，准备下载 zsh 插件......"

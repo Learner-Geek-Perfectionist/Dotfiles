@@ -39,8 +39,8 @@ if [[ $OS_TYPE == "Darwin" ]]; then
 
   # 检查 Git 是否已安装
   if ! type git &>/dev/null; then
-     echo "Git 未安装，现在将通过 Xcode 命令行工具安装 Git..."
-     xcode-select --reset
+     echo "重置 Xcode 工具路径"
+     sudo xcode-select --switch /Library/Developer/CommandLineTools
   fi
 
   if ! xcode-select --print-path &>/dev/null; then

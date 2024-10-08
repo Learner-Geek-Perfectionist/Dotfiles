@@ -60,11 +60,59 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
     fi
 
     
-    # 创建一个文件用来存储未安装的软件包
-    uninstalled_packages="uninstalled_packages.txt"
-    > "$uninstalled_packages"  # 清空文件内容
-    
     print_centered_message "正在安装 macOS 常用的开发工具......"
+
+    # 函数定义，接受一个 package 名作为参数
+    check_and_install_brew_package() {
+        local package=$1
+        local uninstalled_packages=()
+        local timestamp=$(date +"%Y%m%d_%H%M%S")  # 生成时间戳
+        local log_file="failed_to_install_$timestamp.txt"  # 生成文件名包含时间戳
+    
+        echo "Checking if $package is installed..."
+        # 使用 brew list 检查 formula 是否已安装
+        if brew list | grep -q "^${package}$"; then
+            echo "$package is already installed via Homebrew."
+        else
+            # 如果 brew list 没找到，使用 brew info 作为二次验证
+            if brew info "$package" 2>&1 | grep -q "Not installed"; then
+                echo "$package not found in Homebrew, searching with mdfind..."
+                # 使用 mdfind 检查系统是否有该程序的任何安装
+                if mdfind "kMDItemDisplayName == '${package}*'c" | grep -q "$package"; then
+                    echo "$package found with Spotlight but not via Homebrew."
+                else
+                    echo "$package not found, attempting to install..."
+                    # 尝试安装未安装的 formula
+                    if ! brew install "$package"; then
+                        echo "Failed to install $package."
+                        uninstalled_packages+=("$package")  # 记录安装失败的包
+                    fi
+                fi
+            else
+                echo "$package is already installed but was not listed initially."
+            fi
+        fi
+    
+        # 如果有未能安装的包，将其写入带时间戳的文本文件
+        if [ ${#uninstalled_packages[@]} -gt 0 ]; then
+            echo "Failed to install the following package: $package"
+            printf '%s\n' "${uninstalled_packages[@]}" > "$log_file"
+            echo "Details of the failed installation have been saved to $log_file."
+        else
+            echo "Package processed successfully."
+        fi
+    }
+
+
+        # 最后打印未能安装的包并将其写入文本文件
+        if [ ${#uninstalled_packages[@]} -gt 0 ]; then
+            echo "Failed to install the following package: $package"
+            printf '%s\n' "${uninstalled_packages[@]}" > "$log_file"
+            echo "Details of the failed installation have been saved to $log_file."
+        else
+            echo "Package processed successfully."
+        fi
+    }
     
     brew_formulas=(
         bash gettext llvm msgpack ruby
@@ -79,30 +127,10 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
         gcc ninja wget
     )
 
- 
-
-    
-    # 遍历 formulas 包数组
-    for package in "${brew_formulas[@]}"; do
-        # 使用 brew list  检查 formulas 是否已安装
-        if brew list  | grep -q "^${package}$"; then
-            echo "$package is already installed via Homebrew."
-        else
-            # 如果 brew list 没找到，使用 brew info 作为二次验证
-            if brew info  "$package" | grep -q "Not installed"; then
-                echo "$package not found, attempting to install..."
-                # 尝试安装未安装的 formulas
-                if ! brew install  "$package"; then
-                    echo "Failed to install $package."
-                    uninstalled_packages+=("$package")  # 记录安装失败的包
-                fi
-            else
-                echo "$package is already installed but was not listed initially."
-            fi
-        fi
-    done
-
     print_centered_message "开发工具安装完成✅"
+
+    # 安装 brew_formulas 包
+    check_and_install_brew_packages  brew_formulas
     
     print_centered_message "正在安装 macOS 常用的带图形用户界面的应用程序......"
     
@@ -115,28 +143,9 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
         douyin kitty feishu microsoft-edge
     )
 
-    
-    # 遍历 casks 包数组
-    for package in "${brew_casks[@]}"; do
-        # 使用 brew list  检查 casks 是否已安装
-        if brew list  | grep -q "^${package}$"; then
-            echo "$package is already installed via Homebrew."
-        else
-            # 如果 brew list 没找到，使用 brew info 作为二次验证
-            if brew info  "$package" | grep -q "Not installed"; then
-                echo "$package not found, attempting to install..."
-                # 尝试安装未安装的 cask
-                if ! brew install  "$package"; then
-                    echo "Failed to install $package."
-                    uninstalled_packages+=("$package")  # 记录安装失败的包
-                fi
-            else
-                echo "$package is already installed but was not listed initially."
-            fi
-        fi
-    done
+    # 安装 brew_casks 包
+    check_and_install_brew_packages  brew_casks
 
-    
     print_centered_message "图形界面安装完成✅"
 
 

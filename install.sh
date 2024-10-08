@@ -131,7 +131,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
     fastfetch libuv lzip python@3.12 z3
     fd libvterm make readline zstd
     fzf libyaml mpdecimal ripgrep
-    gcc ninja wget
+    gcc ninja wget mas
   )
 
   # 安装 brew_formulas 包

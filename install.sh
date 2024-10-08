@@ -83,7 +83,7 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
                 if ! brew install "$package"; then
                     # 如果 Homebrew 安装失败，则使用 Spotlight 搜索该程序
                     echo "Failed to install $package with Homebrew, searching with Spotlight..."
-                    local found_path=$(mdfind "kMDItemDisplayName == '$package'wc" | grep -i ".app$")
+                    local found_path=$(mdfind "kMDItemDisplayName == '$package'wc")
                     if [ -n "$found_path" ]; then
                         echo "$package found in the system via Spotlight at $found_path"
                     else

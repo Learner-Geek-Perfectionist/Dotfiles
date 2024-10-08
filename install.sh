@@ -99,11 +99,12 @@ if [[ $OS_TYPE == "Darwin" ]]; then
         else
           echo "$package 未通过 Spotlight 找到，尝试通过 Homebrew 安装..."
           if brew install "$package"; then
-            echo "$package 安装成功。"
+            print_centered_message "$package 安装成功。✅"
           else
             echo "通过 Homebrew 安装 $package 失败。"
             uninstalled_packages+=("$package")
-            echo "$package 安装失败。" >>"$log_file"
+            print_centered_message "$package 安装失败。☹️"
+            echo "$package 安装失败。☹️" >>"$log_file"
           fi
         fi
       else

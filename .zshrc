@@ -33,7 +33,7 @@ export HISTFILE="$XDG_CACHE_HOME/zsh/.zsh_history" # HISTFILE 也是 zsh 内置�
 
 # 判断操作系统
 if [[ "$(uname)" == "Darwin" ]]; then
-  # macOS specific settings，设置 git 、clang++、ruby、make 等工具的环境变量
+  # macOS specific settings，设置 git 、clang++、ruby、make bash 等工具的环境变量
   export PATH="/opt/homebrew/opt/llvm/bin:$PATH"
   export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
   export PATH="/opt/homebrew/opt/git/bin:$PATH"
@@ -41,7 +41,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
   export HOMEBREW_NO_ENV_HINTS=1
 else
   # Linux specific settings
-  export PATH="/usr/local/bin:$PATH" # 假设软件安装在这些路径
+  
   # 其他 Linux 特有的设置
 fi
 

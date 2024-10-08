@@ -17,9 +17,5 @@ if [ "$OS_TYPE" = "Darwin" ]; then
     if type brew &>/dev/null; then
         # 设置 zsh 的 FPATH 环境变量，加入 brew 提供的 site-functions
         FPATH="$(brew --prefix)/share/zsh/site-functions:$FPATH"
-
-        # 加载并执行 zsh 的 compinit 初始化，用于命令行补全
-        autoload -Uz compinit
-        compinit
     fi
 fi

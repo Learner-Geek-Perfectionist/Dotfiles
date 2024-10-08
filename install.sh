@@ -90,7 +90,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
       fi
 
       echo "$package 未通过 Homebrew 安装，正在检查 Homebrew 信息..."
-      if brew info "$package" | grep -q "Not installed"; then
+      if brew info "$package"  | head -n 5 | grep -q "Not installed"; then
         echo "使用 Spotlight 搜索 $package ..."
         # 使用 Spotlight 搜索程序路径
         found_path=$(mdfind "kMDItemDisplayName == '$package'wc" | head -n 1)

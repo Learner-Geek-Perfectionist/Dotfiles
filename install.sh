@@ -36,18 +36,12 @@ if [[ $OS_TYPE == "Darwin" ]]; then
   print_centered_message "检测到 macOS 系统"
   
 
-
-  # 检查 Git 是否已安装
-  if ! type git &>/dev/null; then
-     echo "重置 Xcode 工具路径"
-     sudo xcode-select --switch /Library/Developer/CommandLineTools
-  fi
-
   if ! xcode-select --print-path &>/dev/null; then
-     print_centered_message "Xcode 命令行工具未安装，现在将进行安装..."
+     print_centered_message "Xcode 命令行工具未安装"
      xcode-select --install
      # 等待用户完成 Xcode 命令行工具的安装
-     read -p "请按回车继续..."
+     print_centered_message "请手动点击屏幕中的弹窗，选择“安装”，安装完成之后再次运行脚本"
+     exit 1
   fi
 
   

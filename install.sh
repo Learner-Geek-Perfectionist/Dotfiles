@@ -130,7 +130,7 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
     print_centered_message "开发工具安装完成✅"
 
     # 安装 brew_formulas 包
-    check_and_install_brew_packages  brew_formulas
+    check_and_install_brew_packages  "brew_formulas"
     
     print_centered_message "正在安装 macOS 常用的带图形用户界面的应用程序......"
     
@@ -144,12 +144,9 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
     )
 
     # 安装 brew_casks 包
-    check_and_install_brew_packages  brew_casks
+    check_and_install_brew_packages  "brew_casks"
 
     print_centered_message "图形界面安装完成✅"
-
-
-    print_centered_message "检查完成。未安装的软件包列表已写入到 $uninstalled_packages 文件中。"
     
 elif [[ "$OS_TYPE" == "Linux" ]]; then
 

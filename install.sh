@@ -102,8 +102,7 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
             echo "Package processed successfully."
         fi
     }
-    
-    }
+
     
     brew_formulas=(
         bash gettext llvm msgpack ruby
@@ -118,10 +117,12 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
         gcc ninja wget
     )
 
-    print_centered_message "开发工具安装完成✅"
-
     # 安装 brew_formulas 包
     check_and_install_brew_packages  "brew_formulas"
+
+    
+    print_centered_message "开发工具安装完成✅"
+
     
     print_centered_message "正在安装 macOS 常用的带图形用户界面的应用程序......"
     

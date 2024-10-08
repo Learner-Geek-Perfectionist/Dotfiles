@@ -46,7 +46,7 @@ if command -v git &>/dev/null; then
 
   # 使用 Zinit Turbo 模式加载补全插件，并初始化补全系统
   zinit wait lucid for \
-   atinit"autoload -Uz compinit; compinit -d '$ZSH_COMPDUMP'; zicdreplay" \
+   atinit"autoload -Uz compinit; compinit -d "$ZSH_COMPDUMP"; zicdreplay" \
       zdharma-continuum/fast-syntax-highlighting \
    blockf \
       zsh-users/zsh-completions \

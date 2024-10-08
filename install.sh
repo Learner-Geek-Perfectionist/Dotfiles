@@ -62,47 +62,39 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
     
     print_centered_message "正在安装 macOS 常用的开发工具......"
 
-    # 函数定义，接受一个 package 名作为参数
+    # 函数定义，接受一个包含包名的数组变量名作为参数
     check_and_install_brew_packages() {
-        local package=$1
+        local package_group_name=$1
+        local -n packages=$package_group_name  # 使用名引用来间接访问数组
         local uninstalled_packages=()
         local timestamp=$(date +"%Y%m%d_%H%M%S")  # 生成时间戳
         local log_file="failed_to_install_$timestamp.txt"  # 生成文件名包含时间戳
     
-        echo "Checking if $package is installed..."
-        # 使用 brew list 检查 formula 是否已安装
-        if brew list | grep -q "^${package}$"; then
-            echo "$package is already installed via Homebrew."
-        else
-            # 如果 brew list 没找到，使用 brew info 作为二次验证
-            if brew info "$package" 2>&1 | grep -q "Not installed"; then
-                echo "$package not found in Homebrew, searching with mdfind..."
-                # 使用 mdfind 检查系统是否有该程序的任何安装
-                if mdfind "kMDItemDisplayName == '${package}*'c" | grep -q "$package"; then
-                    echo "$package found with Spotlight but not via Homebrew."
-                else
-                    echo "$package not found, attempting to install..."
-                    # 尝试安装未安装的 formula
-                    if ! brew install "$package"; then
-                        echo "Failed to install $package."
-                        uninstalled_packages+=("$package")  # 记录安装失败的包
-                    fi
-                fi
+        for package in "${packages[@]}"; do  # 遍历包名列表
+            echo "Checking if $package is installed..."
+            # 使用 brew list 检查 formula 是否已安装
+            if brew list | grep -q "^${package}$"; then
+                echo "$package is already installed via Homebrew."
             else
-                echo "$package is already installed but was not listed initially."
+                echo "$package not found, attempting to install..."
+                # 尝试安装未安装的 formula
+                if ! brew install "$package"; then
+                    echo "Failed to install $package."
+                    uninstalled_packages+=("$package")  # 记录安装失败的包
+                fi
             fi
-        fi
+        done
     
         # 如果有未能安装的包，将其写入带时间戳的文本文件
         if [ ${#uninstalled_packages[@]} -gt 0 ]; then
-            echo "Failed to install the following package: $package"
+            echo "Failed to install the following packages:"
+            printf '%s\n' "${uninstalled_packages[@]}"
             printf '%s\n' "${uninstalled_packages[@]}" > "$log_file"
-            echo "Details of the failed installation have been saved to $log_file."
+            echo "Details of the failed installations have been saved to $log_file."
         else
-            echo "Package processed successfully."
+            echo "All packages processed successfully."
         fi
     }
-
     
     brew_formulas=(
         bash gettext llvm msgpack ruby

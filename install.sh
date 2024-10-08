@@ -63,7 +63,7 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
     print_centered_message "正在安装 macOS 常用的开发工具......"
 
     # 函数定义，接受一个 package 名作为参数
-    check_and_install_brew_package() {
+    check_and_install_brew_packages() {
         local package=$1
         local uninstalled_packages=()
         local timestamp=$(date +"%Y%m%d_%H%M%S")  # 生成时间戳

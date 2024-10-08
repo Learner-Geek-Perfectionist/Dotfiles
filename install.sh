@@ -34,20 +34,23 @@ OS_TYPE=$(uname)
 if [[ $OS_TYPE == "Darwin" ]]; then
   # macOS 逻辑
   print_centered_message "检测到 macOS 系统"
-  # 检查 Xcode 命令行工具是否已安装
+  
 
-if ! xcode-select --print-path &>/dev/null; then
-    print_centered_message "Xcode 命令行工具未安装，现在将进行安装..."
-    xcode-select --install
-    # 等待用户完成 Xcode 命令行工具的安装
-    read -p "请按回车继续..."
-fi
 
   # 检查 Git 是否已安装
   if ! type git &>/dev/null; then
-    echo "Git 未安装，现在将通过 Xcode 命令行工具安装 Git..."
-    xcode-select --reset
+     echo "Git 未安装，现在将通过 Xcode 命令行工具安装 Git..."
+     xcode-select --reset
   fi
+
+  if ! xcode-select --print-path &>/dev/null; then
+     print_centered_message "Xcode 命令行工具未安装，现在将进行安装..."
+     xcode-select --install
+     # 等待用户完成 Xcode 命令行工具的安装
+     read -p "请按回车继续..."
+  fi
+
+  
 
   # 检查 Homebrew 是否已安装
   if command -v brew >/dev/null 2>&1; then

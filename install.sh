@@ -68,28 +68,36 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
         local package
         local uninstalled_packages=()
         local timestamp=$(date +"%Y%m%d_%H%M%S")  # 生成时间戳
-        local log_file="failed_to_install_$timestamp.txt"  # 生成文件名包含时间戳
+        local log_file="failed_to_install_$timestamp.txt"  # 生成日志文件名包含时间戳
     
         eval "packages=(\"\${${package_group_name}[@]}\")"  # 使用 eval 和间接扩展来访问数组
     
         for package in "${packages[@]}"; do  # 遍历包名列表
             echo "Checking if $package is installed..."
-            # 使用 brew list 检查 formula 是否已安装
-            if brew list | grep -q "^${package}$"; then
+            # 使用 brew list 检查 package 是否已安装
+            if brew list "$package" &> /dev/null; then
                 echo "$package is already installed via Homebrew."
             else
-                # 如果 Homebrew 中没有该包，则尝试安装
-                echo "$package not found in Homebrew, attempting to install..."
-                if ! brew install "$package"; then
-                    # 如果 Homebrew 安装失败，则使用 Spotlight 搜索该程序
-                    echo "Failed to install $package with Homebrew, searching with Spotlight..."
+                # 如果 Homebrew 中没有该包，首先使用 brew info 获取信息
+                echo "$package not found in Homebrew, checking information with brew info..."
+                if brew info "$package" &> /dev/null; then
+                    # 使用 Spotlight 搜索该程序
+                    echo "Searching for $package with Spotlight..."
                     local found_path=$(mdfind "kMDItemDisplayName == '$package'wc")
                     if [ -n "$found_path" ]; then
                         echo "$package found in the system via Spotlight at $found_path"
                     else
-                        echo "$package could not be found in the system."
-                        uninstalled_packages+=("$package")  # 记录未找到的包
+                        echo "$package could not be found in the system via Spotlight."
+                        # 尝试安装
+                        echo "Attempting to install $package with Homebrew..."
+                        if ! brew install "$package"; then
+                            echo "Failed to install $package with Homebrew."
+                            uninstalled_packages+=("$package")  # 记录未找到的包
+                        fi
                     fi
+                else
+                    echo "No information available for $package in Homebrew, cannot install."
+                    uninstalled_packages+=("$package")  # 记录不可用的包
                 fi
             fi
         done
@@ -105,7 +113,8 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
         fi
     }
 
-    
+
+     
     brew_formulas=(
         bash gettext llvm msgpack ruby
         brotli git lpeg ncurses sqlite

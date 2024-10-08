@@ -56,7 +56,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
   fi
   
   # 刷新 brew 配置
-  source /Users/ouyangzhaoxin/.zprofile
+  source ${HOME}/.zprofile
   
   print_centered_message "正在安装 macOS 常用的开发工具......"
 

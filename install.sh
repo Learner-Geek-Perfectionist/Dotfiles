@@ -69,7 +69,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
 
     # 生成时间戳和日志文件名
     timestamp=$(date +"%Y%m%d_%H%M%S")
-    log_file="~/brew_install_logs/failed_to_install_$timestamp.txt" # 指定日志文件路径
+    log_file="./brew_install_logs/failed_to_install_$timestamp.txt" # 指定日志文件路径
 
     # 确保日志文件目录存在
     mkdir -p ./brew_install_logs

@@ -72,7 +72,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
     log_file="~/brew_install_logs/failed_to_install_$timestamp.txt" # 指定日志文件路径
 
     # 确保日志文件目录存在
-    mkdir -p ~/brew_install_logs
+    mkdir -p ./brew_install_logs
 
     # 使用间接扩展访问数组
     eval "packages=(\"\${${package_group_name}[@]}\")"
@@ -154,6 +154,46 @@ if [[ $OS_TYPE == "Darwin" ]]; then
   check_and_install_brew_packages "brew_casks"
 
   print_centered_message "图形界面安装完成✅"
+
+  print_centered_message "通过 uuid 安装 Application"
+  
+  # 定义一个包含应用UUID的数组
+  declare -A apps
+  apps=(
+      ["XApp-应用程序完全卸载清理专家"]="2116250207"
+      ["腾讯文档"]="1370780836"
+      ["FastZip - 专业的 RAR 7Z ZIP 解压缩工具"]="1565629813"
+      ["State-管理电脑CPU、温度、风扇、内存、硬盘运行状态"]="1472818562"
+      ["HUAWEI CLOUD WeLink-办公软件"]="1530487795"
+  )
+  
+  # 检查是否已安装mas
+  if ! command -v mas &> /dev/null
+  then
+      echo "mas-cli 未安装。正在通过Homebrew安装..."
+      brew install mas
+      if [ $? -ne 0 ]; then
+          echo "安装mas失败，请手动安装后重试。"
+          exit 1
+      fi
+  fi
+  
+  # 登录App Store（如果尚未登录）
+  if ! mas account > /dev/null; then
+      echo "你尚未登录App Store。请先登录。"
+      open -a "App Store"
+      read -p "登录后请按回车继续..."
+  fi
+  
+  # 安装应用
+  for app in "${!apps[@]}"
+  do
+      echo "正在安装: $app"
+      mas install ${apps[$app]}
+      echo "$app 安装完成"
+  done
+
+print_centered_message "所有应用安装完成。"
 
 elif [[ $OS_TYPE == "Linux" ]]; then
 

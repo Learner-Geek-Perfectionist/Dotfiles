@@ -77,16 +77,13 @@ if [[ $OS_TYPE == "Darwin" ]]; then
     # 使用间接扩展访问数组
     eval "packages=(\"\${${package_group_name}[@]}\")"
 
-    # 获取已安装的 Homebrew 包列表，存入关联数组
-    declare -A installed_brew_packages
-    while IFS= read -r pkg; do
-      installed_brew_packages["$pkg"]=1
-    done < <(brew list)
+    # 获取已安装的 Homebrew 包列表，存入数组
+    IFS=$'\n' read -d '' -r -a installed_packages < <(brew list && printf '\0')
 
     for package in "${packages[@]}"; do
       echo "检查是否已安装 $package ..."
 
-      if [[ -n ${installed_brew_packages["$package"]} ]]; then
+      if printf '%s\n' "${installed_packages[@]}" | grep -q "^$package$"; then
         echo "$package 已通过 Homebrew 安装。"
         continue
       fi
@@ -102,8 +99,6 @@ if [[ $OS_TYPE == "Darwin" ]]; then
           echo "$package 未通过 Spotlight 找到，尝试通过 Homebrew 安装..."
           if brew install "$package"; then
             echo "$package 安装成功。"
-            # 更新已安装包列表
-            installed_brew_packages["$package"]=1
           else
             echo "通过 Homebrew 安装 $package 失败。"
             uninstalled_packages+=("$package")

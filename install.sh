@@ -102,16 +102,7 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
             echo "Package processed successfully."
         fi
     }
-
-
-        # 最后打印未能安装的包并将其写入文本文件
-        if [ ${#uninstalled_packages[@]} -gt 0 ]; then
-            echo "Failed to install the following package: $package"
-            printf '%s\n' "${uninstalled_packages[@]}" > "$log_file"
-            echo "Details of the failed installation have been saved to $log_file."
-        else
-            echo "Package processed successfully."
-        fi
+    
     }
     
     brew_formulas=(

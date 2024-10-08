@@ -78,21 +78,28 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
             if brew list | grep -q "^${package}$"; then
                 echo "$package is already installed via Homebrew."
             else
-                echo "$package not found, attempting to install..."
-                # 尝试安装未安装的 formula
+                # 如果 Homebrew 中没有该包，则尝试安装
+                echo "$package not found in Homebrew, attempting to install..."
                 if ! brew install "$package"; then
-                    echo "Failed to install $package."
-                    uninstalled_packages+=("$package")  # 记录安装失败的包
+                    # 如果 Homebrew 安装失败，则使用 Spotlight 搜索该程序
+                    echo "Failed to install $package with Homebrew, searching with Spotlight..."
+                    local found_path=$(mdfind "kMDItemDisplayName == '$package'wc" | grep -i ".app$")
+                    if [ -n "$found_path" ]; then
+                        echo "$package found in the system via Spotlight at $found_path"
+                    else
+                        echo "$package could not be found in the system."
+                        uninstalled_packages+=("$package")  # 记录未找到的包
+                    fi
                 fi
             fi
         done
     
-        # 如果有未能安装的包，将其写入带时间戳的文本文件
+        # 如果有未能安装或找到的包，将其写入带时间戳的文本文件
         if [ ${#uninstalled_packages[@]} -gt 0 ]; then
-            echo "Failed to install the following packages:"
+            echo "Failed to install or find the following packages:"
             printf '%s\n' "${uninstalled_packages[@]}"
             printf '%s\n' "${uninstalled_packages[@]}" > "$log_file"
-            echo "Details of the failed installations have been saved to $log_file."
+            echo "Details of the failed installations or searches have been saved to $log_file."
         else
             echo "All packages processed successfully."
         fi

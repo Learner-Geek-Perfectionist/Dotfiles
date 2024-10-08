@@ -65,10 +65,12 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
     # 函数定义，接受一个包含包名的数组变量名作为参数
     check_and_install_brew_packages() {
         local package_group_name=$1
-        local -n packages=$package_group_name  # 使用名引用来间接访问数组
+        local package
         local uninstalled_packages=()
         local timestamp=$(date +"%Y%m%d_%H%M%S")  # 生成时间戳
         local log_file="failed_to_install_$timestamp.txt"  # 生成文件名包含时间戳
+    
+        eval "packages=(\"\${${package_group_name}[@]}\")"  # 使用 eval 和间接扩展来访问数组
     
         for package in "${packages[@]}"; do  # 遍历包名列表
             echo "Checking if $package is installed..."
@@ -95,6 +97,7 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
             echo "All packages processed successfully."
         fi
     }
+
     
     brew_formulas=(
         bash gettext llvm msgpack ruby

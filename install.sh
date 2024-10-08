@@ -54,7 +54,10 @@ if [[ $OS_TYPE == "Darwin" ]]; then
     print_centered_message "正在安装 Homebrew..."
     /bin/zsh -c "$(curl -fsSL https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh)"
   fi
-
+  
+  # 刷新 brew 配置
+  source /Users/ouyangzhaoxin/.zprofile
+  
   print_centered_message "正在安装 macOS 常用的开发工具......"
 
   # 定义函数，接受一个包含包名的数组变量名作为参数

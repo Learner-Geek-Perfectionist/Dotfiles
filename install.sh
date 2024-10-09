@@ -41,10 +41,10 @@ check_and_install_brew_packages() {
   # 确保日志文件目录存在
   mkdir -p ./brew_install_logs
 
-  # 获取安装包数组
+  # 获取需要安装的包的数组
   eval "packages=(\"\${${package_group_name}[@]}\")"
 
-  # 获取通过 Homebrew 安装的包
+  # 获取通过 Homebrew 已安装的包
   installed_packages=($(brew list))
 
   for package in "${packages[@]}"; do
@@ -151,7 +151,7 @@ countdown() {
   local str                               # 用户输入的字符串
   local key_pressed=0                     # 标志是否有按键被按下
 
-  # 开始倒计时       
+  # 开始倒计时
   for ((i = timeout; i > 0; i--)); do
     echo -ne "\r${message} (timeout in $i seconds): "
     if read -t 1 -r -n1 str </dev/tty; then
@@ -244,6 +244,7 @@ OS_TYPE=$(uname)
 
 if [[ $OS_TYPE == "Darwin" ]]; then
   # macOS 逻辑
+  echo -e "\n"
   print_centered_message "检测到 macOS 系统"
 
   # 进入 Documents 目录
@@ -288,21 +289,25 @@ if [[ $OS_TYPE == "Darwin" ]]; then
     gcc ninja wget mas pkg-config
   )
 
-  # 预先判断是否安装 git ruby make llvm bash
-  #!/bin/bash
-
-  # 预先特殊判断软件是否安装。
+  # 预先检查的包
   pre_checked=("git" "ruby" "make" "llvm" "bash" "python")
 
-  # 循环检查每个软件是否已安装
-  for software in "${pre_checked[@]}"; do
-    if brew list $software &>/dev/null; then
-      echo "$software is already installed."
+  # 获取已安装的包
+  installed_packages=($(brew list))
+
+  # 遍历预检查的包
+  for package in "${pre_checked[@]}"; do
+    # 检查包是否已安装
+    if [[ ! " ${installed_packages[*]} " =~ " ${package} " ]]; then
+      # 如果未安装，则进行安装
+      echo "安装 ${package}..."
+      brew install $package
     else
-      echo "$software is not installed. Installing..."
-      brew install $software
+      echo "${package} 已安装."
     fi
   done
+
+  echo -e "\n"
 
   # 临时切换环境变量
   export PATH="/usr/local/bin:$PATH"
@@ -514,7 +519,6 @@ destination="$HOME"
 
 # 对 zsh 进行配置
 copy_config_files_to_home
-
 
 echo -e "\n"
 # 打印提示消息

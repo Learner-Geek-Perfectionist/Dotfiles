@@ -265,7 +265,8 @@ if [[ $OS_TYPE == "Darwin" ]]; then
     curl -O "https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh"
     chmod +x ./Homebrew.sh
     ./Homebrew.sh
-    print_centered_message "\n重新加载 .zprofile 以启动 brew 环境变量 "
+    echo -e "\n"
+    print_centered_message "重新加载 .zprofile 文件以启动 brew 环境变量 "
     # 刷新 brew 配置,启用 brew 环境变量
     source ${HOME}/.zprofile
   fi

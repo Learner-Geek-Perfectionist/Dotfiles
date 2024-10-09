@@ -89,7 +89,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
 
       # 检查包是否已安装
       if printf '%s\n' "${installed_packages[@]}" | grep -q "^$package$"; then
-        echo "$package 已通过 Homebrew 安装。"
+        print_centered_message "$package 已通过 Homebrew 安装。"
         continue
       fi
 
@@ -98,16 +98,16 @@ if [[ $OS_TYPE == "Darwin" ]]; then
       found_path=$(mdfind "$package" | head -n 1)
 
       if [[ -n $found_path ]]; then
-        echo "$package 已通过系统中的 Spotlight 找到，路径为: $found_path"
+        print_centered_message "$package 已通过系统中的 Spotlight 找到，路径为: $found_path"
       else
         echo "$package 未通过 Spotlight 找到，尝试通过 Homebrew 安装..."
         # 尝试通过 Homebrew 安装包
         if brew install "$package"; then
-          echo "$package 安装成功。✅"
+          print_centered_message "$package 安装成功。✅"
         else
-          echo "通过 Homebrew 安装 $package 失败。"
+          print_centered_message "通过 Homebrew 安装 $package 失败。☹️"
           uninstalled_packages+=("$package")
-          echo "$package 安装失败。☹️" >>"$log_file"
+          echo "$package 安装失败。" >>"$log_file"
         fi
       fi
     done

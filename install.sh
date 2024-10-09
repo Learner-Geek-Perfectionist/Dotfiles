@@ -58,7 +58,7 @@ check_and_install_brew_packages() {
 
     # 如果包没有通过 Homebrew 安装，使用 Spotlight 搜索
     echo -e "\n🔎 使用 Spotlight 搜索 $package ...\n"
-    found_path=$(mdfind "$package" | head -n 1)
+    found_path=$(mdfind "$package" 2>/dev/null | head -n 1)
 
     if [[ -n $found_path ]]; then
       print_centered_message "📍 在 Spotlight 中找到 $package\n路径为: $found_path" "false"

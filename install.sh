@@ -67,7 +67,7 @@ check_and_install_brew_packages() {
 
     if [[ -n $found_path ]]; then
       print_centered_message "📍 在 Spotlight 中找到 $package" "false" "false"
-      print_centered_message "路径为: $found_path" "false" "true"
+      print_centered_message "路径为: ➡️ $found_path" "false" "true"
     else
       echo "❌ $package 未通过 Spotlight 找到，尝试通过 Homebrew 安装..."
       # 尝试通过 Homebrew 安装包

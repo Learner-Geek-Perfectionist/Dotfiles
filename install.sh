@@ -61,6 +61,9 @@ if [[ $OS_TYPE == "Darwin" ]]; then
 
   # 刷新 brew 配置,启用 brew 环境变量
   source ${HOME}/.zprofile
+  
+  
+  
 
   print_centered_message "正在安装 macOS 常用的开发工具......"
 
@@ -130,7 +133,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
   }
 
   brew_formulas=(
-    bash gettext llvm msgpack ruby
+    gettext llvm msgpack ruby
     brotli git lpeg ncurses sqlite
     c-ares htop lua neovim tree-sitter
     ca-certificates icu4c luajit node unibilium
@@ -144,6 +147,9 @@ if [[ $OS_TYPE == "Darwin" ]]; then
 
   # 临时切换环境变量
   export PATH="/usr/local/bin:$PATH"
+  
+  # 先安装 git ruby make llvm bash
+  brew install git ruby make llvm bash 
 
   # 安装 brew_formulas 包
   check_and_install_brew_packages "brew_formulas"

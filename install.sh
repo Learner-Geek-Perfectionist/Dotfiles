@@ -300,10 +300,10 @@ if [[ $OS_TYPE == "Darwin" ]]; then
     # 检查包是否已安装
     if [[ ! " ${installed_packages[*]} " =~ " ${package} " ]]; then
       # 如果未安装，则进行安装
-      echo "安装 ${package}..."
+      print_centered_message "安装 ${package}..."
       brew install $package
     else
-      echo "${package} 已安装."
+      print_centered_message "${package} 已安装."
     fi
   done
 

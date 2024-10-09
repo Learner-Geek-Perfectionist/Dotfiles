@@ -34,18 +34,15 @@ OS_TYPE=$(uname)
 if [[ $OS_TYPE == "Darwin" ]]; then
   # macOS 逻辑
   print_centered_message "检测到 macOS 系统"
-  
 
   if ! xcode-select --print-path &>/dev/null; then
-     print_centered_message "Xcode 命令行工具未安装"
-     xcode-select --install
-     # 等待用户完成 Xcode 命令行工具的安装
-     print_centered_message "请手动点击屏幕中的弹窗，选择“安装”，安装完成之后再次运行脚本"
-     print_centered_message "脚本命令：\n(curl -sSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/dotfiles/master/install.sh | bash) && zsh"
-     exit 1
+    print_centered_message "Xcode 命令行工具未安装"
+    xcode-select --install
+    # 等待用户完成 Xcode 命令行工具的安装
+    print_centered_message "请手动点击屏幕中的弹窗，选择“安装”，安装完成之后再次运行脚本"
+    print_centered_message "脚本命令：\n(curl -sSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/dotfiles/master/install.sh | bash) && zsh"
+    exit 1
   fi
-
-  
 
   # 检查 Homebrew 是否已安装
   if command -v brew >/dev/null 2>&1; then
@@ -54,10 +51,10 @@ if [[ $OS_TYPE == "Darwin" ]]; then
     print_centered_message "正在安装 Homebrew..."
     /bin/zsh -c "$(curl -fsSL https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh)"
   fi
-  
+
   # 刷新 brew 配置
   source ${HOME}/.zprofile
-  
+
   print_centered_message "正在安装 macOS 常用的开发工具......"
 
   # 定义函数，接受一个包含包名的数组变量名作为参数
@@ -90,9 +87,13 @@ if [[ $OS_TYPE == "Darwin" ]]; then
       fi
 
       echo "$package 未通过 Homebrew 安装，正在检查 Homebrew 信息..."
-      if (brew info "$package" 2>/dev/null | head -n 3 | grep -q "Not installed"); then
+      brew_info_output=$(brew info "$package" 2>/dev/null)
+      if [[ -z $brew_info_output ]]; then
+        echo "Homebrew 中没有 $package 的信息，无法安装。"
+        uninstalled_packages+=("$package")
+        echo "$package 无法通过 Homebrew 安装。" >>"$log_file"
+      elif echo "$brew_info_output" | grep -q "Not installed"; then
         echo "使用 Spotlight 搜索 $package ..."
-        # 使用 Spotlight 搜索程序路径
         found_path=$(mdfind "kMDItemDisplayName == '$package'wc" | head -n 1)
         if [[ -n $found_path ]]; then
           echo "$package 已通过系统中的 Spotlight 找到，路径为: $found_path"
@@ -108,9 +109,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
           fi
         fi
       else
-        echo "Homebrew 中没有 $package 的信息，无法安装。"
-        uninstalled_packages+=("$package")
-        echo "$package 无法通过 Homebrew 安装。" >>"$log_file"
+        echo "$package 已安装。"
       fi
     done
 
@@ -158,44 +157,42 @@ if [[ $OS_TYPE == "Darwin" ]]; then
   print_centered_message "图形界面安装完成✅"
 
   print_centered_message "通过 uuid 安装 Application"
-  
+
   # 定义一个包含应用UUID的数组
   declare -A apps
   apps=(
-      ["XApp-应用程序完全卸载清理专家"]="2116250207"
-      ["腾讯文档"]="1370780836"
-      ["FastZip - 专业的 RAR 7Z ZIP 解压缩工具"]="1565629813"
-      ["State-管理电脑CPU、温度、风扇、内存、硬盘运行状态"]="1472818562"
-      ["HUAWEI CLOUD WeLink-办公软件"]="1530487795"
+    ["XApp-应用程序完全卸载清理专家"]="2116250207"
+    ["腾讯文档"]="1370780836"
+    ["FastZip - 专业的 RAR 7Z ZIP 解压缩工具"]="1565629813"
+    ["State-管理电脑CPU、温度、风扇、内存、硬盘运行状态"]="1472818562"
+    ["HUAWEI CLOUD WeLink-办公软件"]="1530487795"
   )
-  
+
   # 检查是否已安装mas
-  if ! command -v mas &> /dev/null
-  then
-      echo "mas-cli 未安装。正在通过Homebrew安装..."
-      brew install mas
-      if [ $? -ne 0 ]; then
-          echo "安装mas失败，请手动安装后重试。"
-          exit 1
-      fi
+  if ! command -v mas &>/dev/null; then
+    echo "mas-cli 未安装。正在通过Homebrew安装..."
+    brew install mas
+    if [ $? -ne 0 ]; then
+      echo "安装mas失败，请手动安装后重试。"
+      exit 1
+    fi
   fi
-  
+
   # 登录App Store（如果尚未登录）
-  if ! mas account > /dev/null; then
-      echo "你尚未登录App Store。请先登录。"
-      open -a "App Store"
-      read -p "登录后请按回车继续..."
+  if ! mas account >/dev/null; then
+    echo "你尚未登录App Store。请先登录。"
+    open -a "App Store"
+    read -p "登录后请按回车继续..."
   fi
-  
+
   # 安装应用
-  for app in "${!apps[@]}"
-  do
-      echo "正在安装: $app"
-      mas install ${apps[$app]}
-      echo "$app 安装完成"
+  for app in "${!apps[@]}"; do
+    echo "正在安装: $app"
+    mas install ${apps[$app]}
+    echo "$app 安装完成"
   done
 
-print_centered_message "所有应用安装完成。"
+  print_centered_message "所有应用安装完成。"
 
 elif [[ $OS_TYPE == "Linux" ]]; then
 

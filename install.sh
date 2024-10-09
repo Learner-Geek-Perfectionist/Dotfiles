@@ -36,7 +36,6 @@ if [[ $OS_TYPE == "Darwin" ]]; then
   # 进入 Documents 目录
   cd ~/Documents
 
-
   if ! xcode-select --print-path &>/dev/null; then
     print_centered_message "Xcode 命令行工具未安装"
     xcode-select --install
@@ -175,7 +174,8 @@ if [[ $OS_TYPE == "Darwin" ]]; then
 
   print_centered_message "通过 uuid 安装 Application"
 
-  # 定义一个包含应用UUID的数组
+  # 通过 UUID 安装 Application，但是目前 macOS 15 sequoia 不支持！
+  # 定义一个包含应用 UUID 的数组
   declare -A apps
   apps=(
     ["XApp-应用程序完全卸载清理专家"]="2116250207"
@@ -185,29 +185,29 @@ if [[ $OS_TYPE == "Darwin" ]]; then
     ["HUAWEI CLOUD WeLink-办公软件"]="1530487795"
   )
 
-  # 检查是否已安装mas
-  if ! command -v mas &>/dev/null; then
-    echo "mas-cli 未安装。正在通过Homebrew安装..."
-    brew install mas
-    if [ $? -ne 0 ]; then
-      echo "安装mas失败，请手动安装后重试。"
-      exit 1
-    fi
-  fi
-
-  # 登录App Store（如果尚未登录）
-  if ! mas account >/dev/null; then
-    echo "你尚未登录App Store。请先登录。"
-    open -a "App Store"
-    read -p "登录后请按回车继续..."
-  fi
-
-  # 安装应用
-  for app in "${!apps[@]}"; do
-    echo "正在安装: $app"
-    mas install ${apps[$app]}
-    echo "$app 安装完成"
-  done
+  #  # 检查是否已安装mas
+  #  if ! command -v mas &>/dev/null; then
+  #    echo "mas-cli 未安装。正在通过Homebrew安装..."
+  #    brew install mas
+  #    if [ $? -ne 0 ]; then
+  #      echo "安装mas失败，请手动安装后重试。"
+  #      exit 1
+  #    fi
+  #  fi
+  #
+  #  # 登录App Store（如果尚未登录）
+  #  if ! mas account >/dev/null; then
+  #    echo "你尚未登录App Store。请先登录。"
+  #    open -a "App Store"
+  #    read -p "登录后请按回车继续..."
+  #  fi
+  #
+  #  # 安装应用
+  #  for app in "${!apps[@]}"; do
+  #    echo "正在安装: $app"
+  #    mas install ${apps[$app]}
+  #    echo "$app 安装完成"
+  #  done
 
   print_centered_message "所有应用安装完成。"
 
@@ -291,7 +291,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     sudo dnf group install -y "C Development Tools and Libraries"
     sudo dnf clean all
   else
-    print_centered_message -e "\n不支持的发行版，目前只支持 fedora、ubuntu\n"
+    print_centered_message -e "不支持的发行版，目前只支持 fedora、ubuntu"
   fi
 
 else
@@ -512,3 +512,8 @@ copy_config_files_to_home
 print_centered_message "zsh 配置文件已配置到 Home 目录"
 
 print_centered_message "进入 zsh，准备下载 zsh 插件......"
+
+# 进入 zsh
+zsh
+
+print_centered_message "XApp、腾讯文档、FastZip、State、WeLink 只能通过 App Store 手动安装！！！"

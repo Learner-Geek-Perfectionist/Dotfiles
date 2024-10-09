@@ -342,7 +342,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
   # print_centered_message "通过 uuid 安装 Application"
 
   # 定义一个包含应用 UUID 的数组
-  # declare -A 来声明关联数组（也称为哈希表），在 Bash 4.0 版本中引入的。因此 macOS （的 shell 版本为 3.2.57 ）不支持
+  # declare -A 来声明关联数组（也称为哈希表），在 Bash 4.0 版本中引入的。因此 macOS(的 shell 版本为 3.2.57)不支持。
   # declare -A apps
   # apps=(
   #   ["XApp-应用程序完全卸载清理专家"]="2116250207"

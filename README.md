@@ -10,7 +10,7 @@
 
 2.
 ```
-(curl -sSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/dotfiles/master/install.sh | bash) && zsh
+/bin/zsh -c "$(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/install.sh)"
 ```
 
 

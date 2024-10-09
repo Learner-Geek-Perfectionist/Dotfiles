@@ -1,11 +1,5 @@
 #!/bin/bash
 
-## 当脚本出现错误时，打印出错误信息和发生错误的行号
-#trap 'echo "Error at line $LINENO: $BASH_COMMAND"' ERR
-#
-## 设置脚本在运行中遇到错误时立即退出
-#set -e
-
 # 定义打印 message 的函数
 print_centered_message() {
   local message="$1"
@@ -41,6 +35,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
 
   # 进入 Documents 目录
   cd ~/Documents
+
 
   if ! xcode-select --print-path &>/dev/null; then
     print_centered_message "Xcode 命令行工具未安装"
@@ -102,7 +97,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
       found_path=$(mdfind "$package" | head -n 1)
 
       if [[ -n $found_path ]]; then
-        print_centered_message "$package 已通过系统中的 Spotlight 找到，路径为: \n$found_path" "false"
+        print_centered_message "$package 已通过系统中的 Spotlight，\n 路径为:$found_path" "false"
       else
         echo "$package 未通过 Spotlight 找到，尝试通过 Homebrew 安装..."
         # 尝试通过 Homebrew 安装包
@@ -121,7 +116,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
       echo "以下包未能成功安装或找到，详情请查看 $log_file："
       printf '%s\n' "${uninstalled_packages[@]}"
     else
-      echo "所有包均已成功处理。"
+      print_centered_message "所有包均已成功处理。"
     fi
   }
 

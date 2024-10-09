@@ -296,7 +296,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
   )
 
   # 预先检查的包
-  pre_checked=("git" "ruby" "make" "llvm" "bash" "python")
+  pre_checked=("git" "ruby" "make" "llvm" "bash")
 
   # 获取已安装的包
   installed_packages=($(brew list))

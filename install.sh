@@ -271,7 +271,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
     chmod +x ./Homebrew.sh
     ./Homebrew.sh
     echo -e "\n"
-    print_centered_message "重新加载 .zprofile 文件以启动 brew 环境变量 "
+    print_centered_message "重新加载 .zprofile 文件以启用 brew 环境变量 "
     # 刷新 brew 配置,启用 brew 环境变量
     source ${HOME}/.zprofile
   fi

@@ -26,6 +26,217 @@ print_centered_message() {
   echo "$line"
 }
 
+# 定义 packages 安装函数，接受一个包组(packages group)作为参数
+check_and_install_brew_packages() {
+  local package_group_name="$1"
+  local package
+  local uninstalled_packages=()
+  local timestamp
+  local log_file
+
+  # 生成时间戳和日志文件名
+  timestamp=$(date +"%Y%m%d_%H%M%S")
+  log_file="./brew_install_logs/failed_to_install_$timestamp.txt" # 指定日志文件路径
+
+  # 确保日志文件目录存在
+  mkdir -p ./brew_install_logs
+
+  # 获取安装包数组
+  eval "packages=(\"\${${package_group_name}[@]}\")"
+
+  # 获取通过 Homebrew 安装的包
+  installed_packages=($(brew list))
+
+  for package in "${packages[@]}"; do
+    echo "🔍 检查是否已安装 $package ..."
+
+    # 检查包是否已安装
+    if printf '%s\n' "${installed_packages[@]}" | grep -q "^$package$"; then
+      print_centered_message "🟢 $package 已通过 Homebrew 安装。" "false"
+      continue
+    fi
+
+    # 如果包没有通过 Homebrew 安装，使用 Spotlight 搜索
+    echo -e "\n🔎 使用 Spotlight 搜索 $package ...\n"
+    found_path=$(mdfind "$package" | head -n 1)
+
+    if [[ -n $found_path ]]; then
+      print_centered_message "📍 在 Spotlight 中找到 $package\n路径为: $found_path" "false"
+    else
+      echo "❌ $package 未通过 Spotlight 找到，尝试通过 Homebrew 安装..."
+      # 尝试通过 Homebrew 安装包
+      if brew install "$package"; then
+        print_centered_message "✅ $package 安装成功。" "false"
+      else
+        print_centered_message "☹️ 通过 Homebrew 安装 $package 失败。" "false"
+        uninstalled_packages+=("$package")
+        echo "📝 $package 安装失败。" >>"$log_file"
+      fi
+    fi
+  done
+
+  # 总结结果
+  if [[ ${#uninstalled_packages[@]} -gt 0 ]]; then
+    echo "⚠️ 以下包未能成功安装或找到，详情请查看 $log_file："
+    printf '🚫 %s\n' "${uninstalled_packages[@]}"
+  else
+    print_centered_message "🎉 所有包均已成功处理。"
+  fi
+}
+
+# 定义设置用户密码函数
+set_password_if_needed() {
+  local user=$1
+  local default_password=$2
+  if ! sudo passwd -S "$user" | grep -q ' P '; then
+    echo "用户 $user 的密码未设置，现在将密码设置为 $default_password"
+    echo "$user:$default_password" | sudo chpasswd
+    echo "密码已设置。"
+  else
+    echo "用户 $user 的密码已经存在。"
+  fi
+}
+
+# 定义提示头🔔函数
+prompt_download_fonts() {
+  read -p "是否需要下载字体以支持终端模拟器的渲染？(y/n): " download_confirm </dev/tty
+  if [[ $download_confirm == 'y' ]]; then
+    print_centered_message "正在下载字体......"
+    install_flag=true
+  else
+    print_centered_message "跳过字体下载。"
+  fi
+}
+
+# 定义下载、解压函数
+download_and_extract() {
+  # 压缩包名字
+  local zip_file="$1"
+  # 目录
+  local dest_dir="$2"
+  # 压缩包 URL
+  local repo_url="$3"
+
+  # 检查ZIP文件是否存在，如果不存在则下载
+  if [ ! -f "$zip_file" ]; then
+    print_centered_message "ZIP文件 '$zip_file' 不存在，开始下载..."
+    curl -L -f -o "${zip_file}" "$repo_url"
+    if [ -f "$zip_file" ]; then
+      print_centered_message "ZIP文件 '$zip_file' 下载完成✅"
+    else
+      print_centered_message "ZIP文件 '$zip_file' 下载失败☹️"
+    fi
+  else
+    echo "ZIP文件 '$zip_file' 已存在，跳过下载。"
+  fi
+
+  # 解压ZIP文件
+  if [ -f "$zip_file" ]; then
+    if [ ! -d "$dest_dir" ]; then
+      echo "开始解压ZIP文件 '$zip_file' 到目录 '$dest_dir'..."
+      unzip -o "$zip_file"
+    else
+      echo "目录 '$dest_dir' 已存在，跳过解压。"
+    fi
+  else
+    echo "ZIP文件 '$zip_file' 不存在或损坏，无法进行解压。"
+  fi
+}
+
+# 定义倒计时函数
+countdown() {
+  local timeout=${1:-60}                  # 默认倒计时时间为60秒，可通过函数参数定制
+  local message=${2:-"Waiting for input"} # 默认提示信息
+  local str                               # 用户输入的字符串
+  local key_pressed=0                     # 标志是否有按键被按下
+
+  # 开始倒计时       
+  for ((i = timeout; i > 0; i--)); do
+    echo -ne "\r${message} (timeout in $i seconds): "
+    if read -t 1 -r -n1 str </dev/tty; then
+      key_pressed=1 # 如果用户提前输入，则设置标志并跳出循环
+      break
+    fi
+  done
+
+  # 检查用户是否输入了内容或者时间是否超时
+  if [[ $key_pressed -eq 0 ]]; then
+    echo -e "\nTime out. No input received.\n"
+    exit 1 # 使用 exit 1 终止脚本，表示因超时而结束
+  else
+    echo -e "\nUser input received: '$str'\n"
+    return 0 # 返回 0 表示成功接收到用户输入
+  fi
+}
+
+# 定义安装字体函数
+install_fonts() {
+  # 检查是否执行安装
+  if [ "$install_flag" != "true" ]; then
+    print_centered_message "安装标志设置为 'false'，跳过字体安装。"
+    return 0 # 如果不安装，则正常退出
+  fi
+
+  # 打印提示消息
+  print_centered_message "正在安装字体......"
+
+  # 确认字体源目录存在
+  if [ ! -d "$font_source" ]; then
+    echo "字体目录 '$font_source' 不存在，请确认当前目录下有 ${dest_Fonts} 文件夹。"
+    exit 1
+  fi
+
+  # 创建目标目录如果它不存在
+  mkdir -p "$font_dest"
+
+  # 复制字体文件到目标目录
+  print_centered_message "正在复制字体文件到 $font_dest..."
+
+  # 使用 find 来查找字体源目录中的字体文件，排除 README 文件
+  find "$font_source" -type f \( -iname "*.ttf" -o -iname "*.otf" \) ! -iname "README*" -exec cp -v {} "$font_dest" \;
+
+  # 更新字体缓存
+  print_centered_message "更新字体缓存..."
+  if [ "$OS_TYPE" = "Darwin" ]; then
+    # macOS不需要手动更新字体缓存
+    print_centered_message "\n在 macOS 上，字体缓存将自动更新。\n"
+  else
+    # Linux
+    print_centered_message "\n在 Linux 上，刷新字体缓存\n"
+    fc-cache -fv
+  fi
+
+  # 打印提示消息
+  print_centered_message "字体安装完成。✅"
+}
+
+# 进入目录并复制配置文件到用户的 home 目录的函数
+copy_config_files_to_home() {
+  print_centered_message "正在配置......"
+  local dir_name="${dest_Dotfiles}"
+  local files_to_copy=(".zshrc" ".zprofile" ".config")
+
+  # 进入仓库目录
+  if [ -d "$dir_name" ]; then
+    echo "已进入 '$dir_name' 目录。"
+    cd "$dir_name"
+  else
+    echo "目录 '$dir_name' 不存在，无法进入。"
+    return 1 # 返回非零状态表示失败
+  fi
+
+  # 循环遍历每个文件和目录
+  for item in "${files_to_copy[@]}"; do
+    if [ -e "$item" ]; then
+      echo "正在复制 $item 到 $destination"
+      # 复制文件或目录到 home 目录，如果存在则替换
+      cp -r "$item" "$destination"
+    else
+      echo "$item 不存在，跳过复制。"
+    fi
+  done
+}
+
 # 获取当前操作系统类型
 OS_TYPE=$(uname)
 
@@ -61,66 +272,8 @@ if [[ $OS_TYPE == "Darwin" ]]; then
 
   print_centered_message "正在安装 macOS 常用的开发工具......"
 
-  # 定义函数，接受一个包含包名的数组变量名作为参数
-  check_and_install_brew_packages() {
-    local package_group_name="$1"
-    local package
-    local uninstalled_packages=()
-    local timestamp
-    local log_file
-
-    # 生成时间戳和日志文件名
-    timestamp=$(date +"%Y%m%d_%H%M%S")
-    log_file="./brew_install_logs/failed_to_install_$timestamp.txt" # 指定日志文件路径
-
-    # 确保日志文件目录存在
-    mkdir -p ./brew_install_logs
-
-    # 获取安装包数组
-    eval "packages=(\"\${${package_group_name}[@]}\")"
-
-    # 获取通过 Homebrew 安装的包
-    installed_packages=($(brew list))
-
-    for package in "${packages[@]}"; do
-      echo "检查是否已安装 $package ..."
-
-      # 检查包是否已安装
-      if printf '%s\n' "${installed_packages[@]}" | grep -q "^$package$"; then
-        print_centered_message "$package 已通过 Homebrew 安装。" "false"
-        continue
-      fi
-
-      # 如果包没有通过 Homebrew 安装，使用 Spotlight 搜索
-      echo -e "\n使用 Spotlight 搜索 $package ...\n"
-      found_path=$(mdfind "$package" | head -n 1)
-
-      if [[ -n $found_path ]]; then
-        print_centered_message "在 Spotlight 中 找到 $package\n 路径为:$found_path" "false"
-      else
-        echo "$package 未通过 Spotlight 找到，尝试通过 Homebrew 安装..."
-        # 尝试通过 Homebrew 安装包
-        if brew install "$package"; then
-          print_centered_message "$package 安装成功。✅" "false"
-        else
-          print_centered_message "通过 Homebrew 安装 $package 失败。☹️" "false"
-          uninstalled_packages+=("$package")
-          echo "$package 安装失败。" >>"$log_file"
-        fi
-      fi
-    done
-
-    # 总结结果
-    if [[ ${#uninstalled_packages[@]} -gt 0 ]]; then
-      echo "以下包未能成功安装或找到，详情请查看 $log_file："
-      printf '%s\n' "${uninstalled_packages[@]}"
-    else
-      print_centered_message "所有包均已成功处理。"
-    fi
-  }
-
   brew_formulas=(
-    gettext  msgpack ruby
+    gettext msgpack ruby
     brotli git lpeg ncurses sqlite
     c-ares htop lua neovim tree-sitter
     ca-certificates icu4c luajit node unibilium
@@ -222,17 +375,6 @@ elif [[ $OS_TYPE == "Linux" ]]; then
   read -p "是否需要创建用户？(y/n): " create_confirm </dev/tty
 
   # 检查并设置密码的函数
-  set_password_if_needed() {
-    local user=$1
-    local default_password=$2
-    if ! sudo passwd -S "$user" | grep -q ' P '; then
-      echo "用户 $user 的密码未设置，现在将密码设置为 $default_password"
-      echo "$user:$default_password" | sudo chpasswd
-      echo "密码已设置。"
-    else
-      echo "用户 $user 的密码已经存在。"
-    fi
-  }
 
   # 主逻辑
   if [[ $create_confirm == 'y' ]]; then
@@ -301,46 +443,11 @@ fi
 # 打印提示消息
 print_centered_message "按任意键继续，否则超时停止"
 
-countdown() {
-  local timeout=${1:-60}                  # 默认倒计时时间为60秒，可通过函数参数定制
-  local message=${2:-"Waiting for input"} # 默认提示信息
-  local str                               # 用户输入的字符串
-  local key_pressed=0                     # 标志是否有按键被按下
-
-  # 开始倒计时
-  for ((i = timeout; i > 0; i--)); do
-    echo -ne "\r${message} (timeout in $i seconds): "
-    if read -t 1 -r -n1 str </dev/tty; then
-      key_pressed=1 # 如果用户提前输入，则设置标志并跳出循环
-      break
-    fi
-  done
-
-  # 检查用户是否输入了内容或者时间是否超时
-  if [[ $key_pressed -eq 0 ]]; then
-    echo -e "\nTime out. No input received.\n"
-    exit 1 # 使用 exit 1 终止脚本，表示因超时而结束
-  else
-    echo -e "\nUser input received: '$str'\n"
-    return 0 # 返回 0 表示成功接收到用户输入
-  fi
-}
-
 # 打印倒计时提示
-countdown "60"
+#countdown "60" # 根据需求，是否倒计时？
 
+# 定义是否安装字体的标志符
 install_flag=false
-
-# 提示用户是否需要下载字体
-prompt_download_fonts() {
-  read -p "是否需要下载字体以支持终端模拟器的渲染？(y/n): " download_confirm </dev/tty
-  if [[ $download_confirm == 'y' ]]; then
-    print_centered_message "正在下载字体......"
-    install_flag=true
-  else
-    print_centered_message "跳过字体下载。"
-  fi
-}
 
 # 打印提示消息
 print_centered_message "\n⏰ 注意：某些终端模拟器可能需要特定的字体以正确显示字符。如果你正在使用的终端模拟器对字体渲染有特殊要求，或者你希望确保字符显示的美观和一致性，可能需要下载和安装额外的字体。\n\n下载字体可以改善字符显示效果，特别是对于多语言支持或特殊符号的显示。🌐\n\n\t1️⃣ 在虚拟机中运行时，字体渲染依赖虚拟机特定的字体，因此需要安装字体。\n\t2️⃣ 在 Docker 容器（或 WSL）中运行时，通常不需要在容器（或 WSL）内安装字体，但应确保宿主机已安装适当的字体以支持任何可能的字体渲染需求。\n\n‼️ 宿主机一般需要良好的字体支持来确保所有应用和终端模拟器都能正常渲染字符。\n"
@@ -358,41 +465,6 @@ zip_Dotfiles_file="Dotfiles-master.zip"
 
 dest_Fonts="Fonts-master"
 dest_Dotfiles="Dotfiles-master"
-
-# 定义下载和解压函数
-download_and_extract() {
-  # 压缩包名字
-  local zip_file="$1"
-  # 目录
-  local dest_dir="$2"
-  # 压缩包 URL
-  local repo_url="$3"
-
-  # 检查ZIP文件是否存在，如果不存在则下载
-  if [ ! -f "$zip_file" ]; then
-    print_centered_message "ZIP文件 '$zip_file' 不存在，开始下载..."
-    curl -L -f -o "${zip_file}" "$repo_url"
-    if [ -f "$zip_file" ]; then
-      print_centered_message "ZIP文件 '$zip_file' 下载完成✅"
-    else
-      print_centered_message "ZIP文件 '$zip_file' 下载失败☹️"
-    fi
-  else
-    echo "ZIP文件 '$zip_file' 已存在，跳过下载。"
-  fi
-
-  # 解压ZIP文件
-  if [ -f "$zip_file" ]; then
-    if [ ! -d "$dest_dir" ]; then
-      echo "开始解压ZIP文件 '$zip_file' 到目录 '$dest_dir'..."
-      unzip -o "$zip_file"
-    else
-      echo "目录 '$dest_dir' 已存在，跳过解压。"
-    fi
-  else
-    echo "ZIP文件 '$zip_file' 不存在或损坏，无法进行解压。"
-  fi
-}
 
 # 打印提示消息
 print_centered_message "Dotfile 完成下载和解压"
@@ -428,47 +500,6 @@ else
   font_dest="$HOME/.local/share/fonts"
 fi
 
-# 定义一个函数来复制字体文件并更新字体缓存
-install_fonts() {
-  # 检查是否执行安装
-  if [ "$install_flag" != "true" ]; then
-    print_centered_message "安装标志设置为 'false'，跳过字体安装。"
-    return 0 # 如果不安装，则正常退出
-  fi
-
-  # 打印提示消息
-  print_centered_message "正在安装字体......"
-
-  # 确认字体源目录存在
-  if [ ! -d "$font_source" ]; then
-    echo "字体目录 '$font_source' 不存在，请确认当前目录下有 ${dest_Fonts} 文件夹。"
-    exit 1
-  fi
-
-  # 创建目标目录如果它不存在
-  mkdir -p "$font_dest"
-
-  # 复制字体文件到目标目录
-  print_centered_message "正在复制字体文件到 $font_dest..."
-
-  # 使用 find 来查找字体源目录中的字体文件，排除 README 文件
-  find "$font_source" -type f \( -iname "*.ttf" -o -iname "*.otf" \) ! -iname "README*" -exec cp -v {} "$font_dest" \;
-
-  # 更新字体缓存
-  print_centered_message "更新字体缓存..."
-  if [ "$OS_TYPE" = "Darwin" ]; then
-    # macOS不需要手动更新字体缓存
-    print_centered_message "\n在 macOS 上，字体缓存将自动更新。\n"
-  else
-    # Linux
-    print_centered_message "\n在 Linux 上，刷新字体缓存\n"
-    fc-cache -fv
-  fi
-
-  # 打印提示消息
-  print_centered_message "字体安装完成。✅"
-}
-
 # 安装字体
 install_fonts
 
@@ -477,33 +508,6 @@ print_centered_message "接下来配置 zsh......"
 
 # 定义 zsh 的配置文件目录
 destination="$HOME"
-
-# 进入目录并复制配置文件到用户的 home 目录的函数
-copy_config_files_to_home() {
-  print_centered_message "正在配置......"
-  local dir_name="${dest_Dotfiles}"
-  local files_to_copy=(".zshrc" ".zprofile" ".config")
-
-  # 进入仓库目录
-  if [ -d "$dir_name" ]; then
-    echo "已进入 '$dir_name' 目录。"
-    cd "$dir_name"
-  else
-    echo "目录 '$dir_name' 不存在，无法进入。"
-    return 1 # 返回非零状态表示失败
-  fi
-
-  # 循环遍历每个文件和目录
-  for item in "${files_to_copy[@]}"; do
-    if [ -e "$item" ]; then
-      echo "正在复制 $item 到 $destination"
-      # 复制文件或目录到 home 目录，如果存在则替换
-      cp -r "$item" "$destination"
-    else
-      echo "$item 不存在，跳过复制。"
-    fi
-  done
-}
 
 # 对 zsh 进行配置
 copy_config_files_to_home

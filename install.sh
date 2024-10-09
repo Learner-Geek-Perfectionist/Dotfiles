@@ -30,7 +30,6 @@ print_centered_message() {
 
 # 获取当前操作系统类型
 OS_TYPE=$(uname)
-echo $OS_TYPE
 
 if [[ $OS_TYPE == "Darwin" ]]; then
   # macOS 逻辑
@@ -79,44 +78,37 @@ if [[ $OS_TYPE == "Darwin" ]]; then
     # 确保日志文件目录存在
     mkdir -p ./brew_install_logs
 
-    # 使用间接扩展访问数组
+    # 获取安装包数组
     eval "packages=(\"\${${package_group_name}[@]}\")"
 
-    # 获取已安装的 Homebrew 包列表，存入数组
-    IFS=$'\n' read -d '' -r -a installed_packages < <(brew list && printf '\0')
+    # 获取通过 Homebrew 安装的包
+    installed_packages=($(brew list))
 
     for package in "${packages[@]}"; do
       echo "检查是否已安装 $package ..."
 
+      # 检查包是否已安装
       if printf '%s\n' "${installed_packages[@]}" | grep -q "^$package$"; then
         echo "$package 已通过 Homebrew 安装。"
         continue
       fi
 
-      echo "$package 未通过 Homebrew 安装，正在检查 Homebrew 信息..."
-      brew_info_output=$(brew info "$package" 2>/dev/null)
-      if [[ -z $brew_info_output ]]; then
-        echo "Homebrew 中没有 $package 的信息，无法安装。"
-        uninstalled_packages+=("$package")
-        echo "$package 无法通过 Homebrew 安装。" >>"$log_file"
-      elif echo "$brew_info_output" | grep -q "Not installed"; then
-        echo "使用 Spotlight 搜索 $package ..."
-        found_path=$(mdfind "kMDItemDisplayName == '$package'wc" | head -n 1)
-        if [[ -n $found_path ]]; then
-          echo "$package 已通过系统中的 Spotlight 找到，路径为: $found_path"
-        else
-          echo "$package 未通过 Spotlight 找到，尝试通过 Homebrew 安装..."
-          if brew install "$package"; then
-            print_centered_message "$package 安装成功。✅"
-          else
-            echo "通过 Homebrew 安装 $package 失败。"
-            uninstalled_packages+=("$package")
-            print_centered_message "$package 安装失败。☹️"
-            echo "$package 安装失败。☹️" >>"$log_file"
-          fi
-        fi
+      # 如果包没有通过 Homebrew 安装，使用 Spotlight 搜索
+      echo "使用 Spotlight 搜索 $package ..."
+      found_path=$(mdfind "$package" | head -n 1)
+
+      if [[ -n $found_path ]]; then
+        echo "$package 已通过系统中的 Spotlight 找到，路径为: $found_path"
       else
-        echo "$package 已安装。"
+        echo "$package 未通过 Spotlight 找到，尝试通过 Homebrew 安装..."
+        # 尝试通过 Homebrew 安装包
+        if brew install "$package"; then
+          echo "$package 安装成功。✅"
+        else
+          echo "通过 Homebrew 安装 $package 失败。"
+          uninstalled_packages+=("$package")
+          echo "$package 安装失败。☹️" >>"$log_file"
+        fi
       fi
     done
 
@@ -146,7 +138,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
   #!/bin/bash
 
   # 预先特殊判断软件是否安装。
-  pre_checked=("git" "ruby" "make" "llvm" "bash")
+  pre_checked=("git" "ruby" "make" "llvm" "bash" "python")
 
   # 循环检查每个软件是否已安装
   for software in "${pre_checked[@]}"; do

@@ -18,9 +18,12 @@ print_centered_message() {
     echo "$line"
   fi
 
-  # 计算并居中打印消息
-  local padded_message="$(printf '%*s' $(((cols + ${#message}) / 2)) "$message")"
-  echo -e "$padded_message"
+  # 计算居中的空格数
+  local pad_length=$(((cols - ${#message}) / 2))
+
+  # 打印居中的消息
+  printf "%${pad_length}s" '' # 打印左边的空格以居中对齐
+  echo "$message"
 
   if [[ $double_flag == "true" ]]; then
     # 如果是 true，执行打印下边框的操作
@@ -64,7 +67,7 @@ check_and_install_brew_packages() {
 
     if [[ -n $found_path ]]; then
       print_centered_message "📍 在 Spotlight 中找到 $package" "false" "false"
-      print_centered_message "路径为: $found_path" "false" 
+      print_centered_message "路径为: $found_path" "false" "true"
     else
       echo "❌ $package 未通过 Spotlight 找到，尝试通过 Homebrew 安装..."
       # 尝试通过 Homebrew 安装包

@@ -512,10 +512,10 @@ print_centered_message "Dotfile 完成下载和解压"
 font_source="./${dest_Fonts}/fonts"
 # 根据操作系统设置字体的安装目录
 if [[ "$(uname)" == "Darwin" ]]; then
-  # macOS 用户目录，通常不需要sudo权限
+  # macOS 用户目录，通常不需要 sudo 权限
   font_dest="$HOME/Library/Fonts"
 else
-  # Linux 用户目录，通常不需要sudo权限
+  # Linux 用户目录，通常不需要 sudo 权限
   font_dest="$HOME/.local/share/fonts"
 fi
 

@@ -19,7 +19,7 @@ print_centered_message() {
   # 使用while循环和read命令来正确处理包含\n的字符串
   while IFS= read -r single_line || [[ -n $single_line ]]; do
     local padding=$(((cols - ${#single_line}) / 2))
-    printf "%${padding}s%s\n" "" "$single_line"
+    printf "%${padding}s%b\n" "" "$single_line"
   done <<<"$message"
 
   # 打印下边框

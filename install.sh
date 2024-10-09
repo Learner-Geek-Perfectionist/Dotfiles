@@ -16,15 +16,20 @@ print_centered_message() {
     echo "$line"
   fi
 
-  # 使用while循环和read命令来正确处理包含\n的字符串
+  # 使用 while 循环和 read 命令来正确处理包含 \n 的字符串
   while IFS= read -r single_line || [[ -n $single_line ]]; do
     local padding=$(((cols - ${#single_line}) / 2))
+    # 使用 %b 来正确处理包含转义字符的字符串
     printf "%${padding}s%b\n" "" "$single_line"
-  done <<<"$message"
+  done <<< "$message"
 
   # 打印下边框
   echo "$line"
 }
+
+# 示例使用
+message="📍 在 Spotlight 中找到 $package\n路径为: $found_path"
+print_centered_message "$message" "false"
 
 # 定义 packages 安装函数，接受一个包组(packages group)作为参数
 check_and_install_brew_packages() {
@@ -529,3 +534,11 @@ print_centered_message "进入 zsh，准备下载 zsh 插件......"
 # 进入 zsh
 /bin/zsh
 
+# 进入 zsh
+/bin/zsh
+
+if [ "$SHELL" = "/bin/zsh" ]; then
+    print_centered_message "已经入zsh shell。"
+fi
+
+print_centered_message "XApp、腾讯文档、FastZip、State、WeLink 只能通过 App Store 手动安装！！！"

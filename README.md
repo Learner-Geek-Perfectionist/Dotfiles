@@ -4,7 +4,7 @@
 ```
  git clone --depth 1 git@github.com:Learner-Geek-Perfectionist/dotfiles.git
  cd Dotfiles
- chmod +x install.sh
+ chmod +x ./install.sh
  ./install.sh
 ```
 

@@ -149,7 +149,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
   pre_checked=("git" "ruby" "make" "llvm" "bash")
 
   # 循环检查每个软件是否已安装
-  for software in "${software_list[@]}"; do
+  for software in "${pre_checked[@]}"; do
     if brew list $software &>/dev/null; then
       echo "$software is already installed."
     else

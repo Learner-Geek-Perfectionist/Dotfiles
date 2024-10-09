@@ -285,7 +285,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
     cmake-docs libsodium lz4 pcre2 xz
     fastfetch libuv lzip z3
     fd libvterm make readline zstd
-    fzf libyaml mpdecimal ripgrep
+    fzf libyaml mpdecimal ripgrep go
     gcc ninja wget mas pkg-config
   )
 
@@ -527,6 +527,6 @@ print_centered_message "zsh 配置文件已配置到 Home 目录"
 print_centered_message "进入 zsh，准备下载 zsh 插件......"
 
 # 进入 zsh
-zsh
+/bin/zsh
 
 print_centered_message "XApp、腾讯文档、FastZip、State、WeLink 只能通过 App Store 手动安装！！！"

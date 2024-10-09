@@ -529,10 +529,3 @@ print_centered_message "进入 zsh，准备下载 zsh 插件......"
 # 进入 zsh
 /bin/zsh
 
-if [ "$SHELL" = "/bin/zsh" ]; then
-    print_centered_message "已经入zsh shell。"
-fi
-
-echo "XApp、腾讯文档、FastZip、State、WeLink 只能通过 App Store 手动安装！！！"
-
-exit

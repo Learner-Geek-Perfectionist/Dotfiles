@@ -120,7 +120,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
   }
 
   brew_formulas=(
-    gettext llvm msgpack ruby
+    gettext  msgpack ruby
     brotli git lpeg ncurses sqlite
     c-ares htop lua neovim tree-sitter
     ca-certificates icu4c luajit node unibilium

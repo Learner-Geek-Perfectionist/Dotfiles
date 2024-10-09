@@ -1,12 +1,10 @@
 #!/bin/bash
 
-# 定义打印 message 的函数
+# 定义打印居中消息的函数
 print_centered_message() {
   local message="$1"
-  local single_flag="true"
-  local double_flag="true"
-  single_flag="$2"
-  double_flag="$3"
+  local single_flag="${2:-true}" # 如果没有提供第二个参数，默认为 true
+  local double_flag="${3:-true}" # 如果没有提供第三个参数，默认为 true
   local cols=$(tput cols)
   local line=''
 

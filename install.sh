@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# 当脚本出现错误时，打印出错误信息和发生错误的行号
-trap 'echo "Error at line $LINENO: $BASH_COMMAND"' ERR
-
-# 设置脚本在运行中遇到错误时立即退出
-set -e
+## 当脚本出现错误时，打印出错误信息和发生错误的行号
+#trap 'echo "Error at line $LINENO: $BASH_COMMAND"' ERR
+#
+## 设置脚本在运行中遇到错误时立即退出
+#set -e
 
 # 定义打印 message 的函数
 print_centered_message() {
@@ -30,6 +30,7 @@ print_centered_message() {
 
 # 获取当前操作系统类型
 OS_TYPE=$(uname)
+echo $OS_TYPE
 
 if [[ $OS_TYPE == "Darwin" ]]; then
   # macOS 逻辑
@@ -43,7 +44,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
     xcode-select --install
     # 等待用户完成 Xcode 命令行工具的安装
     print_centered_message "请手动点击屏幕中的弹窗，选择“安装”，安装完成之后再次运行脚本"
-    print_centered_message "脚本命令：\n(curl -sSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/dotfiles/master/install.sh | bash) && zsh"
+    print_centered_message "脚本命令：\n \(curl -sSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/dotfiles/master/install.sh | bash\) && zsh"
     exit 1
   fi
 
@@ -52,7 +53,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
     print_centered_message "Homebrew 已经安装，跳过安装步骤。"
   else
     print_centered_message "正在安装 Homebrew..."
-#    /bin/zsh -c "$(curl -fsSL https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh)"
+    #    /bin/zsh -c "$(curl -fsSL https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh)"
     curl -O "https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh"
     chmod +x ./Homebrew.sh
     ./Homebrew.sh
@@ -60,11 +61,6 @@ if [[ $OS_TYPE == "Darwin" ]]; then
     # 刷新 brew 配置,启用 brew 环境变量
     source ${HOME}/.zprofile
   fi
-
-
-  
-  
-  
 
   print_centered_message "正在安装 macOS 常用的开发工具......"
 
@@ -146,10 +142,22 @@ if [[ $OS_TYPE == "Darwin" ]]; then
     gcc ninja wget mas pkg-config
   )
 
+  # 预先判断是否安装 git ruby make llvm bash
+  #!/bin/bash
 
-  # 先安装 git ruby make llvm bash
-  brew install git ruby make llvm bash 
-  
+  # 预先特殊判断软件是否安装。
+  pre_checked=("git" "ruby" "make" "llvm" "bash")
+
+  # 循环检查每个软件是否已安装
+  for software in "${software_list[@]}"; do
+    if brew list $software &>/dev/null; then
+      echo "$software is already installed."
+    else
+      echo "$software is not installed. Installing..."
+      brew install $software
+    fi
+  done
+
   # 临时切换环境变量
   export PATH="/usr/local/bin:$PATH"
 

@@ -3,8 +3,7 @@
 # 定义打印 message 的函数
 print_centered_message() {
   local message="$1"
-  local single_flag="true"
-  single_flag="$2"
+  local single_flag="$2"
   local cols=$(tput cols)
   local line=''
 
@@ -18,9 +17,12 @@ print_centered_message() {
     echo "$line"
   fi
 
-  # 计算并居中打印消息
-  local padded_message="$(printf '%*s' $(((cols + ${#message}) / 2)) "$message")"
-  echo -e "$padded_message"
+  # 处理每一行文本，确保换行字符的每一行都居中
+  IFS=$'\n' # 设置IFS为换行符
+  for single_line in $message; do
+    local padding=$(((cols - ${#single_line}) / 2))
+    printf "%${padding}s%s\n" "" "$single_line"
+  done
 
   # 打印下边框
   echo "$line"
@@ -452,7 +454,7 @@ fi
 print_centered_message "按任意键继续，否则超时停止"
 
 # 打印倒计时提示
-#countdown "60" # 根据需求，是否倒计时？
+#countdown "60" # 根据需求，是否倒计时。
 
 # 定义是否安装字体的标志符
 install_flag=false

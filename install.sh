@@ -1,8 +1,12 @@
 #!/bin/bash
 
+# 定义打印 message 的函数
 print_centered_message() {
   local message="$1"
-  local single_flag="$2"
+  local single_flag="true"
+  local double_flag="true"
+  single_flag="$2"
+  double_flag="$3"
   local cols=$(tput cols)
   local line=''
 
@@ -16,20 +20,15 @@ print_centered_message() {
     echo "$line"
   fi
 
-  # 使用 while 循环和 read 命令来正确处理包含 \n 的字符串
-  while IFS= read -r single_line || [[ -n $single_line ]]; do
-    local padding=$(((cols - ${#single_line}) / 2))
-    # 使用 %b 来正确处理包含转义字符的字符串
-    printf "%${padding}s%b\n" "" "$single_line"
-  done <<< "$message"
+  # 计算并居中打印消息
+  local padded_message="$(printf '%*s' $(((cols + ${#message}) / 2)) "$message")"
+  echo -e "$padded_message"
 
-  # 打印下边框
-  echo "$line"
+  if [[ $single_flag == "true" ]]; then
+    # 如果是 true，执行打印下边框的操作
+    echo "$line"
+  fi
 }
-
-# 示例使用
-message="📍 在 Spotlight 中找到 $package\n路径为: $found_path"
-print_centered_message "$message" "false"
 
 # 定义 packages 安装函数，接受一个包组(packages group)作为参数
 check_and_install_brew_packages() {
@@ -66,7 +65,8 @@ check_and_install_brew_packages() {
     found_path=$(mdfind "$package" 2>/dev/null | head -n 1)
 
     if [[ -n $found_path ]]; then
-      print_centered_message "📍 在 Spotlight 中找到 $package\n路径为: $found_path" "false"
+      print_centered_message "📍 在 Spotlight 中找到 $package" "false" "false"
+      print_centered_message "路径为: $found_path" "false" "false"
     else
       echo "❌ $package 未通过 Spotlight 找到，尝试通过 Homebrew 安装..."
       # 尝试通过 Homebrew 安装包
@@ -538,7 +538,7 @@ print_centered_message "进入 zsh，准备下载 zsh 插件......"
 /bin/zsh
 
 if [ "$SHELL" = "/bin/zsh" ]; then
-    print_centered_message "已经入zsh shell。"
+  print_centered_message "已经入zsh shell。"
 fi
 
 print_centered_message "XApp、腾讯文档、FastZip、State、WeLink 只能通过 App Store 手动安装！！！"

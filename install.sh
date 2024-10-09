@@ -23,7 +23,7 @@ print_centered_message() {
 
   # 打印居中的消息
   printf "%${pad_length}s" '' # 打印左边的空格以居中对齐
-  echo "$message"
+  echo -e "$message"
 
   if [[ $double_flag == "true" ]]; then
     # 如果是 true，执行打印下边框的操作
@@ -315,8 +315,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
 
   echo -e "\n"
 
-  # 临时切换环境变量
-  export PATH="/usr/local/bin:$PATH"
+  
 
   # 安装 brew_formulas 包
   check_and_install_brew_packages "brew_formulas"
@@ -455,7 +454,7 @@ else
 fi
 
 # 打印提示消息
-print_centered_message "按任意键继续，否则超时停止"
+# print_centered_message "按任意键继续，否则超时停止"
 
 # 打印倒计时提示
 #countdown "60" # 根据需求，是否倒计时。

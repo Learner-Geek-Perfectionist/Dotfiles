@@ -342,14 +342,15 @@ if [[ $OS_TYPE == "Darwin" ]]; then
   # print_centered_message "通过 uuid 安装 Application"
 
   # 定义一个包含应用 UUID 的数组
-  declare -A apps
-  apps=(
-    ["XApp-应用程序完全卸载清理专家"]="2116250207"
-    ["腾讯文档"]="1370780836"
-    ["FastZip - 专业的 RAR 7Z ZIP 解压缩工具"]="1565629813"
-    ["State-管理电脑CPU、温度、风扇、内存、硬盘运行状态"]="1472818562"
-    ["HUAWEI CLOUD WeLink-办公软件"]="1530487795"
-  )
+  # declare -A 来声明关联数组（也称为哈希表），在 Bash 4.0 版本中引入的。因此 macOS （的 shell 版本为 3.2.57 ）不支持
+  # declare -A apps
+  # apps=(
+  #   ["XApp-应用程序完全卸载清理专家"]="2116250207"
+  #   ["腾讯文档"]="1370780836"
+  #   ["FastZip - 专业的 RAR 7Z ZIP 解压缩工具"]="1565629813"
+  #   ["State-管理电脑CPU、温度、风扇、内存、硬盘运行状态"]="1472818562"
+  #   ["HUAWEI CLOUD WeLink-办公软件"]="1530487795"
+  # )
 
   #  # 检查是否已安装mas
   #  if ! command -v mas &>/dev/null; then

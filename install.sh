@@ -35,7 +35,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
   # macOS 逻辑
   print_centered_message "检测到 macOS 系统"
 
-  # 进入 目录
+  # 进入 Documents 目录
   cd ~/Documents
 
   if ! xcode-select --print-path &>/dev/null; then

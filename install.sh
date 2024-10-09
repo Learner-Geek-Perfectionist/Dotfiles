@@ -145,11 +145,12 @@ if [[ $OS_TYPE == "Darwin" ]]; then
     gcc ninja wget mas pkg-config
   )
 
-  # 临时切换环境变量
-  export PATH="/usr/local/bin:$PATH"
-  
+
   # 先安装 git ruby make llvm bash
   brew install git ruby make llvm bash 
+  
+  # 临时切换环境变量
+  export PATH="/usr/local/bin:$PATH"
 
   # 安装 brew_formulas 包
   check_and_install_brew_packages "brew_formulas"

@@ -58,6 +58,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
     ./Homebrew.sh
   fi
 
+  print_centered_message "重新刷新 .zprofile "
 
   # 刷新 brew 配置,启用 brew 环境变量
   source ${HOME}/.zprofile

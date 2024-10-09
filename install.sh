@@ -9,6 +9,8 @@
 # 定义打印 message 的函数
 print_centered_message() {
   local message="$1"
+  local single_flag="true";
+  single_flag="$2"
   local cols=$(tput cols)
   local line=''
 
@@ -17,8 +19,10 @@ print_centered_message() {
     line+='-'
   done
 
-  # 打印上边框
+  if [[ $single_flag == "true" ]]; then
+  # 如果是 true，执行打印上边框的操作
   echo "$line"
+  fi
 
   # 计算并居中打印消息
   local padded_message="$(printf '%*s' $(((cols + ${#message}) / 2)) "$message")"
@@ -89,7 +93,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
 
       # 检查包是否已安装
       if printf '%s\n' "${installed_packages[@]}" | grep -q "^$package$"; then
-        print_centered_message "$package 已通过 Homebrew 安装。"
+        print_centered_message "$package 已通过 Homebrew 安装。" "false"
         continue
       fi
 
@@ -98,14 +102,14 @@ if [[ $OS_TYPE == "Darwin" ]]; then
       found_path=$(mdfind "$package" | head -n 1)
 
       if [[ -n $found_path ]]; then
-        print_centered_message "$package 已通过系统中的 Spotlight 找到，路径为: $found_path"
+        print_centered_message "$package 已通过系统中的 Spotlight 找到，路径为: $found_path" "false"
       else
         echo "$package 未通过 Spotlight 找到，尝试通过 Homebrew 安装..."
         # 尝试通过 Homebrew 安装包
         if brew install "$package"; then
-          print_centered_message "$package 安装成功。✅"
+          print_centered_message "$package 安装成功。✅" "false"
         else
-          print_centered_message "通过 Homebrew 安装 $package 失败。☹️"
+          print_centered_message "通过 Homebrew 安装 $package 失败。☹️" "false"
           uninstalled_packages+=("$package")
           echo "$package 安装失败。" >>"$log_file"
         fi

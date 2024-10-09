@@ -534,3 +534,5 @@ if [ "$SHELL" = "/bin/zsh" ]; then
 fi
 
 echo "XApp、腾讯文档、FastZip、State、WeLink 只能通过 App Store 手动安装！！！"
+
+exit

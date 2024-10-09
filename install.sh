@@ -500,11 +500,13 @@ elif [[ $install_flag == "true" ]]; then
   fi
 fi
 
-# 打印提示消息
-print_centered_message "Dotfile 完成下载和解压"
 
 # 总是下载和解压Dotfiles
 download_and_extract "$zip_Dotfiles_file" "$dest_Dotfiles" "$Dotfiles_REPO_URL"
+
+
+# 打印提示消息
+print_centered_message "Dotfile 完成下载和解压"
 
 # 定义字体的源目录
 font_source="./${dest_Fonts}/fonts"

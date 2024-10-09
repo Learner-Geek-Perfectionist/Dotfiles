@@ -480,8 +480,8 @@ zip_Dotfiles_file="Dotfiles-master.zip"
 dest_Fonts="Fonts-master"
 dest_Dotfiles="Dotfiles-master"
 
-# 打印提示消息
-print_centered_message "Dotfile 完成下载和解压"
+
+
 
 # 对 Fonts 的处理，只在 ZIP 文件不存在时下载
 if [[ $install_flag == "true" ]]; then
@@ -499,6 +499,9 @@ elif [[ $install_flag == "true" ]]; then
     print_centered_message "Fonts 目录已存在，跳过解压。"
   fi
 fi
+
+# 打印提示消息
+print_centered_message "Dotfile 完成下载和解压"
 
 # 总是下载和解压Dotfiles
 download_and_extract "$zip_Dotfiles_file" "$dest_Dotfiles" "$Dotfiles_REPO_URL"

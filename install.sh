@@ -102,7 +102,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
       found_path=$(mdfind "$package" | head -n 1)
 
       if [[ -n $found_path ]]; then
-        print_centered_message "$package 已通过系统中的 Spotlight 找到，路径为: $found_path" "false"
+        print_centered_message "$package 已通过系统中的 Spotlight 找到，路径为: \n$found_path" "false"
       else
         echo "$package 未通过 Spotlight 找到，尝试通过 Homebrew 安装..."
         # 尝试通过 Homebrew 安装包

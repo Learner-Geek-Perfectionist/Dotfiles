@@ -35,6 +35,9 @@ if [[ $OS_TYPE == "Darwin" ]]; then
   # macOS 逻辑
   print_centered_message "检测到 macOS 系统"
 
+  # 进入 目录
+  cd ~/Documents
+
   if ! xcode-select --print-path &>/dev/null; then
     print_centered_message "Xcode 命令行工具未安装"
     xcode-select --install
@@ -49,10 +52,14 @@ if [[ $OS_TYPE == "Darwin" ]]; then
     print_centered_message "Homebrew 已经安装，跳过安装步骤。"
   else
     print_centered_message "正在安装 Homebrew..."
-    /bin/zsh -c "$(curl -fsSL https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh)"
+#    /bin/zsh -c "$(curl -fsSL https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh)"
+    curl -O "https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh"
+    chmod +x ./Homebrew.sh
+    ./Homebrew.sh
   fi
 
-  # 刷新 brew 配置
+
+  # 刷新 brew 配置,启用 brew 环境变量
   source ${HOME}/.zprofile
 
   print_centered_message "正在安装 macOS 常用的开发工具......"
@@ -134,6 +141,9 @@ if [[ $OS_TYPE == "Darwin" ]]; then
     fzf libyaml mpdecimal ripgrep
     gcc ninja wget mas pkg-config
   )
+
+  # 临时切换环境变量
+  export PATH="/usr/local/bin:$PATH"
 
   # 安装 brew_formulas 包
   check_and_install_brew_packages "brew_formulas"

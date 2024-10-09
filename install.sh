@@ -9,7 +9,7 @@
 # 定义打印 message 的函数
 print_centered_message() {
   local message="$1"
-  local single_flag="true";
+  local single_flag="true"
   single_flag="$2"
   local cols=$(tput cols)
   local line=''
@@ -20,8 +20,8 @@ print_centered_message() {
   done
 
   if [[ $single_flag == "true" ]]; then
-  # 如果是 true，执行打印上边框的操作
-  echo "$line"
+    # 如果是 true，执行打印上边框的操作
+    echo "$line"
   fi
 
   # 计算并居中打印消息

@@ -501,7 +501,7 @@ elif [[ $install_flag == "true" ]]; then
 fi
 
 
-# 总是下载和解压Dotfiles
+# 总是下载和解压 Dotfiles
 download_and_extract "$zip_Dotfiles_file" "$dest_Dotfiles" "$Dotfiles_REPO_URL"
 
 

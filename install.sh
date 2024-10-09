@@ -122,6 +122,7 @@ download_and_extract() {
     print_centered_message "ZIP文件 '$zip_file' 不存在，开始下载..."
     curl -L -f -o "${zip_file}" "$repo_url"
     if [ -f "$zip_file" ]; then
+      echo -e "\n"
       print_centered_message "ZIP文件 '$zip_file' 下载完成✅"
     else
       print_centered_message "ZIP文件 '$zip_file' 下载失败☹️"
@@ -173,6 +174,7 @@ countdown() {
 install_fonts() {
   # 检查是否执行安装
   if [ "$install_flag" != "true" ]; then
+    echo -e "\n"
     print_centered_message "安装标志设置为 'false'，跳过字体安装。"
     return 0 # 如果不安装，则正常退出
   fi
@@ -326,9 +328,9 @@ if [[ $OS_TYPE == "Darwin" ]]; then
 
   print_centered_message "图形界面安装完成✅"
 
-  print_centered_message "通过 uuid 安装 Application"
-
   # 通过 UUID 安装 Application，但是目前 macOS 15 sequoia 不支持！
+  # print_centered_message "通过 uuid 安装 Application"
+
   # 定义一个包含应用 UUID 的数组
   declare -A apps
   apps=(
@@ -513,6 +515,8 @@ destination="$HOME"
 # 对 zsh 进行配置
 copy_config_files_to_home
 
+
+echo -e "\n"
 # 打印提示消息
 print_centered_message "zsh 配置文件已配置到 Home 目录"
 

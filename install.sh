@@ -24,7 +24,7 @@ print_centered_message() {
   local padded_message="$(printf '%*s' $(((cols + ${#message}) / 2)) "$message")"
   echo -e "$padded_message"
 
-  if [[ $single_flag == "true" ]]; then
+  if [[ $double_flag == "true" ]]; then
     # 如果是 true，执行打印下边框的操作
     echo "$line"
   fi
@@ -66,7 +66,7 @@ check_and_install_brew_packages() {
 
     if [[ -n $found_path ]]; then
       print_centered_message "📍 在 Spotlight 中找到 $package" "false" "false"
-      print_centered_message "路径为: ➡️ $found_path" "false" "false"
+      print_centered_message "路径为: $found_path" "false" "false"
     else
       echo "❌ $package 未通过 Spotlight 找到，尝试通过 Homebrew 安装..."
       # 尝试通过 Homebrew 安装包

@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# 定义打印 message 的函数
 print_centered_message() {
   local message="$1"
   local single_flag="$2"
@@ -17,12 +16,11 @@ print_centered_message() {
     echo "$line"
   fi
 
-  # 处理每一行文本，确保换行字符的每一行都居中
-  IFS=$'\n' # 设置IFS为换行符
-  for single_line in $message; do
+  # 使用while循环和read命令来正确处理包含\n的字符串
+  while IFS= read -r single_line || [[ -n $single_line ]]; do
     local padding=$(((cols - ${#single_line}) / 2))
     printf "%${padding}s%s\n" "" "$single_line"
-  done
+  done <<<"$message"
 
   # 打印下边框
   echo "$line"

@@ -45,7 +45,7 @@ check_and_install_brew_packages() {
   eval "packages=(\"\${${package_group_name}[@]}\")"
 
   # 获取通过 Homebrew 已安装的包
-  installed_packages=($(brew list))
+  local installed_packages=($(brew list))
 
   for package in "${packages[@]}"; do
     echo "🔍 检查是否已安装 $package ..."

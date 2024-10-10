@@ -257,12 +257,12 @@ if [[ $OS_TYPE == "Darwin" ]]; then
   cd ~/Documents
 
   if ! xcode-select --print-path &>/dev/null; then
-    print_centered_message "Xcode 命令行工具未安装"
+    print_centered_message "⚠Xcode 命令行工具未安装"
     xcode-select --install 2>/dev/null
     # 等待用户完成 Xcode 命令行工具的安装
-    print_centered_message "请手动点击屏幕中的弹窗，选择“安装”，安装完成之后再次运行脚本"
+    print_centered_message "请手动点击屏幕中的弹窗，选择“安装”，安装完成之后再次运行脚本(提示命令通常在终端的背面)"
     print_centered_message "脚本命令:"
-    print_centered_message "/bin/zsh -c "$(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/install.sh)""
+    print_centered_message '/bin/zsh -c "$(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/install.sh)"'
     exit 1
   fi
 

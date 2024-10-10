@@ -105,7 +105,7 @@ set_password_if_needed() {
 
 # 定义提示头🔔函数
 prompt_download_fonts() {
-  read -p "是否需要下载字体以支持终端模拟器的渲染？(y/n): " download_confirm </dev/tty
+  read -p "是否需要下载字体以支持终端模拟器的渲染？(y/n): " download_confirm
   if [[ $download_confirm == 'y' ]]; then
     print_centered_message "正在下载字体......"
     install_flag=true
@@ -160,7 +160,7 @@ countdown() {
   # 开始倒计时
   for ((i = timeout; i > 0; i--)); do
     echo -ne "\r${message} (timeout in $i seconds): "
-    if read -t 1 -r -n1 str </dev/tty; then
+    if read -t 1 -r -n1 str ; then
       key_pressed=1 # 如果用户提前输入，则设置标志并跳出循环
       break
     fi
@@ -315,7 +315,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
 
   echo -e "\n"
 
-  
+
 
   # 安装 brew_formulas 包
   check_and_install_brew_packages "brew_formulas"
@@ -386,14 +386,14 @@ elif [[ $OS_TYPE == "Linux" ]]; then
   print_centered_message "检测到操作系统为: $os_type"
 
   # 询问是否创建用户
-  read -p "是否需要创建用户？(y/n): " create_confirm </dev/tty
+  read -p "是否需要创建用户？(y/n): " create_confirm
 
   # 检查并设置密码的函数
 
   # 主逻辑
   if [[ $create_confirm == 'y' ]]; then
-    read -p "请输入你想创建的用户名: " username </dev/tty
-    read -p "请输入默认密码（将用于新用户，若按下 Enter ，密码默认为 1）: " default_password </dev/tty
+    read -p "请输入你想创建的用户名: " username
+    read -p "请输入默认密码（将用于新用户，若按下 Enter ，密码默认为 1）: " default_password
     # 如果未输入任何内容，则默认密码为 1
     default_password="${default_password:-1}"
 

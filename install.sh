@@ -123,7 +123,7 @@ download_and_extract() {
   # 压缩包 URL
   local repo_url="$3"
 
-  # 检查ZIP文件是否存在，如果不存在则下载
+  # 检查 ZIP 文件是否存在，如果不存在则下载
   if [ ! -f "$zip_file" ]; then
     print_centered_message "ZIP文件 '$zip_file' 不存在，开始下载..."
     curl -L -f -o "${zip_file}" "$repo_url"
@@ -137,7 +137,7 @@ download_and_extract() {
     echo "ZIP文件 '$zip_file' 已存在，跳过下载。"
   fi
 
-  # 解压ZIP文件
+  # 解压 ZIP 文件
   if [ -f "$zip_file" ]; then
     if [ ! -d "$dest_dir" ]; then
       echo "开始解压ZIP文件 '$zip_file' 到目录 '$dest_dir'..."
@@ -536,9 +536,6 @@ echo -e "\n"
 print_centered_message "zsh 配置文件已配置到 Home 目录"
 
 print_centered_message "进入 zsh，准备下载 zsh 插件......"
-
-# 进入 zsh
-/bin/zsh
 
 # 进入 zsh
 /bin/zsh

@@ -41,7 +41,8 @@ if [ "$OS_TYPE" = "Darwin" ]; then
     if [[ ! -d "$BREW_UPDATE_DIR" ]]; then
         mkdir -p "$BREW_UPDATE_DIR"
     fi
-    
+
+    # 每天更新一次
     # Check if the file exists and the modification time is more than 24 hours ago
     if [[ ! -f "$BREW_UPDATE_FILE" || "$(( $(date +%s) - $(stat -f "%m" $BREW_UPDATE_FILE) ))" -gt 86400 ]]; then
         brew update

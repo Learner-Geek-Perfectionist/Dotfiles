@@ -287,7 +287,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
     source ${HOME}/.zprofile
   fi
   
-  print_centered_message "更新 brew 镜像"
+  print_centered_message "更新 brew 镜像......"
   
   # 设置 homebrew/core 和 homebrew/cask 镜像。
   brew tap --custom-remote --force-auto-update --force homebrew/core https://mirrors.tuna.tsinghua.edu.cn/git/homebrew/homebrew-core.git

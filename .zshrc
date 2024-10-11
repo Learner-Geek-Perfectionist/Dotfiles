@@ -38,6 +38,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
   export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
   export PATH="/opt/homebrew/opt/git/bin:$PATH"
   export PATH="/opt/homebrew/opt/make/libexec/gnubin:$PATH"
+  export PATH="/opt/homebrew/opt/bash/bin:$PATH"
   export HOMEBREW_NO_ENV_HINTS=1
 else
   # Linux specific settings

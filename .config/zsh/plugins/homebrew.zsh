@@ -18,4 +18,8 @@ if [ "$OS_TYPE" = "Darwin" ]; then
         # 设置 zsh 的 FPATH 环境变量，加入 brew 提供的 site-functions
         FPATH="$(brew --prefix)/share/zsh/site-functions:$FPATH"
     fi
+
+    brew tap --custom-remote --force-auto-update homebrew/core https://mirrors.tuna.tsinghua.edu.cn/git/homebrew/homebrew-core.git
+    brew tap --custom-remote --force-auto-update homebrew/cask https://mirrors.tuna.tsinghua.edu.cn/git/homebrew/homebrew-cask.git
+
 fi

@@ -105,7 +105,8 @@ set_password_if_needed() {
 
 # 定义提示头🔔函数
 prompt_download_fonts() {
-  read -p "是否需要下载字体以支持终端模拟器的渲染？(y/n): " download_confirm
+  echo "是否需要下载字体以支持终端模拟器的渲染？(y/n): "
+  read download_confirm
   if [[ $download_confirm == 'y' ]]; then
     print_centered_message "正在下载字体......"
     install_flag=true
@@ -251,6 +252,7 @@ OS_TYPE=$(uname)
 if [[ $OS_TYPE == "Darwin" ]]; then
   # macOS 逻辑
   echo -e "\n"
+  
   print_centered_message "检测到 macOS 系统"
 
   # 进入 Documents 目录

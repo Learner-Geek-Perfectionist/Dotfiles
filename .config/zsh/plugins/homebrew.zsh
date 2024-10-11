@@ -19,7 +19,7 @@ if [ "$OS_TYPE" = "Darwin" ]; then
         FPATH="$(brew --prefix)/share/zsh/site-functions:$FPATH"
     fi
 
-    # 手动设置
+    # 设置镜像环境变量
     export HOMEBREW_CORE_GIT_REMOTE="https://mirrors.tuna.tsinghua.edu.cn/git/homebrew/homebrew-core.git"
     
     # 设置 homebrew/core 和 homebrew/cask 镜像。
@@ -28,6 +28,24 @@ if [ "$OS_TYPE" = "Darwin" ]; then
     
     # 除 homebrew/core 和 homebrew/cask 仓库外的 tap 仓库仍然需要设置镜像
     brew tap --custom-remote --force-auto-update homebrew/command-not-found https://mirrors.tuna.tsinghua.edu.cn/git/homebrew/homebrew-command-not-found.git
-    brew update
+
+
+    # 设置 brew up 的更新频率
+    # Path to the directory where the update reminder file will be stored
+    BREW_UPDATE_DIR="$HOME/.cache/brew_updates"
+    
+    # Path to the update reminder file
+    BREW_UPDATE_FILE="$BREW_UPDATE_DIR/last_brew_update"
+    
+    # Create the directory if it doesn't exist
+    if [[ ! -d "$BREW_UPDATE_DIR" ]]; then
+        mkdir -p "$BREW_UPDATE_DIR"
+    fi
+    
+    # Check if the file exists and the modification time is more than 24 hours ago
+    if [[ ! -f "$BREW_UPDATE_FILE" || "$(( $(date +%s) - $(stat -f "%m" $BREW_UPDATE_FILE) ))" -gt 86400 ]]; then
+        brew update
+        touch $BREW_UPDATE_FILE
+    fi
 
 fi

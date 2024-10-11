@@ -256,9 +256,16 @@ if [[ $OS_TYPE == "Darwin" ]]; then
   # 进入 Documents 目录
   cd ~/Documents
 
-  # 设置 brew 的 homebrew/core 和 homebrew/cask 镜像
+  # 手动设置
+  export HOMEBREW_CORE_GIT_REMOTE="https://mirrors.tuna.tsinghua.edu.cn/git/homebrew/homebrew-core.git"
+  
+  # 设置 homebrew/core 和 homebrew/cask 镜像。
   brew tap --custom-remote --force-auto-update homebrew/core https://mirrors.tuna.tsinghua.edu.cn/git/homebrew/homebrew-core.git
   brew tap --custom-remote --force-auto-update homebrew/cask https://mirrors.tuna.tsinghua.edu.cn/git/homebrew/homebrew-cask.git
+  
+  # 除 homebrew/core 和 homebrew/cask 仓库外的 tap 仓库仍然需要设置镜像
+  brew tap --custom-remote --force-auto-update homebrew/command-not-found https://mirrors.tuna.tsinghua.edu.cn/git/homebrew/homebrew-command-not-found.git
+  brew update
 
 
   if ! xcode-select --print-path &>/dev/null; then

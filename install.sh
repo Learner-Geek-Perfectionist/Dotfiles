@@ -292,7 +292,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
   fi
   
    
-  print_centered_message "为了能顺利安装 cask 包，请打开代理软件，否则下载速度很慢（推荐选择香港 🇭🇰 节点，如果速度还是太慢，可以通过客户端查看代理情况）"
+  print_centered_message "为了能顺利安装 Homebrew 的 cask 包，请打开代理软件，否则下载速度很慢（推荐选择香港 🇭🇰 节点，如果速度还是太慢，可以通过客户端查看代理情况）"
 
   prompt_open_proxy
   

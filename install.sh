@@ -113,6 +113,7 @@ prompt_open_proxy() {
     print_centered_message "开启代理，关闭脚本"
     print_centered_message "重新执行脚本命令:" "true" "false"
     print_centered_message '/bin/zsh -c "$(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/install.sh)"' "false" "true"
+    exit 1
   else
     print_centered_message "不开启代理，继续执行脚本"
   fi
@@ -296,7 +297,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
 
   prompt_open_proxy
   
-  exit 1
+
   
   print_centered_message "正在安装 macOS 常用的开发工具......"
 

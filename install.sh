@@ -52,24 +52,24 @@ check_and_install_brew_packages() {
   # 获取通过 Homebrew 已安装的包
   local installed_packages=($(brew list))
 
-for package in "${packages[@]}"; do
-  echo "🔍 检查是否已安装 $package ..."
-
-  # 直接使用 brew list 检查包是否已安装
-  if brew list "$package" &>/dev/null; then
-    echo "🟢 $package 已通过 Homebrew 安装。"
-  else
-    echo "❌ $package 未安装，尝试通过 Homebrew 安装..."
-    # 如果包未安装，则通过 Homebrew 安装
-    if brew install "$package"; then
-      echo "✅ $package 安装成功。"
+  for package in "${packages[@]}"; do
+    echo "🔍 检查是否已安装 $package ..."
+  
+    # 直接使用 brew list 检查包是否已安装
+    if brew list "$package" &>/dev/null; then
+      echo "🟢 $package 已通过 Homebrew 安装。"
     else
-      echo "☹️ 通过 Homebrew 安装 $package 失败。"
-      uninstalled_packages+=("$package")
-      echo "📝 $package 安装失败。" >>"$log_file"
+      echo "❌ $package 未安装，尝试通过 Homebrew 安装..."
+      # 如果包未安装，则通过 Homebrew 安装
+      if brew install "$package"; then
+        echo "✅ $package 安装成功。"
+      else
+        echo "☹️ 通过 Homebrew 安装 $package 失败。"
+        uninstalled_packages+=("$package")
+        echo "📝 $package 安装失败。" >>"$log_file"
+      fi
     fi
-  fi
-done
+  done
 
   # 总结结果
   if [[ ${#uninstalled_packages[@]} -gt 0 ]]; then

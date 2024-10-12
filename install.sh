@@ -105,6 +105,21 @@ prompt_download_fonts() {
   fi
 }
 
+# 定义提示头🔔函数
+prompt_open_proxy() {
+  echo -n "是否需要开启代理软件？(y/n): "
+  read open_confirm
+  if [[ $open_confirm == 'y' ]]; then
+    print_centered_message "开启代理，关闭脚本"
+    print_centered_message "重新执行脚本命令:" "true" "false"
+    print_centered_message '/bin/zsh -c "$(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/install.sh)"' "false" "true"
+  else
+    print_centered_message "不开启代理，继续执行脚本"
+  fi
+
+  
+}
+
 # 定义下载、解压函数
 download_and_extract() {
   # 压缩包名字
@@ -248,8 +263,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
   # 进入 Documents 目录
   cd ~/Documents
 
-  # 手动设置
-  export HOMEBREW_CORE_GIT_REMOTE="https://mirrors.tuna.tsinghua.edu.cn/git/homebrew/homebrew-core.git"
+  
 
 
   if ! xcode-select --print-path &>/dev/null; then
@@ -279,9 +293,8 @@ if [[ $OS_TYPE == "Darwin" ]]; then
   
    
   print_centered_message "为了能顺利安装 cask 包，请打开代理软件，否则下载速度很慢（推荐选择香港 🇭🇰节点，如果速度还是太慢，可以通过客户端查看代理情况）"
-  print_centered_message "重新执行脚本命令:" "true" "false"
-  print_centered_message '/bin/zsh -c "$(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/install.sh)"' "false" "true"
 
+  prompt_open_proxy
   
   exit 1
   

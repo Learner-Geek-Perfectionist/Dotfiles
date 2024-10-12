@@ -52,34 +52,24 @@ check_and_install_brew_packages() {
   # 获取通过 Homebrew 已安装的包
   local installed_packages=($(brew list))
 
-  for package in "${packages[@]}"; do
-    echo "🔍 检查是否已安装 $package ..."
+for package in "${packages[@]}"; do
+  echo "🔍 检查是否已安装 $package ..."
 
-    # 检查包是否已安装
-    if printf '%s\n' "${installed_packages[@]}" | grep -q "^$package$"; then
-      print_centered_message "🟢 $package 已通过 Homebrew 安装。" "false"
-      continue
-    fi
-
-    # 如果包没有通过 Homebrew 安装，使用 Spotlight 搜索
-    echo -e "\n🔎 使用 Spotlight 搜索 $package ...\n"
-    found_path=$(mdfind 'kMDItemDisplayName=="package"' 2>/dev/null | head -n 1)
-
-    if [[ -n $found_path ]]; then
-      print_centered_message "📍 在 Spotlight 中找到 $package" "false" "false"
-      print_centered_message "路径为: ➡️ $found_path" "false" "true"
+  # 直接使用 brew list 检查包是否已安装
+  if brew list "$package" &>/dev/null; then
+    echo "🟢 $package 已通过 Homebrew 安装。"
+  else
+    echo "❌ $package 未安装，尝试通过 Homebrew 安装..."
+    # 如果包未安装，则通过 Homebrew 安装
+    if brew install "$package"; then
+      echo "✅ $package 安装成功。"
     else
-      echo "❌ $package 未通过 Spotlight 找到，尝试通过 Homebrew 安装..."
-      # 尝试通过 Homebrew 安装包
-      if brew install "$package"; then
-        print_centered_message "✅ $package 安装成功。" "false"
-      else
-        print_centered_message "☹️ 通过 Homebrew 安装 $package 失败。" "false"
-        uninstalled_packages+=("$package")
-        echo "📝 $package 安装失败。" >>"$log_file"
-      fi
+      echo "☹️ 通过 Homebrew 安装 $package 失败。"
+      uninstalled_packages+=("$package")
+      echo "📝 $package 安装失败。" >>"$log_file"
     fi
-  done
+  fi
+done
 
   # 总结结果
   if [[ ${#uninstalled_packages[@]} -gt 0 ]]; then

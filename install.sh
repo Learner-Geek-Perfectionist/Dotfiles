@@ -283,20 +283,18 @@ if [[ $OS_TYPE == "Darwin" ]]; then
     ./Homebrew.sh
     echo -e "\n"
     print_centered_message "重新加载 .zprofile 文件以启用 brew 环境变量 "
-    # 刷新 brew 配置,启用 brew 环境变量
+    # 刷新 brew 配置，启用 brew 环境变量
     source ${HOME}/.zprofile
   fi
   
-  print_centered_message "更新 brew 镜像......"
-  
-  # 设置 homebrew/core 和 homebrew/cask 镜像。
-  brew tap --custom-remote --force-auto-update --force homebrew/core https://mirrors.tuna.tsinghua.edu.cn/git/homebrew/homebrew-core.git
-  brew tap --custom-remote --force-auto-update --force homebrew/cask https://mirrors.tuna.tsinghua.edu.cn/git/homebrew/homebrew-cask.git
-  
-  # 除 homebrew/core 和 homebrew/cask 仓库外的 tap 仓库仍然需要设置镜像
-  brew tap --custom-remote --force-auto-update homebrew/command-not-found https://mirrors.tuna.tsinghua.edu.cn/git/homebrew/homebrew-command-not-found.git
-  brew update
+   
+  print_centered_message "为了能顺利安装 cask 包，请打开代理软件，否则下载速度很慢（推荐选择香港节点，如果速度还是太慢，可以通过客户端查看代理情况）"
+  print_centered_message "重新执行脚本命令:" "true" "false"
+  print_centered_message '/bin/zsh -c "$(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/install.sh)"' "false" "true"
 
+  
+  exit 1
+  
   print_centered_message "正在安装 macOS 常用的开发工具......"
 
   brew_formulas=(

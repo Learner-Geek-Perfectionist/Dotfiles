@@ -230,6 +230,16 @@ copy_config_files_to_home() {
   print_centered_message "正在配置......"
   local dir_name="${dest_Dotfiles}"
   local files_to_copy=(".zshrc" ".zprofile" ".config")
+  local home_dir="$HOME"
+
+  # 删除已有的 zshrc、zprofile 和 config
+  print_centered_message "检查并删除已有的 .zshrc、.zprofile 和 .config 文件/文件夹..."
+  for file in ".zshrc" ".zprofile" ".config"; do
+    if [ -e "$home_dir/$file" ]; then
+      echo "删除 $home_dir/$file"
+      rm -rf "$home_dir/$file"
+    fi
+  done
 
   # 进入仓库目录
   if [ -d "$dir_name" ]; then
@@ -250,7 +260,7 @@ copy_config_files_to_home() {
       echo "$item 不存在，跳过复制。"
     fi
   done
-}
+ }
 
 # 获取当前操作系统类型
 OS_TYPE=$(uname)
@@ -295,9 +305,8 @@ if [[ $OS_TYPE == "Darwin" ]]; then
    
   print_centered_message "为了能顺利安装 Homebrew 的 cask 包，请打开代理软件，否则下载速度很慢（推荐选择香港 🇭🇰 节点，如果速度还是太慢，可以通过客户端查看代理情况）" "true" "false"
   print_centered_message "在代理客户端中，推荐开启 「全局模式」，并且打开 TUN 选项。" "false" "true"
-  prompt_open_proxy
   
-
+  prompt_open_proxy
   
   print_centered_message "正在安装 macOS 常用的开发工具......"
 

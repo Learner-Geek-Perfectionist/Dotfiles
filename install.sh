@@ -107,19 +107,20 @@ prompt_download_fonts() {
 
 # 定义提示头🔔函数
 prompt_open_proxy() {
+  # 首先检查clash-verge-rev是否已经安装
+  if brew list clash-verge-rev &>/dev/null; then
+    print_centered_message "clash-verge-rev 已安装，无需重新下载"
+    return 0  # 如果已安装，直接退出函数
+  fi
+
   echo -n "是否需要开启代理软件？(y/n): "
   read open_confirm
   if [[ $open_confirm == 'y' ]]; then
-    # 检查 clash-verge-rev 是否已经安装
-    if brew list clash-verge-rev &>/dev/null; then
-      print_centered_message "Clash Verge 已安装，无需重新下载"
-    else
-      print_centered_message "正在下载 clash-verge-rev ......"
-      brew install clash-verge-rev
-      print_centered_message "重新执行脚本命令:" "true" "false"
-      print_centered_message '/bin/zsh -c "$(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/install.sh)"' "false" "true"
-      exit 1
-    fi
+    print_centered_message "正在下载 clash-verge-rev ......"
+    brew install clash-verge-rev
+    print_centered_message "重新执行脚本命令:" "true" "false"
+    print_centered_message '/bin/zsh -c "$(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/install.sh)"' "false" "true"
+    exit 1
   else
     print_centered_message "不开启代理，继续执行脚本"
   fi

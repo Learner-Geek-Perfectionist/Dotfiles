@@ -303,8 +303,8 @@ if [[ $OS_TYPE == "Darwin" ]]; then
   fi
   
    
-  print_centered_message "为了能顺利安装 Homebrew 的 cask 包，请打开代理软件，否则下载速度很慢（推荐选择香港 🇭🇰 节点，如果速度还是太慢，可以通过客户端查看代理情况）" "true" "false"
-  print_centered_message "在代理客户端中，推荐开启 「全局模式」，并且打开 TUN 选项。" "false" "true"
+  print_centered_message "为了能顺利安装 Homebrew 的 cask 包，请打开代理软件，否则下载速度很慢（推荐选择香港 🇭🇰  或者 新加坡 🇸🇬  节点，如果速度还是太慢，可以通过客户端查看代理情况）" "true" "false"
+  print_centered_message "如果下载进度条卡住，在代理客户端中，多次切换「全局模式」或者「规则模式」，并且打开 TUN 选项。" "false" "true"
   
   prompt_open_proxy
   

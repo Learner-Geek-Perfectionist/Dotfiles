@@ -12,7 +12,12 @@
 ```
 # macOS 
 caffeinate -d -i -s -t 86400
+
+# GitHub
 caffeinate -i /bin/zsh -c "$(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/install.sh)"
+
+# Gitee
+caffeinate -i /bin/zsh -c "$(curl -fsSL https://gitee.com/oyzxin/Dotfiles/raw/master/install.sh)"
 ```
 
 

@@ -10,6 +10,7 @@
 
 2.
 ```
+caffeinate -d -i -s -t 86400
 caffeinate -i /bin/zsh -c "$(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/install.sh)"
 ```
 

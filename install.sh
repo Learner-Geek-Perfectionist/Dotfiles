@@ -62,9 +62,9 @@ check_and_install_brew_packages() {
       print_centered_message "❌ $package 未安装，尝试通过 Homebrew 安装..." "false" "true"
       # 如果包未安装，则通过 Homebrew 安装
       if brew install "$package"; then
-        echo "✅ $package 安装成功。"
+        print_centered_message "✅ $package 安装成功。" "false" "true"
       else
-        echo "☹️ 通过 Homebrew 安装 $package 失败。"
+        print_centered_message "☹️ 通过 Homebrew 安装 $package 失败。" "false" "true"
         uninstalled_packages+=("$package")
         echo "📝 $package 安装失败。" >>"$log_file"
       fi

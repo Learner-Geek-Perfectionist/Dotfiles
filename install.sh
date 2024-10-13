@@ -110,7 +110,8 @@ prompt_open_proxy() {
   echo -n "是否需要开启代理软件？(y/n): "
   read open_confirm
   if [[ $open_confirm == 'y' ]]; then
-    print_centered_message "开启代理，关闭脚本"
+    print_centered_message "正在下载 clash-verge-rev ......"
+    brew install clash-verge-rev
     print_centered_message "重新执行脚本命令:" "true" "false"
     print_centered_message '/bin/zsh -c "$(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/install.sh)"' "false" "true"
     exit 1
@@ -356,7 +357,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
     alfred videofusion wpsoffice tencent-meeting google-chrome
     orbstack dingtalk baidunetdisk anaconda iina KeepingYouAwake
     pycharm android-studio input-source-pro qq chatgpt
-    intellij-idea qqmusic clash-verge-rev jetbrains-gateway telegram
+    intellij-idea qqmusic  jetbrains-gateway telegram
     clion jordanbaird-ice visual-studio-code discord keycastr wechat
     douyin kitty feishu microsoft-edge
   )

@@ -59,7 +59,7 @@ check_and_install_brew_packages() {
     if brew list "$package" &>/dev/null; then
       print_centered_message "🟢 $package 已通过 Homebrew 安装。" "false" "true"
     else
-      print_centered_message "❌ $package 未安装，尝试通过 Homebrew 安装..." "false" "true"
+      print_centered_message "❌ $package 未安装，尝试通过 Homebrew 安装..." "false" "false"
       # 如果包未安装，则通过 Homebrew 安装
       if brew install "$package"; then
         print_centered_message "✅ $package 安装成功。" "false" "true"

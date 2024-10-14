@@ -360,7 +360,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
   brew_casks=(
     alfred videofusion wpsoffice tencent-meeting google-chrome
     orbstack dingtalk baidunetdisk anaconda iina KeepingYouAwake
-    pycharm android-studio input-source-pro qq chatgpt 
+    pycharm android-studio input-source-pro qq chatgpt fleet
     intellij-idea qqmusic  jetbrains-gateway telegram 
     clion jordanbaird-ice visual-studio-code discord keycastr wechat
     douyin kitty feishu microsoft-edge

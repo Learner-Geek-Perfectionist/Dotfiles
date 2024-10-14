@@ -316,7 +316,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
   print_centered_message "正在安装 macOS 常用的开发工具......"
 
   brew_formulas=(
-    gettext msgpack ruby
+    gettext msgpack ruby graphviz kotlin
     brotli git lpeg ncurses sqlite
     c-ares htop lua neovim tree-sitter
     ca-certificates icu4c luajit node unibilium
@@ -360,8 +360,8 @@ if [[ $OS_TYPE == "Darwin" ]]; then
   brew_casks=(
     alfred videofusion wpsoffice tencent-meeting google-chrome
     orbstack dingtalk baidunetdisk anaconda iina KeepingYouAwake
-    pycharm android-studio input-source-pro qq chatgpt graphviz
-    intellij-idea qqmusic  jetbrains-gateway telegram kotlin
+    pycharm android-studio input-source-pro qq chatgpt 
+    intellij-idea qqmusic  jetbrains-gateway telegram 
     clion jordanbaird-ice visual-studio-code discord keycastr wechat
     douyin kitty feishu microsoft-edge
   )

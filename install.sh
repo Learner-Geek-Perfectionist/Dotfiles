@@ -361,7 +361,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
     alfred videofusion wpsoffice tencent-meeting google-chrome
     orbstack dingtalk baidunetdisk anaconda iina KeepingYouAwake
     pycharm android-studio input-source-pro qq chatgpt graphviz
-    intellij-idea qqmusic  jetbrains-gateway telegram
+    intellij-idea qqmusic  jetbrains-gateway telegram kotlin
     clion jordanbaird-ice visual-studio-code discord keycastr wechat
     douyin kitty feishu microsoft-edge
   )

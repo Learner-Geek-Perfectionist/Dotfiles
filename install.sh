@@ -525,23 +525,24 @@ dest_Dotfiles="Dotfiles-master"
 
 
 
-# 对 Fonts 的处理，只在 ZIP 文件不存在时下载
+# 对 Fonts 的处理：
+# 如果安装标志（$install_flag）为真，并且ZIP文件不存在，则下载并解压ZIP文件；如果ZIP文件已经存在，则检查目录是否存在，不存在则解压，存在则跳过解压。
+
+
 if [[ $install_flag == "true" ]]; then
-  download_and_extract "$zip_Fonts_file" "$dest_Fonts" "$Fonts_REPO_URL"
-elif [[ $install_flag == "true" ]]; then
-  print_centered_message "Fonts ZIP 文件已存在，不需要下载。"
-  if [ ! -d "$dest_Fonts" ]; then
-    if [ -f "$zip_Fonts_file" ]; then
-      print_centered_message "开始解压已存在的 Fonts ZIP文件..."
-      unzip -o "$zip_Fonts_file"
-    else
-      print_centered_message "Fonts ZIP 文件不存在或损坏，无法进行解压。"
-    fi
+  if [ ! -f "$zip_Fonts_file" ]; then
+    print_centered_message "Fonts ZIP 文件不存在，开始下载..."
+    download_and_extract "$zip_Fonts_file" "$dest_Fonts" "$Fonts_REPO_URL"
   else
-    print_centered_message "Fonts 目录已存在，跳过解压。"
+    print_centered_message "Fonts ZIP 文件已存在，不需要下载。"
+    if [ ! -d "$dest_Fonts" ]; then
+      print_centered_message "开始解压已存在的 Fonts ZIP 文件..."
+      unzip -o "$zip_Fonts_file" -d "$dest_Fonts"
+    else
+      print_centered_message "Fonts 目录已存在，跳过解压。"
+    fi
   fi
 fi
-
 
 # 总是下载和解压 Dotfiles
 download_and_extract "$zip_Dotfiles_file" "$dest_Dotfiles" "$Dotfiles_REPO_URL"

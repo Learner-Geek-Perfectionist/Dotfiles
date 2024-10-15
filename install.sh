@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# 一旦错误，就退出
+set -e 
+
 # 定义打印居中消息的函数
 print_centered_message() {
   local message="$1"

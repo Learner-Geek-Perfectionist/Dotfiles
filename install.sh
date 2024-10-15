@@ -528,7 +528,6 @@ dest_Dotfiles="Dotfiles-master"
 # 对 Fonts 的处理：
 # 如果安装标志（$install_flag）为真，并且ZIP文件不存在，则下载并解压ZIP文件；如果ZIP文件已经存在，则检查目录是否存在，不存在则解压，存在则跳过解压。
 
-
 if [[ $install_flag == "true" ]]; then
   if [ ! -f "$zip_Fonts_file" ]; then
     print_centered_message "Fonts ZIP 文件不存在，开始下载..."
@@ -543,6 +542,7 @@ if [[ $install_flag == "true" ]]; then
     fi
   fi
 fi
+
 
 # 总是下载和解压 Dotfiles
 download_and_extract "$zip_Dotfiles_file" "$dest_Dotfiles" "$Dotfiles_REPO_URL"

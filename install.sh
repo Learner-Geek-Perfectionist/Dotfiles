@@ -564,7 +564,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
   sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
   sudo sh -c 'echo "Asia/Shanghai" > /etc/timezone'
   sudo sh -c 'echo "export TZ=Asia/Shanghai" >> /etc/profile'
-    
+  install_kotlin_native "linux"
   # 根据操作系统设置软件源
   if [[ $os_type == "ubuntu" ]]; then
     sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list
@@ -592,7 +592,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     source "$HOME/.sdkman/bin/sdkman-init.sh"
     sdk install kotlin
 
-    install_kotlin_native "linux"
+  
     
     # 安装 docker 
 

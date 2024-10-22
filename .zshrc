@@ -46,17 +46,19 @@ if [[ "$(uname)" == "Darwin" ]]; then
   export PATH="/opt/homebrew/opt/grep/libexec/gnubin:$PATH"
   export HOMEBREW_NO_ENV_HINTS=1
 
-
-elif [[ -f /etc/os-release ]]; then 
+elif [[ -f /etc/os-release ]]; then
+  # 检查是否是 Fedora 系统
+  if grep -q 'ID=fedora' /etc/os-release; then
+    # Fedora specific settings: 初始化 SDKMAN 环境
+    if [[ -f "$HOME/.sdkman/bin/sdkman-init.sh" ]]; then
+      source "$HOME/.sdkman/bin/sdkman-init.sh"
+    fi
   
-  # Fedora specific settings: 初始化 SDKMAN 环境
-  if [[ -f "$HOME/.sdkman/bin/sdkman-init.sh" ]]; then
-    source "$HOME/.sdkman/bin/sdkman-init.sh"
   else
-    echo "SDKMAN is not installed in $HOME/.sdkman"
+    # 其他 Linux 系统的设置
+    export PATH="$HOME/.fzf/bin:$PATH"
   fi
-  
-  # 其他 Linux 特有的设置可以放在这里
+
 else
   # 其他操作系统的设置
   echo "Unsupported OS"

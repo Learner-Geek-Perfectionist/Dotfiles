@@ -35,12 +35,8 @@ print_centered_message() {
 }
 LATEST_VERSION=""
 get_latest_version() {
-    # 使用 curl 获取 GitHub releases 最新的重定向地址
-    LATEST_VERSION=$(curl -s -L -I https://github.com/JetBrains/kotlin/releases/latest | grep -i location)
-
-    # 从重定向地址中提取版本号
-    LATEST_VERSION=$(echo $LATEST_VERSION | sed -E 's/.*tag\/v([0-9\.]+).*/\1/')
-
+    # 使用 curl 获取 GitHub releases 最新的重定向地址，并且 grep 最新的版本号
+    LATEST_VERSION=$(curl -s -L -I https://github.com/JetBrains/kotlin/releases/latest | grep -i location | sed -E 's/.*tag\/(v[0-9\.]+).*/\1/')
     # 输出最新的版本号
     echo "The Latest Version is $LATEST_VERSION"
 }

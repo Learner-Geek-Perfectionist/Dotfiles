@@ -33,7 +33,9 @@ print_centered_message() {
     echo "$line"
   fi
 }
+
 LATEST_VERSION=""
+
 get_latest_version() {
     # 使用 curl 获取 GitHub releases 最新的重定向地址，并且 grep 最新的版本号
     LATEST_VERSION=$(curl -s -L -I https://github.com/JetBrains/kotlin/releases/latest | grep -i location | sed -E 's/.*tag\/(v[0-9\.]+).*/\1/')
@@ -74,11 +76,6 @@ install_kotlin_native() {
     # 解压并替换之前的安装
     sudo tar -xzf /tmp/kotlin-native.tar.gz -C /opt
 
-    # 更新 Zsh 环境变量
-    if ! grep -q "$INSTALL_DIR/bin" ~/.zshrc; then
-        echo "export PATH=\$PATH:$INSTALL_DIR/bin" >> ~/.zshrc
-        source ~/.zshrc
-    fi
 
     # 清理临时文件
     rm /tmp/kotlin-native.tar.gz

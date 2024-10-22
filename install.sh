@@ -74,12 +74,12 @@ install_kotlin_native() {
             INSTALL_DIR="/opt/kotlin-native-linux-aarch64-$LATEST_VERSION"
         else
             echo "不支持的 Linux 架构: $ARCH"
-            return 1
+            return 0
         fi
 
     else
         echo "未知系统类型，请使用 'macos' 或 'linux' 作为参数。"
-        return 1
+        return 0
     fi
 
     # 检查下载链接是否有效
@@ -88,7 +88,7 @@ install_kotlin_native() {
 
     if [ "$HTTP_STATUS" != "200" ]; then
         echo -e "下载链接无效，HTTP 状态码: $HTTP_STATUS。请检查版本号或网络连接。\n"
-        return 1
+        return 0
     else
         echo "下载链接有效，开始下载。"
     fi
@@ -99,7 +99,7 @@ install_kotlin_native() {
 
     if [ $? -ne 0 ]; then
         echo "下载失败，请检查网络连接和下载地址。"
-        return 1
+        return 0
     fi
 
     # 解压并替换之前的安装
@@ -109,7 +109,7 @@ install_kotlin_native() {
 
     if [ $? -ne 0 ]; then
         echo "解压失败，检查下载的文件是否正确。"
-        return 1
+        return 0
     fi
 
     # 清理临时文件
@@ -120,7 +120,7 @@ install_kotlin_native() {
         echo "Kotlin/Native $LATEST_VERSION 已成功安装到 $INSTALL_DIR"
     else
         echo "安装失败，目标目录未找到。"
-        return 1
+        return 0
     fi
 }
 

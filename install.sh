@@ -34,6 +34,56 @@ print_centered_message() {
   fi
 }
 
+#!/bin/bash
+
+install_kotlin_native() {
+    # 获取系统类型参数
+    SYSTEM_TYPE=$1
+    
+    # 获取最新版本号
+    LATEST_VERSION=$(curl -s https://api.github.com/repos/JetBrains/kotlin/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+
+    # 判断系统类型
+    if [ "$SYSTEM_TYPE" == "macos" ]; then
+        # 检查系统架构，判断是 Apple Silicon 还是 Intel
+        ARCH=$(uname -m)
+        if [ "$ARCH" == "arm64" ]; then
+            DOWNLOAD_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-native-macos-aarch64-$LATEST_VERSION.tar.gz"
+        else
+            DOWNLOAD_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-native-macos-x86_64-$LATEST_VERSION.tar.gz"
+        fi
+        INSTALL_DIR="/opt/kotlin-native-macos-$ARCH-$LATEST_VERSION"
+
+    elif [ "$SYSTEM_TYPE" == "linux" ]; then
+        DOWNLOAD_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-native-linux-x86_64-$LATEST_VERSION.tar.gz"
+        INSTALL_DIR="/opt/kotlin-native-linux-x86_64-$LATEST_VERSION"
+    else
+        echo "未知系统类型，请使用 'macos' 或 'linux' 作为参数。"
+        exit 1
+    fi
+
+    # 下载 Kotlin/Native 二进制包
+    wget -O /tmp/kotlin-native.tar.gz $DOWNLOAD_URL
+
+    # 解压并替换之前的安装
+    sudo tar -xzf /tmp/kotlin-native.tar.gz -C /opt
+
+    # 更新 Zsh 环境变量
+    if ! grep -q "$INSTALL_DIR/bin" ~/.zshrc; then
+        echo "export PATH=\$PATH:$INSTALL_DIR/bin" >> ~/.zshrc
+        source ~/.zshrc
+    fi
+
+    # 清理临时文件
+    rm /tmp/kotlin-native.tar.gz
+
+    echo "Kotlin/Native $LATEST_VERSION 已安装并配置完成"
+}
+
+# 使用方法：传递 macos 或 linux 作为参数
+# 示例： install_kotlin_native macos
+# 示例： install_kotlin_native linux
+
 # 定义 packages 安装函数，接受一个包组(packages group)作为参数
 check_and_install_brew_packages() {
   local package_group_name="$1"
@@ -351,7 +401,10 @@ if [[ $OS_TYPE == "Darwin" ]]; then
 
   echo -e "\n"
 
+  print_centered_message "Kotlin/Native"
 
+  # 安装 Kotlin/Native
+  install_kotlin_native macos
 
   # 安装 brew_formulas 包
   check_and_install_brew_packages "brew_formulas"
@@ -466,6 +519,8 @@ elif [[ $OS_TYPE == "Linux" ]]; then
   sudo sh -c 'echo "Asia/Shanghai" > /etc/timezone'
   sudo sh -c 'echo "export TZ=Asia/Shanghai" >> /etc/profile'
 
+  install_kotlin_native linux
+    
   # 根据操作系统设置软件源
   if [[ $os_type == "ubuntu" ]]; then
     sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list

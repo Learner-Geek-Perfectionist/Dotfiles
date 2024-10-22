@@ -62,7 +62,7 @@ install_kotlin_native() {
         INSTALL_DIR="/opt/kotlin-native-macos-$ARCH-$LATEST_VERSION"
 
     elif [ "$SYSTEM_TYPE" == "linux" ]; then
-        DOWNLOAD_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-native-linux-x86_64-$LATEST_VERSION.tar.gz"
+        DOWNLOAD_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-native-prebuilt-linux-x86_64-${LATEST_VERSION#v}.tar.gz"
         INSTALL_DIR="/opt/kotlin-native-linux-x86_64-$LATEST_VERSION"
     else
         echo "未知系统类型，请使用 'macos' 或 'linux' 作为参数。"

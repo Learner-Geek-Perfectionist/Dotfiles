@@ -63,7 +63,7 @@ install_kotlin_native() {
     fi
 
     # 下载 Kotlin/Native 二进制包
-    wget -O /tmp/kotlin-native.tar.gz $DOWNLOAD_URL
+    curl -L $DOWNLOAD_URL -o /tmp/kotlin-native.tar.gz
 
     # 解压并替换之前的安装
     sudo tar -xzf /tmp/kotlin-native.tar.gz -C /opt

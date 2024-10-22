@@ -565,15 +565,17 @@ elif [[ $OS_TYPE == "Linux" ]]; then
   sudo sh -c 'echo "Asia/Shanghai" > /etc/timezone'
   sudo sh -c 'echo "export TZ=Asia/Shanghai" >> /etc/profile'
 
-  # 安装 Kotlin/Native
-  install_kotlin_native "linux"
+  
   # 根据操作系统设置软件源
   if [[ $os_type == "ubuntu" ]]; then
     sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list
     sudo apt update && sudo apt upgrade -y
     sudo apt install -y openssh-server net-tools git unzip fzf ninja-build neovim ruby-full cmake nodejs iputils-ping procps htop traceroute tree coreutils zsh fontconfig python3 iproute2 kitty wget2 pkg-config graphviz kotlin zip
-
-    # 安装 SDKMAN
+    
+    # 安装 Kotlin/Native
+    install_kotlin_native "linux"
+    
+    # 安装 SDKMAN 和 java
     curl -s "https://get.sdkman.io" | bash
     source "$HOME/.sdkman/bin/sdkman-init.sh"
     sdk install java
@@ -593,6 +595,10 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     curl -s "https://get.sdkman.io" | bash
     source "$HOME/.sdkman/bin/sdkman-init.sh"
     sdk install kotlin
+
+
+    # 安装 Kotlin/Native
+    install_kotlin_native "linux"
 
   
     

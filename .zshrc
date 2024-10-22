@@ -72,47 +72,6 @@ install_kotlin_native() {
         echo "未知系统类型，请使用 'macos' 或 'linux' 作为参数。"
         exit 1
     fi
-
-    # 检查下载链接是否有效
-    echo -e "Checking the validity of the download URL: $DOWNLOAD_URL\n"
-    HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}" "$DOWNLOAD_URL")
-
-    if [ "$HTTP_STATUS" != "200" ]; then
-        echo -e "下载链接无效，HTTP 状态码: $HTTP_STATUS。请检查版本号或网络连接。\n"
-        exit 1
-    else
-        echo "下载链接有效，开始下载。"
-    fi
-
-    # 下载 Kotlin/Native 二进制包
-    echo "Downloading Kotlin/Native from: $DOWNLOAD_URL"
-    curl -L $DOWNLOAD_URL -o /tmp/kotlin-native.tar.gz
-
-    if [ $? -ne 0 ]; then
-        echo "下载失败，请检查网络连接和下载地址。"
-        exit 1
-    fi
-
-    # 解压并替换之前的安装
-    echo "Installing Kotlin/Native to: $INSTALL_DIR"
-    sudo mkdir -p $INSTALL_DIR
-    sudo tar -xzf /tmp/kotlin-native.tar.gz -C $INSTALL_DIR --strip-components=1
-
-    if [ $? -ne 0 ]; then
-        echo "解压失败，检查下载的文件是否正确。"
-        exit 1
-    fi
-
-    # 清理临时文件
-    rm /tmp/kotlin-native.tar.gz
-
-    # 检查是否成功安装
-    if [ -d "$INSTALL_DIR" ]; then
-        echo "Kotlin/Native $LATEST_VERSION 已成功安装到 $INSTALL_DIR"
-    else
-        echo "安装失败，目标目录未找到。"
-        exit 1
-    fi
 }
 
 

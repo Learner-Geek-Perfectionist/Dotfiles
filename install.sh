@@ -34,32 +34,17 @@ print_centered_message() {
   fi
 }
 LATEST_VERSION=""
-get_latest_version() {
-    # 尝试未经认证的 API 请求，获取 HTTP 状态码
-    HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://api.github.com/repos/JetBrains/kotlin/releases/latest)
+get_latest_kotlin_native_version() {
+    # 使用 curl 获取 GitHub releases 最新的重定向地址
+    LATEST_VERSION=$(curl -s -L -I https://github.com/JetBrains/kotlin/releases/latest | grep -i location)
 
-    # 判断状态码是否为 200（成功访问）
-    if [ "$HTTP_STATUS" -eq 200 ]; then
-        # 获取最新版本号
-        LATEST_VERSION=$(curl -s https://api.github.com/repos/JetBrains/kotlin/releases/latest | sed -n 's/.*"tag_name": "\(.*\)",.*/\1/p')
-        echo "Latest version is: $LATEST_VERSION"
-    else
-        # 请求未成功，提示用户输入 GitHub 令牌
-        echo "无法访问 GitHub API，可能已超过访问限制。请提供 GitHub 个人访问令牌："
-        read -r GITHUB_TOKEN
+    # 从重定向地址中提取版本号
+    LATEST_VERSION=$(echo $LATEST_VERSION | sed -E 's/.*tag\/v([0-9\.]+).*/\1/')
 
-        # 使用用户提供的 GitHub 令牌进行认证请求
-        LATEST_VERSION=$(curl -H "Authorization: token $GITHUB_TOKEN" -s https://api.github.com/repos/JetBrains/kotlin/releases/latest | sed -n 's/.*"tag_name": "\(.*\)",.*/\1/p')
-
-        # 检查是否成功获取版本号
-        if [ -z "$LATEST_VERSION" ]; then
-            echo "使用 GitHub 令牌访问时仍然失败，请检查令牌或网络连接。"
-            exit 1
-        else
-            echo "Authenticated request successful. Latest version is: $LATEST_VERSION"
-        fi
-    fi
+    # 输出最新的版本号
+    echo "The Latest Version is $LATEST_VERSION"
 }
+
 
 
 install_kotlin_native() {

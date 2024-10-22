@@ -64,7 +64,7 @@ install_kotlin_native() {
         INSTALL_DIR="/opt/kotlin-native-macos-$ARCH-$LATEST_VERSION"
 
     elif [ "$SYSTEM_TYPE" == "linux" ]; then
-        # 检查 Linux 系统架构，支持 x86_64 和其他架构
+        # 检查 Linux 系统架构，支持 x86_64 和 aarch64
         ARCH=$(uname -m)
         if [ "$ARCH" == "x86_64" ]; then
             DOWNLOAD_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-native-prebuilt-linux-x86_64-${LATEST_VERSION#v}.tar.gz"
@@ -80,6 +80,17 @@ install_kotlin_native() {
     else
         echo "未知系统类型，请使用 'macos' 或 'linux' 作为参数。"
         exit 1
+    fi
+
+    # 检查下载链接是否有效
+    echo "Checking the validity of the download URL: $DOWNLOAD_URL"
+    HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}" "$DOWNLOAD_URL")
+
+    if [ "$HTTP_STATUS" != "200" ]; then
+        echo "下载链接无效，HTTP 状态码: $HTTP_STATUS。请检查版本号或网络连接。"
+        exit 1
+    else
+        echo "下载链接有效，开始下载。"
     fi
 
     # 下载 Kotlin/Native 二进制包
@@ -112,6 +123,7 @@ install_kotlin_native() {
         exit 1
     fi
 }
+
 
 
 # 使用方法：传递 macos 或 linux 作为参数

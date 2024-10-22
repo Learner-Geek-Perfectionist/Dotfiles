@@ -28,9 +28,55 @@ export HISTFILE="$XDG_CACHE_HOME/zsh/.zsh_history" # HISTFILE 也是 zsh 内置�
  mkdir -p "$(dirname "$ZSH_COMPDUMP")"
 
 
+# 使用 curl 获取 GitHub releases 最新的重定向地址，并且 grep 最新的版本号
+LATEST_VERSION=$(curl -s -L -I https://github.com/JetBrains/kotlin/releases/latest | grep -i location | sed -E 's/.*tag\/(v[0-9\.]+).*/\1/')
 
+# 检查系统类型并设置 Kotlin/Native 的安装目录
+set_kotlin_native_install_dir() {
+    SYSTEM_TYPE=$(uname)
+    
+    # 获取系统架构
+    ARCH=$(uname -m)
 
+    # 根据系统类型和架构设置安装目录
+    if [[ "$SYSTEM_TYPE" == "Darwin" ]]; then
+        # macOS 系统
+        if [[ "$ARCH" == "arm64" ]]; then
+            INSTALL_DIR="/opt/kotlin-native-macos-arm64-$LATEST_VERSION"
+        else
+            INSTALL_DIR="/opt/kotlin-native-macos-x86_64-$LATEST_VERSION"
+        fi
+    elif [[ "$SYSTEM_TYPE" == "Linux" ]]; then
+        # Linux 系统
+        if [[ "$ARCH" == "x86_64" ]]; then
+            INSTALL_DIR="/opt/kotlin-native-linux-x86_64-$LATEST_VERSION"
+        elif [[ "$ARCH" == "aarch64" ]]; then
+            INSTALL_DIR="/opt/kotlin-native-linux-aarch64-$LATEST_VERSION"
+        else
+            echo "不支持的 Linux 架构: $ARCH"
+            return 1
+        fi
+    else
+        echo "未知系统类型: $SYSTEM_TYPE"
+        return 1
+    fi
 
+    # 检查安装目录是否存在
+    if [[ -d "$INSTALL_DIR" ]]; then
+        echo "Kotlin/Native 安装目录: $INSTALL_DIR"
+    else
+        echo "安装目录未找到: $INSTALL_DIR"
+    fi
+}
+
+# 调用设置函数
+set_kotlin_native_install_dir
+
+# 可选：将安装目录的 bin 目录加入 PATH 环境变量
+if [[ -n "$INSTALL_DIR" && -d "$INSTALL_DIR/bin" ]]; then
+    export PATH="$INSTALL_DIR/bin:$PATH"
+    echo "Kotlin/Native 已添加到 PATH"
+fi
 
 
 # 判断操作系统

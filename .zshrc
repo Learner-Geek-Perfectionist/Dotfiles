@@ -28,19 +28,14 @@ export HISTFILE="$XDG_CACHE_HOME/zsh/.zsh_history" # HISTFILE 也是 zsh 内置�
  mkdir -p "$(dirname "$ZSH_COMPDUMP")"
 
 
-# 使用 curl 获取 GitHub releases 最新的重定向地址，并且 grep 最新的版本号
 LATEST_VERSION=$(curl -s -L -I https://github.com/JetBrains/kotlin/releases/latest | grep -i location | sed -E 's/.*tag\/(v[0-9\.]+).*/\1/')
 INSTALL_DIR=""
-
 
 # 判断操作系统并设置 Kotlin/Native 安装目录
 set_kotlin_native_install_dir() {
     SYSTEM_TYPE=$1
-    
-    # 获取系统架构
     ARCH=$(uname -m)
 
-    # 判断操作系统类型
     if [[ "$SYSTEM_TYPE" == "macos" ]]; then
         if [[ "$ARCH" == "arm64" ]]; then
             INSTALL_DIR="/opt/kotlin-native-macos-aarch64"
@@ -63,44 +58,49 @@ set_kotlin_native_install_dir() {
     fi
 }
 
-
-
-
-# 判断操作系统
+# 获取操作系统信息并设置 PATH
 if [[ "$(uname)" == "Darwin" ]]; then
-  # macOS specific settings，设置 git 、clang++、ruby、make bash、VSCode、grep 等工具的环境变量
-  export PATH="/opt/homebrew/opt/llvm/bin:$PATH"
-  export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
-  export PATH="/opt/homebrew/opt/git/bin:$PATH"
-  export PATH="/opt/homebrew/opt/make/libexec/gnubin:$PATH"
-  export PATH="/opt/homebrew/opt/bash/bin:$PATH"
-  export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
-  export PATH="/opt/homebrew/opt/grep/libexec/gnubin:$PATH"
-  export HOMEBREW_NO_ENV_HINTS=1
+    # macOS specific settings，设置 git 、clang++、ruby、make bash、VSCode、grep 等工具的环境变量
+    export PATH="/opt/homebrew/opt/llvm/bin:$PATH"
+    export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
+    export PATH="/opt/homebrew/opt/git/bin:$PATH"
+    export PATH="/opt/homebrew/opt/make/libexec/gnubin:$PATH"
+    export PATH="/opt/homebrew/opt/bash/bin:$PATH"
+    export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
+    export PATH="/opt/homebrew/opt/grep/libexec/gnubin:$PATH"
+    export HOMEBREW_NO_ENV_HINTS=1
 
-  # 调用函数，传入操作系统参数 (macos 或 linux)
-  set_kotlin_native_install_dir "macos"  
-  export PATH="$INSTALL_DIR/bin:$PATH"
-
+    # 调用函数，传入 macOS 参数
+    set_kotlin_native_install_dir "macos"
+    
 elif [[ -f /etc/os-release ]]; then
-  set_kotlin_native_install_dir "linux"
-  export PATH="$INSTALL_DIR/bin:$PATH"
+    # 调用函数，传入 Linux 参数
+    set_kotlin_native_install_dir "linux"
 
-  # 检查是否是 Fedora 系统
-  if grep -q 'ID=fedora' /etc/os-release; then
-    # Fedora specific settings: 初始化 SDKMAN 环境
-    if [[ -f "$HOME/.sdkman/bin/sdkman-init.sh" ]]; then
-      source "$HOME/.sdkman/bin/sdkman-init.sh"
+    # 检查是否是 Fedora 系统
+    if grep -q 'ID=fedora' /etc/os-release; then
+        # Fedora specific settings: 初始化 SDKMAN 环境
+        if [[ -f "$HOME/.sdkman/bin/sdkman-init.sh" ]]; then
+            source "$HOME/.sdkman/bin/sdkman-init.sh"
+        fi
+    else
+        # 对于其他 Linux 系统
+        export PATH="$HOME/.fzf/bin:$PATH"
     fi
-  
-  else
-    # 其他 Linux 系统的设置
-    export PATH="$HOME/.fzf/bin:$PATH"
-  fi
 
 else
-  # 其他操作系统的设置
-  echo "Unsupported OS"
+    # 其他操作系统的设置
+    echo "Unsupported OS"
+    return 1
+fi
+
+# 最后统一将 Kotlin/Native 安装路径添加到 PATH
+if [[ -n "$INSTALL_DIR" ]]; then
+    export PATH="$INSTALL_DIR/bin:$PATH"
+    echo "Kotlin/Native 安装目录已设置为 $INSTALL_DIR 并已添加到 PATH。"
+else
+    echo "安装目录未设置，脚本中止。"
+    return 1
 fi
 
 

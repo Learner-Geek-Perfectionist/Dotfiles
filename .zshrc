@@ -30,6 +30,38 @@ export HISTFILE="$XDG_CACHE_HOME/zsh/.zsh_history" # HISTFILE 也是 zsh 内置�
 
 # 使用 curl 获取 GitHub releases 最新的重定向地址，并且 grep 最新的版本号
 LATEST_VERSION=$(curl -s -L -I https://github.com/JetBrains/kotlin/releases/latest | grep -i location | sed -E 's/.*tag\/(v[0-9\.]+).*/\1/')
+INSTALL_DIR=""
+
+
+# 判断操作系统并设置 Kotlin/Native 安装目录
+set_kotlin_native_install_dir() {
+    SYSTEM_TYPE=$1
+    
+    # 获取系统架构
+    ARCH=$(uname -m)
+
+    # 判断操作系统类型
+    if [[ "$SYSTEM_TYPE" == "macos" ]]; then
+        if [[ "$ARCH" == "arm64" ]]; then
+            INSTALL_DIR="/opt/kotlin-native-macos-aarch64"
+        else
+            INSTALL_DIR="/opt/kotlin-native-macos-x86_64"
+        fi
+
+    elif [[ "$SYSTEM_TYPE" == "linux" ]]; then
+        if [[ "$ARCH" == "x86_64" ]]; then
+            INSTALL_DIR="/opt/kotlin-native-linux-x86_64"
+        elif [[ "$ARCH" == "aarch64" ]]; then
+            INSTALL_DIR="/opt/kotlin-native-linux-aarch64"
+        else
+            echo "不支持的 Linux 架构: $ARCH"
+            return 1
+        fi
+    else
+        echo "未知系统类型，请使用 'macos' 或 'linux' 作为参数。"
+        return 1
+    fi
+}
 
 
 
@@ -46,7 +78,14 @@ if [[ "$(uname)" == "Darwin" ]]; then
   export PATH="/opt/homebrew/opt/grep/libexec/gnubin:$PATH"
   export HOMEBREW_NO_ENV_HINTS=1
 
+  # 调用函数，传入操作系统参数 (macos 或 linux)
+  set_kotlin_native_install_dir "macos"  
+  export PATH="$INSTALL_DIR/bin:$PATH"
+
 elif [[ -f /etc/os-release ]]; then
+  set_kotlin_native_install_dir "linux"
+  export PATH="$INSTALL_DIR/bin:$PATH"
+
   # 检查是否是 Fedora 系统
   if grep -q 'ID=fedora' /etc/os-release; then
     # Fedora specific settings: 初始化 SDKMAN 环境

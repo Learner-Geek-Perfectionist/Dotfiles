@@ -28,13 +28,14 @@ export HISTFILE="$XDG_CACHE_HOME/zsh/.zsh_history" # HISTFILE 也是 zsh 内置�
  mkdir -p "$(dirname "$ZSH_COMPDUMP")"
 
 
-LATEST_VERSION=""
-INSTALL_DIR=""
-get_latest_version() {
-    # 使用 curl 获取 GitHub releases 最新的重定向地址，并且 grep 最新的版本号
-    LATEST_VERSION=$(curl -s -L -I https://github.com/JetBrains/kotlin/releases/latest | grep -i location | sed -E 's/.*tag\/(v[0-9\.]+).*/\1/')
-}
 
+INSTALL_DIR=""
+# 使用 curl 获取 GitHub releases 最新的重定向地址，并且 grep 最新的版本号
+LATEST_VERSION=$(curl -s -L -I https://github.com/JetBrains/kotlin/releases/latest | grep -i location | sed -E 's/.*tag\/(v[0-9\.]+).*/\1/')
+
+
+
+# 添加到 ~/.zshrc
 
 install_kotlin_native() {
     # 获取系统类型参数
@@ -44,23 +45,23 @@ install_kotlin_native() {
     get_latest_version
 
     # 判断系统类型
-    if [ "$SYSTEM_TYPE" == "macos" ]; then
+    if [ "$SYSTEM_TYPE" = "macos" ]; then
         # 检查系统架构，判断是 Apple Silicon 还是 Intel
         ARCH=$(uname -m)
-        if [ "$ARCH" == "arm64" ]; then
+        if [ "$ARCH" = "arm64" ]; then
             DOWNLOAD_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-native-macos-aarch64-$LATEST_VERSION.tar.gz"
         else
             DOWNLOAD_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-native-macos-x86_64-$LATEST_VERSION.tar.gz"
         fi
         INSTALL_DIR="/opt/kotlin-native-macos-$ARCH-$LATEST_VERSION"
 
-    elif [ "$SYSTEM_TYPE" == "linux" ]; then
+    elif [ "$SYSTEM_TYPE" = "linux" ]; then
         # 检查 Linux 系统架构，支持 x86_64 和 aarch64
         ARCH=$(uname -m)
-        if [ "$ARCH" == "x86_64" ]; then
+        if [ "$ARCH" = "x86_64" ]; then
             DOWNLOAD_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-native-prebuilt-linux-x86_64-${LATEST_VERSION#v}.tar.gz"
             INSTALL_DIR="/opt/kotlin-native-linux-x86_64-$LATEST_VERSION"
-        elif [ "$ARCH" == "aarch64" ]; then
+        elif [ "$ARCH" = "aarch64" ]; then
             DOWNLOAD_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-native-prebuilt-linux-aarch64-${LATEST_VERSION#v}.tar.gz"
             INSTALL_DIR="/opt/kotlin-native-linux-aarch64-$LATEST_VERSION"
         else
@@ -73,6 +74,9 @@ install_kotlin_native() {
         return 0
     fi
 }
+
+# 使用此函数安装 Kotlin/Native
+# 例如: install_kotlin_native "linux" 或 install_kotlin_native "macos"
 
 
 

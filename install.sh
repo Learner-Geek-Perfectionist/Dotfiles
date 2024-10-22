@@ -396,7 +396,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
 
   brew_formulas=(
     gettext msgpack ruby graphviz kotlin
-    brotli git lpeg ncurses sqlite java
+    brotli git lpeg ncurses sqlite java grep
     c-ares htop lua neovim tree-sitter
     ca-certificates icu4c luajit node unibilium
     cmake libnghttp2 luv openssl@3 vim

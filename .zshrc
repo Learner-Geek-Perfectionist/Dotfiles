@@ -103,7 +103,7 @@ elif [[ -f /etc/os-release ]]; then
     echo "SDKMAN is not installed in $HOME/.sdkman"
   fi
 
-  # install_kotlin_native "linux"
+  install_kotlin_native "linux"
   export PATH="$INSTALL_DIR/bin:$PATH"
   
   # 其他 Linux 特有的设置可以放在这里

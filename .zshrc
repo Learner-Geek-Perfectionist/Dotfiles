@@ -75,7 +75,6 @@ set_kotlin_native_install_dir
 # 可选：将安装目录的 bin 目录加入 PATH 环境变量
 if [[ -n "$INSTALL_DIR" && -d "$INSTALL_DIR/bin" ]]; then
     export PATH="$INSTALL_DIR/bin:$PATH"
-    echo "Kotlin/Native 已添加到 PATH"
 fi
 
 

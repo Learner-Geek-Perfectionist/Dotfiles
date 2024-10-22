@@ -658,3 +658,4 @@ if [ "$SHELL" = "/bin/zsh" ]; then
 fi
 
 print_centered_message "XApp、腾讯文档、FastZip、State、WeLink 只能通过 App Store 手动安装！！！"
+print_centered_message "Eudic 最好通过官网安装（如果购买了 VIP ）"

@@ -416,7 +416,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
 
   brew_formulas=(
     gettext msgpack ruby graphviz kotlin
-    brotli git lpeg ncurses sqlite java grep
+    brotli git lpeg ncurses sqlite openjdk grep
     c-ares htop lua neovim tree-sitter
     ca-certificates icu4c luajit node unibilium
     cmake libnghttp2 luv openssl@3 vim
@@ -465,7 +465,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
     pycharm android-studio input-source-pro qq chatgpt fleet
     intellij-idea qqmusic  jetbrains-gateway telegram 
     clion jordanbaird-ice visual-studio-code discord keycastr wechat
-    douyin kitty feishu microsoft-edge
+    douyin kitty feishu microsoft-edge Eudic
   )
 
   # 安装 brew_casks 包
@@ -698,4 +698,3 @@ if [ "$SHELL" = "/bin/zsh" ]; then
 fi
 
 print_centered_message "XApp、腾讯文档、FastZip、State、WeLink 只能通过 App Store 手动安装！！！"
-print_centered_message "Eudic 最好通过官网安装（如果购买了 VIP ）"

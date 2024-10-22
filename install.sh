@@ -34,7 +34,7 @@ print_centered_message() {
   fi
 }
 LATEST_VERSION=""
-get_latest_kotlin_native_version() {
+get_latest_version() {
     # 使用 curl 获取 GitHub releases 最新的重定向地址
     LATEST_VERSION=$(curl -s -L -I https://github.com/JetBrains/kotlin/releases/latest | grep -i location)
 

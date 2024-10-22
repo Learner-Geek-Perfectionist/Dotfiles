@@ -40,7 +40,7 @@ get_latest_version() {
     # 使用 curl 获取 GitHub releases 最新的重定向地址，并且 grep 最新的版本号
     LATEST_VERSION=$(curl -s -L -I https://github.com/JetBrains/kotlin/releases/latest | grep -i location | sed -E 's/.*tag\/(v[0-9\.]+).*/\1/')
     # 输出最新的版本号
-    echo -e "The Latest Version is $LATEST_VERSION\n"
+    echo -e "\nThe Latest Version of Kotlin/Native is $LATEST_VERSION\n"
 }
 
 

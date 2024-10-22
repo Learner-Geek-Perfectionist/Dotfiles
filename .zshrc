@@ -88,6 +88,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
   export PATH="/opt/homebrew/opt/bash/bin:$PATH"
   export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
   export PATH="/opt/homebrew/opt/grep/libexec/gnubin:$PATH"
+  export PATH="$INSTALL_DIR/bin:$PATH"
   export HOMEBREW_NO_ENV_HINTS=1
 
   # 下载 Kotlin/Native 
@@ -103,12 +104,7 @@ elif [[ -f /etc/os-release ]]; then
   fi
 
   install_kotlin_native "linux"
-
-  # 更新 Zsh 环境变量
-  if ! grep -q "$INSTALL_DIR/bin" ~/.zshrc; then
-      echo "export PATH=\$PATH:$INSTALL_DIR/bin" >> ~/.zshrc
-      source ~/.zshrc
-  fi
+  export PATH="$INSTALL_DIR/bin:$PATH"
   
   # 其他 Linux 特有的设置可以放在这里
 else

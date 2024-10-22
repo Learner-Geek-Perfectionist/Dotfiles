@@ -564,6 +564,8 @@ elif [[ $OS_TYPE == "Linux" ]]; then
   sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
   sudo sh -c 'echo "Asia/Shanghai" > /etc/timezone'
   sudo sh -c 'echo "export TZ=Asia/Shanghai" >> /etc/profile'
+
+  # 安装 Kotlin/Native
   install_kotlin_native "linux"
   # 根据操作系统设置软件源
   if [[ $os_type == "ubuntu" ]]; then

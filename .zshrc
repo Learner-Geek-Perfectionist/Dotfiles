@@ -41,10 +41,23 @@ if [[ "$(uname)" == "Darwin" ]]; then
   export PATH="/opt/homebrew/opt/bash/bin:$PATH"
   export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
   export HOMEBREW_NO_ENV_HINTS=1
-else
-  # Linux specific settings
+elif [[ -f /etc/os-release ]]; then
+  # 读取 /etc/os-release 文件来检测 Linux 发行版
+  . /etc/os-release
   
-  # 其他 Linux 特有的设置
+  if [[ "$ID" == "fedora" ]]; then
+    # Fedora specific settings: 初始化 SDKMAN 环境
+    if [[ -f "$HOME/.sdkman/bin/sdkman-init.sh" ]]; then
+      source "$HOME/.sdkman/bin/sdkman-init.sh"
+      echo "Fedora detected, SDKMAN initialized."
+    else
+      echo "SDKMAN is not installed in $HOME/.sdkman"
+    fi
+  fi
+  # 其他 Linux 特有的设置可以放在这里
+else
+  # 其他操作系统的设置
+  echo "Unsupported OS"
 fi
 
 

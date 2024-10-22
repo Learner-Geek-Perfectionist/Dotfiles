@@ -574,6 +574,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
 
     # 手动安装 fzf
     git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
+    yes | ~/.fzf/install --no-update-rc
     
     # 安装 Kotlin/Native
     install_kotlin_native "linux"

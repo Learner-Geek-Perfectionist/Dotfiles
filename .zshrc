@@ -45,15 +45,15 @@ elif [[ -f /etc/os-release ]]; then
   # 读取 /etc/os-release 文件来检测 Linux 发行版
   . /etc/os-release
   
-  if [[ "$ID" == "fedora" ]]; then
-    # Fedora specific settings: 初始化 SDKMAN 环境
-    if [[ -f "$HOME/.sdkman/bin/sdkman-init.sh" ]]; then
-      source "$HOME/.sdkman/bin/sdkman-init.sh"
-      echo "Fedora detected, SDKMAN initialized."
-    else
-      echo "SDKMAN is not installed in $HOME/.sdkman"
-    fi
+  
+  # Fedora specific settings: 初始化 SDKMAN 环境
+  if [[ -f "$HOME/.sdkman/bin/sdkman-init.sh" ]]; then
+    source "$HOME/.sdkman/bin/sdkman-init.sh"
+    echo "Fedora detected, SDKMAN initialized."
+  else
+    echo "SDKMAN is not installed in $HOME/.sdkman"
   fi
+  
   # 其他 Linux 特有的设置可以放在这里
 else
   # 其他操作系统的设置

@@ -40,7 +40,7 @@ get_latest_version() {
     # 使用 curl 获取 GitHub releases 最新的重定向地址，并且 grep 最新的版本号
     LATEST_VERSION=$(curl -s -L -I https://github.com/JetBrains/kotlin/releases/latest | grep -i location | sed -E 's/.*tag\/(v[0-9\.]+).*/\1/')
     # 输出最新的版本号
-    echo "The Latest Version is $LATEST_VERSION"
+    echo -e "The Latest Version is $LATEST_VERSION\n"
 }
 
 
@@ -83,11 +83,11 @@ install_kotlin_native() {
     fi
 
     # 检查下载链接是否有效
-    echo "Checking the validity of the download URL: $DOWNLOAD_URL"
+    echo -e "Checking the validity of the download URL: $DOWNLOAD_URL\n"
     HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}" "$DOWNLOAD_URL")
 
     if [ "$HTTP_STATUS" != "200" ]; then
-        echo "下载链接无效，HTTP 状态码: $HTTP_STATUS。请检查版本号或网络连接。"
+        echo -e "下载链接无效，HTTP 状态码: $HTTP_STATUS。请检查版本号或网络连接。\n"
         exit 1
     else
         echo "下载链接有效，开始下载。"

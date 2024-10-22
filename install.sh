@@ -438,7 +438,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
   print_centered_message "Kotlin/Native"
 
   # 安装 Kotlin/Native
-  install_kotlin_native macos
+  install_kotlin_native "macos"
 
   # 安装 brew_formulas 包
   check_and_install_brew_packages "brew_formulas"
@@ -580,7 +580,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     source "$HOME/.sdkman/bin/sdkman-init.sh"
     sdk install kotlin
 
-    install_kotlin_native linux
+    install_kotlin_native "linux"
     
     # 安装 docker 
 

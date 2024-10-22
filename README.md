@@ -30,5 +30,3 @@ caffeinate -i /bin/zsh -c "$(curl -fsSL https://gitee.com/oyzxin/Dotfiles/raw/ma
 # Gitee
 /bin/bash -c "$(curl -fsSL https://gitee.com/oyzxin/Dotfiles/raw/master/install.sh)"
 ```
-
-

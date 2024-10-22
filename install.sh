@@ -88,7 +88,7 @@ set_password_if_needed() {
   local user=$1
   local default_password=$2
   if ! sudo passwd -S "$user" | grep -q ' P '; then
-    echo -n "用户 $user 的密码未设置，现在将密码设置为 $default_password"
+    echo -n "用户 $user 的密码未设置，现在将密码设置为 $default_password。"
     echo "$user:$default_password" | sudo chpasswd
     echo "密码已设置。"
   else

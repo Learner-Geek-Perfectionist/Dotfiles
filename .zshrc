@@ -33,13 +33,14 @@ export HISTFILE="$XDG_CACHE_HOME/zsh/.zsh_history" # HISTFILE 也是 zsh 内置�
 
 # 判断操作系统
 if [[ "$(uname)" == "Darwin" ]]; then
-  # macOS specific settings，设置 git 、clang++、ruby、make bash 等工具的环境变量
+  # macOS specific settings，设置 git 、clang++、ruby、make bash、VSCode、grep 等工具的环境变量
   export PATH="/opt/homebrew/opt/llvm/bin:$PATH"
   export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
   export PATH="/opt/homebrew/opt/git/bin:$PATH"
   export PATH="/opt/homebrew/opt/make/libexec/gnubin:$PATH"
   export PATH="/opt/homebrew/opt/bash/bin:$PATH"
   export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
+  export PATH="/opt/homebrew/opt/grep/libexec/gnubin:$PATH"
   export HOMEBREW_NO_ENV_HINTS=1
 elif [[ -f /etc/os-release ]]; then
   # 读取 /etc/os-release 文件来检测 Linux 发行版

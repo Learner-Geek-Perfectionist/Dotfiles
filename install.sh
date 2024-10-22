@@ -570,7 +570,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
   if [[ $os_type == "ubuntu" ]]; then
     sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list
     sudo apt update && sudo apt upgrade -y
-    sudo apt install -y openssh-server net-tools git unzip fzf ninja-build neovim ruby-full cmake nodejs iputils-ping procps htop traceroute tree coreutils zsh fontconfig python3 iproute2 kitty wget2 pkg-config graphviz kotlin golang
+    sudo apt install -y openssh-server net-tools git unzip fzf ninja-build neovim ruby-full cmake nodejs iputils-ping procps htop traceroute tree coreutils zsh fontconfig python3 iproute2 kitty wget2 pkg-config graphviz kotlin golang zip
     
     # 安装 Kotlin/Native
     install_kotlin_native "linux"

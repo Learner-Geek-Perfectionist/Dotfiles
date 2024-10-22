@@ -49,7 +49,6 @@ install_kotlin_native() {
     
     # 获取最新版本号
     get_latest_version
-    echo "The latest version is: $LATEST_VERSION"
     # 判断系统类型
     if [ "$SYSTEM_TYPE" == "macos" ]; then
         # 检查系统架构，判断是 Apple Silicon 还是 Intel

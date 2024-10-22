@@ -33,7 +33,7 @@ print_centered_message() {
     echo "$line"
   fi
 }
-
+LATEST_VERSION=""
 get_latest_version() {
     # 尝试未经认证的 API 请求，获取 HTTP 状态码
     HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://api.github.com/repos/JetBrains/kotlin/releases/latest)
@@ -67,7 +67,7 @@ install_kotlin_native() {
     SYSTEM_TYPE=$1
     
     # 获取最新版本号
-    LATEST_VERSION=$(get_latest_version)
+    get_latest_version
     echo "The latest version is: $LATEST_VERSION"
     # 判断系统类型
     if [ "$SYSTEM_TYPE" == "macos" ]; then

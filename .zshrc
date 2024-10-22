@@ -43,7 +43,6 @@ if [[ "$(uname)" == "Darwin" ]]; then
   export PATH="/opt/homebrew/opt/bash/bin:$PATH"
   export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
   export PATH="/opt/homebrew/opt/grep/libexec/gnubin:$PATH"
-  export PATH="$INSTALL_DIR/bin:$PATH"
   export HOMEBREW_NO_ENV_HINTS=1
 
 

@@ -28,8 +28,56 @@ export HISTFILE="$XDG_CACHE_HOME/zsh/.zsh_history" # HISTFILE 也是 zsh 内置�
  mkdir -p "$(dirname "$ZSH_COMPDUMP")"
 
 
+LATEST_VERSION=""
+
+get_latest_version() {
+    # 使用 curl 获取 GitHub releases 最新的重定向地址，并且 grep 最新的版本号
+    LATEST_VERSION=$(curl -s -L -I https://github.com/JetBrains/kotlin/releases/latest | grep -i location | sed -E 's/.*tag\/(v[0-9\.]+).*/\1/')
+    # 输出最新的版本号
+    echo "The Latest Version is $LATEST_VERSION"
+}
 
 
+install_kotlin_native() {
+    # 获取系统类型参数
+    SYSTEM_TYPE=$1
+    
+    # 获取最新版本号
+    get_latest_version
+    # 判断系统类型
+    if [ "$SYSTEM_TYPE" == "macos" ]; then
+        # 检查系统架构，判断是 Apple Silicon 还是 Intel
+        ARCH=$(uname -m)
+        if [ "$ARCH" == "arm64" ]; then
+            DOWNLOAD_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-native-macos-aarch64-$LATEST_VERSION.tar.gz"
+        else
+            DOWNLOAD_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-native-macos-x86_64-$LATEST_VERSION.tar.gz"
+        fi
+        INSTALL_DIR="/opt/kotlin-native-macos-$ARCH-$LATEST_VERSION"
+
+    elif [ "$SYSTEM_TYPE" == "linux" ]; then
+        DOWNLOAD_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-native-prebuilt-linux-x86_64-${LATEST_VERSION#v}.tar.gz"
+        INSTALL_DIR="/opt/kotlin-native-linux-x86_64-$LATEST_VERSION"
+    else
+        echo "未知系统类型，请使用 'macos' 或 'linux' 作为参数。"
+        exit 1
+    fi
+
+    # 下载 Kotlin/Native 二进制包
+    curl -L $DOWNLOAD_URL -o /tmp/kotlin-native.tar.gz
+
+    # 解压并替换之前的安装
+    sudo tar -xzf /tmp/kotlin-native.tar.gz -C /opt
+
+
+    # 清理临时文件
+    rm /tmp/kotlin-native.tar.gz
+
+    echo "Kotlin/Native $LATEST_VERSION 已安装并配置完成"
+}
+
+
+get_latest_version
 
 # 判断操作系统
 if [[ "$(uname)" == "Darwin" ]]; then
@@ -42,16 +90,25 @@ if [[ "$(uname)" == "Darwin" ]]; then
   export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
   export PATH="/opt/homebrew/opt/grep/libexec/gnubin:$PATH"
   export HOMEBREW_NO_ENV_HINTS=1
-elif [[ -f /etc/os-release ]]; then
-  # 读取 /etc/os-release 文件来检测 Linux 发行版
-  . /etc/os-release
-  
+
+  # 下载 Kotlin/Native 
+  install_kotlin_native macos
+
+elif [[ -f /etc/os-release ]]; then 
   
   # Fedora specific settings: 初始化 SDKMAN 环境
   if [[ -f "$HOME/.sdkman/bin/sdkman-init.sh" ]]; then
     source "$HOME/.sdkman/bin/sdkman-init.sh"
   else
     echo "SDKMAN is not installed in $HOME/.sdkman"
+  fi
+
+  install_kotlin_native linux
+
+  # 更新 Zsh 环境变量
+  if ! grep -q "$INSTALL_DIR/bin" ~/.zshrc; then
+      echo "export PATH=\$PATH:$INSTALL_DIR/bin" >> ~/.zshrc
+      source ~/.zshrc
   fi
   
   # 其他 Linux 特有的设置可以放在这里

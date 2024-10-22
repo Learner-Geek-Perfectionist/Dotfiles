@@ -44,6 +44,7 @@ install_kotlin_native() {
     
     # 获取最新版本号
     get_latest_version
+
     # 判断系统类型
     if [ "$SYSTEM_TYPE" == "macos" ]; then
         # 检查系统架构，判断是 Apple Silicon 还是 Intel
@@ -56,25 +57,55 @@ install_kotlin_native() {
         INSTALL_DIR="/opt/kotlin-native-macos-$ARCH-$LATEST_VERSION"
 
     elif [ "$SYSTEM_TYPE" == "linux" ]; then
-        DOWNLOAD_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-native-prebuilt-linux-x86_64-${LATEST_VERSION#v}.tar.gz"
-        INSTALL_DIR="/opt/kotlin-native-linux-x86_64-$LATEST_VERSION"
+        # 检查 Linux 系统架构，支持 x86_64 和其他架构
+        ARCH=$(uname -m)
+        if [ "$ARCH" == "x86_64" ]; then
+            DOWNLOAD_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-native-prebuilt-linux-x86_64-${LATEST_VERSION#v}.tar.gz"
+            INSTALL_DIR="/opt/kotlin-native-linux-x86_64-$LATEST_VERSION"
+        elif [ "$ARCH" == "aarch64" ]; then
+            DOWNLOAD_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-native-prebuilt-linux-aarch64-${LATEST_VERSION#v}.tar.gz"
+            INSTALL_DIR="/opt/kotlin-native-linux-aarch64-$LATEST_VERSION"
+        else
+            echo "不支持的 Linux 架构: $ARCH"
+            exit 1
+        fi
+
     else
         echo "未知系统类型，请使用 'macos' 或 'linux' 作为参数。"
         exit 1
     fi
 
     # 下载 Kotlin/Native 二进制包
+    echo "Downloading Kotlin/Native from: $DOWNLOAD_URL"
     curl -L $DOWNLOAD_URL -o /tmp/kotlin-native.tar.gz
 
-    # 解压并替换之前的安装
-    sudo tar -xzf /tmp/kotlin-native.tar.gz -C /opt
+    if [ $? -ne 0 ]; then
+        echo "下载失败，请检查网络连接和下载地址。"
+        exit 1
+    fi
 
+    # 解压并替换之前的安装
+    echo "Installing Kotlin/Native to: $INSTALL_DIR"
+    sudo mkdir -p $INSTALL_DIR
+    sudo tar -xzf /tmp/kotlin-native.tar.gz -C $INSTALL_DIR --strip-components=1
+
+    if [ $? -ne 0 ]; then
+        echo "解压失败，检查下载的文件是否正确。"
+        exit 1
+    fi
 
     # 清理临时文件
     rm /tmp/kotlin-native.tar.gz
 
-    echo "Kotlin/Native $LATEST_VERSION 已安装并配置完成"
+    # 检查是否成功安装
+    if [ -d "$INSTALL_DIR" ]; then
+        echo "Kotlin/Native $LATEST_VERSION 已成功安装到 $INSTALL_DIR"
+    else
+        echo "安装失败，目标目录未找到。"
+        exit 1
+    fi
 }
+
 
 
 get_latest_version
@@ -92,7 +123,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
   export HOMEBREW_NO_ENV_HINTS=1
 
   # 下载 Kotlin/Native 
-  install_kotlin_native macos
+  install_kotlin_native "macos"
 
 elif [[ -f /etc/os-release ]]; then 
   
@@ -103,7 +134,7 @@ elif [[ -f /etc/os-release ]]; then
     echo "SDKMAN is not installed in $HOME/.sdkman"
   fi
 
-  install_kotlin_native linux
+  install_kotlin_native "linux"
 
   # 更新 Zsh 环境变量
   if ! grep -q "$INSTALL_DIR/bin" ~/.zshrc; then

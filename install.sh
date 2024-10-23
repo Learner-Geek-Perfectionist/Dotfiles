@@ -420,7 +420,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
     brotli git lpeg ncurses sqlite openjdk grep
     c-ares htop lua neovim tree-sitter bash
     ca-certificates icu4c luajit node unibilium
-    cmake libnghttp2 luv openssl@3 vim
+    cmake libnghttp2 luv openssl@3 vim perl
     cmake-docs libsodium lz4 pcre2 xz llvm
     fastfetch libuv lzip z3 tree valgrind
     fd libvterm make readline zstd
@@ -576,7 +576,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
       /etc/yum.repos.d/fedora-updates.repo
 
     sudo dnf makecache
-    sudo dnf update -y && sudo dnf install -y openssh-server iproute net-tools fd-find git unzip ripgrep fzf ninja-build neovim ruby kitty cmake nodejs iputils procps-ng htop traceroute fastfetch tree coreutils zsh fontconfig python3 wget2 pkgconf-pkg-config graphviz zip java-latest-openjdk golang 
+    sudo dnf update -y && sudo dnf install -y openssh-server iproute net-tools fd-find git unzip ripgrep fzf ninja-build neovim ruby kitty cmake nodejs iputils procps-ng htop traceroute fastfetch tree coreutils zsh fontconfig python3 wget2 pkgconf-pkg-config graphviz zip java-latest-openjdk golang openssl
     sudo dnf group install -y "C Development Tools and Libraries"
 
     # 安装 kotlin

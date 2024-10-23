@@ -455,7 +455,9 @@ if [[ $OS_TYPE == "Darwin" ]]; then
   # 安装 brew_casks 包
   check_and_install_brew_packages "brew_casks"
 
-  print_centered_message "图形界面安装完成✅"
+  brew cleanup
+  
+  print_centered_message "图形界面安装完成✅"  
 
   # 通过 UUID 安装 Application，但是目前 macOS 15 sequoia 不支持！
   # print_centered_message "通过 uuid 安装 Application"

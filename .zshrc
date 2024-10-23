@@ -137,6 +137,9 @@ fi
 # 清除整个屏幕
 alias clear='clear && printf '\''\e[3J'\'''
 
+# python3 映射到 python
+alias python=python3 
+
 # 感叹号「!」是 zsh 中特殊的前缀，用于历史扩展，禁止它。
 setopt NO_BANG_HIST
 

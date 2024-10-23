@@ -206,7 +206,7 @@ prompt_download_fonts() {
 
 # 定义提示头🔔函数
 prompt_open_proxy() {
-  # 首先检查clash-verge-rev是否已经安装
+  # 首先检查 clash-verge-rev 是否已经安装
   if brew list clash-verge-rev &>/dev/null; then
     print_centered_message "clash-verge-rev 已安装，无需重新下载"
     return 0  # 如果已安装，直接退出函数
@@ -227,7 +227,7 @@ prompt_open_proxy() {
 
 # 定义下载、解压函数
 download_and_extract() {
-  # 压缩包名字
+  # 压缩包名称
   local zip_file="$1"
   # 目录
   local dest_dir="$2"

@@ -416,7 +416,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
   print_centered_message "正在安装 macOS 常用的开发工具......"
 
   brew_formulas=(
-    gettext msgpack ruby graphviz kotlin
+    gettext msgpack ruby graphviz kotlin python
     brotli git lpeg ncurses sqlite openjdk grep
     c-ares htop lua neovim tree-sitter bash
     ca-certificates icu4c luajit node unibilium

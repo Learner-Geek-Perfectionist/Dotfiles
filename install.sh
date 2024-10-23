@@ -422,7 +422,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
     ca-certificates icu4c luajit node unibilium
     cmake libnghttp2 luv openssl@3 vim perl
     cmake-docs libsodium lz4 pcre2 xz llvm
-    fastfetch libuv lzip z3 tree 
+    fastfetch libuv lzip z3 tree zsh
     fd libvterm make readline zstd
     fzf libyaml mpdecimal ripgrep go
     gcc ninja wget mas pkg-config

@@ -417,37 +417,20 @@ if [[ $OS_TYPE == "Darwin" ]]; then
   brew_formulas=(
     gettext msgpack ruby graphviz kotlin
     brotli git lpeg ncurses sqlite openjdk grep
-    c-ares htop lua neovim tree-sitter
+    c-ares htop lua neovim tree-sitter bash
     ca-certificates icu4c luajit node unibilium
     cmake libnghttp2 luv openssl@3 vim
-    cmake-docs libsodium lz4 pcre2 xz
+    cmake-docs libsodium lz4 pcre2 xz llvm
     fastfetch libuv lzip z3 tree valgrind
     fd libvterm make readline zstd
     fzf libyaml mpdecimal ripgrep go
     gcc ninja wget mas pkg-config
   )
 
-  # 预先检查的包
-  pre_checked=("git" "ruby" "make" "llvm" "bash")
-
-  # 获取已安装的包
-  installed_packages=($(brew list))
-
-  # 遍历预检查的包
-  for package in "${pre_checked[@]}"; do
-    # 检查包是否已安装
-    if [[ ! " ${installed_packages[*]} " =~ " ${package} " ]]; then
-      # 如果未安装，则进行安装
-      print_centered_message "安装 ${package}..."
-      brew install $package
-    else
-      print_centered_message "${package} 已安装."
-    fi
-  done
 
   echo -e "\n"
 
-  print_centered_message "Kotlin/Native"
+  print_centered_message "准备安装 Kotlin/Native"
 
   # 安装 Kotlin/Native
   install_kotlin_native "macos"

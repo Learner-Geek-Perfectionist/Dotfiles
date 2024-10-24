@@ -591,7 +591,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     # 3.更新 apt 包索引
     sudo apt update
     # 4.安装 Docker CE
-    sudo apt install docker-ce docker-ce-cli containerd.io
+    sudo apt install -y docker-ce docker-ce-cli containerd.io
     # 5.启动 Docker 服务
     sudo systemctl start docker
     # 6.启用 Docker 开机自启

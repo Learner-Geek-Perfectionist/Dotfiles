@@ -594,7 +594,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
     # 5. 将当前登录的用户添加到 docker 组
     sudo usermod -aG docker ${USER}
-    # 6. 启动并且开机自启 Docker
+    # 6. 启动并且开机自启 Docker 服务
     sudo systemctl start docker && sudo systemctl enable docker
     # 7.设置 Docker 镜像
     sudo mkdir -p /etc/docker

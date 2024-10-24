@@ -13,11 +13,6 @@ if [ "$OS_TYPE" = "Darwin" ]; then
         eval $(/opt/homebrew/bin/brew shellenv) # 加载 Homebrew 环境变量
     fi
 
-    # 检查 'brew' 命令是否存在
-    if type brew &>/dev/null; then
-        # 设置 zsh 的 FPATH 环境变量，加入 brew 提供的 site-functions
-        FPATH="$(brew --prefix)/share/zsh/site-functions:$FPATH"
-    fi
 
 elif [ "$OS_TYPE" = "Linux" ]; then
     # 查找 /usr/share/zsh 下的所有目录并添加到 FPATH

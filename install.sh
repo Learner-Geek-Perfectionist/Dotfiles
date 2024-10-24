@@ -583,20 +583,27 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     source "$HOME/.sdkman/bin/sdkman-init.sh"
     sdk install java
     
+ 
     # 安装 Docker
-    # 1.添加 Docker 的官方 GPG 密钥：
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+    # 1.添加 Docker 的官方 GPG 密钥并保存到指定目录
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/docker.gpg >/dev/null
+    
     # 2.设置 Docker 仓库
-    echo "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list
-    # 3.更新 apt 包索引
+    echo "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
+    
+    # 3.再次更新 apt 包索引以包括新的 Docker 仓库
     sudo apt update
-    # 4.安装 Docker CE
+    
+    # 4.安装 Docker CE，Docker CE CLI 和 containerd
     sudo apt install -y docker-ce docker-ce-cli containerd.io
+    
     # 5.启动 Docker 服务
     sudo systemctl start docker
-    # 6.启用 Docker 开机自启
+    
+    # 6.启用 Docker 开机自启动
     sudo systemctl enable docker
-    # 7.将当前用户添加到 Docker 组中，以便无需 sudo 使用 Docker
+    
+    # 7.将当前用户添加到 Docker 用户组中，以便无需 sudo 使用 Docker
     sudo usermod -aG docker ${USER}
 
    

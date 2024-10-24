@@ -607,12 +607,8 @@ elif [[ $OS_TYPE == "Linux" ]]; then
       ]
     }' | sudo tee /etc/docker/daemon.json > /dev/null
     #   重启 Docker 服务以应用新的配置
-    sudo systemctl restart docker
-    #   显示 Docker 配置以验证新的镜像源已经生效
-    docker info | grep -i 'Registry Mirrors'
-     
+    sudo systemctl restart docker    
 
-   
     
   elif [[ $os_type == "fedora" ]]; then
     sudo sed -e 's|^metalink=|#metalink=|g' \

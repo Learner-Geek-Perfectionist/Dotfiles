@@ -556,11 +556,24 @@ elif [[ $OS_TYPE == "Linux" ]]; then
   if [[ $os_type == "ubuntu" ]]; then
     sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list
     sudo apt update && sudo apt upgrade -y
-    sudo apt install -y openssh-server net-tools git unzip zip ninja-build neovim ruby-full cmake nodejs iputils-ping procps htop traceroute tree coreutils zsh fontconfig python3 iproute2 kitty wget2 pkg-config graphviz kotlin golang software-properties-common valgrind fastfetch sudo fd-find ripgrep rustc apt-transport-https apt-transport-https
+    sudo apt install -y openssh-server net-tools git unzip zip ninja-build neovim ruby-full cmake nodejs iputils-ping procps htop traceroute tree coreutils zsh fontconfig python3 iproute2 kitty wget2 pkg-config graphviz kotlin golang software-properties-common valgrind sudo fd-find ripgrep rustc apt-transport-https apt-transport-https
 
     # 手动安装 fzf
     git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
     yes | ~/.fzf/install --no-update-rc
+    
+    # 手动安装 fastfetch
+    # 1.克隆 fastfetch 源码
+    git clone https://github.com/LinusDierheimer/fastfetch.git
+    cd fastfetch
+    # 2.创建构建目录并编译项目
+    mkdir build && cd build
+    cmake ..
+    make
+    # 3.安装 fastfetch
+    sudo make install
+    # 4.清理（可选）
+    cd ../.. && rm -rf fastfetch
     
     # 安装 Kotlin/Native
     install_kotlin_native "linux"
@@ -570,28 +583,23 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     source "$HOME/.sdkman/bin/sdkman-init.sh"
     sdk install java
     
-    # 添加 Docker 的官方 GPG 密钥：
+    # 安装 Docker
+    # 1.添加 Docker 的官方 GPG 密钥：
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-    
-    # 设置稳定仓库
+    # 2.设置稳定仓库
     sudo add-apt-repository \
        "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
        $(lsb_release -cs) \
        stable"
-    
-    # 再次更新 apt 包索引
+    # 3.更新 apt 包索引
     sudo apt update
-    
-    # 安装 Docker CE
+    # 4.安装 Docker CE
     sudo apt install docker-ce docker-ce-cli containerd.io
-    
-    # 启动 Docker 服务
+    # 5.启动 Docker 服务
     sudo systemctl start docker
-    
-    # 启用 Docker 开机自启
+    # 6.启用 Docker 开机自启
     sudo systemctl enable docker
-    
-    # 将当前用户添加到 Docker 组中，以便无需 sudo 使用 Docker
+    # 7.将当前用户添加到 Docker 组中，以便无需 sudo 使用 Docker
     sudo usermod -aG docker ${USER}
    
     

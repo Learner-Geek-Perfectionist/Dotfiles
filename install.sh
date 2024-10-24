@@ -582,29 +582,35 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     curl -s "https://get.sdkman.io" | bash
     source "$HOME/.sdkman/bin/sdkman-init.sh"
     sdk install java
-    
- 
+
     # 安装 Docker
-    # 1.添加 Docker 的官方 GPG 密钥并保存到指定目录
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/docker.gpg >/dev/null
-    
-    # 2.设置 Docker 仓库
-    echo "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
-    
-    # 3.再次更新 apt 包索引以包括新的 Docker 仓库
+    # 1. 导入GPG 密钥
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+    # 2. 将 Docker 的官方仓库添加到 Ubuntu 24.04 LTS 的软件源列表：
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    # 3. 刷新软件包列表
     sudo apt update
-    
-    # 4.安装 Docker CE，Docker CE CLI 和 containerd
-    sudo apt install -y docker-ce docker-ce-cli containerd.io
-    
-    # 5.启动 Docker 服务
-    sudo systemctl start docker
-    
-    # 6.启用 Docker 开机自启动
-    sudo systemctl enable docker
-    
-    # 7.将当前用户添加到 Docker 用户组中，以便无需 sudo 使用 Docker
+    # 4. 安装 Docker 引擎及其相关组件
+    sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    # 5. 将当前登录的用户添加到 docker 组
     sudo usermod -aG docker ${USER}
+    # 6. 启动并且开机自启 Docker
+    sudo systemctl start docker && sudo systemctl enable docker
+    # 7.设置 Docker 镜像
+    sudo mkdir -p /etc/docker
+    # 写入指定的镜像源到 daemon.json
+    echo '{
+      "registry-mirrors": [
+        "https://docker.m.daocloud.io",
+        "https://mirror.baidubce.com",
+        "http://hub-mirror.c.163.com"
+      ]
+    }' | sudo tee /etc/docker/daemon.json > /dev/null
+    # 重启 Docker 服务以应用新的配置
+    sudo systemctl restart docker
+    # 显示 Docker 配置以验证新的镜像源已经生效
+    docker info | grep -i 'Registry Mirrors'
+     
 
    
     

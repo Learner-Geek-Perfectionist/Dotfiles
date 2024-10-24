@@ -598,8 +598,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     sudo systemctl enable docker
     # 7.将当前用户添加到 Docker 组中，以便无需 sudo 使用 Docker
     sudo usermod -aG docker ${USER}
-    # 8.提示：需要注销并重新登录以应用用户组更改
-    echo "Please log out and back in to apply user group changes."
+
    
     
   elif [[ $os_type == "fedora" ]]; then
@@ -730,4 +729,7 @@ if [ "$SHELL" = "/bin/zsh" ]; then
   print_centered_message "已进入 zsh shell。"
 fi
 
-print_centered_message "XApp、腾讯文档、FastZip、State、WeLink 只能通过 App Store 手动安装！！！"
+print_centered_message "对于 macOS 的用户，XApp、腾讯文档、FastZip、State、WeLink 只能通过 App Store 手动安装！！！"
+
+# 提示：需要注销并重新登录以应用用户组更改
+print_centered_message "Please log out and back in to apply user group changes."

@@ -584,19 +584,15 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     sdk install java
 
     # 安装 Docker
-    # 1. 导入GPG 密钥
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-    # 2. 将 Docker 的官方仓库添加到 Ubuntu 24.04 LTS 的软件源列表：
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-    # 3. 刷新软件包列表
-    sudo apt update
-    # 4. 安装 Docker 引擎及其相关组件
-    sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-    # 5. 将当前登录的用户添加到 docker 组
+    # 1. 获取安装脚本
+    curl -fsSL https://get.docker.com -o get-docker.sh
+    # 2. 运行安装脚本
+    sudo sh get-docker.sh
+    # 3. 将当前登录的用户添加到 docker 组
     sudo usermod -aG docker ${USER}
-    # 6. 启动并且开机自启 Docker 服务
+    # 4. 启动并且开机自启 Docker 服务
     sudo systemctl start docker && sudo systemctl enable docker
-    # 7.设置 Docker 镜像
+    # 5.设置 Docker 镜像
     sudo mkdir -p /etc/docker
     #   写入指定的镜像源到 daemon.json
     echo '{
@@ -630,14 +626,19 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     # 安装 Kotlin/Native
     install_kotlin_native "linux"
     
+ 
     # 安装 Docker
-    sudo dnf -y install dnf-plugins-core
-    sudo dnf config-manager  --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
-    sudo dnf -y install docker-ce docker-ce-cli containerd.io
-    sudo systemctl start docker && sudo systemctl enable docker
+    # 1. 获取安装脚本
+    curl -fsSL https://get.docker.com -o get-docker.sh
+    # 2. 运行安装脚本
+    sudo sh get-docker.sh
+    # 3. 将当前登录的用户添加到 docker 组
     sudo usermod -aG docker ${USER}
+    # 4. 启动并且开机自启 Docker 服务
+    sudo systemctl start docker && sudo systemctl enable docker
+    # 5.设置 Docker 镜像
     sudo mkdir -p /etc/docker
-    # 写入指定的镜像源到 daemon.json
+    #   写入指定的镜像源到 daemon.json
     echo '{
       "registry-mirrors": [
         "https://docker.m.daocloud.io",

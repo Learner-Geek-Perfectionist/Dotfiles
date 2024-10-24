@@ -556,7 +556,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
   if [[ $os_type == "ubuntu" ]]; then
     sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list
     sudo apt update && sudo apt upgrade -y
-    sudo apt install -y openssh-server net-tools git unzip zip ninja-build neovim ruby-full cmake nodejs iputils-ping procps htop traceroute tree coreutils zsh fontconfig python3 iproute2 kitty wget2 pkg-config graphviz kotlin golang software-properties-common valgrind fastfetch sudo fd-find ripgrep rustc
+    sudo apt install -y openssh-server net-tools git unzip zip ninja-build neovim ruby-full cmake nodejs iputils-ping procps htop traceroute tree coreutils zsh fontconfig python3 iproute2 kitty wget2 pkg-config graphviz kotlin golang software-properties-common valgrind fastfetch sudo fd-find ripgrep rustc apt-transport-https apt-transport-https
 
     # 手动安装 fzf
     git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
@@ -569,12 +569,31 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     curl -s "https://get.sdkman.io" | bash
     source "$HOME/.sdkman/bin/sdkman-init.sh"
     sdk install java
-
-    # 安装 Docker
-
-    curl -fsSL https://get.docker.com -o get-docker.sh
-    sh get-docker.sh
+    
+    # 添加 Docker 的官方 GPG 密钥：
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+    
+    # 设置稳定仓库
+    sudo add-apt-repository \
+       "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+       $(lsb_release -cs) \
+       stable"
+    
+    # 再次更新 apt 包索引
+    sudo apt update
+    
+    # 安装 Docker CE
+    sudo apt install docker-ce docker-ce-cli containerd.io
+    
+    # 启动 Docker 服务
     sudo systemctl start docker
+    
+    # 启用 Docker 开机自启
+    sudo systemctl enable docker
+    
+    # 将当前用户添加到 Docker 组中，以便无需 sudo 使用 Docker
+    sudo usermod -aG docker ${USER}
+   
     
   elif [[ $os_type == "fedora" ]]; then
     sudo sed -e 's|^metalink=|#metalink=|g' \
@@ -597,10 +616,12 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     install_kotlin_native "linux"
     
     # 安装 Docker
-
-    curl -fsSL https://get.docker.com -o get-docker.sh
-    sh get-docker.sh
+    sudo dnf -y install dnf-plugins-core
+    sudo dnf config-manager  --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+    sudo dnf install docker-ce docker-ce-cli containerd.io
     sudo systemctl start docker
+    sudo systemctl enable docker
+    sudo usermod -aG docker ${USER}
     
     sudo dnf clean all
   else

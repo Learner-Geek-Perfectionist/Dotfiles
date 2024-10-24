@@ -15,9 +15,10 @@ if [ "$OS_TYPE" = "Darwin" ]; then
 
 
 elif [ "$OS_TYPE" = "Linux" ]; then
-    # 查找 /usr/share/zsh 下的所有目录并有选择地添加到 FPATH
-    for dir in $(find /usr/share/zsh -type d); do
-        if [[ ":$FPATH:" != *":$dir:"* ]]; then
+    # 查找 /usr/share/zsh 目录下第一层的所有目录并有选择地添加到 FPATH
+    for dir in $(find /usr/share/zsh -maxdepth 1 -type d); do
+        # 跳过添加 /usr/share/zsh 本身，只添加其子目录
+        if [[ "$dir" != "/usr/share/zsh" ]] && [[ ":$FPATH:" != *":$dir:"* ]]; then
             FPATH="$dir:$FPATH"  # 只有当目录不在 FPATH 中时才添加
         fi
     done

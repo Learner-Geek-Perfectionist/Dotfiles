@@ -591,7 +591,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     # 3. 刷新软件包列表
     sudo apt update
     # 4. 安装 Docker 引擎及其相关组件
-    sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
     # 5. 将当前登录的用户添加到 docker 组
     sudo usermod -aG docker ${USER}
     # 6. 启动并且开机自启 Docker

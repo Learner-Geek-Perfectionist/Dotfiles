@@ -637,6 +637,18 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     sudo systemctl start docker
     sudo systemctl enable docker
     sudo usermod -aG docker ${USER}
+    sudo mkdir -p /etc/docker
+    # 写入指定的镜像源到 daemon.json
+    echo '{
+      "registry-mirrors": [
+        "https://docker.m.daocloud.io",
+        "https://mirror.baidubce.com",
+        "http://hub-mirror.c.163.com"
+      ]
+    }' | sudo tee /etc/docker/daemon.json > /dev/null
+    #   重启 Docker 服务以应用新的配置
+    sudo systemctl restart docker    
+
     
     sudo dnf clean all
   else

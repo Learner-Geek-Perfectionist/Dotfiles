@@ -19,4 +19,13 @@ if [ "$OS_TYPE" = "Darwin" ]; then
         FPATH="$(brew --prefix)/share/zsh/site-functions:$FPATH"
     fi
 
+elif [ "$OS_TYPE" = "Linux" ]; then
+    # 查找 /usr/share/zsh 下的所有目录并添加到 FPATH
+    for dir in $(find /usr/share/zsh -type d); do
+        FPATH="$dir:$FPATH"
+    done
 fi
+
+# 导出 FPATH 以确保设置生效
+export FPATH
+

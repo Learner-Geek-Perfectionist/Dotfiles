@@ -143,6 +143,12 @@ alias python=python3
 # 感叹号「!」是 zsh 中特殊的前缀，用于历史扩展，禁止它。
 setopt NO_BANG_HIST
 
+# 检查 .zprofile 是否包含特定的初始化命令
+if ! grep -q 'source ~/.orbstack/shell/init.zsh 2>/dev/null || :' ~/.zprofile; then
+    # 如果 .zprofile 没有包含该命令，那么在当前 shell 中执行它
+    source ~/.orbstack/shell/init.zsh 2>/dev/null || :
+fi
+
 # 检查 fzf 是否已安装
 if command -v fzf >/dev/null 2>&1; then
     # 如果 fzf 存在，则加载 fzf 的 zsh 配置

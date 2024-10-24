@@ -556,7 +556,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
   if [[ $os_type == "ubuntu" ]]; then
     sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list
     sudo apt update && sudo apt upgrade -y
-    sudo apt install -y openssh-server net-tools git unzip zip ninja-build neovim ruby-full cmake nodejs iputils-ping procps htop traceroute tree coreutils zsh fontconfig python3 iproute2 kitty wget2 pkg-config graphviz kotlin golang software-properties-common valgrind sudo fd-find ripgrep rustc apt-transport-https apt-transport-https
+    sudo apt install -y openssh-server net-tools git unzip zip ninja-build neovim ruby-full cmake nodejs iputils-ping procps htop traceroute tree coreutils zsh fontconfig python3 iproute2 kitty wget2 pkg-config graphviz kotlin golang software-properties-common valgrind sudo fd-find ripgrep rustc apt-transport-https ca-certificates
 
     # 手动安装 fzf
     git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
@@ -586,11 +586,8 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     # 安装 Docker
     # 1.添加 Docker 的官方 GPG 密钥：
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-    # 2.设置稳定仓库
-    sudo add-apt-repository \
-       "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
-       $(lsb_release -cs) \
-       stable"
+    # 2.设置 Docker 仓库
+    echo "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list
     # 3.更新 apt 包索引
     sudo apt update
     # 4.安装 Docker CE
@@ -601,6 +598,8 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     sudo systemctl enable docker
     # 7.将当前用户添加到 Docker 组中，以便无需 sudo 使用 Docker
     sudo usermod -aG docker ${USER}
+    # 8.提示：需要注销并重新登录以应用用户组更改
+    echo "Please log out and back in to apply user group changes."
    
     
   elif [[ $os_type == "fedora" ]]; then

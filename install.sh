@@ -569,6 +569,11 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     curl -s "https://get.sdkman.io" | bash
     source "$HOME/.sdkman/bin/sdkman-init.sh"
     sdk install java
+
+    # 安装 Docker
+
+    curl -fsSL https://get.docker.com -o get-docker.sh
+    sh get-docker.sh
     
   elif [[ $os_type == "fedora" ]]; then
     sudo sed -e 's|^metalink=|#metalink=|g' \
@@ -589,10 +594,11 @@ elif [[ $OS_TYPE == "Linux" ]]; then
 
     # 安装 Kotlin/Native
     install_kotlin_native "linux"
-
-  
     
-    # 安装 docker 
+    # 安装 Docker
+
+    curl -fsSL https://get.docker.com -o get-docker.sh
+    sh get-docker.sh
 
     
     sudo dnf clean all

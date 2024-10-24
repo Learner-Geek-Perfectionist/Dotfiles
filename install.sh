@@ -574,6 +574,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
 
     curl -fsSL https://get.docker.com -o get-docker.sh
     sh get-docker.sh
+    sudo systemctl start docker
     
   elif [[ $os_type == "fedora" ]]; then
     sudo sed -e 's|^metalink=|#metalink=|g' \
@@ -599,7 +600,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
 
     curl -fsSL https://get.docker.com -o get-docker.sh
     sh get-docker.sh
-
+    sudo systemctl start docker
     
     sudo dnf clean all
   else

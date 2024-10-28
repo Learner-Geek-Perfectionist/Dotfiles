@@ -1,4 +1,4 @@
-zmodload zsh/zprof
+zmodload zsh/zprof # 加载 zprof 模块，分析 Zsh 脚本的性能。
 
 # -----------------------------------
 # -------- XDG Base Directory

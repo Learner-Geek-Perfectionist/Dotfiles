@@ -42,7 +42,6 @@ if command -v git &>/dev/null; then
   zinit ice depth=1
   # 加载 p10k 主题
   zinit light romkatv/powerlevel10k
-  zinit light zsh-users/zsh-autosuggestions
 
   # 使用 Zinit Turbo 模式加载补全插件，并初始化补全系统
   zinit wait lucid for \

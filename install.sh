@@ -620,6 +620,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
 
     
   elif [[ $os_type == "fedora" ]]; then
+    sudo sed -i '/tsflags=nodocs/s/^/#/' /etc/dnf/dnf.conf
     sudo sed -e 's|^metalink=|#metalink=|g' \
       -e 's|^#baseurl=http://download.example/pub/fedora/linux|baseurl=https://mirrors.ustc.edu.cn/fedora|g' \
       -i.bak \

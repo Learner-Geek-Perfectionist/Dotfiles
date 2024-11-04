@@ -642,8 +642,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     # 生成 locale
     sudo localedef -c -f UTF-8 -i zh_CN zh_CN.UTF-8
     
-    # 设置 MANPATH 环境变量
-    sudo echo 'export MANPATH="/usr/local/share/man:/usr/share/man:$MANPATH"' >> ~/.zshrc
+    # 生成和更新手册页的数据库
     sudo mandb
     
     # 安装 kotlin

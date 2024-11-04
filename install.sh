@@ -549,11 +549,6 @@ elif [[ $OS_TYPE == "Linux" ]]; then
   echo "$username ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers
   print_centered_message "已配置用户 $username 无需 sudo 密码。"
 
-  # 设置时区和环境变量
-  sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-  sudo sh -c 'echo "Asia/Shanghai" > /etc/timezone'
-  sudo sh -c 'echo "export TZ=Asia/Shanghai" >> /etc/profile'
-
   
   # 根据操作系统设置软件源
   if [[ $os_type == "ubuntu" ]]; then
@@ -619,6 +614,17 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     sudo dnf makecache
     sudo dnf update -y && sudo dnf install -y glibc glibc-common openssh-server iproute net-tools fd-find git unzip zip ripgrep fzf ninja-build neovim ruby kitty cmake nodejs iputils procps-ng htop traceroute fastfetch tree coreutils zsh fontconfig python3 wget2 pkgconf-pkg-config graphviz java-latest-openjdk golang openssl rust tcpdump glibc-langpack-zh man
     sudo dnf group install -y --skip-unavailable "c-development" 
+
+    # 设置时区
+    sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+    sudo echo "Asia/Shanghai" > /etc/timezone
+
+    # 设置语言环境变量
+    export LANG=zh_CN.UTF-8
+    export LC_ALL=zh_CN.UTF-8
+
+    # 生成 locale
+    sudo localedef -c -f UTF-8 -i zh_CN zh_CN.UTF-8
 
     # 安装 kotlin
     curl -s "https://get.sdkman.io" | bash

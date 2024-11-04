@@ -619,6 +619,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
     sudo echo "Asia/Shanghai" > /etc/timezone
 
+    sudo echo 'export MANPATH="/usr/local/share/man:/usr/share/man:$MANPATH"' >> ~/.zshrc
     # 设置语言环境变量
     export LANG=zh_CN.UTF-8
     export LC_ALL=zh_CN.UTF-8

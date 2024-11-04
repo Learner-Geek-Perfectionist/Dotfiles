@@ -418,7 +418,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
   brew_formulas=(
     gettext msgpack ruby graphviz kotlin python
     brotli git lpeg ncurses sqlite openjdk grep
-    c-ares htop lua neovim tree-sitter bash
+    c-ares htop lua neovim tree-sitter bash tcpdump
     ca-certificates icu4c luajit node unibilium
     cmake libnghttp2 luv openssl@3 vim perl
     cmake-docs libsodium lz4 pcre2 xz llvm
@@ -556,7 +556,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
   if [[ $os_type == "ubuntu" ]]; then
     sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list
     sudo apt update && sudo apt upgrade -y
-    sudo apt install -y openssh-server net-tools git unzip zip ninja-build neovim ruby-full cmake nodejs iputils-ping procps htop traceroute tree coreutils zsh fontconfig python3 iproute2 kitty wget2 pkg-config graphviz kotlin golang software-properties-common valgrind sudo fd-find ripgrep rustc apt-transport-https ca-certificates
+    sudo apt install -y openssh-server net-tools git unzip zip ninja-build neovim ruby-full cmake nodejs iputils-ping procps htop traceroute tree coreutils zsh fontconfig python3 iproute2 kitty wget2 pkg-config graphviz kotlin golang software-properties-common valgrind sudo fd-find ripgrep rustc apt-transport-https ca-certificates tcpdump
 
     # 手动安装 fzf
     git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
@@ -614,7 +614,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
       /etc/yum.repos.d/fedora-updates.repo
 
     sudo dnf makecache
-    sudo dnf update -y && sudo dnf install -y openssh-server iproute net-tools fd-find git unzip zip ripgrep fzf ninja-build neovim ruby kitty cmake nodejs iputils procps-ng htop traceroute fastfetch tree coreutils zsh fontconfig python3 wget2 pkgconf-pkg-config graphviz java-latest-openjdk golang openssl rust
+    sudo dnf update -y && sudo dnf install -y openssh-server iproute net-tools fd-find git unzip zip ripgrep fzf ninja-build neovim ruby kitty cmake nodejs iputils procps-ng htop traceroute fastfetch tree coreutils zsh fontconfig python3 wget2 pkgconf-pkg-config graphviz java-latest-openjdk golang openssl rust tcpdump
     sudo dnf group install -y "C Development Tools and Libraries"
 
     # 安装 kotlin

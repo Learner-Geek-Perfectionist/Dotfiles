@@ -78,6 +78,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
 elif [[ -f /etc/os-release ]]; then
     # 调用函数，传入 Linux 参数
     set_kotlin_native_install_dir "linux"
+
     # 设置默认的语言环境
     export LANG=zh_CN.UTF-8
     export LC_ALL=zh_CN.UTF-8

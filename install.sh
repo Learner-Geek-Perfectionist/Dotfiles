@@ -627,24 +627,24 @@ elif [[ $OS_TYPE == "Linux" ]]; then
       /etc/yum.repos.d/fedora-updates.repo
 
     sudo dnf makecache
-    sudo dnf update -y && sudo dnf install -y glibc glibc-common openssh-server iproute net-tools fd-find git unzip zip ripgrep fzf ninja-build neovim ruby kitty cmake nodejs iputils procps-ng htop traceroute fastfetch tree coreutils zsh fontconfig python3 wget2 pkgconf-pkg-config graphviz java-latest-openjdk golang openssl rust tcpdump glibc-langpack-zh man
+    sudo dnf update -y && sudo dnf install -y glibc glibc-common openssh-server iproute net-tools fd-find git unzip zip ripgrep fzf ninja-build neovim ruby kitty cmake nodejs iputils procps-ng htop traceroute fastfetch tree coreutils zsh fontconfig python3 wget2 pkgconf-pkg-config graphviz java-latest-openjdk golang openssl rust tcpdump glibc-langpack-zh glibc-locale-source man 
     sudo dnf group install -y --skip-unavailable "c-development" 
 
     # 设置时区
     sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
     sudo echo "Asia/Shanghai" > /etc/timezone
-    
-    # 设置 MANPATH 环境变量
-    sudo echo 'export MANPATH="/usr/local/share/man:/usr/share/man:$MANPATH"' >> ~/.zshrc
-    sudo mandb
-    
+
     # 设置语言环境变量
     export LANG=zh_CN.UTF-8
     export LC_ALL=zh_CN.UTF-8
 
     # 生成 locale
     sudo localedef -c -f UTF-8 -i zh_CN zh_CN.UTF-8
-
+    
+    # 设置 MANPATH 环境变量
+    sudo echo 'export MANPATH="/usr/local/share/man:/usr/share/man:$MANPATH"' >> ~/.zshrc
+    sudo mandb
+    
     # 安装 kotlin
     curl -s "https://get.sdkman.io" | bash
     source "$HOME/.sdkman/bin/sdkman-init.sh"

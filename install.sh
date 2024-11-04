@@ -618,7 +618,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
 
     sudo dnf makecache
     sudo dnf update -y && sudo dnf install -y openssh-server iproute net-tools fd-find git unzip zip ripgrep fzf ninja-build neovim ruby kitty cmake nodejs iputils procps-ng htop traceroute fastfetch tree coreutils zsh fontconfig python3 wget2 pkgconf-pkg-config graphviz java-latest-openjdk golang openssl rust tcpdump
-    sudo dnf group install -y --skip-unavailable "C Development Tools and Libraries"
+    sudo dnf group install -y --skip-unavailable "c-development" 
 
     # 安装 kotlin
     curl -s "https://get.sdkman.io" | bash

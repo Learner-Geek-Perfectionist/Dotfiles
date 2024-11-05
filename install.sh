@@ -627,7 +627,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
       /etc/yum.repos.d/fedora.repo \
       /etc/yum.repos.d/fedora-updates.repo
 
-    sudo dnf update -y && sudo dnf install -y glibc glibc-common openssh-server iproute net-tools fd-find git unzip zip ripgrep fzf ninja-build neovim ruby kitty cmake nodejs iputils procps-ng htop traceroute fastfetch tree coreutils zsh fontconfig python3 wget2 pkgconf-pkg-config graphviz java-latest-openjdk golang openssl rust tcpdump glibc-langpack-zh glibc-locale-source man man-pages
+    sudo dnf update -y && sudo dnf install -y glibc glibc-common openssh-server iproute net-tools fd-find git unzip zip ripgrep fzf ninja-build neovim ruby kitty cmake nodejs iputils procps-ng htop traceroute fastfetch tree coreutils zsh fontconfig python3 wget2 pkgconf-pkg-config graphviz java-latest-openjdk golang openssl rust tcpdump glibc-langpack-zh glibc-locale-source man man-pages man-db
     sudo dnf group install -y --skip-unavailable "c-development" 
 
     # 设置时区
@@ -675,6 +675,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
 
     sudo dnf clean all
     sudo dnf makecache
+    
     # 生成和更新手册页的数据库
     sudo mandb
   else

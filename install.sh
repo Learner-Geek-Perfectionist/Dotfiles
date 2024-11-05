@@ -627,7 +627,6 @@ elif [[ $OS_TYPE == "Linux" ]]; then
       /etc/yum.repos.d/fedora.repo \
       /etc/yum.repos.d/fedora-updates.repo
 
-    sudo dnf makecache
     sudo dnf update -y && sudo dnf install -y glibc glibc-common openssh-server iproute net-tools fd-find git unzip zip ripgrep fzf ninja-build neovim ruby kitty cmake nodejs iputils procps-ng htop traceroute fastfetch tree coreutils zsh fontconfig python3 wget2 pkgconf-pkg-config graphviz java-latest-openjdk golang openssl rust tcpdump glibc-langpack-zh glibc-locale-source man man-pages
     sudo dnf group install -y --skip-unavailable "c-development" 
 
@@ -641,9 +640,6 @@ elif [[ $OS_TYPE == "Linux" ]]; then
 
     # 生成 locale
     sudo localedef -c -f UTF-8 -i zh_CN zh_CN.UTF-8
-    
-    # 生成和更新手册页的数据库
-    sudo mandb
     
     # 安装 kotlin
     curl -s "https://get.sdkman.io" | bash
@@ -677,8 +673,10 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     #   重启 Docker 服务以应用新的配置
     sudo systemctl restart docker    
 
-    
     sudo dnf clean all
+    sudo dnf makecache
+    # 生成和更新手册页的数据库
+    sudo mandb
   else
     print_centered_message -e "不支持的发行版，目前只支持 fedora、ubuntu"
   fi

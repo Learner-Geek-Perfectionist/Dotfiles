@@ -568,6 +568,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     sudo DEBIAN_FRONTEND=noninteractive apt install -y wireshark
     # 手动设置 setuid 位
     sudo chmod u+s /usr/bin/dumpcap
+    sudo usermod -aG wireshark $username
     
 
     
@@ -651,13 +652,11 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     sudo dnf -y update && sudo dnf install -y glibc glibc-common openssh-server iproute net-tools fd-find git unzip zip ripgrep fastfetch fzf ninja-build neovim ruby kitty cmake nodejs iputils procps-ng htop traceroute tree coreutils zsh fontconfig python3 wget pkgconf-pkg-config graphviz wireshark tcpdump java-latest-openjdk golang rust glibc-locale-source glibc-langpack-zh openssl && sudo dnf install -y --setopt=tsflags= coreutils coreutils-common man-pages man-db && sudo dnf group install -y --setopt=strict=0 "c-development"
 
     # 安装 wireshark
-    # 1.创建 Wireshark 组（如果尚未存在）：
-    sudo groupadd wireshark
-    # 2. 将 dumpcap 设置为允许 wireshark 组的成员执行：
+    # 1. 将 dumpcap 设置为允许 wireshark 组的成员执行：
     sudo chgrp wireshark /usr/bin/dumpcap
     sudo chmod 750 /usr/bin/dumpcap
     sudo setcap cap_net_raw,cap_net_admin=eip /usr/bin/dumpcap
-    # 3.将用户添加到 Wireshark 组：
+    # 2.将用户添加到 Wireshark 组：
     sudo usermod -aG wireshark $username
     
     

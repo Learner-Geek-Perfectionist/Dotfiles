@@ -627,13 +627,17 @@ elif [[ $OS_TYPE == "Linux" ]]; then
 
     
   elif [[ $os_type == "fedora" ]]; then
+    # 注释 tsflags=nodocs,从而安装 manual 手册
     sudo sed -i '/tsflags=nodocs/s/^/#/' /etc/dnf/dnf.conf
+
+    # 设置镜像
     sudo sed -e 's|^metalink=|#metalink=|g' \
       -e 's|^#baseurl=http://download.example/pub/fedora/linux|baseurl=https://mirrors.ustc.edu.cn/fedora|g' \
       -i.bak \
       /etc/yum.repos.d/fedora.repo \
       /etc/yum.repos.d/fedora-updates.repo
 
+    # 安装必要的工具 🔧
     sudo dnf update -y && sudo dnf install -y glibc glibc-common openssh-server iproute net-tools fd-find git unzip zip ripgrep fzf ninja-build neovim ruby kitty cmake nodejs iputils procps-ng htop traceroute fastfetch tree coreutils zsh fontconfig python3 wget2 pkgconf-pkg-config graphviz java-latest-openjdk golang openssl rust tcpdump glibc-langpack-zh glibc-locale-source man man-pages man-db
     sudo dnf group install -y --skip-unavailable "c-development" 
 

@@ -655,7 +655,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     # 安装 wireshark
     # 1. 将 dumpcap 设置为允许 wireshark 组的成员执行：
     sudo chgrp wireshark /usr/bin/dumpcap
-    sudo chmod 750 /usr/bin/dumpcap
+    sudo chmod 4755 /usr/bin/dumpcap
     sudo setcap cap_net_raw,cap_net_admin=eip /usr/bin/dumpcap
     # 2.将用户添加到 Wireshark 组：
     sudo usermod -aG wireshark $username

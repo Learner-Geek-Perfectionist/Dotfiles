@@ -552,7 +552,8 @@ elif [[ $OS_TYPE == "Linux" ]]; then
   
   # 根据操作系统设置软件源
   if [[ $os_type == "ubuntu" ]]; then
-    # 设置镜像
+  
+    # 设置国内源
     sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list
 
     # 取消最小化安装 ubuntu ，从而安装手册
@@ -627,10 +628,11 @@ elif [[ $OS_TYPE == "Linux" ]]; then
 
     
   elif [[ $os_type == "fedora" ]]; then
-    # 注释 tsflags=nodocs,从而安装 manual 手册
+  
+    # 注释 tsflags=nodocs，从而安装 manual 手册
     sudo sed -i '/tsflags=nodocs/s/^/#/' /etc/dnf/dnf.conf
 
-    # 设置镜像
+    # 设置国内源
     sudo sed -e 's|^metalink=|#metalink=|g' \
       -e 's|^#baseurl=http://download.example/pub/fedora/linux|baseurl=https://mirrors.ustc.edu.cn/fedora|g' \
       -i.bak \

@@ -559,7 +559,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
 
     # 安装必要的工具 🔧 
     sudo apt update && sudo apt upgrade -y
-    sudo apt install -y openssh-server net-tools git unzip zip ninja-build neovim ruby-full cmake nodejs iputils-ping procps htop traceroute tree coreutils zsh fontconfig python3 iproute2 kitty wget2 pkg-config graphviz kotlin golang software-properties-common valgrind sudo fd-find ripgrep rustc apt-transport-https ca-certificates tcpdump man locales unminimize
+    sudo apt install -y openssh-server net-tools git unzip zip ninja-build neovim ruby-full fd-find ripgrep cmake nodejs iputils-ping procps htop traceroute tree coreutils zsh fontconfig python3 iproute2 kitty wget pkg-config graphviz sudo wireshark tcpdump kotlin golang rustc software-properties-common valgrind curl tar locales unminimize man-db
 
     # 执行 unminimize 脚本
     yes | sudo unminimize
@@ -567,13 +567,13 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     # 设置时区环境变量
     TZ="Asia/Shanghai"
 
-    # 设置时区
-    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
-    echo "$TZ" > /etc/timezone
-    dpkg-reconfigure --frontend noninteractive tzdata
+     # 设置时区
+    sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+    sudo echo "Asia/Shanghai" > /etc/timezone
+    sudo dpkg-reconfigure --frontend noninteractive tzdata
 
     # 生成所需的语言环境
-    locale-gen zh_CN.UTF-8
+    sudo locale-gen zh_CN.UTF-8
 
     # 设置默认的语言环境
     export LANG=zh_CN.UTF-8

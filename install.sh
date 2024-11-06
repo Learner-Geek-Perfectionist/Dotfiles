@@ -559,7 +559,14 @@ elif [[ $OS_TYPE == "Linux" ]]; then
 
     # 安装必要的工具 🔧 
     sudo apt update && sudo apt upgrade -y
-    sudo apt install -y openssh-server net-tools git unzip zip ninja-build neovim ruby-full fd-find ripgrep cmake nodejs iputils-ping procps htop traceroute tree coreutils zsh fontconfig python3 iproute2 kitty wget pkg-config graphviz sudo wireshark tcpdump kotlin golang rustc software-properties-common valgrind curl tar locales unminimize man-db
+    sudo apt install -y openssh-server debconf-utils net-tools git unzip zip ninja-build neovim ruby-full fd-find ripgrep cmake nodejs iputils-ping procps htop traceroute tree coreutils zsh fontconfig python3 iproute2 kitty wget pkg-config graphviz sudo tcpdump kotlin golang rustc software-properties-common valgrind curl tar locales unminimize man-db
+
+
+    # 设置 Debconf，允许非root用户捕获数据包
+    echo "wireshark-common wireshark-common/install-setuid boolean true" | sudo debconf-set-selections
+
+    # 以非交互模式安装 Wireshark
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y wireshark-common
 
     # 执行 unminimize 脚本
     yes | sudo unminimize

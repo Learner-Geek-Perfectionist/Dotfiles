@@ -566,7 +566,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     echo "wireshark-common wireshark-common/install-setuid boolean true" | sudo debconf-set-selections
     # 以非交互模式安装 Wireshark
     sudo DEBIAN_FRONTEND=noninteractive apt install -y wireshark
-    # 手动设置  setuid 位
+    # 手动设置 setuid 位
     sudo chmod u+s /usr/bin/dumpcap
     
 

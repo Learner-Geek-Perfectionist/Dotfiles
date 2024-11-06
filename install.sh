@@ -640,8 +640,9 @@ elif [[ $OS_TYPE == "Linux" ]]; then
       /etc/yum.repos.d/fedora-updates.repo
 
     # 安装必要的工具 🔧
-    sudo dnf update -y && sudo dnf install -y glibc glibc-common openssh-server iproute net-tools fd-find git unzip zip ripgrep fzf ninja-build neovim ruby kitty cmake nodejs iputils procps-ng htop traceroute fastfetch tree coreutils zsh fontconfig python3 wget2 pkgconf-pkg-config graphviz java-latest-openjdk golang openssl rust tcpdump glibc-langpack-zh glibc-locale-source man man-pages man-db
-    sudo dnf group install -y --skip-unavailable "c-development" 
+    sudo dnf -y update && dnf install -y glibc glibc-common openssh-server iproute net-tools fd-find git unzip zip ripgrep fastfetch fzf ninja-build neovim ruby kitty cmake nodejs iputils procps-ng htop traceroute tree coreutils-common coreutils zsh fontconfig python3 wget pkgconf-pkg-config graphviz wireshark tcpdump java-latest-openjdk golang rust glibc-locale-source glibc-langpack-zh openssl && dnf install -y --setopt=tsflags= coreutils coreutils-common man-pages man-db && dnf group install -y --skip-unavailable "c-development" && dnf clean all && dnf makecache
+    # 禁用 dnf 配置中的 tsflags 选项，从而安装 manual 手册
+    sudo install -y --setopt=tsflags= man-pages
 
     # 设置时区
     sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime

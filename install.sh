@@ -554,7 +554,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
   if [[ $os_type == "ubuntu" ]]; then
     sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list
     sudo apt update && sudo apt upgrade -y
-    sudo apt install -y openssh-server net-tools git unzip zip ninja-build neovim ruby-full cmake nodejs iputils-ping procps htop traceroute tree coreutils coreutils-common zsh fontconfig python3 iproute2 kitty wget2 pkg-config graphviz kotlin golang software-properties-common valgrind sudo fd-find ripgrep rustc apt-transport-https ca-certificates tcpdump man 
+    sudo apt install -y openssh-server net-tools git unzip zip ninja-build neovim ruby-full cmake nodejs iputils-ping procps htop traceroute tree coreutils coreutils-common zsh fontconfig python3 iproute2 kitty wget2 pkg-config graphviz kotlin golang software-properties-common valgrind sudo fd-find ripgrep rustc apt-transport-https ca-certificates tcpdump man locales
 
     # 设置时区环境变量
     TZ="Asia/Shanghai"

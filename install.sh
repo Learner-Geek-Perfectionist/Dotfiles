@@ -564,9 +564,13 @@ elif [[ $OS_TYPE == "Linux" ]]; then
 
     # 设置 Debconf，允许非root用户捕获数据包
     echo "wireshark-common wireshark-common/install-setuid boolean true" | sudo debconf-set-selections
-
     # 以非交互模式安装 Wireshark
     sudo DEBIAN_FRONTEND=noninteractive apt install -y wireshark
+    # 手动设置  setuid 位
+    sudo chmod u+s /usr/bin/dumpcap
+    
+
+    
 
     # 执行 unminimize 脚本
     yes | sudo unminimize

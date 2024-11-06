@@ -570,11 +570,8 @@ elif [[ $OS_TYPE == "Linux" ]]; then
 
     # 执行 unminimize 脚本
     yes | sudo unminimize
-    
-    # 设置时区环境变量
-    TZ="Asia/Shanghai"
 
-     # 设置时区
+    # 设置时区
     sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
     sudo echo "Asia/Shanghai" > /etc/timezone
     sudo dpkg-reconfigure --frontend noninteractive tzdata

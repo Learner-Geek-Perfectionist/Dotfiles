@@ -644,7 +644,19 @@ elif [[ $OS_TYPE == "Linux" ]]; then
       /etc/yum.repos.d/fedora-updates.repo
 
     # 安装必要的工具 🔧
-    sudo dnf -y update && sudo dnf install -y glibc glibc-common openssh-server iproute net-tools fd-find git unzip zip ripgrep fastfetch fzf ninja-build neovim ruby kitty cmake nodejs iputils procps-ng htop traceroute tree coreutils zsh fontconfig python3 wget pkgconf-pkg-config graphviz wireshark tcpdump java-latest-openjdk golang rust glibc-locale-source glibc-langpack-zh mandb openssl && dnf install -y --setopt=tsflags= coreutils coreutils-common man-pages man-db && dnf group install -y --skip-unavailable "c-development"
+    sudo dnf -y update && sudo dnf install -y glibc glibc-common openssh-server iproute net-tools fd-find git unzip zip ripgrep fastfetch fzf ninja-build neovim ruby kitty cmake nodejs iputils procps-ng htop traceroute tree coreutils zsh fontconfig python3 wget pkgconf-pkg-config graphviz tcpdump java-latest-openjdk golang rust glibc-locale-source glibc-langpack-zh mandb openssl && sudo dnf install -y --setopt=tsflags= coreutils coreutils-common man-pages man-db && sudo dnf group install -y --skip-unavailable "c-development"
+
+    # 安装 wireshark
+    # 1.创建 Wireshark 组（如果尚未存在）：
+    sudo groupadd wireshark
+    # 2. 将 dumpcap 设置为允许 wireshark 组的成员执行：
+    sudo chgrp wireshark /usr/bin/dumpcap
+    sudo chmod 750 /usr/bin/dumpcap
+    sudo setcap cap_net_raw,cap_net_admin=eip /usr/bin/dumpcap
+    # 3.将用户添加到 Wireshark 组：
+    sudo usermod -aG wireshark $username
+    
+    
     
     # 设置时区
     sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
@@ -694,7 +706,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     # 确保安装必要的 manual 手册
     sudo dnf -y reinstall $(rpm -qads --qf "PACKAGE: %{NAME}\n" | sed -n -E '/PACKAGE: /{s/PACKAGE: // ; h ; b }; /^not installed/ { g; p }' | uniq)
     # 生成和更新手册页的数据库
-    sudo mandb
+    sudo mandb -c
   else
     print_centered_message -e "不支持的发行版，目前只支持 fedora、ubuntu"
   fi

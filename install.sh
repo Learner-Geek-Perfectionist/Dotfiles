@@ -552,7 +552,14 @@ elif [[ $OS_TYPE == "Linux" ]]; then
   
   # 根据操作系统设置软件源
   if [[ $os_type == "ubuntu" ]]; then
+    # 设置镜像
     sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list
+
+    # 取消最小化安装 ubuntu ，从而安装手册
+    sudo apt install -y unminimize
+    yes | sudo unminimize
+
+    # 安装必要的工具 🔧 
     sudo apt update && sudo apt upgrade -y
     sudo apt install -y openssh-server net-tools git unzip zip ninja-build neovim ruby-full cmake nodejs iputils-ping procps htop traceroute tree coreutils coreutils-common zsh fontconfig python3 iproute2 kitty wget2 pkg-config graphviz kotlin golang software-properties-common valgrind sudo fd-find ripgrep rustc apt-transport-https ca-certificates tcpdump man locales
 

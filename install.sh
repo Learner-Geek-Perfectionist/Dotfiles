@@ -566,7 +566,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     echo "wireshark-common wireshark-common/install-setuid boolean true" | sudo debconf-set-selections
 
     # 以非交互模式安装 Wireshark
-    sudo DEBIAN_FRONTEND=noninteractive apt install -y wireshark-common
+    sudo DEBIAN_FRONTEND=noninteractive apt install -y wireshark
 
     # 执行 unminimize 脚本
     yes | sudo unminimize

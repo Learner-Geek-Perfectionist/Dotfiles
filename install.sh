@@ -573,7 +573,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
 
     # 设置时区
     sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-    sudo echo "Asia/Shanghai" > /etc/timezone
+    echo "Asia/Shanghai" | sudo tee /etc/timezone > /dev/null
     sudo dpkg-reconfigure --frontend noninteractive tzdata
 
     # 生成所需的语言环境
@@ -648,7 +648,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     
     # 设置时区
     sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-    sudo echo "Asia/Shanghai" > /etc/timezone
+    echo "Asia/Shanghai" | sudo tee /etc/timezone > /dev/null
 
     # 设置语言环境变量
     export LANG=zh_CN.UTF-8

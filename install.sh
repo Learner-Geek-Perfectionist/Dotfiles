@@ -568,6 +568,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     sudo DEBIAN_FRONTEND=noninteractive apt install -y wireshark
     # 手动设置 setuid 位
     sudo chmod u+s /usr/bin/dumpcap
+    # 将当前用户添加到 wireshark 组
     sudo usermod -aG wireshark $username
     
 

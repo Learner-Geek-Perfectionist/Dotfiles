@@ -187,6 +187,49 @@ check_and_install_brew_packages() {
   fi
 }
 
+
+install_and_configure_docker() {
+    # 检查 Docker 是否已经安装
+    if ! command -v docker >/dev/null 2>&1; then
+        echo "Docker 未安装，开始安装过程..."
+
+        # 1. 获取安装脚本
+        curl -fsSL https://get.docker.com -o get-docker.sh
+
+        # 2. 运行安装脚本
+        sudo sh get-docker.sh
+
+        # 3. 将当前登录的用户添加到 docker 组
+        sudo usermod -aG docker ${USER}
+
+        # 4. 启动并且开机自启 Docker 服务
+        sudo systemctl start docker && sudo systemctl enable docker
+
+        echo "Docker 安装完成。"
+    else
+        echo "Docker 已安装，跳过安装步骤。"
+    fi
+
+    # 配置 Docker 镜像
+    echo "配置 Docker 镜像..."
+    sudo mkdir -p /etc/docker
+
+    # 写入指定的镜像源到 daemon.json
+    echo '{
+      "registry-mirrors": [
+        "https://docker.m.daocloud.io",
+        "https://mirror.baidubce.com",
+        "http://hub-mirror.c.163.com"
+      ]
+    }' | sudo tee /etc/docker/daemon.json > /dev/null
+
+    # 重启 Docker 服务以应用新的配置
+    sudo systemctl restart docker
+
+    echo "Docker 镜像配置完成。"
+}
+
+
 # 定义设置用户密码函数
 set_password_if_needed() {
   local user=$1
@@ -671,45 +714,9 @@ elif [[ $OS_TYPE == "Linux" ]]; then
         echo "Java 安装完成。"
     fi
 
-    # 检查 Docker 是否已经安装
-    if ! command -v docker >/dev/null 2>&1; then
-        echo "Docker 未安装，开始安装过程..."
-    
-        # 1. 获取安装脚本
-        curl -fsSL https://get.docker.com -o get-docker.sh
-    
-        # 2. 运行安装脚本
-        sudo sh get-docker.sh
-    
-        # 3. 将当前登录的用户添加到 docker 组
-        sudo usermod -aG docker ${USER}
-    
-        # 4. 启动并且开机自启 Docker 服务
-        sudo systemctl start docker && sudo systemctl enable docker
-    
-        echo "Docker 安装完成。"
-    else
-        echo "Docker 已安装，跳过安装步骤。"
-    fi
-    
-    # 配置 Docker 镜像
-    echo "配置 Docker 镜像..."
-    sudo mkdir -p /etc/docker
-    
-    # 写入指定的镜像源到 daemon.json
-    echo '{
-      "registry-mirrors": [
-        "https://docker.m.daocloud.io",
-        "https://mirror.baidubce.com",
-        "http://hub-mirror.c.163.com"
-      ]
-    }' | sudo tee /etc/docker/daemon.json > /dev/null
-    
-    # 重启 Docker 服务以应用新的配置
-    sudo systemctl restart docker
-    
-    echo "Docker 镜像配置完成。"
-
+   
+    # 调用函数以安装和配置 Docker
+    install_and_configure_docker
     
   elif [[ $os_type == "fedora" ]]; then
   
@@ -757,27 +764,8 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     install_kotlin_native "linux"
     
  
-    # 安装 Docker
-    # 1. 获取安装脚本
-    curl -fsSL https://get.docker.com -o get-docker.sh
-    # 2. 运行安装脚本
-    sudo sh get-docker.sh
-    # 3. 将当前登录的用户添加到 docker 组
-    sudo usermod -aG docker ${USER}
-    # 4. 启动并且开机自启 Docker 服务
-    sudo systemctl start docker && sudo systemctl enable docker
-    # 5.设置 Docker 镜像
-    sudo mkdir -p /etc/docker
-    #   写入指定的镜像源到 daemon.json
-    echo '{
-      "registry-mirrors": [
-        "https://docker.m.daocloud.io",
-        "https://mirror.baidubce.com",
-        "http://hub-mirror.c.163.com"
-      ]
-    }' | sudo tee /etc/docker/daemon.json > /dev/null
-    #   重启 Docker 服务以应用新的配置
-    sudo systemctl restart docker    
+    # 调用函数以安装和配置 Docker
+    install_and_configure_docker
 
     sudo dnf clean all && sudo dnf makecache
 
@@ -785,6 +773,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     sudo dnf -y reinstall $(rpm -qads --qf "PACKAGE: %{NAME}\n" | sed -n -E '/PACKAGE: /{s/PACKAGE: // ; h ; b }; /^not installed/ { g; p }' | uniq)
     # 生成和更新手册页的数据库
     sudo mandb -c
+    
   else
     print_centered_message -e "不支持的发行版，目前只支持 fedora、ubuntu"
   fi

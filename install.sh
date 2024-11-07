@@ -578,10 +578,6 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     sudo usermod -aG wireshark $username
     
 
-    
-
-    # 执行 unminimize 脚本
-    yes | sudo unminimize
 
     # 设置时区
     sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime

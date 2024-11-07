@@ -39,17 +39,12 @@ set_kotlin_native_install_dir() {
     ARCH=$(uname -m)
 
     if [[ "$SYSTEM_TYPE" == "macos" ]]; then
-        if [[ "$ARCH" == "arm64" ]]; then
-            INSTALL_DIR="/opt/kotlin-native-macos-aarch64"
-        else
-            INSTALL_DIR="/opt/kotlin-native-macos-x86_64"
-        fi
-
+        INSTALL_DIR="/opt/kotlin-native-macos-$ARCH-$LATEST_VERSION"
     elif [[ "$SYSTEM_TYPE" == "linux" ]]; then
         if [[ "$ARCH" == "x86_64" ]]; then
-            INSTALL_DIR="/opt/kotlin-native-linux-x86_64"
+            INSTALL_DIR="/opt/kotlin-native-linux-x86_64-$LATEST_VERSION"
         elif [[ "$ARCH" == "aarch64" ]]; then
-            INSTALL_DIR="/opt/kotlin-native-linux-aarch64"
+            INSTALL_DIR="/opt/kotlin-native-linux-aarch64-$LATEST_VERSION"
         else
             echo "不支持的 Linux 架构: $ARCH"
             return 1

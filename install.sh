@@ -648,7 +648,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     FZF_DIR="$HOME/.fzf"
     
     # 检查 fzf 目录是否已存在
-    if command -v fzf >/dev/null 2>&1; then
+    if [ -d "$FZF_DIR" ]; then
         # 目录存在，跳过安装
         echo "fzf 已安装"
         echo "跳过安装。"

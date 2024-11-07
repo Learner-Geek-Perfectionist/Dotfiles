@@ -3,8 +3,8 @@
 # 定义日志文件路径
 LOG_FILE="install.log"
 
-# 重定向整个脚本的输出到日志文件
-exec > >(tee -a "$LOG_FILE") 2>&1
+# 重定向整个脚本的输出到日志文件，并覆盖之前的日志
+exec > >(tee "$LOG_FILE") 2>&1
 
 # 一旦错误，就退出
 set -e 

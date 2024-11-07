@@ -88,6 +88,12 @@ install_kotlin_native() {
         return 0
     fi
 
+    # 检查是否已安装 Kotlin/Native
+    if [ -d "$INSTALL_DIR" ]; then
+        echo "Kotlin/Native 已安装在 $INSTALL_DIR。跳过安装。"
+        return 0
+    fi
+
     # 检查下载链接是否有效
     echo -e "Checking the validity of the download URL: $DOWNLOAD_URL\n"
     HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}" "$DOWNLOAD_URL")
@@ -129,7 +135,6 @@ install_kotlin_native() {
         return 0
     fi
 }
-
 
 
 # 使用方法：传递 macos 或 linux 作为参数
@@ -597,56 +602,104 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     export LANG=zh_CN.UTF-8
     export LC_ALL=zh_CN.UTF-8
     
-    # 手动安装 fzf
     # 定义 fzf 的安装目录
     FZF_DIR="$HOME/.fzf"
-    if [ -d "$FZF_DIR" ]; then
-        # 目录存在，自动删除
-        echo "检测到已存在 fzf 目录: $FZF_DIR"
-        echo "正在删除旧的 fzf 目录并重新安装..."
-        rm -rf "$FZF_DIR"
+    
+    # 检查 fzf 目录是否已存在
+    if command -v fzf >/dev/null 2>&1; then
+        # 目录存在，跳过安装
+        echo "fzf 已安装"
+        echo "跳过安装。"
+    else
+        # 目录不存在，克隆并安装 fzf
+        echo "正在安装 fzf..."
+        git clone --depth 1 https://github.com/junegunn/fzf.git "$FZF_DIR"
+        yes | $FZF_DIR/install --no-update-rc
+        echo "fzf 安装完成。"
     fi
     
-    # 克隆并安装 fzf
-    echo "正在安装 fzf..."
-    git clone --depth 1 https://github.com/junegunn/fzf.git "$FZF_DIR"
-    yes | $FZF_DIR/install --no-update-rc
-    
-    echo "fzf 安装完成。"
-    
     # 手动安装 fastfetch
-    # 1.克隆 fastfetch 源码
-    git clone https://github.com/LinusDierheimer/fastfetch.git
-    cd fastfetch
-    # 2.创建构建目录并编译项目
-    mkdir build && cd build
-    cmake ..
-    make
-    # 3.安装 fastfetch
-    sudo make install
-    # 4.清理（可选）
-    cd ../.. && rm -rf fastfetch
+    # 检查 fastfetch 是否已经安装
+    if command -v fastfetch >/dev/null 2>&1; then
+        echo "fastfetch 已经安装。跳过安装步骤。"
+    else
+        echo "开始安装 fastfetch..."
+    
+        # 克隆 fastfetch 源码
+        git clone https://github.com/LinusDierheimer/fastfetch.git
+        cd fastfetch
+    
+        # 创建构建目录并编译项目
+        mkdir build && cd build
+        cmake ..
+        make
+    
+        # 安装 fastfetch
+        sudo make install
+    
+        # 清理（可选）
+        cd ../.. && rm -rf fastfetch
+    
+        echo "fastfetch 安装完成。"
+    fi
     
     # 安装 Kotlin/Native
     install_kotlin_native "linux"
     
     # 安装 SDKMAN 和 java
-    curl -s "https://get.sdkman.io" | bash
-    source "$HOME/.sdkman/bin/sdkman-init.sh"
-    sdk install java
+    # 定义 SDKMAN 的安装目录
+    SDKMAN_DIR="$HOME/.sdkman"
+    
+    # 检查 SDKMAN 是否已经安装
+    if [ -d "$SDKMAN_DIR" ]; then
+        echo "SDKMAN 已经安装。"
+    else
+        echo "开始安装 SDKMAN..."
+        # 1. 下载并安装 SDKMAN
+        curl -s "https://get.sdkman.io" | bash
+    
+        # 2. 初始化 SDKMAN 环境
+        source "$SDKMAN_DIR/bin/sdkman-init.sh"
+    
+        echo "SDKMAN 安装完成。"
+    fi
+    
+    # 检查 Java 是否已经安装
+    if sdk list java | grep -q 'installed'; then
+        echo "Java 已经安装。"
+    else
+        echo "开始安装 Java..."
+        # 安装 Java
+        sdk install java
+        echo "Java 安装完成。"
+    fi
 
-    # 安装 Docker
-    # 1. 获取安装脚本
-    curl -fsSL https://get.docker.com -o get-docker.sh
-    # 2. 运行安装脚本
-    sudo sh get-docker.sh
-    # 3. 将当前登录的用户添加到 docker 组
-    sudo usermod -aG docker ${USER}
-    # 4. 启动并且开机自启 Docker 服务
-    sudo systemctl start docker && sudo systemctl enable docker
-    # 5.设置 Docker 镜像
+    # 检查 Docker 是否已经安装
+    if ! command -v docker >/dev/null 2>&1; then
+        echo "Docker 未安装，开始安装过程..."
+    
+        # 1. 获取安装脚本
+        curl -fsSL https://get.docker.com -o get-docker.sh
+    
+        # 2. 运行安装脚本
+        sudo sh get-docker.sh
+    
+        # 3. 将当前登录的用户添加到 docker 组
+        sudo usermod -aG docker ${USER}
+    
+        # 4. 启动并且开机自启 Docker 服务
+        sudo systemctl start docker && sudo systemctl enable docker
+    
+        echo "Docker 安装完成。"
+    else
+        echo "Docker 已安装，跳过安装步骤。"
+    fi
+    
+    # 配置 Docker 镜像
+    echo "配置 Docker 镜像..."
     sudo mkdir -p /etc/docker
-    #   写入指定的镜像源到 daemon.json
+    
+    # 写入指定的镜像源到 daemon.json
     echo '{
       "registry-mirrors": [
         "https://docker.m.daocloud.io",
@@ -654,8 +707,11 @@ elif [[ $OS_TYPE == "Linux" ]]; then
         "http://hub-mirror.c.163.com"
       ]
     }' | sudo tee /etc/docker/daemon.json > /dev/null
-    #   重启 Docker 服务以应用新的配置
-    sudo systemctl restart docker    
+    
+    # 重启 Docker 服务以应用新的配置
+    sudo systemctl restart docker
+    
+    echo "Docker 镜像配置完成。"
 
     
   elif [[ $os_type == "fedora" ]]; then

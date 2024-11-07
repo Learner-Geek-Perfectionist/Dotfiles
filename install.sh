@@ -651,7 +651,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     SDKMAN_DIR="$HOME/.sdkman"
     
     # 检查 SDKMAN 是否已经安装
-    if [ -d "$SDKMAN_DIR" ]; then
+    if command -v sdk >/dev/null 2>&1; then
         echo "SDKMAN 已经安装。"
     else
         echo "开始安装 SDKMAN..."

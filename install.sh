@@ -60,7 +60,6 @@ install_kotlin_native() {
 
     # 判断系统类型
     if [ "$SYSTEM_TYPE" == "macos" ]; then
-        # 检查系统架构，判断是 Apple Silicon 还是 Intel
         ARCH=$(uname -m)
         if [ "$ARCH" == "arm64" ]; then
             DOWNLOAD_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-native-macos-aarch64-$LATEST_VERSION.tar.gz"
@@ -70,7 +69,6 @@ install_kotlin_native() {
         INSTALL_DIR="/opt/kotlin-native-macos-$ARCH-$LATEST_VERSION"
 
     elif [ "$SYSTEM_TYPE" == "linux" ]; then
-        # 检查 Linux 系统架构，支持 x86_64 和 aarch64
         ARCH=$(uname -m)
         if [ "$ARCH" == "x86_64" ]; then
             DOWNLOAD_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-native-prebuilt-linux-x86_64-${LATEST_VERSION#v}.tar.gz"
@@ -95,14 +93,14 @@ install_kotlin_native() {
     fi
 
     # 检查下载链接是否有效
-    echo -e "Checking the validity of the download URL: $DOWNLOAD_URL\n"
-    HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}" "$DOWNLOAD_URL")
+    echo "Checking the validity of the download URL: $DOWNLOAD_URL"
+    HTTP_STATUS=$(curl -L -o /dev/null -s -w "%{http_code}" "$DOWNLOAD_URL")
 
-    if [ "$HTTP_STATUS" != "200" ]; then
-        echo -e "下载链接无效，HTTP 状态码: $HTTP_STATUS。请检查版本号或网络连接。\n"
-        return 0
-    else
+    if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
         echo "下载链接有效，开始下载。"
+    else
+        echo "下载链接无效，HTTP 状态码: $HTTP_STATUS。请检查版本号或网络连接。"
+        return 0
     fi
 
     # 下载 Kotlin/Native 二进制包
@@ -114,7 +112,7 @@ install_kotlin_native() {
         return 0
     fi
 
-    # 解压并替换之前的安装
+    # 解压并安装
     echo "Installing Kotlin/Native to: $INSTALL_DIR"
     sudo mkdir -p $INSTALL_DIR
     sudo tar -xzf /tmp/kotlin-native.tar.gz -C $INSTALL_DIR --strip-components=1
@@ -135,7 +133,6 @@ install_kotlin_native() {
         return 0
     fi
 }
-
 
 # 使用方法：传递 macos 或 linux 作为参数
 # 示例： install_kotlin_native macos

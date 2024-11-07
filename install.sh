@@ -592,8 +592,21 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     export LC_ALL=zh_CN.UTF-8
     
     # 手动安装 fzf
-    git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
-    yes | ~/.fzf/install --no-update-rc
+    # 定义 fzf 的安装目录
+    FZF_DIR="$HOME/.fzf"
+    if [ -d "$FZF_DIR" ]; then
+        # 目录存在，自动删除
+        echo "检测到已存在 fzf 目录: $FZF_DIR"
+        echo "正在删除旧的 fzf 目录并重新安装..."
+        rm -rf "$FZF_DIR"
+    fi
+    
+    # 克隆并安装 fzf
+    echo "正在安装 fzf..."
+    git clone --depth 1 https://github.com/junegunn/fzf.git "$FZF_DIR"
+    "$FZF_DIR/install" --no-update-rc
+    
+    echo "fzf 安装完成。"
     
     # 手动安装 fastfetch
     # 1.克隆 fastfetch 源码

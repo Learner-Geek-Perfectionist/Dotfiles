@@ -190,7 +190,9 @@ check_and_install_brew_packages() {
 
 install_and_configure_docker() {
     # 检查 Docker 是否已经安装
-    if ! command -v docker >/dev/null 2>&1; then
+    echo "检查 Docker 命令..."
+    docker_cmd=$(command -v docker)
+    if [ -z "$docker_cmd" ]; then
         echo "Docker 未安装，开始安装过程..."
 
         # 1. 获取安装脚本
@@ -208,6 +210,7 @@ install_and_configure_docker() {
         echo "Docker 安装完成。"
     else
         echo "Docker 已安装，跳过安装步骤。"
+        echo "Docker 命令位置：$docker_cmd"
     fi
 
     # 配置 Docker 镜像
@@ -228,7 +231,6 @@ install_and_configure_docker() {
 
     echo "Docker 镜像配置完成。"
 }
-
 
 # 定义设置用户密码函数
 set_password_if_needed() {

@@ -18,20 +18,20 @@ caffeinate -d -i -s -t 86400
 
 # GitHub
 
-caffeinate -i /bin/zsh -c "$(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/install.sh?$(date +%s))"
+caffeinate -i /bin/zsh -c "$(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/install.sh)"
 
 # Gitee
 
-caffeinate -i /bin/zsh -c "$(curl -H 'Cache-Control: no-cache' -fsSL https://gitee.com/oyzxin/Dotfiles/raw/master/install.sh?$(date +%s))"
+caffeinate -i /bin/zsh -c "$(curl -H 'Cache-Control: no-cache' -fsSL https://gitee.com/oyzxin/Dotfiles/raw/master/install.sh"
 
 
 #Linux
 
 # GitHub
 
-/bin/bash -c "$(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/install.sh?$(date +%s))"
+/bin/bash -c "$(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/install.sh"
 
 # Gitee
 
-/bin/bash -c "$(curl -H 'Cache-Control: no-cache' -fsSL https://gitee.com/oyzxin/Dotfiles/raw/master/install.sh?$(date +%s))"
+/bin/bash -c "$(curl -H 'Cache-Control: no-cache' -fsSL https://gitee.com/oyzxin/Dotfiles/raw/master/install.sh)"
 ```

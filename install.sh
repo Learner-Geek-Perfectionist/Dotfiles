@@ -604,7 +604,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     # 克隆并安装 fzf
     echo "正在安装 fzf..."
     git clone --depth 1 https://github.com/junegunn/fzf.git "$FZF_DIR"
-    "$FZF_DIR/install" --no-update-rc
+    yes | $FZF_DIR/install --no-update-rc
     
     echo "fzf 安装完成。"
     

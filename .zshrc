@@ -47,11 +47,11 @@ set_kotlin_native_install_dir() {
             INSTALL_DIR="/opt/kotlin-native-linux-aarch64-$LATEST_VERSION"
         else
             echo "不支持的 Linux 架构: $ARCH"
-            return 1
+            return 0
         fi
     else
         echo "未知系统类型，请使用 'macos' 或 'linux' 作为参数。"
-        return 1
+        return 0
     fi
 }
 

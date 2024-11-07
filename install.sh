@@ -58,33 +58,35 @@ install_kotlin_native() {
     # 获取最新版本号
     get_latest_version
 
+    # 获取系统架构
+    ARCH=$(uname -m)
+    
     # 判断系统类型
     if [ "$SYSTEM_TYPE" == "macos" ]; then
-        ARCH=$(uname -m)
-        if [ "$ARCH" == "arm64" ]; then
-            DOWNLOAD_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-native-macos-aarch64-$LATEST_VERSION.tar.gz"
+        if [ "$ARCH" == "arm64" ] || [ "$ARCH" == "x86_64" ]; then
+            DOWNLOAD_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-native-macos-$ARCH-$LATEST_VERSION.tar.gz"
+            INSTALL_DIR="/opt/kotlin-native-macos-$ARCH-$LATEST_VERSION"
         else
-            DOWNLOAD_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-native-macos-x86_64-$LATEST_VERSION.tar.gz"
+            echo "不支持的 macOS 架构: $ARCH"
+            return 0
         fi
-        INSTALL_DIR="/opt/kotlin-native-macos-$ARCH-$LATEST_VERSION"
-
     elif [ "$SYSTEM_TYPE" == "linux" ]; then
-        ARCH=$(uname -m)
-        if [ "$ARCH" == "x86_64" ]; then
-            DOWNLOAD_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-native-prebuilt-linux-x86_64-${LATEST_VERSION#v}.tar.gz"
-            INSTALL_DIR="/opt/kotlin-native-linux-x86_64-$LATEST_VERSION"
-        elif [ "$ARCH" == "aarch64" ]; then
-            DOWNLOAD_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-native-prebuilt-linux-aarch64-${LATEST_VERSION#v}.tar.gz"
-            INSTALL_DIR="/opt/kotlin-native-linux-aarch64-$LATEST_VERSION"
+        if [ "$ARCH" == "x86_64" ] || [ "$ARCH" == "aarch64" ]; then
+            # 使用 ${LATEST_VERSION#v} 以去除可能存在的版本前的 'v'
+            DOWNLOAD_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-native-prebuilt-linux-$ARCH-${LATEST_VERSION#v}.tar.gz"
+            INSTALL_DIR="/opt/kotlin-native-linux-$ARCH-$LATEST_VERSION"
         else
             echo "不支持的 Linux 架构: $ARCH"
             return 0
         fi
-
     else
         echo "未知系统类型，请使用 'macos' 或 'linux' 作为参数。"
         return 0
     fi
+    
+    # 显示下载和安装信息
+    echo "下载 URL: $DOWNLOAD_URL"
+    echo "安装目录: $INSTALL_DIR"
 
     # 检查是否已安装 Kotlin/Native
     if [ -d "$INSTALL_DIR" ]; then

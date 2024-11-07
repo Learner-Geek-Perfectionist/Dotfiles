@@ -556,10 +556,13 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     # 设置国内源
     sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list
 
-
+    # 取消最小化安装
+    sudo apt update && sudo apt upgrade -y && sudo apt install -y unminimize
+    yes | sudo unminimize
+    
     # 安装必要的工具 🔧 
     sudo apt update && sudo apt upgrade -y
-    sudo apt install -y openssh-server debconf-utils net-tools git unzip zip ninja-build neovim ruby-full fd-find ripgrep cmake nodejs iputils-ping procps htop traceroute tree coreutils zsh fontconfig python3 iproute2 kitty wget pkg-config graphviz sudo tcpdump kotlin golang rustc software-properties-common valgrind curl tar locales unminimize man-db
+    sudo apt install -y openssh-server debconf-utils net-tools git unzip zip ninja-build neovim ruby-full fd-find ripgrep cmake nodejs iputils-ping procps htop traceroute tree coreutils zsh fontconfig python3 iproute2 kitty wget pkg-config graphviz sudo tcpdump kotlin golang rustc software-properties-common valgrind curl tar locales man-db
 
 
     # 设置 Debconf，允许非root用户捕获数据包

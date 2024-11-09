@@ -28,7 +28,7 @@ caffeinate -i /bin/zsh -c "$(curl -fsSL https://gitee.com/oyzxin/Dotfiles/raw/ma
 
 # GitHub
 
-/bin/bash -c "$(curl -H -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/bootstrap.sh)"  
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/bootstrap.sh)"  
 
 # Gitee
 

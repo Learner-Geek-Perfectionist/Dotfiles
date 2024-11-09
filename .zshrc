@@ -65,19 +65,11 @@ elif [[ -f /etc/os-release ]]; then
     fi
 fi
 
-else
-    # 其他操作系统的设置
-    echo "Unsupported OS"
-    return 1
-fi
 
-
+INSTALL_DIR="/opt/kotlin-native/"
 # 最后统一将 Kotlin/Native 安装路径添加到 PATH
 if [[ -n "$INSTALL_DIR" ]]; then
     export PATH="$PATH:/opt/kotlin-native/bin"
-else
-    echo "安装目录未设置，脚本中止。"
-    return 1
 fi
 
 

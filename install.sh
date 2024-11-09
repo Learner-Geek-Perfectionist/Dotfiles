@@ -75,6 +75,19 @@ install_kotlin_native() {
     # 获取系统架构
     ARCH=$(uname -m)
     
+    case "$ARCH" in
+        arm64 | armd64)
+            ARCH="aarch64"  # 将 arm64 和 armd64 统一处理为 aarch64
+            ;;
+        x86_64)
+            ARCH="x86_64"
+            ;;
+        *)
+            echo "Unsupported architecture: $ARCH"
+            exit 1
+            ;;
+    esac
+    
     # 判断系统类型和架构支持
     case "$SYSTEM_TYPE" in
         "macos" | "linux")

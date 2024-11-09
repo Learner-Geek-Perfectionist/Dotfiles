@@ -24,6 +24,7 @@ echo -e "${YELLOW}🔍 Checking and removing old configuration files if they exi
 [ -f "$HOME/.zprofile" ] && echo -e "${RED}🗑️ Removing old .zprofile...${NC}" && rm "$HOME/.zprofile"
 [ -f "$HOME/.zshrc" ] && echo -e "${RED}🗑️ Removing old .zshrc...${NC}" && rm "$HOME/.zshrc"
 [ -d "$HOME/.config" ] && echo -e "${RED}🗑️ Removing old .config directory...${NC}" && rm -r "$HOME/.config"
+[ -d "$HOME/sh-script" ] && echo -e "${RED}🗑️ Removing old sh-script directory...${NC}" && rm -r "$HOME/sh-script/"
 echo -e "${GREEN}🧹 Old configuration files removed.${NC}"
 
 # 复制新的文件到当前用户的家目录
@@ -31,6 +32,7 @@ echo -e "${YELLOW}📋 Copying new configuration files to $HOME...${NC}"
 cp "$TMP_DIR/.zprofile" "$HOME/.zprofile"
 cp "$TMP_DIR/.zshrc" "$HOME/.zshrc"
 cp -r "$TMP_DIR/.config" "$HOME/.config"
+cp -r "$TMP_DIR/sh-script/" "$HOME/sh-script/"
 echo -e "${GREEN}✔️ New configuration files copied.${NC}"
 
 # 清理临时目录

@@ -878,7 +878,6 @@ print_centered_message "zsh 配置文件已配置到 Home 目录"
 
 print_centered_message "进入 zsh，准备下载 zsh 插件......"
 
-chsh -s $(which zsh) ${username}
 
 # 进入 zsh
 /bin/zsh

@@ -37,7 +37,8 @@ caffeinate -i /bin/zsh -c "$(curl -H 'Cache-Control: no-cache' -fsSL "https://gi
 
 Only for zsh configuration
 
+# GitHub
 ```bash
-/bin/bash -c "$(curl -H 'Cache-Control: no-cache' -fsSL "https://gitee.com/oyzxin/Dotfiles/raw/master/zsh_config.sh?$(date +%s)")"
+/bin/bash -c "$(curl -H 'Cache-Control: no-cache' -fsSL "https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/zsh_config.sh?$(date +%s)")"  
 ```
 

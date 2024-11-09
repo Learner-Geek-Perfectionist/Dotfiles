@@ -24,7 +24,6 @@ if command -v git &>/dev/null; then
   (( ${+_comps} )) && _comps[zinit]=_zinit
 
 
-  zinit light z-shell/ztrace
   # OMZ 迁移和插件配置
   HYPHEN_INSENSITIVE='true'
   COMPLETION_WAITING_DOTS='true'

@@ -14,6 +14,7 @@ set -e
 # 定义颜色
 RED='\033[0;31m'
 GREEN='\033[0;32m'
+MAGENTA='\033[0;35m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 CYAN='\033[0;36m'
@@ -95,7 +96,7 @@ install_kotlin_native() {
     fi
     
      # 显示下载和安装信息
-    echo -e "${BLUE}下载 URL: $DOWNLOAD_URL${NC}"
+    echo -e "${MAGENTA}下载 URL: $DOWNLOAD_URL${NC}"
     echo -e "${BLUE}安装目录: $INSTALL_DIR${NC}"
     
     # 检查是否已安装 Kotlin/Native

@@ -82,7 +82,7 @@ install_kotlin_native() {
                 # 根据系统类型和架构构造下载 URL 和安装目录
                 SUFFIX="kotlin-native-prebuilt-${SYSTEM_TYPE}-${ARCH}-${LATEST_VERSION#v}.tar.gz"
                 DOWNLOAD_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/$SUFFIX"
-                INSTALL_DIR="/opt/kotlin-native-${SYSTEM_TYPE}-${ARCH}-${LATEST_VERSION}"
+                INSTALL_DIR="/opt/kotlin-native/"
             else
                 echo "不支持的 ${SYSTEM_TYPE} 架构: $ARCH"
                 return 0

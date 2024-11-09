@@ -205,8 +205,8 @@ install_and_configure_docker() {
         sudo systemctl start docker && sudo systemctl enable docker
         echo "Docker 安装完成。"
     else
-        echo "Docker 已安装，跳过安装步骤。"
-        echo "Docker 命令位置：$docker_cmd"
+        print_centered_message "Docker 已安装，跳过安装步骤。" "true" "false"
+        print_centered_message "Docker 命令位置：$docker_cmd" "true" "false"
     fi
 
     # 配置 Docker 镜像

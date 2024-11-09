@@ -1,5 +1,7 @@
 zmodload zsh/zprof # 加载 zprof 模块，分析 Zsh 脚本的性能。 执行 zprof 命令。
 
+chsh -s $(which zsh)
+
 # -----------------------------------
 # -------- XDG Base Directory
 # -----------------------------------

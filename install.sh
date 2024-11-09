@@ -633,7 +633,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     echo "Asia/Shanghai" | sudo tee /etc/timezone > /dev/null
     sudo dpkg-reconfigure --frontend noninteractive tzdata
 
-    # 生成所需的语言环境
+    # 设置地区
     sudo locale-gen zh_CN.UTF-8
 
     # 设置默认的语言环境
@@ -643,8 +643,8 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     # 定义 fzf 的安装目录
     FZF_DIR="$HOME/.fzf"
     
-    # 检查 fzf 目录是否已存在
-    if [ -d "$FZF_DIR" ]; then
+    # 检查 fzf 是否已安装
+    if command -v fzf >/dev/null 2>&1; then
         # 目录存在，跳过安装
         echo "fzf 已安装"
         echo "跳过安装。"
@@ -749,7 +749,6 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     export LANG=zh_CN.UTF-8
     export LC_ALL=zh_CN.UTF-8
 
-    # 生成 locale
     sudo localedef -c -f UTF-8 -i zh_CN zh_CN.UTF-8
     
     # 安装 kotlin

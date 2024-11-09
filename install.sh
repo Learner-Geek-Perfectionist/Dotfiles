@@ -16,6 +16,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+CYAN='\033[0;36m'
 NC='\033[0m' # 没有颜色
 
 # 定义打印居中消息的函数
@@ -54,8 +55,8 @@ LATEST_VERSION=""
 get_latest_version() {
     # 使用 curl 获取 GitHub releases 最新的重定向地址，并且 grep 最新的版本号
     LATEST_VERSION=$(curl -s -L -I https://github.com/JetBrains/kotlin/releases/latest | grep -i location | sed -E 's/.*tag\/(v[0-9\.]+).*/\1/')
-    # 输出最新的版本号
-    print_centered_message "The Latest Version of Kotlin/Native is $LATEST_VERSION" "true" "false"
+    # 输出最新的版本号，添加颜色
+    print_centered_message "${CYAN}The Latest Version of Kotlin/Native is $LATEST_VERSION${NC}" "true" "false"
 }
 
 
@@ -110,9 +111,9 @@ install_kotlin_native() {
     HTTP_STATUS=$(curl -L -o /dev/null -s -w "%{http_code}" "$DOWNLOAD_URL")
 
     if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
-        echo "下载链接有效，开始下载。"
+        echo -e "${GREEN}下载链接有效，开始下载。${NC}"
     else
-        print_centered_message "下载链接无效，HTTP 状态码: $HTTP_STATUS。请检查版本号或网络连接。" "false" "true"
+        print_centered_message "${RED}下载链接无效，HTTP 状态码: $HTTP_STATUS。请检查版本号或网络连接。${NC}" "false" "true"
         return 0
     fi
 

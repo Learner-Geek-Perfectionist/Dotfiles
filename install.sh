@@ -486,7 +486,7 @@ if [[ $OS_TYPE == "Darwin" ]]; then
     fastfetch libuv lzip z3 tree rust
     fd libvterm make readline zstd
     fzf libyaml mpdecimal ripgrep go
-    gcc ninja wget mas pkg-config
+    gcc ninja wget mas pkg-config jq
   )
 
 

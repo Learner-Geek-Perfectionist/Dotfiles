@@ -28,6 +28,7 @@ case $country_code in
     JP) flag="🇯🇵" ;;
     CN) flag="🇨🇳" ;;
     IN) flag="🇮🇳" ;;
+    HK) flag="🇭🇰" ;;
     RU) flag="🇷🇺" ;;
     BR) flag="🇧🇷" ;;
     SA) flag="🇸🇦" ;;

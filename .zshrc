@@ -46,9 +46,6 @@ if [[ "$(uname)" == "Darwin" ]]; then
     export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
     export PATH="/opt/homebrew/opt/grep/libexec/gnubin:$PATH"
     export HOMEBREW_NO_ENV_HINTS=1
-
-    # 调用函数，传入 macOS 参数
-    set_kotlin_native_install_dir "macos"
     
 elif [[ -f /etc/os-release ]]; then
 

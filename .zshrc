@@ -106,7 +106,6 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
 fi
 
 
-
 # 清除整个屏幕
 alias clear='clear && printf '\''\e[3J'\'''
 

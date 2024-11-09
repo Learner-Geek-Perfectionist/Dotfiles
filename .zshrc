@@ -139,10 +139,12 @@ setopt notify                    # 后台任务完成后通知
 setopt no_beep                   # 关闭终端提示音
 setopt no_bang_hist              # 不对双引号当中的叹号做历史记录拓展 "!"
 
-# 检查 .zprofile 是否包含特定的初始化命令
-if ! grep -q 'source ~/.orbstack/shell/init.zsh 2>/dev/null || :' ~/.zprofile; then
-    # 如果 .zprofile 没有包含该命令，那么在当前 shell 中执行它
-    source ~/.orbstack/shell/init.zsh 2>/dev/null || :
+# 检查 .zprofile 文件是否存在并且包含特定的初始化命令
+if [ -f "$HOME/.zprofile" ]; then
+    if ! grep -qF "source $HOME/.orbstack/shell/init.zsh 2>/dev/null || :" "$HOME/.zprofile"; then
+        # 如果命令不在 .zprofile 中，执行它
+        source $HOME/.orbstack/shell/init.zsh 2>/dev/null || :
+    fi
 fi
 
 # 检查 fzf 是否已安装

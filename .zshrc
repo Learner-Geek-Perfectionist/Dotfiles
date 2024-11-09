@@ -2,7 +2,7 @@
 zmodload zsh/zprof 
 
 # 修改默认的登录 shell 为 zsh
-chsh -s $(which zsh) 
+[[ $SHELL != */zsh ]] && chsh -s $(which zsh) 
 
 # -----------------------------------
 # -------- XDG Base Directory

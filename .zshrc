@@ -147,6 +147,8 @@ alias python=python3
 
 # 感叹号「!」是 zsh 中特殊的前缀，用于历史扩展，禁止它。
 setopt NO_BANG_HIST
+# 禁用忽略以空格开头的命令的历史记录功能。
+setopt no_hist_ignore_space
 
 # 检查 .zprofile 是否包含特定的初始化命令
 if ! grep -q 'source ~/.orbstack/shell/init.zsh 2>/dev/null || :' ~/.zprofile; then

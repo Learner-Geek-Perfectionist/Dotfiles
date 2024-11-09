@@ -32,7 +32,11 @@ echo -e "${YELLOW}📋 Copying new configuration files to $HOME...${NC}"
 cp "$TMP_DIR/.zprofile" "$HOME/.zprofile"
 cp "$TMP_DIR/.zshrc" "$HOME/.zshrc"
 cp -r "$TMP_DIR/.config" "$HOME/.config"
-cp -r "$TMP_DIR/sh-script/" "$HOME/sh-script/"
+# 在文件中添加以下代码
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # 仅在 macOS 上拷贝
+    cp -r "$TMP_DIR/sh-script/" "$HOME/sh-script/"
+fi
 echo -e "${GREEN}✔️ New configuration files copied.${NC}"
 
 # 清理临时目录

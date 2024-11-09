@@ -34,30 +34,6 @@ export HISTFILE="$XDG_CACHE_HOME/zsh/.zsh_history" # HISTFILE 也是 zsh 内置�
  mkdir -p "$(dirname "$ZSH_COMPDUMP")"
 
 
-LATEST_VERSION=$(curl -s -L -I https://github.com/JetBrains/kotlin/releases/latest | grep -i location | sed -E 's/.*tag\/(v[0-9\.]+).*/\1/')
-INSTALL_DIR=""
-
-# 判断操作系统并设置 Kotlin/Native 安装目录
-set_kotlin_native_install_dir() {
-    SYSTEM_TYPE=$1
-    ARCH=$(uname -m)
-
-    if [[ "$SYSTEM_TYPE" == "macos" ]]; then
-        INSTALL_DIR="/opt/kotlin-native-macos-$ARCH-$LATEST_VERSION"
-    elif [[ "$SYSTEM_TYPE" == "linux" ]]; then
-        if [[ "$ARCH" == "x86_64" ]]; then
-            INSTALL_DIR="/opt/kotlin-native-linux-x86_64-$LATEST_VERSION"
-        elif [[ "$ARCH" == "aarch64" ]]; then
-            INSTALL_DIR="/opt/kotlin-native-linux-aarch64-$LATEST_VERSION"
-        else
-            echo "不支持的 Linux 架构: $ARCH"
-            return 0
-        fi
-    else
-        echo "未知系统类型，请使用 'macos' 或 'linux' 作为参数。"
-        return 0
-    fi
-}
 
 # 获取操作系统信息并设置 PATH
 if [[ "$(uname)" == "Darwin" ]]; then

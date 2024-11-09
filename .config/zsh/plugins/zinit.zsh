@@ -23,6 +23,8 @@ if command -v git &>/dev/null; then
   # 将 _zinit 补全函数绑定到 zinit 命令，从而获得 zinit 命令的补全功能。
   (( ${+_comps} )) && _comps[zinit]=_zinit
 
+
+  zinit light z-shell/ztrace
   # OMZ 迁移和插件配置
   HYPHEN_INSENSITIVE='true'
   COMPLETION_WAITING_DOTS='true'
@@ -42,15 +44,18 @@ if command -v git &>/dev/null; then
   zinit ice depth=1
   # 加载 p10k 主题
   zinit light romkatv/powerlevel10k
+  zinit ice lucid wait='0' atload='_zsh_autosuggest_start'
+  zinit light zsh-users/zsh-autosuggestions
 
   # 使用 Zinit Turbo 模式加载补全插件，并初始化补全系统
   zinit wait lucid for \
-   atinit"autoload -Uz compinit; compinit -d "$ZSH_COMPDUMP"; zicdreplay" \
+   atinit"autoload -Uz compinit; compinit -C -d "$ZSH_COMPDUMP"" \
       zdharma-continuum/fast-syntax-highlighting \
    blockf \
       zsh-users/zsh-completions \
-   atload"!_zsh_autosuggest_start" \
-      zsh-users/zsh-autosuggestions
+#   atload"!_zsh_autosuggest_start" \
+#      zsh-users/zsh-autosuggestions
 else
   echo "git is not installed, zinit installation skipped."
 fi
+

@@ -121,7 +121,7 @@ alias cl=clion
 # 确定脚本所在的目录
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 # ip 映射到 get-my-ip.sh
-alias ip=$HOME/sh-script/get-my-ip.sh
+alias ip="bash $HOME/sh-script/get-my-ip.sh"
 
 # 禁用忽略以空格开头的命令的历史记录功能。
 setopt no_hist_ignore_space

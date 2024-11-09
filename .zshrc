@@ -101,7 +101,7 @@ fi
 
 # 最后统一将 Kotlin/Native 安装路径添加到 PATH
 if [[ -n "$INSTALL_DIR" ]]; then
-    export PATH="$INSTALL_DIR/bin:$PATH"
+    export PATH="$PATH:/opt/kotlin-native/bin"
 else
     echo "安装目录未设置，脚本中止。"
     return 1

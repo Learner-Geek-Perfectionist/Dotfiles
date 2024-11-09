@@ -44,7 +44,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
     export PATH="/opt/homebrew/opt/make/libexec/gnubin:$PATH"
     export PATH="/opt/homebrew/opt/bash/bin:$PATH"
     export PATH="/opt/homebrew/opt/grep/libexec/gnubin:$PATH"
-    export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
+    export PATH="/Applications/Visual Studio Code.app/Contents/Resources/app/bin:$PATH"
     export PATH="/Applications/CLion.app/Contents/MacOS:$PATH"
     export PATH="/Applications/PyCharm.app/Contents/MacOS:$PATH"
     export PATH="/Applications/IntelliJ IDEA.app/Contents/MacOS:$PATH"

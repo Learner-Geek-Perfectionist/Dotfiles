@@ -774,9 +774,10 @@ elif [[ $OS_TYPE == "Linux" ]]; then
 
     sudo localedef -c -f UTF-8 -i zh_CN zh_CN.UTF-8
     
-    # 安装 kotlin
+    # 安装 sdk
     curl -s "https://get.sdkman.io" | bash
     source "$HOME/.sdkman/bin/sdkman-init.sh"
+    # 安装 kotlin
     sdk install kotlin
 
 

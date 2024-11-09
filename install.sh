@@ -710,7 +710,6 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     
     # 安装 SDKMAN 和 java
     # 定义 SDKMAN 的安装目录
-    SDKMAN_DIR="$HOME/.sdkman"
     
     # 检查 SDKMAN 是否已经安装
     if command -v sdk >/dev/null 2>&1; then
@@ -721,7 +720,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
         curl -s "https://get.sdkman.io" | bash
     
         # 2. 初始化 SDKMAN 环境
-        source "$SDKMAN_DIR/bin/sdkman-init.sh"
+        source "$HOME/.sdkman/bin/sdkman-init.sh"
     
         echo "SDKMAN 安装完成。"
     fi

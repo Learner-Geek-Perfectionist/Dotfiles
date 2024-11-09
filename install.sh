@@ -46,7 +46,7 @@ get_latest_version() {
     # 使用 curl 获取 GitHub releases 最新的重定向地址，并且 grep 最新的版本号
     LATEST_VERSION=$(curl -s -L -I https://github.com/JetBrains/kotlin/releases/latest | grep -i location | sed -E 's/.*tag\/(v[0-9\.]+).*/\1/')
     # 输出最新的版本号
-    echo -e "\nThe Latest Version of Kotlin/Native is $LATEST_VERSION\n"
+    print_centered_message "The Latest Version of Kotlin/Native is $LATEST_VERSION" "true" "false"
 }
 
 
@@ -101,7 +101,7 @@ install_kotlin_native() {
     if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
         echo "下载链接有效，开始下载。"
     else
-        echo "下载链接无效，HTTP 状态码: $HTTP_STATUS。请检查版本号或网络连接。"
+        print_centered_message "下载链接无效，HTTP 状态码: $HTTP_STATUS。请检查版本号或网络连接。" "true" "false"
         return 0
     fi
 
@@ -110,7 +110,7 @@ install_kotlin_native() {
     curl -L $DOWNLOAD_URL -o /tmp/kotlin-native.tar.gz
 
     if [ $? -ne 0 ]; then
-        echo "下载失败，请检查网络连接和下载地址。"
+        print_centered_message   "下载失败，请检查网络连接和下载地址。"
         return 0
     fi
 

@@ -249,15 +249,6 @@ install_and_configure_docker() {
             sudo systemctl start docker && sudo systemctl enable docker
             echo "Docker 安装完成。"
         fi
-    else
-        echo "在非 WSL2 Linux 环境中运行"
-        # 直接检查 Docker 是否已安装
-        if ! command -v docker >/dev/null; then
-            echo "Docker 未安装，开始安装过程..."
-            # 在这里插入 Docker 安装命令
-        else
-            echo "Docker 已安装，跳过安装步骤。"
-        fi
     fi
 
     

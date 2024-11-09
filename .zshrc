@@ -120,8 +120,12 @@ alias cl=clion
 
 # 确定脚本所在的目录
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-# ip 映射到 get-my-ip.sh
-alias ip="$HOME/sh-script/get-my-ip.sh"
+
+# 在文件中添加以下代码
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # 仅在 macOS 上设置别名
+    alias ip="$HOME/sh-script/get-my-ip.sh"
+fi
 
 # 禁用忽略以空格开头的命令的历史记录功能。
 setopt no_hist_ignore_space

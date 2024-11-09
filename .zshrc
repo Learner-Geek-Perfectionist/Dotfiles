@@ -110,10 +110,18 @@ alias clear='clear && printf '\''\e[3J'\'''
 # python3 映射到 python
 alias python=python3 
 
-# 感叹号「!」是 zsh 中特殊的前缀，用于历史扩展，禁止它。
-setopt NO_BANG_HIST
+
 # 禁用忽略以空格开头的命令的历史记录功能。
 setopt no_hist_ignore_space
+
+setopt interactive_comments      # 注释行不报错
+setopt no_nomatch                # 通配符 * 匹配不到文件也不报错
+setopt autocd                    # 输入目录名自动cd
+# setopt correct                 # 自动纠正拼写错误
+setopt nocaseglob                # 路径名匹配时忽略大小写
+setopt notify                    # 后台任务完成后通知
+setopt no_beep                   # 关闭终端提示音
+setopt no_bang_hist              # 不对双引号当中的叹号做历史记录拓展 "!"
 
 # 检查 .zprofile 是否包含特定的初始化命令
 if ! grep -q 'source ~/.orbstack/shell/init.zsh 2>/dev/null || :' ~/.zprofile; then

@@ -193,22 +193,16 @@ check_and_install_brew_packages() {
 install_and_configure_docker() {
     # 检查 Docker 是否已经安装
     echo "检查 Docker 命令..."
-    docker_cmd=$(command -v docker)
-    if [ -z "$docker_cmd" ] || [[ "$docker_cmd" == "/mnt/c/"* ]]; then
+    if ! docker_cmd=$(command -v docker); then
         echo "Docker 未安装或未正确配置在WSL2中，开始安装过程..."
-
         # 1. 获取安装脚本
         curl -fsSL https://get.docker.com -o get-docker.sh
-
         # 2. 运行安装脚本
         sudo sh get-docker.sh
-
         # 3. 将当前登录的用户添加到 docker 组
         sudo usermod -aG docker ${USER}
-
         # 4. 启动并且开机自启 Docker 服务
         sudo systemctl start docker && sudo systemctl enable docker
-
         echo "Docker 安装完成。"
     else
         echo "Docker 已安装，跳过安装步骤。"

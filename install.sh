@@ -57,7 +57,7 @@ LATEST_VERSION=""
 get_latest_version() {
     
     # 使用 curl 获取 GitHub releases 最新的重定向地址，并且 grep 最新的版本号
-    LATEST_VERSION=$(curl -s -L -I https://github.com/JetBrains/kotlin/releases/latest | grep -i location | sed -E 's/.*tag\/(v[0-9\.]+).*/\1/')
+    LATEST_VERSION=$(curl -s https://api.github.com/repos/JetBrains/kotlin/releases/latest | jq -r '.tag_name')
     # 输出最新的版本号，添加颜色
     print_centered_message "${LIGHT_BLUE}正在下载Kotlin/Native...... ${NC}" "true" "false"
     echo -e "${CYAN}The Latest Version of Kotlin/Native is $LATEST_VERSION${NC}" 
@@ -75,28 +75,24 @@ install_kotlin_native() {
     # 获取系统架构
     ARCH=$(uname -m)
     
-    # 判断系统类型
-    if [ "$SYSTEM_TYPE" == "macos" ]; then
-        if [ "$ARCH" == "arm64" ] || [ "$ARCH" == "x86_64" ]; then
-            DOWNLOAD_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-native-prebuilt-macos-$ARCH-${LATEST_VERSION#v}.tar.gz"
-            INSTALL_DIR="/opt/kotlin-native-macos-$ARCH-$LATEST_VERSION"
-        else
-            echo "不支持的 macOS 架构: $ARCH"
+    # 判断系统类型和架构支持
+    case "$SYSTEM_TYPE" in
+        "macos" | "linux")
+            if [[ "$ARCH" == "x86_64" || "$ARCH" == "aarch64" ]]; then
+                # 根据系统类型和架构构造下载 URL 和安装目录
+                SUFFIX="kotlin-native-prebuilt-${SYSTEM_TYPE}-${ARCH}-${LATEST_VERSION#v}.tar.gz"
+                DOWNLOAD_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/$SUFFIX"
+                INSTALL_DIR="/opt/kotlin-native-${SYSTEM_TYPE}-${ARCH}-${LATEST_VERSION}"
+            else
+                echo "不支持的 ${SYSTEM_TYPE} 架构: $ARCH"
+                return 0
+            fi
+            ;;
+        *)
+            echo "未知系统类型，请使用 'macos' 或 'linux' 作为参数。"
             return 0
-        fi
-    elif [ "$SYSTEM_TYPE" == "linux" ]; then
-        if [ "$ARCH" == "x86_64" ] || [ "$ARCH" == "aarch64" ]; then
-            # 使用 ${LATEST_VERSION#v} 以去除可能存在的版本前的 'v'
-            DOWNLOAD_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-native-prebuilt-linux-$ARCH-${LATEST_VERSION#v}.tar.gz"
-            INSTALL_DIR="/opt/kotlin-native-linux-$ARCH-$LATEST_VERSION"
-        else
-            echo "不支持的 Linux 架构: $ARCH"
-            return 0
-        fi
-    else
-        echo "未知系统类型，请使用 'macos' 或 'linux' 作为参数。"
-        return 0
-    fi
+            ;;
+    esac
     
      # 显示下载和安装信息
     echo -e "${MAGENTA}下载 URL: $DOWNLOAD_URL${NC}"

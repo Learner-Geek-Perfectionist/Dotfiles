@@ -56,7 +56,7 @@ elif [[ -f /etc/os-release ]]; then
     export LANG=zh_CN.UTF-8
     export LC_ALL=zh_CN.UTF-8
 
-    # 源 sdkman 初始化脚本，对所有 Linux 系统执行
+    # 执行 sdkman 初始化脚本，对所有 Linux 系统执行
     if [[ -f "$HOME/.sdkman/bin/sdkman-init.sh" ]]; then
         source "$HOME/.sdkman/bin/sdkman-init.sh"
     fi

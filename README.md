@@ -41,6 +41,12 @@ Only for zsh configuration
 ```bash
 # GitHub
 
-/bin/bash -c "$(curl -H 'Cache-Control: no-cache' -fsSL "https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/zsh_config.sh?$(date +%s)")"  
+/bin/bash -c "$(curl -H 'Cache-Control: no-cache' -fsSL "https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/zsh_config.sh?$(date +%s)")"
+
+# Gitee
+/bin/bash -c "$(curl -H 'Cache-Control: no-cache' -fsSL "https://gitee.com/oyzxin/Dotfiles/raw/master/zsh_config.sh?$(date +%s)")" 
+
+
+
 ```
 

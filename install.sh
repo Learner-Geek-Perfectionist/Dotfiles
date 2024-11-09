@@ -84,7 +84,6 @@ install_kotlin_native() {
             ;;
         *)
             echo "Unsupported architecture: $ARCH"
-            exit 1
             ;;
     esac
     

@@ -51,26 +51,22 @@ if [[ "$(uname)" == "Darwin" ]]; then
     set_kotlin_native_install_dir "macos"
     
 elif [[ -f /etc/os-release ]]; then
-    # 调用函数，传入 Linux 参数
-    set_kotlin_native_install_dir "linux"
 
     # 设置默认的语言环境
     export LANG=zh_CN.UTF-8
     export LC_ALL=zh_CN.UTF-8
 
-# 添加 sdk 环境变量
-source "$HOME/.sdkman/bin/sdkman-init.sh"
+    # 源 sdkman 初始化脚本，对所有 Linux 系统执行
+    if [[ -f "$HOME/.sdkman/bin/sdkman-init.sh" ]]; then
+        source "$HOME/.sdkman/bin/sdkman-init.sh"
+    fi
 
-    # 检查是否是 Fedora 系统
+    # 检查是否是 Ubuntu 系统
     if grep -q 'ID=ubuntu' /etc/os-release; then
-        # Fedora specific settings: 初始化 SDKMAN 环境
-        if [[ -f "$HOME/.sdkman/bin/sdkman-init.sh" ]]; then
-            source "$HOME/.sdkman/bin/sdkman-init.sh"
-        fi
-    else
-        # 对于其他 Linux 系统
+        # 对于 Ubuntu 系统，添加 fzf 的环境变量
         export PATH="$HOME/.fzf/bin:$PATH"
     fi
+fi
 
 else
     # 其他操作系统的设置

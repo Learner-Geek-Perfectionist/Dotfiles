@@ -217,7 +217,7 @@ check_and_install_brew_packages() {
 install_and_configure_docker() {
     # 检查 Docker 是否已经安装
     echo "检查 Docker 命令..."
-    if ! docker_cmd=$(command -v docker); then
+    if grep -qi microsoft /proc/version || uname -a | grep -vi microsoft; then
         echo "Docker 未安装或未正确配置在WSL2中，开始安装过程..."
         # 1. 获取安装脚本
         curl -fsSL https://get.docker.com -o get-docker.sh

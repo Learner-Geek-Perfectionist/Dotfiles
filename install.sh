@@ -630,7 +630,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     sudo chmod 4755 /usr/bin/dumpcap
     sudo setcap cap_net_raw,cap_net_admin=eip /usr/bin/dumpcap
     # 2.将用户添加到 wireshark 组：
-    sudo usermod -aG wireshark $username
+    sudo usermod -aG wireshark $USER
     
 
 

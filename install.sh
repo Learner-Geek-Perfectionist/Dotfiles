@@ -101,7 +101,7 @@ install_kotlin_native() {
     if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
         echo "下载链接有效，开始下载。"
     else
-        print_centered_message "下载链接无效，HTTP 状态码: $HTTP_STATUS。请检查版本号或网络连接。" "true" "false"
+        print_centered_message "下载链接无效，HTTP 状态码: $HTTP_STATUS。请检查版本号或网络连接。" "false" "true"
         return 0
     fi
 

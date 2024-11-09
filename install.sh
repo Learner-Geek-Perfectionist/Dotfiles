@@ -672,6 +672,8 @@ elif [[ $OS_TYPE == "Linux" ]]; then
         # 目录存在，跳过安装
         echo "fzf 已安装，跳过安装。"
     else
+        [ -d "$HOME/.fzf" ] && rm -rf "$FZF_DIR"
+        
         # 目录不存在，克隆并安装 fzf
         echo "正在安装 fzf..."
         git clone --depth 1 https://github.com/junegunn/fzf.git "$FZF_DIR"

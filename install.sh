@@ -646,8 +646,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     # 检查 fzf 是否已安装
     if command -v fzf >/dev/null 2>&1; then
         # 目录存在，跳过安装
-        echo "fzf 已安装"
-        echo "跳过安装。"
+        echo "fzf 已安装，跳过安装。"
     else
         # 目录不存在，克隆并安装 fzf
         echo "正在安装 fzf..."

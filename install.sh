@@ -14,10 +14,11 @@ set -e
 # 定义颜色
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-MAGENTA='\033[0;35m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+MAGENTA='\033[0;35m'
 CYAN='\033[0;36m'
+LIGHT_BLUE='\033[1;34m'
 NC='\033[0m' # 没有颜色
 
 # 定义打印居中消息的函数
@@ -58,8 +59,8 @@ get_latest_version() {
     # 使用 curl 获取 GitHub releases 最新的重定向地址，并且 grep 最新的版本号
     LATEST_VERSION=$(curl -s -L -I https://github.com/JetBrains/kotlin/releases/latest | grep -i location | sed -E 's/.*tag\/(v[0-9\.]+).*/\1/')
     # 输出最新的版本号，添加颜色
-    print_centered_message "正在下载Kotlin/Native...... " "true" "false"
-    echo "${CYAN}The Latest Version of Kotlin/Native is $LATEST_VERSION${NC}" 
+    print_centered_message "${LIGHT_BLUE}正在下载Kotlin/Native...... ${NC}" "true" "false"
+    echo -e "${CYAN}The Latest Version of Kotlin/Native is $LATEST_VERSION${NC}" 
 }
 
 

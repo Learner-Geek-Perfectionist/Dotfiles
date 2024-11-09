@@ -9,6 +9,15 @@ exec > >(tee "$LOG_FILE") 2>&1
 # 一旦错误，就退出
 set -e 
 
+
+
+# 定义颜色
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # 没有颜色
+
 # 定义打印居中消息的函数
 print_centered_message() {
   local message="$1"
@@ -84,18 +93,20 @@ install_kotlin_native() {
         return 0
     fi
     
-    # 显示下载和安装信息
-    echo "下载 URL: $DOWNLOAD_URL"
-    echo "安装目录: $INSTALL_DIR"
-
+     # 显示下载和安装信息
+    echo -e "${BLUE}下载 URL: $DOWNLOAD_URL${NC}"
+    echo -e "${BLUE}安装目录: $INSTALL_DIR${NC}"
+    
     # 检查是否已安装 Kotlin/Native
     if [ -d "$INSTALL_DIR" ]; then
-        echo "Kotlin/Native 已安装在 $INSTALL_DIR。跳过安装。"
+        echo -e "${GREEN}Kotlin/Native 已安装在 $INSTALL_DIR。跳过安装。${NC}"
         return 0
     fi
-
+    
     # 检查下载链接是否有效
-    echo "Checking the validity of the download URL: $DOWNLOAD_URL"
+    echo -e "${YELLOW}Checking the validity of the download URL: $DOWNLOAD_URL${NC}"
+
+
     HTTP_STATUS=$(curl -L -o /dev/null -s -w "%{http_code}" "$DOWNLOAD_URL")
 
     if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then

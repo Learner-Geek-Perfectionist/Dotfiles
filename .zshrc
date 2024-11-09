@@ -58,8 +58,11 @@ elif [[ -f /etc/os-release ]]; then
     export LANG=zh_CN.UTF-8
     export LC_ALL=zh_CN.UTF-8
 
+# 添加 sdk 环境变量
+source "$HOME/.sdkman/bin/sdkman-init.sh"
+
     # 检查是否是 Fedora 系统
-    if grep -q 'ID=fedora' /etc/os-release; then
+    if grep -q 'ID=ubuntu' /etc/os-release; then
         # Fedora specific settings: 初始化 SDKMAN 环境
         if [[ -f "$HOME/.sdkman/bin/sdkman-init.sh" ]]; then
             source "$HOME/.sdkman/bin/sdkman-init.sh"
@@ -74,6 +77,7 @@ else
     echo "Unsupported OS"
     return 1
 fi
+
 
 # 最后统一将 Kotlin/Native 安装路径添加到 PATH
 if [[ -n "$INSTALL_DIR" ]]; then

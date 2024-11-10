@@ -746,14 +746,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
 
     
     # 检查 Java 是否已经安装
-    if sdk list java | grep -q 'installed'; then
-        echo "Java 已经安装。"
-    else
-        echo "开始安装 Java..."
-        # 安装 Java
-        sdk install java
-        echo "Java 安装完成。"
-    fi
+    command -v java >/dev/null && echo "Java已经安装。" || (echo "开始安装Java..." && sdk install java && echo "Java安装完成。")
 
    
     # 调用函数以安装和配置 Docker
@@ -811,7 +804,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     source "$HOME/.sdkman/bin/sdkman-init.sh"
     
     # 安装 kotlin
-    sdk list kotlin | grep -q "Installed" && echo "Kotlin已安装，无需再次安装。" || (echo "Kotlin未安装，现在开始安装。" && sdk install kotlin)
+    command -v kotlin >/dev/null && echo "Kotlin已安装，无需再次安装。" || (echo "Kotlin未安装，现在开始安装。" && sdk install kotlin)
 
 
     # 安装 Kotlin/Native

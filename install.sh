@@ -811,7 +811,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     source "$HOME/.sdkman/bin/sdkman-init.sh"
     
     # 安装 kotlin
-    sdk install kotlin
+    sdk list kotlin | grep -q "Installed" && echo "Kotlin已安装，无需再次安装。" || (echo "Kotlin未安装，现在开始安装。" && sdk install kotlin)
 
 
     # 安装 Kotlin/Native

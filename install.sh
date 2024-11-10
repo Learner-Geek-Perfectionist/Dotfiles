@@ -740,20 +740,21 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     # 安装 Kotlin/Native
     install_kotlin_native "linux"
     
-    
     # 检查 SDKMAN 是否已经安装
-    if command -v sdk >/dev/null 2>&1; then
-        echo "SDKMAN 已经安装。"
-    else
-        echo "开始安装 SDKMAN..."
-        # 1. 下载并安装 SDKMAN
-        curl -s "https://get.sdkman.io" | bash
-    
-        # 2. 初始化 SDKMAN 环境
+    if [ ! -d "$HOME/.sdkman" ]; then
+        echo "SDKMAN not found, installing..."
+        
+        # 下载并安装SDKMAN
+        /bin/bash -c "$(curl -fsSL https://get.sdkman.io)"  
+
+        # 初始化SDKMAN环境
         source "$HOME/.sdkman/bin/sdkman-init.sh"
     
-        echo "SDKMAN 安装完成。"
+        echo "SDKMAN installed successfully."
+    else
+        echo "SDKMAN is already installed."
     fi
+
     
     # 检查 Java 是否已经安装
     if sdk list java | grep -q 'installed'; then
@@ -770,9 +771,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     install_and_configure_docker
     
   elif [[ $os_type == "fedora" ]]; then
-    echo $PATH
-    command -v sdk >/dev/null 2>&1
-    echo "状态码：$?"
+   
     # 注释 tsflags=nodocs，从而安装 manual 手册
     sudo sed -i '/tsflags=nodocs/s/^/#/' /etc/dnf/dnf.conf
 
@@ -805,20 +804,20 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     export LC_ALL=zh_CN.UTF-8
 
     sudo localedef -c -f UTF-8 -i zh_CN zh_CN.UTF-8
-    command -v sdk >/dev/null 2>&1
-    echo "状态码：$?"
-    # 检查 SDKMAN 是否已经安装
-    if command -v sdk >/dev/null 2>&1; then
-        echo "SDKMAN 已经安装。"
-    else
-        echo "开始安装 SDKMAN..."
-        # 1. 下载并安装 SDKMAN
-        curl -s "https://get.sdkman.io" | bash
     
-        # 2. 初始化 SDKMAN 环境
+    # 检查 SDKMAN 是否已经安装
+    if [ ! -d "$HOME/.sdkman" ]; then
+        echo "SDKMAN not found, installing..."
+        
+        # 下载并安装SDKMAN
+        /bin/bash -c "$(curl -fsSL https://get.sdkman.io)"  
+
+        # 初始化SDKMAN环境
         source "$HOME/.sdkman/bin/sdkman-init.sh"
     
-        echo "SDKMAN 安装完成。"
+        echo "SDKMAN installed successfully."
+    else
+        echo "SDKMAN is already installed."
     fi
     
     # 安装 kotlin

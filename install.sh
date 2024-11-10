@@ -822,11 +822,8 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     install_and_configure_docker
 
     sudo dnf clean all && sudo dnf makecache
-
-    # 确保安装必要的 manual 手册
-    sudo dnf -y reinstall $(rpm -qads --qf "PACKAGE: %{NAME}\n" | sed -n -E '/PACKAGE: /{s/PACKAGE: // ; h ; b }; /^not installed/ { g; p }' | uniq)
-    # 生成和更新手册页的数据库
-    sudo mandb -c
+    # 安装缺失的手册，并且更新手册页的数据库
+    packages_to_reinstall=$(rpm -qads --qf "PACKAGE: %{NAME}\n" | sed -n -E '/PACKAGE: /{s/PACKAGE: // ; h ; b }; /^not installed/ { g; p }' | uniq); [ -z "$packages_to_reinstall" ] && echo "没有找到需要重新安装的手册包。" || sudo dnf -y reinstall $packages_to_reinstall && sudo mandb -c
     
   else
     print_centered_message -e "不支持的发行版，目前只支持 fedora、ubuntu"

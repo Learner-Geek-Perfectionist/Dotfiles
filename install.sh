@@ -249,6 +249,18 @@ install_and_configure_docker() {
             sudo systemctl start docker && sudo systemctl enable docker
             echo "Docker 安装完成。"
         fi
+    else
+
+        echo "Docker 未安装，开始安装过程..."
+        # 1. 获取安装脚本
+        curl -fsSL https://get.docker.com -o get-docker.sh
+        # 2. 运行安装脚本
+        sudo sh get-docker.sh
+        # 3. 将当前登录的用户添加到 docker 组
+        sudo usermod -aG docker ${USER}
+        # 4. 启动并且开机自启 Docker 服务
+        sudo systemctl start docker && sudo systemctl enable docker
+        echo "Docker 安装完成。"
     fi
 
     

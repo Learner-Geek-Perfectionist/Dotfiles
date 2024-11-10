@@ -770,7 +770,8 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     install_and_configure_docker
     
   elif [[ $os_type == "fedora" ]]; then
-  
+    command -v sdk >/dev/null 2>&1
+    echo "状态码：$?"
     # 注释 tsflags=nodocs，从而安装 manual 手册
     sudo sed -i '/tsflags=nodocs/s/^/#/' /etc/dnf/dnf.conf
 

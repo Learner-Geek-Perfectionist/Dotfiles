@@ -121,7 +121,7 @@ alias cl=clion
 # 确定脚本所在的目录
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
-# 在文件中添加以下代码
+# ip 映射到 ip-script
 if [[ "$OSTYPE" == "darwin"* ]]; then
     # 仅在 macOS 上设置别名
     alias ip="$HOME/sh-script/get-my-ip.sh"

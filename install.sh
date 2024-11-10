@@ -910,13 +910,12 @@ print_centered_message "zsh 配置文件已配置到 Home 目录"
 
 print_centered_message "进入 zsh，准备下载 zsh 插件......"
 
+# 修改默认的登录 shell 为 zsh
+[[ $SHELL != */zsh ]] && echo "修改默认的 shell 为 zsh " && chsh -s $(which zsh) 
 
 # 进入 zsh
 /bin/zsh
 
-if [ "$SHELL" = "/bin/zsh" ]; then
-  print_centered_message "已进入 zsh shell。"
-fi
 
 print_centered_message "对于 macOS 的用户，XApp、腾讯文档、FastZip、State、WeLink 只能通过 App Store 手动安装！！！"
 

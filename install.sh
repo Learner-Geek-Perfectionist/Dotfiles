@@ -213,54 +213,43 @@ check_and_install_brew_packages() {
   fi
 }
 
+install_docker() {
+    echo "获取 Docker 安装脚本..."
+    curl -fsSL https://get.docker.com -o get-docker.sh || { echo "下载安装脚本失败"; exit 1; }
+    echo "运行安装脚本..."
+    sudo sh get-docker.sh || { echo "安装 Docker 失败"; exit 1; }
+    echo "将当前用户添加到 docker 组..."
+    sudo usermod -aG docker ${USER} || { echo "添加用户到 docker 组失败"; exit 1; }
+    echo "启动并设置 Docker 服务开机自启..."
+    sudo systemctl start docker && sudo systemctl enable docker || { echo "启动或设置开机自启失败"; exit 1; }
+    echo "Docker 安装完成。请考虑重新登录或重启以使组设置生效。"
+}
+
 
 install_and_configure_docker() {
-    # 检查 Docker 是否已经安装
     echo "检查 Docker 命令..."  
+    
     if grep -qi microsoft /proc/version; then
         echo "在 WSL2 环境中运行"
-        # 检查 Docker 命令是否可执行
         if command -v docker >/dev/null; then
-            # 检查 Docker 环境是否由 Windows 提供
             if [ "$(docker context show 2>/dev/null)" = "desktop-windows" ]; then
                 echo "检测到 Docker 运行在 Windows Docker Desktop 上。"
                 echo "准备在 WSL2 中安装独立的 Docker 版本..."
-                # 1. 获取安装脚本
-                curl -fsSL https://get.docker.com -o get-docker.sh
-                # 2. 运行安装脚本
-                sudo sh get-docker.sh
-                # 3. 将当前登录的用户添加到 docker 组
-                sudo usermod -aG docker ${USER}
-                # 4. 启动并且开机自启 Docker 服务
-                sudo systemctl start docker && sudo systemctl enable docker
-                echo "Docker 安装完成。"
+                install_docker
             else
                 echo "Docker 已安装在 WSL2 中，跳过安装步骤。"
             fi
         else
             echo "Docker 未安装，开始安装过程..."
-            # 1. 获取安装脚本
-            curl -fsSL https://get.docker.com -o get-docker.sh
-            # 2. 运行安装脚本
-            sudo sh get-docker.sh
-            # 3. 将当前登录的用户添加到 docker 组
-            sudo usermod -aG docker ${USER}
-            # 4. 启动并且开机自启 Docker 服务
-            sudo systemctl start docker && sudo systemctl enable docker
-            echo "Docker 安装完成。"
+            install_docker
         fi
     else
-
-        echo "Docker 未安装，开始安装过程..."
-        # 1. 获取安装脚本
-        curl -fsSL https://get.docker.com -o get-docker.sh
-        # 2. 运行安装脚本
-        sudo sh get-docker.sh
-        # 3. 将当前登录的用户添加到 docker 组
-        sudo usermod -aG docker ${USER}
-        # 4. 启动并且开机自启 Docker 服务
-        sudo systemctl start docker && sudo systemctl enable docker
-        echo "Docker 安装完成。"
+        if command -v docker >/dev/null; then
+            echo "Docker 已安装，跳过安装步骤。"
+        else
+            echo "Docker 未安装，开始安装过程..."
+            install_docker
+        fi
     fi
 
     

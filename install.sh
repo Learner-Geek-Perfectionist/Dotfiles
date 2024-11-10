@@ -811,14 +811,15 @@ elif [[ $OS_TYPE == "Linux" ]]; then
         
         # 下载并安装SDKMAN
         /bin/bash -c "$(curl -fsSL https://get.sdkman.io)"  
-
-        # 初始化SDKMAN环境
-        source "$HOME/.sdkman/bin/sdkman-init.sh"
-    
+        
         echo "SDKMAN installed successfully."
     else
         echo "SDKMAN is already installed."
     fi
+
+
+    # 初始化SDKMAN环境
+    source "$HOME/.sdkman/bin/sdkman-init.sh"
     
     # 安装 kotlin
     sdk install kotlin

@@ -158,6 +158,7 @@ install_kotlin_native() {
         echo "安装失败，目标目录未找到。"
         return 0
     fi
+    print_centered_message "End" "false" "true"
 }
 
 # 使用方法：传递 macos 或 linux 作为参数

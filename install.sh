@@ -803,7 +803,8 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     export LC_ALL=zh_CN.UTF-8
 
     sudo localedef -c -f UTF-8 -i zh_CN zh_CN.UTF-8
-    
+    command -v sdk >/dev/null 2>&1
+    echo "状态码：$?"
     # 检查 SDKMAN 是否已经安装
     if command -v sdk >/dev/null 2>&1; then
         echo "SDKMAN 已经安装。"

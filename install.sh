@@ -228,7 +228,7 @@ install_docker() {
 
 
 install_and_configure_docker() {
-    echo "检查 Docker 命令..."  
+    print_centered_message "检查 Docker 命令..." "true" "false"
     
     if grep -qi microsoft /proc/version; then
         echo "在 WSL2 环境中运行"
@@ -270,7 +270,7 @@ install_and_configure_docker() {
     # 重启 Docker 服务以应用新的配置
     sudo systemctl restart docker
 
-    echo "Docker 镜像配置完成。"
+    print_centered_message "Docker 镜像配置完成。" "false" "true"
 }
 
 # 定义设置用户密码函数

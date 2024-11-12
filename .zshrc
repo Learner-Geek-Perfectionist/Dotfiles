@@ -36,6 +36,9 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
+# 加载 p10k 主题的配置文件
+[[ ! -f ~/.config/zsh/.p10k.zsh ]] || source ~/.config/zsh/.p10k.zsh
+
 # 获取操作系统信息并设置 PATH
 if [[ "$(uname)" == "Darwin" ]]; then
     # macOS specific settings，设置 git 、clang++、ruby、make bash、VSCode、grep 等工具的环境变量

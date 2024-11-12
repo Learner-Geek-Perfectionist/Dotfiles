@@ -57,6 +57,7 @@ if command -v git &>/dev/null; then
   zinit ice wait lucid depth=1 atload'unalias g grv ghh'
 
   # autosuggestions
+  #（直到 shell 初始化之后，才）延迟加载 zsh-users/zsh-autosuggestions 插件，atload 用于保障启动 autosuggest 功能。
   zinit ice wait lucid atload='_zsh_autosuggest_start'
   zinit light zsh-users/zsh-autosuggestions
 

@@ -34,9 +34,16 @@ autoload -Uz _zinit
 # 将 _zinit 补全函数绑定到 zinit 命令，从而获得 zinit 命令的补全功能。
 (( ${+_comps} )) && _comps[zinit]=_zinit
 
+# 1.Powerlevel10k 的 instant prompt 的缓存文件，用于加速启动
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
 
-# 最先加载 p10k 主题
+# 2.加载 p10k 主题
 zinit light romkatv/powerlevel10k
+
+# 3.加载 p10k 主题的配置文件
+[[ ! -f ~/.config/zsh/.p10k.zsh ]] || source ~/.config/zsh/.p10k.zsh
 
 # General options for all plugins
 HYPHEN_INSENSITIVE='true'

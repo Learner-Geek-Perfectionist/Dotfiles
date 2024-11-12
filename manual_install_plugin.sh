@@ -36,9 +36,7 @@ declare -a FILES_TO_REMOVE=(
     "$HOME/plugin"
     "$HOME/fast-syntax-highlighting"
     "$HOME/zsh-autosuggestions"
-    "$HOME/zsh-autosuggestions/zsh-autosuggestions.zsh"
     "$HOME/zsh-completions"
-    "$HOME/zsh-completions/src"
 )
 
 for file in "${FILES_TO_REMOVE[@]}"; do

@@ -66,4 +66,14 @@ echo 'fpath=(~/zsh-completions/src $fpath)'
 echo ''
 echo '# Remove old zcompdump and regenerate it'
 echo 'rm -f ~/.zcompdump; compinit'
+echo "# 1.Powerlevel10k 的 instant prompt 的缓存文件，用于加速启动"
+echo "if [[ -r \"\${XDG_CACHE_HOME:-\$HOME/.cache}/p10k-instant-prompt-\${(%):-%n}.zsh\" ]]; then"
+echo "  source \"\${XDG_CACHE_HOME:-\$HOME/.cache}/p10k-instant-prompt-\${(%):-%n}.zsh\""
+echo "fi"
+echo ""
+echo "# 2.加载 p10k 主题"
+echo "zinit light romkatv/powerlevel10k"
+echo ""
+echo "# 3.加载 p10k 主题的配置文件"
+echo "[[ ! -f ~/.config/zsh/.p10k.zsh ]] || source ~/.config/zsh/.p10k.zsh"
 } >> ~/.zshrc

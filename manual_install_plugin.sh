@@ -74,9 +74,6 @@ echo "if [[ -r \"\${XDG_CACHE_HOME:-\$HOME/.cache}/p10k-instant-prompt-\${(%):-%
 echo "  source \"\${XDG_CACHE_HOME:-\$HOME/.cache}/p10k-instant-prompt-\${(%):-%n}.zsh\""
 echo "fi"
 echo ""
-echo "# 2.加载 p10k 主题"
-echo "zinit light romkatv/powerlevel10k"
-echo ""
-echo "# 3.加载 p10k 主题的配置文件"
+echo "# 2.加载 p10k 主题的配置文件"
 echo "[[ ! -f $HOME/.config/zsh/.p10k.zsh ]] || source $HOME/.config/zsh/.p10k.zsh"
 } >> $HOME/.zshrc

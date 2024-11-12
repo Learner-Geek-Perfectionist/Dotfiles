@@ -21,25 +21,25 @@ echo -e "${GREEN}✔️ Repository cloned.${NC}"
 
 # 删除当前用户家目录中的旧文件和目录（如果存在）
 echo -e "${YELLOW}🔍 Checking and removing old configuration files if they exist...${NC}"
-[ -f "$HOMEE/.zprofile" ] && echo -e "${RED}🗑️ Removing old .zprofile...${NC}" && rm "$HOMEE/.zprofile"
-[ -f "$HOMEE/.zshrc" ] && echo -e "${RED}🗑️ Removing old .zshrc...${NC}" && rm "$HOMEE/.zshrc"
-[ -d "$HOMEE/.config" ] && echo -e "${RED}🗑️ Removing old .config directory...${NC}" && rm -rf "$HOMEE/.config"
-[ -d "$HOMEE/powerlevel10k" ] && echo -e "${RED}🗑️ Removing old powerlevel10k directory...${NC}" && rm -rf "$HOMEE/powerlevel10k"
-[ -d "$HOMEE/fast-syntax-highlighting" ] && echo -e "${RED}🗑️ Removing old fast-syntax-highlighting directory...${NC}" && rm -rf "$HOMEE/fast-syntax-highlighting/"
-[ -d "$HOMEE/zsh-autosuggestions" ] && echo -e "${RED}🗑️ Removing old zsh-autosuggestions directory...${NC}" && rm -rf "$HOMEE/zsh-autosuggestions/"
-[ -d "$HOMEE/zsh-completions" ] && echo -e "${RED}🗑️ Removing old zsh-completions directory...${NC}" && rm -rf "$HOMEE/zsh-completions/"
+[ -f "$HOME/.zprofile" ] && echo -e "${RED}🗑️ Removing old .zprofile...${NC}" && rm "$HOME/.zprofile"
+[ -f "$HOME/.zshrc" ] && echo -e "${RED}🗑️ Removing old .zshrc...${NC}" && rm "$HOME/.zshrc"
+[ -d "$HOME/.config" ] && echo -e "${RED}🗑️ Removing old .config directory...${NC}" && rm -rf "$HOME/.config"
+[ -d "$HOME/powerlevel10k" ] && echo -e "${RED}🗑️ Removing old powerlevel10k directory...${NC}" && rm -rf "$HOME/powerlevel10k"
+[ -d "$HOME/fast-syntax-highlighting" ] && echo -e "${RED}🗑️ Removing old fast-syntax-highlighting directory...${NC}" && rm -rf "$HOME/fast-syntax-highlighting/"
+[ -d "$HOME/zsh-autosuggestions" ] && echo -e "${RED}🗑️ Removing old zsh-autosuggestions directory...${NC}" && rm -rf "$HOME/zsh-autosuggestions/"
+[ -d "$HOME/zsh-completions" ] && echo -e "${RED}🗑️ Removing old zsh-completions directory...${NC}" && rm -rf "$HOME/zsh-completions/"
 echo -e "${GREEN}🧹 Old configuration files removed.${NC}"
 
 # 复制新的文件到当前用户的家目录
-echo -e "${YELLOW}📋 Copying new configuration files to $HOMEE...${NC}"
-# cp "$TMP_DIR/.zprofile" "$HOMEE/.zprofile"
-# cp "$TMP_DIR/.zshrc" "$HOMEE/.zshrc"
-cp -r "$TMP_DIR/.config" "$HOMEE/.config"
-cp -r "$TMP_DIR/plugin.zip" "$HOMEE"
+echo -e "${YELLOW}📋 Copying new configuration files to $HOME...${NC}"
+# cp "$TMP_DIR/.zprofile" "$HOME/.zprofile"
+# cp "$TMP_DIR/.zshrc" "$HOME/.zshrc"
+cp -r "$TMP_DIR/.config" "$HOME/.config"
+cp -r "$TMP_DIR/plugin.zip" "$HOME"
 # 在文件中添加以下代码
 if [[ "$OSTYPE" == "darwin"* ]]; then
     # 仅在 macOS 上拷贝
-    cp -r "$TMP_DIR/sh-script/" "$HOMEE/sh-script/"
+    cp -r "$TMP_DIR/sh-script/" "$HOME/sh-script/"
 fi
 echo -e "${GREEN}✔️ New configuration files copied.${NC}"
 
@@ -70,8 +70,8 @@ echo ''
 echo '# Remove old zcompdump and regenerate it'
 echo 'rm -f $HOME/.zcompdump; compinit'
 echo "# 1.Powerlevel10k 的 instant prompt 的缓存文件，用于加速启动"
-echo "if [[ -r \"\${XDG_CACHE_HOME:-\$HOMEE/.cache}/p10k-instant-prompt-\${(%):-%n}.zsh\" ]]; then"
-echo "  source \"\${XDG_CACHE_HOME:-\$HOMEE/.cache}/p10k-instant-prompt-\${(%):-%n}.zsh\""
+echo "if [[ -r \"\${XDG_CACHE_HOME:-\$HOME/.cache}/p10k-instant-prompt-\${(%):-%n}.zsh\" ]]; then"
+echo "  source \"\${XDG_CACHE_HOME:-\$HOME/.cache}/p10k-instant-prompt-\${(%):-%n}.zsh\""
 echo "fi"
 echo ""
 echo "# 2.加载 p10k 主题"

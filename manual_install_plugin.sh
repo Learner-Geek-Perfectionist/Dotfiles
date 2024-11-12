@@ -26,6 +26,13 @@ declare -a FILES_TO_REMOVE=(
     "$HOME/.zshrc"
     "$HOME/.config"
     "$HOME/powerlevel10k"
+    "$HOME/clipboard.zsh"
+    "$HOME/completion.zsh"
+    "$HOME/grep.zsh"
+    "$HOME/key-bindings.zsh"
+    "$HOME/history.zsh"
+    "$HOME/theme-and-appearance.zsh"
+    "$HOME/git.zsh"
     "$HOME/fast-syntax-highlighting"
     "$HOME/zsh-autosuggestions"
     "$HOME/zsh-autosuggestions/zsh-autosuggestions.zsh"
@@ -76,7 +83,7 @@ echo 'source $HOME/history.zsh'
 echo 'source $HOME/theme-and-appearance.zsh'
 echo 'source $HOME/git.zsh'
 echo '# Load zsh-autosuggestions'
-echo 'source ~/zsh-autosuggestions/zsh-autosuggestions.zsh'
+echo 'source $HOME/zsh-autosuggestions/zsh-autosuggestions.zsh'
 echo '# Load fast-syntax-highlighting'
 echo 'source $HOME/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh'
 echo '# Add zsh-completions to fpath'

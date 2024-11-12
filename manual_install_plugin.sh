@@ -60,7 +60,7 @@ unzip -o plugin.zip
 rm plugin.zip  # Clean up the original zip file
 
 # Comment out existing lines and add new configuration to .zshrc
-sed -i.bak -e 's|^source "\$ZPLUGINDIR/colorful_print.zsh"|# &|' \
+sed -i -e 's|^source "\$ZPLUGINDIR/colorful_print.zsh"|# &|' \
            -e 's|^source "\$ZPLUGINDIR/homebrew.zsh"|# &|' \
            -e 's|^source "\$ZPLUGINDIR/zinit.zsh"|# &|' ~/.zshrc
 

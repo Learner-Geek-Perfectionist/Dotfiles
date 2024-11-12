@@ -23,8 +23,11 @@ echo -e "${GREEN}✔️ Repository cloned.${NC}"
 echo -e "${YELLOW}🔍 Checking and removing old configuration files if they exist...${NC}"
 [ -f "$HOME/.zprofile" ] && echo -e "${RED}🗑️ Removing old .zprofile...${NC}" && rm "$HOME/.zprofile"
 [ -f "$HOME/.zshrc" ] && echo -e "${RED}🗑️ Removing old .zshrc...${NC}" && rm "$HOME/.zshrc"
-[ -d "$HOME/.config" ] && echo -e "${RED}🗑️ Removing old .config directory...${NC}" && rm -r "$HOME/.config"
-[ -d "$HOME/sh-script" ] && echo -e "${RED}🗑️ Removing old sh-script directory...${NC}" && rm -r "$HOME/sh-script/"
+[ -d "$HOME/.config" ] && echo -e "${RED}🗑️ Removing old .config directory...${NC}" && rm -rf "$HOME/.config"
+[ -d "$HOME/powerlevel10k" ] && echo -e "${RED}🗑️ Removing old powerlevel10k directory...${NC}" && rm -rf "$HOME/powerlevel10k"
+[ -d "$HOME/fast-syntax-highlighting" ] && echo -e "${RED}🗑️ Removing old fast-syntax-highlighting directory...${NC}" && rm -rf "$HOME/fast-syntax-highlighting/"
+[ -d "$HOME/zsh-autosuggestions" ] && echo -e "${RED}🗑️ Removing old zsh-autosuggestions directory...${NC}" && rm -rf "$HOME/zsh-autosuggestions/"
+[ -d "$HOME/zsh-completions" ] && echo -e "${RED}🗑️ Removing old zsh-completions directory...${NC}" && rm -rf "$HOME/zsh-completions/"
 echo -e "${GREEN}🧹 Old configuration files removed.${NC}"
 
 # 复制新的文件到当前用户的家目录
@@ -56,10 +59,10 @@ echo '# Load Powerlevel10k theme'
 echo 'source ~/powerlevel10k/powerlevel10k.zsh-theme'
 echo ''
 echo '# Load fast-syntax-highlighting'
-echo 'source ~/fast-syntax-highlighting.plugin.zsh'
+echo 'source ~/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh'
 echo ''
 echo '# Load zsh-autosuggestions'
-echo 'source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh'
+echo 'source ~/zsh-autosuggestions/zsh-autosuggestions.zsh'
 echo ''
 echo '# Add zsh-completions to fpath'
 echo 'fpath=(~/zsh-completions/src $fpath)'

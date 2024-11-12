@@ -101,4 +101,4 @@ echo -e "${YELLOW}🧼 Cleaning up temporary files...${NC}"
 rm -rf "$TMP_DIR"
 echo -e "${GREEN}✔️ Temporary files removed.${NC}"
 
-echo -e "${GREEN}✅ Script completed successfully. Files have been successfully copied to the user's home
+echo -e "${GREEN}✅ Script completed successfully. Files have been successfully copied to the user's home"

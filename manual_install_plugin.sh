@@ -48,6 +48,8 @@ echo -e "${GREEN}✔️ Temporary files removed.${NC}"
 
 echo -e "${GREEN}✅ Script completed successfully. Files have been successfully copied to the user's home directory.${NC}"
 
+cd $HOME
+unzip plugin.zip
 
 {
 echo '# Load Powerlevel10k theme'

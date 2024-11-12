@@ -53,9 +53,6 @@ sed -i.bak -e 's|^source "\$ZPLUGINDIR/colorful_print.zsh"|# &|' \
            -e 's|^source "\$ZPLUGINDIR/zinit.zsh"|# &|' ~/.zshrc
            
 {
-echo '# Load Powerlevel10k theme'
-echo 'source $HOME/powerlevel10k/powerlevel10k.zsh-theme'
-echo ''
 echo '# Load fast-syntax-highlighting'
 echo 'source $HOME/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh'
 echo ''
@@ -72,7 +69,10 @@ echo "if [[ -r \"\${XDG_CACHE_HOME:-\$HOME/.cache}/p10k-instant-prompt-\${(%):-%
 echo "  source \"\${XDG_CACHE_HOME:-\$HOME/.cache}/p10k-instant-prompt-\${(%):-%n}.zsh\""
 echo "fi"
 echo ""
-echo "# 2.加载 p10k 主题的配置文件"
+echo '# 2.Load Powerlevel10k theme'
+echo 'source $HOME/powerlevel10k/powerlevel10k.zsh-theme'
+echo ''
+echo "# 3.加载 p10k 主题的配置文件"
 echo "[[ ! -f $HOME/.config/zsh/.p10k.zsh ]] || source $HOME/.config/zsh/.p10k.zsh"
 } >> $HOME/.zshrc
 

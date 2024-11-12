@@ -55,7 +55,8 @@ if command -v git &>/dev/null; then
   zinit snippet OMZP::git
 
   zinit ice wait lucid depth=1 atload'unalias g grv ghh'
- 
+
+  # autosuggestions
   zinit ice wait lucid atload='_zsh_autosuggest_start'
   zinit light zsh-users/zsh-autosuggestions
 

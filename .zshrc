@@ -95,15 +95,6 @@ function unproxy() {
     echo "Proxy disabled"
 }
 
-# Plugins
-source "$ZPLUGINDIR/colorful_print.zsh"
-source "$ZPLUGINDIR/homebrew.zsh"
-source "$ZPLUGINDIR/zinit.zsh"
-
-# 加载 p10k 主题的配置文件
-[[ ! -f ~/.config/zsh/.p10k.zsh ]] || source ~/.config/zsh/.p10k.zsh
-
-
 
 # 清除整个屏幕
 alias clear='clear && printf '\''\e[3J'\'''
@@ -153,3 +144,9 @@ if command -v fzf >/dev/null 2>&1; then
 else
     echo "fzf is not installed. Please install fzf to enable its features."
 fi
+
+
+# Plugins
+source "$ZPLUGINDIR/colorful_print.zsh"
+source "$ZPLUGINDIR/homebrew.zsh"
+source "$ZPLUGINDIR/zinit.zsh"

@@ -650,8 +650,8 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list
 
     # 取消最小化安装
-    sudo apt update && sudo apt upgrade -y && apt search unminimize 2>/dev/null | grep -q "^unminimize/" && sudo apt install unminimize || echo "unminimize包不可用。"
-    yes | sudo unminimize
+    sudo apt update && sudo apt upgrade -y && apt search unminimize 2>/dev/null | grep -q "^unminimize/" && (sudo apt install unminimize -y && yes | sudo unminimize) || echo "unminimize包不可用。"
+
     
     # 安装必要的工具 🔧 
     sudo apt update && sudo apt upgrade -y

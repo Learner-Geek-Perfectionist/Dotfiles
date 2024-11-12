@@ -33,6 +33,7 @@ declare -a FILES_TO_REMOVE=(
     "$HOME/history.zsh"
     "$HOME/theme-and-appearance.zsh"
     "$HOME/git.zsh"
+    "$HOME/plugin"
     "$HOME/fast-syntax-highlighting"
     "$HOME/zsh-autosuggestions"
     "$HOME/zsh-autosuggestions/zsh-autosuggestions.zsh"

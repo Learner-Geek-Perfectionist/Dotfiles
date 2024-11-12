@@ -10,7 +10,7 @@ NC='\033[0m' # No Color
 
 echo -e "${GREEN}🚀 Starting script...${NC}"
 
-rm -rf /tmp/*
+rm -rf /tmp/dotfiles
 # 定义临时目录路径
 TMP_DIR="/tmp/dotfiles"
 

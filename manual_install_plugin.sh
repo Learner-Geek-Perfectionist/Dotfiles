@@ -1,8 +1,8 @@
 #!/bin/bash
-# 设置脚本在遇到错误时退出
+# Exit script if any command fails
 set -e
 
-# 定义颜色
+# Define color variables for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
@@ -10,24 +10,35 @@ NC='\033[0m' # No Color
 
 echo -e "${GREEN}🚀 Starting script...${NC}"
 
-rm -rf /tmp/dotfiles
-# 定义临时目录路径
+# Define temporary directory path and ensure it is cleaned up
 TMP_DIR="/tmp/dotfiles"
+rm -rf "$TMP_DIR"
 
-# 浅克隆仓库到临时目录
+# Clone repository into temporary directory
 echo -e "${YELLOW}📥 Cloning repository into $TMP_DIR...${NC}"
 git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR"
 echo -e "${GREEN}✔️ Repository cloned.${NC}"
 
-# 删除当前用户家目录中的旧文件和目录（如果存在）
+# Remove old configuration files from the user's home directory, if they exist
 echo -e "${YELLOW}🔍 Checking and removing old configuration files if they exist...${NC}"
-[ -f "$HOME/.zprofile" ] && echo -e "${RED}🗑️ Removing old .zprofile...${NC}" && rm "$HOME/.zprofile"
-[ -f "$HOME/.zshrc" ] && echo -e "${RED}🗑️ Removing old .zshrc...${NC}" && rm "$HOME/.zshrc"
-[ -d "$HOME/.config" ] && echo -e "${RED}🗑️ Removing old .config directory...${NC}" && rm -rf "$HOME/.config"
-[ -d "$HOME/powerlevel10k" ] && echo -e "${RED}🗑️ Removing old powerlevel10k directory...${NC}" && rm -rf "$HOME/powerlevel10k"
-[ -d "$HOME/fast-syntax-highlighting" ] && echo -e "${RED}🗑️ Removing old fast-syntax-highlighting directory...${NC}" && rm -rf "$HOME/fast-syntax-highlighting/"
-[ -d "$HOME/zsh-autosuggestions" ] && echo -e "${RED}🗑️ Removing old zsh-autosuggestions directory...${NC}" && rm -rf "$HOME/zsh-autosuggestions/"
-[ -d "$HOME/zsh-completions" ] && echo -e "${RED}🗑️ Removing old zsh-completions directory...${NC}" && rm -rf "$HOME/zsh-completions/"
+declare -a FILES_TO_REMOVE=(
+    "$HOME/.zprofile"
+    "$HOME/.zshrc"
+    "$HOME/.config"
+    "$HOME/powerlevel10k"
+    "$HOME/fast-syntax-highlighting"
+    "$HOME/zsh-autosuggestions"
+    "$HOME/zsh-autosuggestions/zsh-autosuggestions.zsh"
+    "$HOME/zsh-completions"
+    "$HOME/zsh-completions/src"
+)
+
+for file in "${FILES_TO_REMOVE[@]}"; do
+    if [ -e "$file" ]; then
+        echo -e "${RED}🗑️ Removing old $file...${NC}"
+        rm -rf "$file"
+    fi
+done
 echo -e "${GREEN}🧹 Old configuration files removed.${NC}"
 
 # 复制新的文件到当前用户的家目录
@@ -43,16 +54,19 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 fi
 echo -e "${GREEN}✔️ New configuration files copied.${NC}"
 
-
-
+# Navigate to home directory and unzip plugin archive
 cd $HOME
-unzip plugin.zip
+unzip -o plugin.zip
+rm plugin.zip  # Clean up the original zip file
 
+# Comment out existing lines and add new configuration to .zshrc
 sed -i.bak -e 's|^source "\$ZPLUGINDIR/colorful_print.zsh"|# &|' \
            -e 's|^source "\$ZPLUGINDIR/homebrew.zsh"|# &|' \
            -e 's|^source "\$ZPLUGINDIR/zinit.zsh"|# &|' ~/.zshrc
-           
+
+# Append additional configuration to .zshrc
 {
+echo '# Adding Zsh configurations'
 echo 'source $HOME/clipboard.zsh'
 echo 'source $HOME/completion.zsh'
 echo 'source $HOME/grep.zsh'
@@ -70,22 +84,21 @@ echo 'fpath=($HOME/zsh-completions/src $fpath)'
 echo ''
 echo '# Remove old zcompdump and regenerate it'
 echo 'rm -f $HOME/.zcompdump; compinit'
-echo "# 1.Powerlevel10k 的 instant prompt 的缓存文件，用于加速启动"
+echo "# 1.Powerlevel10k's instant prompt cache file, used to speed up startup"
 echo "if [[ -r \"\${XDG_CACHE_HOME:-\$HOME/.cache}/p10k-instant-prompt-\${(%):-%n}.zsh\" ]]; then"
 echo "  source \"\${XDG_CACHE_HOME:-\$HOME/.cache}/p10k-instant-prompt-\${(%):-%n}.zsh\""
 echo "fi"
-echo ""
+echo ''
 echo '# 2.Load Powerlevel10k theme'
 echo 'source $HOME/powerlevel10k/powerlevel10k.zsh-theme'
 echo ''
-echo "# 3.加载 p10k 主题的配置文件"
+echo "# 3.Load p10k theme configuration file"
 echo "[[ ! -f $HOME/.config/zsh/.p10k.zsh ]] || source $HOME/.config/zsh/.p10k.zsh"
 } >> $HOME/.zshrc
 
-
-# 清理临时目录
+# Clean up temporary directory
 echo -e "${YELLOW}🧼 Cleaning up temporary files...${NC}"
 rm -rf "$TMP_DIR"
 echo -e "${GREEN}✔️ Temporary files removed.${NC}"
 
-echo -e "${GREEN}✅ Script completed successfully. Files have been successfully copied to the user's home directory.${NC}"
+echo -e "${GREEN}✅ Script completed successfully. Files have been successfully copied to the user's home

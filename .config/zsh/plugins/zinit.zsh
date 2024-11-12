@@ -27,23 +27,36 @@ if command -v git &>/dev/null; then
   # OMZ 迁移和插件配置
   HYPHEN_INSENSITIVE='true'
   COMPLETION_WAITING_DOTS='true'
+  # clipboard
   zinit ice wait lucid depth=1
   zinit snippet OMZL::clipboard.zsh
+  # completion
+  zinit ice wait lucid depth=1
   zinit snippet OMZL::completion.zsh
+  # grep
+  zinit ice wait lucid depth=1
   zinit snippet OMZL::grep.zsh
+  # key-bindings
+  zinit ice wait lucid depth=1
   zinit snippet OMZL::key-bindings.zsh
-
+  # directories
   zinit ice depth=1
   zinit snippet OMZL::directories.zsh
+  # history
+  zinit ice depth=1  
   zinit snippet OMZL::history.zsh
+  # theme
+  zinit ice depth=1
   zinit snippet OMZL::theme-and-appearance.zsh
+  # git
+  zinit ice depth=1  
   zinit snippet OMZP::git
 
   zinit ice wait lucid depth=1 atload'unalias g grv ghh'
-  zinit ice depth=1
+ 
   # 加载 p10k 主题
   zinit light romkatv/powerlevel10k
-  zinit ice lucid wait='0' atload='_zsh_autosuggest_start'
+  zinit ice wait lucid atload='_zsh_autosuggest_start'
   zinit light zsh-users/zsh-autosuggestions
 
   # 使用 Zinit Turbo 模式加载补全插件，并初始化补全系统

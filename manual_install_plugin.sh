@@ -33,7 +33,7 @@ echo -e "${GREEN}🧹 Old configuration files removed.${NC}"
 # 复制新的文件到当前用户的家目录
 echo -e "${YELLOW}📋 Copying new configuration files to $HOME...${NC}"
 # cp "$TMP_DIR/.zprofile" "$HOME/.zprofile"
-# cp "$TMP_DIR/.zshrc" "$HOME/.zshrc"
+cp "$TMP_DIR/.zshrc" "$HOME/.zshrc"
 cp -r "$TMP_DIR/.config" "$HOME/.config"
 cp -r "$TMP_DIR/plugin.zip" "$HOME"
 # 在文件中添加以下代码
@@ -44,16 +44,14 @@ fi
 echo -e "${GREEN}✔️ New configuration files copied.${NC}"
 
 
-# 清理临时目录
-echo -e "${YELLOW}🧼 Cleaning up temporary files...${NC}"
-rm -rf "$TMP_DIR"
-echo -e "${GREEN}✔️ Temporary files removed.${NC}"
-
-echo -e "${GREEN}✅ Script completed successfully. Files have been successfully copied to the user's home directory.${NC}"
 
 cd $HOME
 unzip plugin.zip
 
+sed -i.bak -e 's|^source "\$ZPLUGINDIR/colorful_print.zsh"|# &|' \
+           -e 's|^source "\$ZPLUGINDIR/homebrew.zsh"|# &|' \
+           -e 's|^source "\$ZPLUGINDIR/zinit.zsh"|# &|' ~/.zshrc
+           
 {
 echo '# Load Powerlevel10k theme'
 echo 'source $HOME/powerlevel10k/powerlevel10k.zsh-theme'
@@ -77,3 +75,11 @@ echo ""
 echo "# 2.加载 p10k 主题的配置文件"
 echo "[[ ! -f $HOME/.config/zsh/.p10k.zsh ]] || source $HOME/.config/zsh/.p10k.zsh"
 } >> $HOME/.zshrc
+
+
+# 清理临时目录
+echo -e "${YELLOW}🧼 Cleaning up temporary files...${NC}"
+rm -rf "$TMP_DIR"
+echo -e "${GREEN}✔️ Temporary files removed.${NC}"
+
+echo -e "${GREEN}✅ Script completed successfully. Files have been successfully copied to the user's home directory.${NC}"

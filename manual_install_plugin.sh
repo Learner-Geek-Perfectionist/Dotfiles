@@ -43,8 +43,8 @@ declare -a FILES_TO_REMOVE=(
 
 for file in "${FILES_TO_REMOVE[@]}"; do
     if [ -e "$file" ]; then
-        echo -e "${RED}🗑️ Removing old $file...${NC}"
-        rm -rf "$file"
+        rm -rf "$file" && echo -e "${RED}🗑️ Removing old $file...${NC}"
+    
     fi
 done
 echo -e "${GREEN}🧹 Old configuration files removed.${NC}"

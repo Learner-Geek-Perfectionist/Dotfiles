@@ -108,9 +108,6 @@ alias py=pycharm
 # clion 映射到 cl
 alias cl=clion
 
-# 确定脚本所在的目录
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-
 # ip 映射到 ip-script
 if [[ "$OSTYPE" == "darwin"* ]]; then
     # 仅在 macOS 上设置别名
@@ -119,7 +116,6 @@ fi
 
 # 禁用忽略以空格开头的命令的历史记录功能。
 setopt no_hist_ignore_space
-
 setopt interactive_comments      # 注释行不报错
 setopt no_nomatch                # 通配符 * 匹配不到文件也不报错
 setopt autocd                    # 输入目录名自动cd
@@ -137,6 +133,12 @@ if [ -f "$HOME/.zprofile" ]; then
     fi
 fi
 
+
+# Plugins
+source "$ZPLUGINDIR/colorful_print.zsh"
+source "$ZPLUGINDIR/homebrew.zsh"   
+source "$ZPLUGINDIR/zinit.zsh"
+
 # 检查 fzf 是否已安装
 if command -v fzf >/dev/null 2>&1; then
     # 如果 fzf 存在，则加载 fzf 的 zsh 配置
@@ -146,7 +148,4 @@ else
 fi
 
 
-# Plugins
-source "$ZPLUGINDIR/colorful_print.zsh"
-source "$ZPLUGINDIR/homebrew.zsh"
-source "$ZPLUGINDIR/zinit.zsh"
+ 

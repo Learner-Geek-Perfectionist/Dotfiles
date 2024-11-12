@@ -22,7 +22,9 @@ if command -v git &>/dev/null; then
   autoload -Uz _zinit
   # 将 _zinit 补全函数绑定到 zinit 命令，从而获得 zinit 命令的补全功能。
   (( ${+_comps} )) && _comps[zinit]=_zinit
-
+  
+  # 最先加载 p10k 主题
+  zinit light romkatv/powerlevel10k
 
   # OMZ 迁移和插件配置
   HYPHEN_INSENSITIVE='true'
@@ -54,8 +56,6 @@ if command -v git &>/dev/null; then
 
   zinit ice wait lucid depth=1 atload'unalias g grv ghh'
  
-  # 加载 p10k 主题
-  zinit light romkatv/powerlevel10k
   zinit ice wait lucid atload='_zsh_autosuggest_start'
   zinit light zsh-users/zsh-autosuggestions
 

@@ -31,6 +31,14 @@ export HISTFILE="$XDG_CACHE_HOME/zsh/.zsh_history" # HISTFILE 也是 zsh 内置�
 # Ensure the directory for zcompdump exists
  mkdir -p "$(dirname "$ZSH_COMPDUMP")"
 
+# Powerlevel10k 的 instant prompt 的缓存文件，用于加速启动
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
+# 加载 p10k 主题的配置文件
+[[ ! -f ~/.config/zsh/.p10k.zsh ]] || source ~/.config/zsh/.p10k.zsh
+
 # 获取操作系统信息并设置 PATH
 if [[ "$(uname)" == "Darwin" ]]; then
     # macOS specific settings，设置 git 、clang++、ruby、make bash、VSCode、grep 等工具的环境变量
@@ -100,6 +108,13 @@ alias py=pycharm
 # clion 映射到 cl
 alias cl=clion
 
+# reload 映射到重启 .zshrc
+alias reload='source ~/.zshrc'
+
+alias md='mkdir -p'
+
+alias g1='git clone --depth=1'
+
 # ip 映射到 ip-script
 if [[ "$OSTYPE" == "darwin"* ]]; then
     # 仅在 macOS 上设置别名
@@ -138,6 +153,3 @@ if command -v fzf >/dev/null 2>&1; then
 else
     echo "fzf is not installed. Please install fzf to enable its features."
 fi
-
-
- 

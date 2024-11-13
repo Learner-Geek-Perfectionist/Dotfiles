@@ -9,10 +9,10 @@ if ! command -v git &>/dev/null; then
   return
 fi
 
-# Define Zinit installation directory
+# 插件管理器 zinit 安装的路径
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
 
-# Install Zinit if not already installed
+# 如果插件管理器 zinit 没有安装......
 if [[ ! -f "$ZINIT_HOME/zinit.zsh" ]]; then
   print -P "%F{33} %F{220}Installing ZDHARMA-CONTINUUM Initiative Plugin Manager...%f"
   mkdir -p "$(dirname $ZINIT_HOME)" && chmod g-rwX "$(dirname $ZINIT_HOME)"

@@ -63,14 +63,14 @@ zinit ice wait lucid depth=1;zinit snippet OMZL::grep.zsh
 # key-bindings
 zinit ice wait lucid depth=1;zinit snippet OMZL::key-bindings.zsh
 # directories
-zinit ice depth=1;zinit snippet OMZL::directories.zsh
+zinit ice wait lucid depth=1;zinit snippet OMZL::directories.zsh
 # history
-zinit ice depth=1;zinit snippet OMZL::history.zsh
+zinit ice wait lucid depth=1;zinit snippet OMZL::history.zsh
 # theme
-zinit ice depth=1;zinit snippet OMZL::theme-and-appearance.zsh
+zinit ice wait lucid depth=1;zinit snippet OMZL::theme-and-appearance.zsh
 # git
-zinit ice depth=1;zinit snippet OMZL::git.zsh
-zinit ice depth=1;zinit snippet OMZP::git/git.plugin.zsh
+zinit ice wait lucid depth=1;zinit snippet OMZL::git.zsh
+zinit ice wait lucid depth=1;zinit snippet OMZP::git/git.plugin.zsh
 
 
 zinit ice wait lucid depth=1 atload'unalias g grv ghh'

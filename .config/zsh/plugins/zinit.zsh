@@ -99,8 +99,7 @@ autoload -Uz compinit; compinit -C -d "$ZSH_COMPDUMP";zpcdreplay
 # 加载 fzf-tab 插件
 zinit ice wait lucid depth=1;zinit light Aloxaf/fzf-tab
 # autosuggestions，atload 用于保障启动 autosuggest 功能。
-zinit ice wait lucid atload='_zsh_autosuggest_start'
-zinit light zsh-users/zsh-autosuggestions
+zinit ice wait lucid atload='_zsh_autosuggest_start';zinit light zsh-users/zsh-autosuggestions
 # 必须在 zdharma-continuum/fast-syntax-highlighting 之前加载 autosuggestions，否则「粘贴代码」太亮了。
 zinit ice wait lucid depth=1;zinit light zdharma-continuum/fast-syntax-highlighting
 

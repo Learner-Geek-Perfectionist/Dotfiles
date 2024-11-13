@@ -50,33 +50,28 @@ HYPHEN_INSENSITIVE='true'
 COMPLETION_WAITING_DOTS='true'
 
 
+
 # OMZ 迁移和插件配置
 HYPHEN_INSENSITIVE='true'
 COMPLETION_WAITING_DOTS='true'
 # clipboard
-zinit ice wait lucid depth=1
-zinit snippet OMZL::clipboard.zsh
+zinit ice wait lucid depth=1;zinit snippet OMZL::clipboard.zsh
 # completion
-zinit ice wait lucid depth=1
-zinit snippet OMZL::completion.zsh
+zinit ice wait lucid depth=1;zinit snippet OMZL::completion.zsh
 # grep
-zinit ice wait lucid depth=1
-zinit snippet OMZL::grep.zsh
+zinit ice wait lucid depth=1;zinit snippet OMZL::grep.zsh
 # key-bindings
-zinit ice wait lucid depth=1
-zinit snippet OMZL::key-bindings.zsh
+zinit ice wait lucid depth=1;zinit snippet OMZL::key-bindings.zsh
 # directories
-zinit ice depth=1
-zinit snippet OMZL::directories.zsh
+zinit ice depth=1;zinit snippet OMZL::directories.zsh
 # history
-zinit ice depth=1  
-zinit snippet OMZL::history.zsh
+zinit ice depth=1;zinit snippet OMZL::history.zsh
 # theme
-zinit ice depth=1
-zinit snippet OMZL::theme-and-appearance.zsh
+zinit ice depth=1;zinit snippet OMZL::theme-and-appearance.zsh
 # git
-zinit ice depth=1  
-zinit snippet OMZ::lib/git.zsh
+zinit ice depth=1;zinit snippet OMZP::git
+
+zinit ice wait lucid depth=1 atload'unalias g grv ghh'
 
 zinit ice wait lucid depth=1 atload'unalias g grv ghh'
 

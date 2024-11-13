@@ -22,22 +22,15 @@ export ZSCRIPTDIR="$ZDOTDIR/.config/zsh/scripts"
 export HISTFILE="$XDG_CACHE_HOME/zsh/.zsh_history" # HISTFILE 也是 zsh 内置的环境变量
 
 # Ensure Zsh directories exist
- mkdir -p "$ZPLUGINDIR" "$ZSCRIPTDIR"
+mkdir -p "$ZPLUGINDIR" "$ZSCRIPTDIR"
 
 
 # Set the location for the zcompdump file to be in the cache directory
- export ZSH_COMPDUMP="$XDG_CACHE_HOME/zsh/.zcompdump"
+export ZSH_COMPDUMP="$XDG_CACHE_HOME/zsh/.zcompdump"
 
 # Ensure the directory for zcompdump exists
- mkdir -p "$(dirname "$ZSH_COMPDUMP")"
+mkdir -p "$(dirname "$ZSH_COMPDUMP")"
 
-# Powerlevel10k 的 instant prompt 的缓存文件，用于加速启动
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
-fi
-
-# 加载 p10k 主题的配置文件
-[[ ! -f ~/.config/zsh/.p10k.zsh ]] || source ~/.config/zsh/.p10k.zsh
 
 # 获取操作系统信息并设置 PATH
 if [[ "$(uname)" == "Darwin" ]]; then
@@ -153,3 +146,6 @@ if command -v fzf >/dev/null 2>&1; then
 else
     echo "fzf is not installed. Please install fzf to enable its features."
 fi
+
+
+ 

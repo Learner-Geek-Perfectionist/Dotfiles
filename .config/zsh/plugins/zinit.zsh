@@ -76,7 +76,7 @@ zinit ice depth=1
 zinit snippet OMZL::theme-and-appearance.zsh
 # git
 zinit ice depth=1  
-zinit snippet OMZP::git
+zinit snippet OMZ::lib/git.zsh
 
 zinit ice wait lucid depth=1 atload'unalias g grv ghh'
 

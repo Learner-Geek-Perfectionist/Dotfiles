@@ -655,7 +655,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     
     # 安装必要的工具 🔧 
     sudo apt update && sudo apt upgrade -y
-    sudo apt install -y openssh-server debconf-utils net-tools git unzip zip ninja-build neovim ruby-full fd-find ripgrep cmake nodejs iputils-ping procps htop traceroute tree coreutils zsh fontconfig python3 iproute2 kitty wget pkg-config graphviz sudo tcpdump kotlin golang rustc software-properties-common valgrind curl tar locales man-db jq
+    sudo apt install -y openssh-server debconf-utils net-tools git unzip zip ninja-build neovim ruby-full fd-find ripgrep cmake nodejs iputils-ping procps htop traceroute tree coreutils zsh fontconfig python3 iproute2 kitty wget pkg-config graphviz sudo tcpdump kotlin golang rustc software-properties-common valgrind curl tar locales man-db jq tshark
 
 
     # 设置 Debconf，允许非root用户捕获数据包

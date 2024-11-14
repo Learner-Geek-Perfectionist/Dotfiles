@@ -60,28 +60,6 @@ function unproxy() {
 }
 
 
-# 清除整个屏幕
-alias clear='clear && printf '\''\e[3J'\'''
-
-# python3 映射到 python
-alias python=python3 
-
-# pycharm 映射到 py
-alias py=pycharm
-
-# clion 映射到 cl
-alias cl=clion
-
-# reload 映射到重启 .zshrc
-alias reload='source ~/.zshrc'
-
-alias md='mkdir -p'
-
-alias g1='git clone --depth=1'
-
-unalias ls
-alias ls='eza --icons -lha'
-
 # ip 映射到 ip-script
 if [[ "$OSTYPE" == "darwin"* ]]; then
     # 仅在 macOS 上设置别名
@@ -112,6 +90,30 @@ fi
 source "$ZPLUGINDIR/colorful_print.zsh"
 source "$ZPLUGINDIR/homebrew.zsh"   
 source "$ZPLUGINDIR/zinit.zsh"
+
+
+
+# 清除整个屏幕
+alias clear='clear && printf '\''\e[3J'\'''
+
+# python3 映射到 python
+alias python=python3 
+
+# pycharm 映射到 py
+alias py=pycharm
+
+# clion 映射到 cl
+alias cl=clion
+
+# reload 映射到重启 .zshrc
+alias reload='source ~/.zshrc'
+
+alias md='mkdir -p'
+
+alias g1='git clone --depth=1'
+
+unalias ls
+alias ls='eza --icons -lha'
 
 # 执行 sdkman 初始化脚本，对所有 Linux 系统执行
 if [[ -f "$HOME/.sdkman/bin/sdkman-init.sh" ]]; then

@@ -21,6 +21,123 @@ CYAN='\033[0;36m'
 LIGHT_BLUE='\033[1;34m'
 NC='\033[0m' # 没有颜色
 
+
+# macOS 
+brew_casks=(
+    alfred videofusion wpsoffice tencent-meeting google-chrome
+    orbstack dingtalk baidunetdisk anaconda iina KeepingYouAwake
+    pycharm android-studio input-source-pro qq chatgpt fleet
+    intellij-idea qqmusic  jetbrains-gateway telegram
+    clion jordanbaird-ice visual-studio-code discord keycastr wechat
+    douyin kitty feishu microsoft-edge Eudic
+  )
+
+brew_formulas=(
+    gettext msgpack ruby graphviz kotlin python
+    brotli git lpeg ncurses sqlite openjdk grep
+    c-ares htop lua neovim tree-sitter bash tcpdump
+    ca-certificates icu4c luajit node unibilium
+    cmake libnghttp2 luv openssl@3 vim perl
+    cmake-docs libsodium lz4 pcre2 xz llvm
+    fastfetch libuv lzip z3 tree rust
+    fd libvterm make readline zstd eza
+    fzf libyaml mpdecimal ripgrep go
+    gcc ninja wget mas pkg-config jq
+)
+
+#ubuntu
+packages_ubuntu=(
+  openssh-server
+  debconf-utils
+  net-tools
+  git
+  unzip
+  zip
+  ninja-build
+  neovim
+  ruby-full
+  fd-find
+  ripgrep
+  cmake
+  nodejs
+  iputils-ping
+  procps
+  htop
+  traceroute
+  tree
+  coreutils
+  zsh
+  fontconfig
+  python3
+  iproute2
+  kitty
+  wget
+  pkg-config
+  graphviz
+  sudo
+  tcpdump
+  kotlin
+  golang
+  rustc
+  software-properties-common
+  valgrind
+  curl
+  tar
+  locales
+  man-db
+  jq
+  tshark
+  eza
+)
+
+
+
+#fedora
+packages_fedora=(
+glibc
+glibc-common
+openssh-server
+iproute
+net-tools
+fd-find
+git
+unzip
+zip
+ripgrep
+fastfetch
+fzf
+ninja-build
+neovim
+ruby
+kitty
+cmake
+nodejs
+iputils
+procps-ng
+htop
+traceroute
+tree
+coreutils
+zsh
+fontconfig
+python3
+wget
+pkgconf-pkg-config
+graphviz
+wireshark
+tcpdump
+java-latest-openjdk
+golang
+rust
+glibc-locale-source
+glibc-langpack-zh
+jq
+eza
+openssl
+)
+
+ 
+
 # 定义打印居中消息的函数
 print_centered_message() {
   local message="$1"
@@ -508,19 +625,6 @@ if [[ $OS_TYPE == "Darwin" ]]; then
   
   print_centered_message "正在安装 macOS 常用的开发工具......"
 
-  brew_formulas=(
-    gettext msgpack ruby graphviz kotlin python
-    brotli git lpeg ncurses sqlite openjdk grep
-    c-ares htop lua neovim tree-sitter bash tcpdump
-    ca-certificates icu4c luajit node unibilium
-    cmake libnghttp2 luv openssl@3 vim perl
-    cmake-docs libsodium lz4 pcre2 xz llvm
-    fastfetch libuv lzip z3 tree rust
-    fd libvterm make readline zstd eza
-    fzf libyaml mpdecimal ripgrep go
-    gcc ninja wget mas pkg-config jq
-  )
-
 
   echo -e "\n"
 
@@ -535,15 +639,6 @@ if [[ $OS_TYPE == "Darwin" ]]; then
   print_centered_message "开发工具安装完成✅"
 
   print_centered_message "正在安装 macOS 常用的带图形用户界面的应用程序......"
-
-  brew_casks=(
-    alfred videofusion wpsoffice tencent-meeting google-chrome
-    orbstack dingtalk baidunetdisk anaconda iina KeepingYouAwake
-    pycharm android-studio input-source-pro qq chatgpt fleet
-    intellij-idea qqmusic  jetbrains-gateway telegram
-    clion jordanbaird-ice visual-studio-code discord keycastr wechat
-    douyin kitty feishu microsoft-edge Eudic
-  )
 
   # 安装 brew_casks 包
   check_and_install_brew_packages "brew_casks"
@@ -655,7 +750,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     
     # 安装必要的工具 🔧 
     sudo apt update && sudo apt upgrade -y
-    sudo apt install -y openssh-server debconf-utils net-tools git unzip zip ninja-build neovim ruby-full fd-find ripgrep cmake nodejs iputils-ping procps htop traceroute tree coreutils zsh fontconfig python3 iproute2 kitty wget pkg-config graphviz sudo tcpdump kotlin golang rustc software-properties-common valgrind curl tar locales man-db jq tshark eza
+    sudo apt install -y "${packages_ubuntu[@]}"
 
 
     # 设置 Debconf，允许非root用户捕获数据包
@@ -692,7 +787,7 @@ elif [[ $OS_TYPE == "Linux" ]]; then
         # 目录存在，跳过安装
         echo "fzf 已安装，跳过安装。"
     else
-        [ -d "$HOME/.fzf" ] && rm -rf "$FZF_DIR"
+        [ -d "$FZF_DIR" ] && rm -rf "$FZF_DIR"
         
         # 目录不存在，克隆并安装 fzf
         echo "正在安装 fzf..."
@@ -763,9 +858,11 @@ elif [[ $OS_TYPE == "Linux" ]]; then
       -i.bak \
       /etc/yum.repos.d/fedora.repo \
       /etc/yum.repos.d/fedora-updates.repo
-
+    
     # 安装必要的工具 🔧
-    sudo dnf -y update && sudo dnf install -y glibc glibc-common openssh-server iproute net-tools fd-find git unzip zip ripgrep fastfetch fzf ninja-build neovim ruby kitty cmake nodejs iputils procps-ng htop traceroute tree coreutils zsh fontconfig python3 wget pkgconf-pkg-config graphviz wireshark tcpdump java-latest-openjdk golang rust glibc-locale-source glibc-langpack-zh jq eza openssl && sudo dnf install -y --setopt=tsflags= coreutils coreutils-common man-pages man-db && sudo dnf group install -y --setopt=strict=0 "c-development"  
+    sudo dnf -y update && sudo dnf install -y "${packages_fedora[@]}"
+    sudo dnf install -y --setopt=tsflags= coreutils coreutils-common man-pages man-db && sudo dnf group install -y --setopt=strict=0 "c-development"  
+     
 
     # 设置 wireshark 权限 
     # 1. 将 dumpcap 设置为允许 wireshark 组的成员执行：

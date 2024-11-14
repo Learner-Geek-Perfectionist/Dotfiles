@@ -29,11 +29,6 @@ elif [[ -f /etc/os-release ]]; then
     export LANG=zh_CN.UTF-8
     export LC_ALL=zh_CN.UTF-8
 
-    # 执行 sdkman 初始化脚本，对所有 Linux 系统执行
-    if [[ -f "$HOME/.sdkman/bin/sdkman-init.sh" ]]; then
-        source "$HOME/.sdkman/bin/sdkman-init.sh"
-    fi
-
     # 检查是否是 Ubuntu 系统
     if grep -q 'ID=ubuntu' /etc/os-release; then
         # 对于 Ubuntu 系统，添加 fzf 的环境变量

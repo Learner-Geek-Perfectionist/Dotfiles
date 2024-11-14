@@ -66,7 +66,7 @@ zinit ice wait lucid depth=1;zinit snippet OMZL::directories.zsh
 # history
 zinit ice wait lucid depth=1;zinit snippet OMZL::history.zsh
 # theme 
-zinit ice wait lucid atload="alias ls &>/dev/null && unalias ls && alias ls='eza --icons -lh'";zinit snippet OMZL::theme-and-appearance.zsh
+zinit ice wait lucid atload="alias ls &>/dev/null && unalias ls && alias ls='eza --icons -lh --time-style=iso'";zinit snippet OMZL::theme-and-appearance.zsh
 
 # git
 zinit ice wait lucid depth=1;zinit snippet OMZL::git.zsh

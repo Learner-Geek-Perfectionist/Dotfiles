@@ -88,6 +88,7 @@ packages_ubuntu=(
   jq
   tshark
   eza
+  hyperfine
 )
 
 
@@ -134,6 +135,7 @@ glibc-langpack-zh
 jq
 eza
 openssl
+hyperfine
 )
 
  

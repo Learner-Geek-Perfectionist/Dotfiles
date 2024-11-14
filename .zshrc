@@ -113,9 +113,6 @@ alias md='mkdir -p'
 alias g1='git clone --depth=1'
 
 
-alias ls &>/dev/null && unalias ls
-alias ls='eza --icons -lha'
-
 # 执行 sdkman 初始化脚本，对所有 Linux 系统执行
 if [[ -f "$HOME/.sdkman/bin/sdkman-init.sh" ]]; then
     source "$HOME/.sdkman/bin/sdkman-init.sh"
@@ -128,9 +125,6 @@ if command -v fzf >/dev/null 2>&1; then
 else
     echo "fzf is not installed. Please install fzf to enable its features."
 fi
-
-
-
 
 
  

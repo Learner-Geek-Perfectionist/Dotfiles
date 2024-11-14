@@ -1,6 +1,5 @@
 
-[ -f /etc/zsh/zshrc ] && sed -i 's/^skip_global_compinit=1/#skip_global_compinit=1/' /etc/zsh/zshrc 
-
+export skip_global_compinit=1
 
 # 加载 zprof 模块，分析 Zsh 脚本的性能。 执行 zprof 命令。
 zmodload zsh/zprof 

@@ -5,9 +5,6 @@ mkdir -p "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME" "$XDG_DATA_HOME" "$XDG_STATE_HOME"
 mkdir -p "$ZPLUGINDIR" "$ZSCRIPTDIR"
 
 
-# Set the location for the zcompdump file to be in the cache directory
-export ZSH_COMPDUMP="$XDG_CACHE_HOME/zsh/.zcompdump"
-
 # Ensure the directory for zcompdump exists
 mkdir -p "$(dirname "$ZSH_COMPDUMP")"
 

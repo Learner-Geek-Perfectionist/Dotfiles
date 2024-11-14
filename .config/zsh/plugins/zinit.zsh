@@ -65,8 +65,9 @@ zinit ice wait lucid depth=1;zinit snippet OMZL::key-bindings.zsh
 zinit ice wait lucid depth=1;zinit snippet OMZL::directories.zsh
 # history
 zinit ice wait lucid depth=1;zinit snippet OMZL::history.zsh
-# theme
-zinit ice wait lucid depth=1;zinit snippet OMZL::theme-and-appearance.zsh
+# theme 
+zinit ice wait lucid atload="alias ls &>/dev/null && unalias ls && alias ls='eza --icons -lh'";zinit snippet OMZL::theme-and-appearance.zsh
+
 # git
 zinit ice wait lucid depth=1;zinit snippet OMZL::git.zsh
 zinit ice wait lucid depth=1;zinit snippet OMZP::git/git.plugin.zsh

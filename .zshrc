@@ -79,6 +79,9 @@ alias md='mkdir -p'
 
 alias g1='git clone --depth=1'
 
+unalias ls
+alias ls='eza --icons -lha'
+
 # ip 映射到 ip-script
 if [[ "$OSTYPE" == "darwin"* ]]; then
     # 仅在 macOS 上设置别名

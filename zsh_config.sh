@@ -22,14 +22,16 @@ echo -e "${GREEN}✔️ Repository cloned.${NC}"
 
 # 删除当前用户家目录中的旧文件和目录（如果存在）
 echo -e "${YELLOW}🔍 Checking and removing old configuration files if they exist...${NC}"
-[ -f "$HOME/.zprofile" ] && echo -e "${RED}🗑️ Removing old .zprofile...${NC}" && rm "$HOME/.zprofile"
-[ -f "$HOME/.zshrc" ] && echo -e "${RED}🗑️ Removing old .zshrc...${NC}" && rm "$HOME/.zshrc"
-[ -d "$HOME/.config" ] && echo -e "${RED}🗑️ Removing old .config directory...${NC}" && rm -r "$HOME/.config"
-[ -d "$HOME/sh-script" ] && echo -e "${RED}🗑️ Removing old sh-script directory...${NC}" && rm -r "$HOME/sh-script/"
+[ -f "$HOME/.zshenv" ] && echo -e "${RED}🗑️ Removing old .zshenv...${NC}" && rm -rf "$HOME/.zshenv"
+[ -f "$HOME/.zprofile" ] && echo -e "${RED}🗑️ Removing old .zprofile...${NC}" && rm -rf "$HOME/.zprofile"
+[ -f "$HOME/.zshrc" ] && echo -e "${RED}🗑️ Removing old .zshrc...${NC}" && rm -rf "$HOME/.zshrc"
+[ -d "$HOME/.config" ] && echo -e "${RED}🗑️ Removing old .config directory...${NC}" && rm -rf "$HOME/.config"
+[ -d "$HOME/sh-script" ] && echo -e "${RED}🗑️ Removing old sh-script directory...${NC}" && rm -rf "$HOME/sh-script/"
 echo -e "${GREEN}🧹 Old configuration files removed.${NC}"
 
 # 复制新的文件到当前用户的家目录
 echo -e "${YELLOW}📋 Copying new configuration files to $HOME...${NC}"
+cp "$TMP_DIR/.zshenv" "$HOME/.zshenv"
 cp "$TMP_DIR/.zprofile" "$HOME/.zprofile"
 cp "$TMP_DIR/.zshrc" "$HOME/.zshrc"
 cp -r "$TMP_DIR/.config" "$HOME/.config"

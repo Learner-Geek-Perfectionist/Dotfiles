@@ -20,3 +20,7 @@ export XDG_STATE_HOME="$HOME/.local/state"
 export ZPLUGINDIR="$HOME/.config/zsh/plugins"
 export ZSCRIPTDIR="$HOME/.config/zsh/scripts"
 export HISTFILE="$XDG_CACHE_HOME/zsh/.zsh_history" # HISTFILE 也是 zsh 内置的环境变量
+
+
+# Set the location for the zcompdump file to be in the cache directory
+export ZSH_COMPDUMP="$XDG_CACHE_HOME/zsh/.zcompdump"

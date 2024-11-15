@@ -66,16 +66,6 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     alias ip="$HOME/sh-script/get-my-ip.sh"
 fi
 
-# 禁用忽略以空格开头的命令的历史记录功能。
-setopt no_hist_ignore_space
-setopt interactive_comments      # 注释行不报错
-setopt no_nomatch                # 通配符 * 匹配不到文件也不报错
-setopt autocd                    # 输入目录名自动cd
-# setopt correct                 # 自动纠正拼写错误
-setopt nocaseglob                # 路径名匹配时忽略大小写
-setopt notify                    # 后台任务完成后通知
-setopt no_beep                   # 关闭终端提示音
-setopt no_bang_hist              # 不对双引号当中的叹号做历史记录拓展 "!"
 
 # 检查 .zprofile 文件是否存在并且包含特定的初始化命令
 if [ -f "$HOME/.zprofile" ]; then
@@ -90,6 +80,19 @@ fi
 source "$ZPLUGINDIR/colorful_print.zsh"
 source "$ZPLUGINDIR/homebrew.zsh"   
 source "$ZPLUGINDIR/zinit.zsh"
+
+
+
+# 禁用忽略以空格开头的命令的历史记录功能。
+setopt no_hist_ignore_space
+setopt interactive_comments      # 注释行不报错
+setopt no_nomatch                # 通配符 * 匹配不到文件也不报错
+setopt autocd                    # 输入目录名自动cd
+# setopt correct                 # 自动纠正拼写错误
+setopt nocaseglob                # 路径名匹配时忽略大小写
+setopt notify                    # 后台任务完成后通知
+setopt no_beep                   # 关闭终端提示音
+setopt no_bang_hist              # 不对双引号当中的叹号做历史记录拓展 "!"
 
 
 

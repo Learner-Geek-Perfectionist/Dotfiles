@@ -749,11 +749,6 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     # 取消最小化安装
     sudo apt update && sudo apt upgrade -y && apt search unminimize 2>/dev/null | grep -q "^unminimize/" && (sudo apt install unminimize -y && yes | sudo unminimize) || echo "unminimize包不可用。"
 
-    
-    # 安装必要的工具 🔧 
-    sudo apt update && sudo apt upgrade -y
-    sudo apt install -y "${packages_ubuntu[@]}"
-
 
     # 设置 Debconf，允许非root用户捕获数据包
     echo "wireshark-common wireshark-common/install-setuid boolean true" | sudo debconf-set-selections
@@ -766,6 +761,11 @@ elif [[ $OS_TYPE == "Linux" ]]; then
     sudo setcap cap_net_raw,cap_net_admin=eip /usr/bin/dumpcap
     # 2.将用户添加到 wireshark 组：
     sudo usermod -aG wireshark $USER
+
+
+    # 安装必要的工具 🔧 
+    sudo apt update && sudo apt upgrade -y
+    sudo apt install -y "${packages_ubuntu[@]}"
     
 
 

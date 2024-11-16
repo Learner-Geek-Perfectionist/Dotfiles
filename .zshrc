@@ -110,6 +110,17 @@ alias md='mkdir -p'
 
 alias g1='git clone --depth=1'
 
+case "$(uname -s)" in
+    Darwin)
+        alias find='fd --hidden'  # 在 macOS 上使用 fd 并包括隐藏文件
+        ;;
+    Linux)
+        command -v fdfind &>/dev/null && alias find='fdfind --hidden' || command -v fd &>/dev/null && alias find='fd --hidden' || echo "Neither fd nor fdfind is installed."
+        ;;
+esac
+
+
+
 
 # 执行 sdkman 初始化脚本，对所有 Linux 系统执行
 if [[ -f "$HOME/.sdkman/bin/sdkman-init.sh" ]]; then

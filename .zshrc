@@ -105,6 +105,8 @@ alias md='mkdir -p'
 
 alias g1='git clone --depth=1'
 
+alias rm='rm -rf'
+
 case "$(uname -s)" in
     Darwin)
         alias find='fd --hidden'  # 在 macOS 上使用 fd 并包括隐藏文件

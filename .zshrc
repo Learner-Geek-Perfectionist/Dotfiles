@@ -62,10 +62,7 @@ function unproxy() {
 
 
 # ip 映射到 ip-script
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    # 仅在 macOS 上设置别名
-    alias ip="$HOME/sh-script/get-my-ip.sh"
-fi
+[[ "$OSTYPE" == "darwin"* ]] && alias ip="$HOME/sh-script/get-my-ip.sh"
 
 # 禁用忽略以空格开头的命令的历史记录功能。
 setopt no_hist_ignore_space
@@ -123,9 +120,7 @@ esac
 
 
 # 执行 sdkman 初始化脚本，对所有 Linux 系统执行
-if [[ -f "$HOME/.sdkman/bin/sdkman-init.sh" ]]; then
-    source "$HOME/.sdkman/bin/sdkman-init.sh"
-fi
+[[ -f "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
 
 # 检查 fzf 是否已安装
 if command -v fzf >/dev/null 2>&1; then

@@ -40,9 +40,7 @@ fi
 
 INSTALL_DIR="/opt/kotlin-native/"
 # 最后统一将 Kotlin/Native 安装路径添加到 PATH
-if [[ -n "$INSTALL_DIR" ]]; then
-    export PATH="$PATH:/opt/kotlin-native/bin"
-fi
+[[ -n "$INSTALL_DIR" ]] && export PATH="$PATH:/opt/kotlin-native/bin"
 
 
 ## 代理配置

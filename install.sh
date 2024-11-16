@@ -39,7 +39,7 @@ brew_formulas=(
     ca-certificates icu4c luajit node unibilium
     cmake libnghttp2 luv openssl@3 vim perl
     cmake-docs libsodium lz4 pcre2 xz llvm
-    fastfetch libuv lzip z3 tree rust
+    fastfetch libuv lzip z3 tree rust autoconf
     fd libvterm make readline zstd eza
     fzf libyaml mpdecimal ripgrep go
     gcc ninja wget mas pkg-config jq
@@ -89,6 +89,7 @@ packages_ubuntu=(
   tshark
   eza
   hyperfine
+  autoconf
 )
 
 
@@ -136,6 +137,7 @@ jq
 eza
 openssl
 hyperfine
+autoconf
 )
 
  

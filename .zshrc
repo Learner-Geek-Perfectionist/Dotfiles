@@ -88,7 +88,6 @@ fi
 
 
 # Plugins
-source "$ZPLUGINDIR/colorful_print.zsh"
 source "$ZPLUGINDIR/homebrew.zsh"   
 source "$ZPLUGINDIR/zinit.zsh"
 

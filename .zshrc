@@ -91,8 +91,6 @@ fi
 source "$ZPLUGINDIR/homebrew.zsh"   
 source "$ZPLUGINDIR/zinit.zsh"
 
-
-
 # 清除整个屏幕
 alias clear='clear && printf '\''\e[3J'\'''
 

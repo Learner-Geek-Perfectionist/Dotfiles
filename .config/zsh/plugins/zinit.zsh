@@ -64,6 +64,10 @@ zinit ice wait lucid depth=1;zinit snippet OMZP::git/git.plugin.zsh
 # man
 zinit ice wait lucid depth=1;zinit snippet OMZ::plugins/colored-man-pages/colored-man-pages.plugin.zsh
 
+
+
+
+
 # == fzf-tab setting
 zstyle ':fzf-tab:complete:_zlua:*' query-string input
 zstyle ':fzf-tab:complete:kill:argument-rest' fzf-preview 'ps --pid=$word -o cmd --no-headers -w -w'
@@ -79,6 +83,9 @@ zstyle ':completion:*' file-sort modification
 zstyle ':completion:*:exa' sort false
 zstyle ':completion:files' sort false
 
+# 添加 _fzf 补全函数 
+zinit ice as"completion"
+zinit snippet https://github.com/Learner-Geek-Perfectionist/Dotfiles/blob/master/.config/zsh/completion/_fzf
 
 # 1.make sure fzf is installed
 # 2.fzf-tab needs to be loaded 「after」 compinit, but 「before」 plugins which will wrap widgets, such as zsh-autosuggestions or fast-syntax-highlighting

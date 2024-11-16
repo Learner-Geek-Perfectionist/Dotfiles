@@ -72,6 +72,8 @@ zinit ice wait lucid atload="alias ls &>/dev/null && unalias ls && alias ls='eza
 zinit ice wait lucid depth=1;zinit snippet OMZL::git.zsh
 zinit ice wait lucid depth=1;zinit snippet OMZP::git/git.plugin.zsh
 
+# man
+zinit ice wait lucid depth=1;zinit snippet OMZ::plugins/colored-man-pages/colored-man-pages.plugin.zsh
 
 # == fzf-tab
 zstyle ':fzf-tab:complete:_zlua:*' query-string input
@@ -98,7 +100,7 @@ zinit ice wait lucid depth=1;zinit light zsh-users/zsh-completions
 # 生成 .zcompdump 补全文件
 autoload -Uz compinit; compinit -d "$ZSH_COMPDUMP";zpcdreplay
 # 加载 fzf-tab 插件
-zinit light Aloxaf/fzf-tab
+zinit ice wait lucid depth=1;zinit light Aloxaf/fzf-tab
 # autosuggestions，atload 用于保障启动 autosuggest 功能。
 zinit ice wait lucid atload='_zsh_autosuggest_start';zinit light zsh-users/zsh-autosuggestions
 # 必须在 zdharma-continuum/fast-syntax-highlighting 之前加载 autosuggestions，否则「粘贴代码」太亮了。

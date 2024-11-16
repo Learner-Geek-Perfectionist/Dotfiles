@@ -8,12 +8,6 @@ if [ "$OS_TYPE" = "Darwin" ]; then
     export HOMEBREW_API_DOMAIN=https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles/api
     export HOMEBREW_PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple
 
-    # 检测 Homebrew 是否安装在默认位置，并执行环境变量设置
-    if [ -x "/opt/homebrew/bin/brew" ]; then
-        eval $(/opt/homebrew/bin/brew shellenv) # 加载 Homebrew 环境变量
-    fi
-
-
 elif [ "$OS_TYPE" = "Linux" ]; then
     # 查找 /usr/share/zsh 目录下第一层的所有目录并有选择地添加到 FPATH
     for dir in $(find /usr/share/zsh -maxdepth 1 -type d); do

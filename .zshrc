@@ -1,3 +1,4 @@
+
 # Ensure XDG base directories exist
 mkdir -p "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME" "$XDG_DATA_HOME" "$XDG_STATE_HOME"
 
@@ -10,10 +11,11 @@ mkdir -p "$(dirname "$ZSH_COMPDUMP")"
 
 # 获取操作系统信息并设置 PATH
 if [[ "$(uname)" == "Darwin" ]]; then
-    # macOS specific settings，设置 git 、clang++、ruby、make bash、VSCode、grep 等工具的环境变量
+    # macOS specific settings，设置 git 、clang++、ruby、make bash、VSCode、gre、less 等工具的环境变量
     export PATH="/opt/homebrew/opt/llvm/bin:$PATH"
     export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
     export PATH="/opt/homebrew/opt/git/bin:$PATH"
+    export PATH="/opt/homebrew/opt/less/bin:$PATH"
     export PATH="/opt/homebrew/opt/make/libexec/gnubin:$PATH"
     export PATH="/opt/homebrew/opt/bash/bin:$PATH"
     export PATH="/opt/homebrew/opt/grep/libexec/gnubin:$PATH"
@@ -66,6 +68,16 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     alias ip="$HOME/sh-script/get-my-ip.sh"
 fi
 
+# 禁用忽略以空格开头的命令的历史记录功能。
+setopt no_hist_ignore_space
+setopt interactive_comments      # 注释行不报错
+setopt no_nomatch                # 通配符 * 匹配不到文件也不报错
+setopt autocd                    # 输入目录名自动cd
+# setopt correct                 # 自动纠正拼写错误
+setopt nocaseglob                # 路径名匹配时忽略大小写
+setopt notify                    # 后台任务完成后通知
+setopt no_beep                   # 关闭终端提示音
+setopt no_bang_hist              # 不对双引号当中的叹号做历史记录拓展 "!"
 
 # 检查 .zprofile 文件是否存在并且包含特定的初始化命令
 if [ -f "$HOME/.zprofile" ]; then
@@ -80,19 +92,6 @@ fi
 source "$ZPLUGINDIR/colorful_print.zsh"
 source "$ZPLUGINDIR/homebrew.zsh"   
 source "$ZPLUGINDIR/zinit.zsh"
-
-
-
-# 禁用忽略以空格开头的命令的历史记录功能。
-setopt no_hist_ignore_space
-setopt interactive_comments      # 注释行不报错
-setopt no_nomatch                # 通配符 * 匹配不到文件也不报错
-setopt autocd                    # 输入目录名自动cd
-# setopt correct                 # 自动纠正拼写错误
-setopt nocaseglob                # 路径名匹配时忽略大小写
-setopt notify                    # 后台任务完成后通知
-setopt no_beep                   # 关闭终端提示音
-setopt no_bang_hist              # 不对双引号当中的叹号做历史记录拓展 "!"
 
 
 
@@ -128,6 +127,3 @@ if command -v fzf >/dev/null 2>&1; then
 else
     echo "fzf is not installed. Please install fzf to enable its features."
 fi
-
-
- 

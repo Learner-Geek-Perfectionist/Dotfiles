@@ -1,4 +1,3 @@
-
 # Ensure XDG base directories exist
 mkdir -p "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME" "$XDG_DATA_HOME" "$XDG_STATE_HOME"
 
@@ -108,7 +107,7 @@ alias py=pycharm
 alias cl=clion
 
 # reload 映射到重启 .zshrc
-alias reload='source ~/.zshrc'
+alias reload="source ~/.zshrc;rm -rf $HOME/.cache/zsh/.zcompdump "
 
 alias md='mkdir -p'
 
@@ -127,3 +126,6 @@ if command -v fzf >/dev/null 2>&1; then
 else
     echo "fzf is not installed. Please install fzf to enable its features."
 fi
+
+
+ 

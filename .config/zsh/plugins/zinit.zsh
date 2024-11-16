@@ -3,7 +3,7 @@
 # =============================================
 
 
-# Check if git is installed
+# 检查 git 是否安装......
 if ! command -v git &>/dev/null; then
   echo "git is not installed, zinit installation skipped."
   return
@@ -24,15 +24,8 @@ if [[ ! -f "$ZINIT_HOME/zinit.zsh" ]]; then
   fi
 fi
 
-
 # 执行 zinit.zsh，加载 zinit 插件管理器本身，将 zinit 命令引入 zsh 中。
 source "$ZINIT_HOME/zinit.zsh"
-
-# 延迟加载 zinit 补全函数。
-autoload -Uz _zinit
-
-# 将 _zinit 补全函数绑定到 zinit 命令，从而获得 zinit 命令的补全功能。
-(( ${+_comps} )) && _comps[zinit]=_zinit
 
 # 1.Powerlevel10k 的 instant prompt 的缓存文件，用于加速启动
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
@@ -51,8 +44,6 @@ COMPLETION_WAITING_DOTS='true'
 
 
 # OMZ 迁移和插件配置
-HYPHEN_INSENSITIVE='true'
-COMPLETION_WAITING_DOTS='true'
 # clipboard
 zinit ice wait lucid depth=1;zinit snippet OMZL::clipboard.zsh
 # completion
@@ -66,16 +57,14 @@ zinit ice wait lucid depth=1;zinit snippet OMZL::directories.zsh
 # history
 zinit ice wait lucid depth=1;zinit snippet OMZL::history.zsh
 # theme 
-zinit ice wait lucid atload="alias ls &>/dev/null && unalias ls && alias ls='eza --icons -h --time-style=iso'";zinit snippet OMZL::theme-and-appearance.zsh
-
+zinit ice wait lucid depth=1 atload="alias ls &>/dev/null && unalias ls && alias ls='eza --icons -h --time-style=iso'";zinit snippet OMZL::theme-and-appearance.zsh
 # git
 zinit ice wait lucid depth=1;zinit snippet OMZL::git.zsh
 zinit ice wait lucid depth=1;zinit snippet OMZP::git/git.plugin.zsh
-
 # man
 zinit ice wait lucid depth=1;zinit snippet OMZ::plugins/colored-man-pages/colored-man-pages.plugin.zsh
 
-# == fzf-tab
+# == fzf-tab setting
 zstyle ':fzf-tab:complete:_zlua:*' query-string input
 zstyle ':fzf-tab:complete:kill:argument-rest' fzf-preview 'ps --pid=$word -o cmd --no-headers -w -w'
 zstyle ':fzf-tab:complete:kill:argument-rest' fzf-flags '--preview-window=down:3:wrap'
@@ -96,16 +85,15 @@ zstyle ':completion:files' sort false
 # 3.Completions should be configured before compinit, as stated in the zsh-completions manual installation guide.
 
 # zsh-completions 提供大量的补全定义
-zinit ice wait lucid depth=1;zinit light zsh-users/zsh-completions
-# 生成 .zcompdump 补全文件
-autoload -Uz compinit; compinit -d "$ZSH_COMPDUMP";zpcdreplay
-# 加载 fzf-tab 插件
-zinit ice wait lucid depth=1;zinit light Aloxaf/fzf-tab
+zinit ice wait blockf lucid depth=1;zinit light zsh-users/zsh-completions
+
+# 设置插件加载的选项，加载 fzf-tab 插件
+zinit ice atinit"autoload -Uz compinit; compinit -C -d \"$ZSH_COMPDUMP\"; zpcdreplay" wait lucid depth=1;zinit light Aloxaf/fzf-tab
+
 # autosuggestions，atload 用于保障启动 autosuggest 功能。
-zinit ice wait lucid atload='_zsh_autosuggest_start';zinit light zsh-users/zsh-autosuggestions
+zinit ice wait lucid depth=1 atload='_zsh_autosuggest_start';zinit light zsh-users/zsh-autosuggestions
 # 必须在 zdharma-continuum/fast-syntax-highlighting 之前加载 autosuggestions，否则「粘贴代码」太亮了。
 zinit ice wait lucid depth=1;zinit light zdharma-continuum/fast-syntax-highlighting
-
 
 
 

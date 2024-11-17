@@ -117,11 +117,6 @@ case "$(uname -s)" in
 esac
 
 
-
-
-# 执行 sdkman 初始化脚本，对所有 Linux 系统执行
-[[ -f "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
-
 # 检查 fzf 是否已安装
 if command -v fzf >/dev/null 2>&1; then
     # 如果 fzf 存在，则加载 fzf 的 zsh 配置
@@ -129,6 +124,3 @@ if command -v fzf >/dev/null 2>&1; then
 else
     echo "fzf is not installed. Please install fzf to enable its features."
 fi
-
-
- 

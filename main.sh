@@ -25,7 +25,6 @@ source ./package.sh
 # 加载辅助函数
 source ./auxiliary_function.sh
 
-
 if [[ $(uname -s) == "Darwin" ]]; then
     source ./macos_install.sh
 

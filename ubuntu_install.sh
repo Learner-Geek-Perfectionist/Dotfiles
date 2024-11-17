@@ -82,7 +82,6 @@ fi
 # 安装 Kotlin/Native
 download_and_extract $KOTLIN_NATIVE_URL $INSTALL_DIR
 
-
 # 搜索可用的 OpenJDK 包并尝试获取最新版本
 jdk_version=$(apt search openjdk | grep -oP 'openjdk-\d+-jdk' | sort -V | tail -n1)
 [ -z "$jdk_version" ] && echo "没有找到可用的 OpenJDK 版本。" && exit 1 || echo "找到最新的 OpenJDK 版本: $jdk_version"

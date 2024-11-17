@@ -23,7 +23,7 @@ sudo chgrp wireshark /usr/bin/dumpcap
 sudo chmod 4755 /usr/bin/dumpcap
 sudo setcap cap_net_raw,cap_net_admin=eip /usr/bin/dumpcap
 # 2.将用户添加到 wireshark 组：
-sudo usermod -aG wireshark $username
+sudo usermod -aG wireshark $USER
 
 # 设置时区
 sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
@@ -34,7 +34,6 @@ export LANG=zh_CN.UTF-8
 export LC_ALL=zh_CN.UTF-8
 
 sudo localedef -c -f UTF-8 -i zh_CN zh_CN.UTF-8
-
 
 # 安装 Kotlin/Native 和 Kotlin
 download_and_extract $KOTLIN_NATIVE_URL $INSTALL_DIR

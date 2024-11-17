@@ -53,12 +53,10 @@ download_and_extract_kotlin() {
 
     echo -e "${YELLOW}Downloading ${BLUE}$FILE_NAME${YELLOW} from ${MAGENTA}$URL${YELLOW}...${NC}"
     # 使用 curl 下载文件，检查 URL 的有效性
-    curl -L -f -s -S "$URL" -o "/tmp/$FILE_NAME"
-    # 检查上一个命令的退出状态
-    if [ $? -ne 0 ]; then
+    curl -L -f -s -S "$URL" -o "/tmp/$FILE_NAME" || {
         echo -e "${RED}Failed to download $FILE_NAME. Please check your internet connection and URL.${NC}"
         return 0
-    fi
+    }
 
     echo -e "${YELLOW}Installing ${GREEN}$FILE_NAME${YELLOW} to ${BLUE}$TARGET_DIR${YELLOW}...${NC}"
     sudo mkdir -p $TARGET_DIR

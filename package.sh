@@ -1,3 +1,8 @@
+#!/bin/bash
+
+# 一旦错误，就退出
+set -e
+
 # macOS
 brew_casks=(
     alfred videofusion wpsoffice tencent-meeting google-chrome

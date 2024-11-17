@@ -68,7 +68,7 @@ else
     # 创建构建目录并编译项目
     mkdir build && cd build
     cmake ..
-    make
+    make -j32
 
     # 安装 fastfetch
     sudo make install

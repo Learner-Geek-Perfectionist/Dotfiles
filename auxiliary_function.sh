@@ -44,7 +44,7 @@ get_latest_version() {
 }
 
 # 下载和解压函数
-download_and_extract() {
+download_and_extract_kotlin() {
     URL=$1
     TARGET_DIR=$2
     FILE_NAME=$(basename $URL)

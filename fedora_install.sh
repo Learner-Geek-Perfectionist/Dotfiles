@@ -36,8 +36,8 @@ export LC_ALL=zh_CN.UTF-8
 sudo localedef -c -f UTF-8 -i zh_CN zh_CN.UTF-8
 
 # 安装 Kotlin/Native 和 Kotlin
-download_and_extract $KOTLIN_NATIVE_URL $INSTALL_DIR
-download_and_extract $KOTLIN_COMPILER_URL $COMPILER_INSTALL_DIR
+download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR
+download_and_extract_kotlin $KOTLIN_COMPILER_URL $COMPILER_INSTALL_DIR
 
 # 调用函数以安装和配置 Docker
 install_and_configure_docker

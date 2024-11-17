@@ -35,6 +35,7 @@ export LC_ALL=zh_CN.UTF-8
 
 sudo localedef -c -f UTF-8 -i zh_CN zh_CN.UTF-8
 
+setup_kotlin_environment
 # 安装 Kotlin/Native 和 Kotlin
 download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR
 download_and_extract_kotlin $KOTLIN_COMPILER_URL $COMPILER_INSTALL_DIR

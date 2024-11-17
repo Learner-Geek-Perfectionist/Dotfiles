@@ -43,6 +43,8 @@ get_latest_version() {
     echo -e "${CYAN}The Latest Version of Kotlin/Native is $LATEST_VERSION${NC}"
 }
 
+KOTLIN_NATIVE_URL=""
+KOTLIN_COMPILER_URL=""
 # 下载和解压函数
 download_and_extract_kotlin() {
     URL=$1
@@ -74,10 +76,8 @@ download_and_extract_kotlin() {
     echo -e "${GREEN}$FILE_NAME has been installed successfully to $TARGET_DIR${NC}"
 }
 
-KOTLIN_NATIVE_URL=""
-KOTLIN_COMPILER_URL=""
 # 主安装函数
-install_kotlin() {
+setup_kotlin_environment() {
     # 获取系统架构
     ARCH=$(uname -m)
 

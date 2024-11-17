@@ -21,10 +21,10 @@ configs=(".zshenv" ".zprofile" ".zshrc" ".config")
 echo -e "${YELLOW}🔍 Checking and removing old configuration files if they exist...${NC}"
 for config in "${configs[@]}"; do
     if [ -f "$HOME/$config" ] || [ -d "$HOME/$config" ]; then
-        echo -e "${RED}🗑️ Removing old $config...${NC}"
+        echo -e "${ORANGE}🗑️ Removing old $config...${NC}"
         rm -rf "$HOME/$config"
     fi
-    echo -e "${ORANGE}📋 Copying new $config to $HOME...${NC}"
+    echo -e "${PURPLE}📋 Copying new $config to $HOME...${NC}"
     cp -r "$TMP_DIR/$config" "$HOME/$config"
 done
 echo -e "${GREEN}🧹 Old configuration files removed and new ones copied.${NC}"

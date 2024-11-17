@@ -71,7 +71,7 @@ download_and_extract_kotlin() {
         sudo unzip "/tmp/$FILE_NAME" -d $TARGET_DIR
     fi
 
-    print_centered_message -e "${GREEN}\n$FILE_NAME has been installed successfully to $TARGET_DIR${NC}"
+    echo -e "${GREEN}\n$FILE_NAME has been installed successfully to $TARGET_DIR${NC}"
     # 清理临时文件
     sudo rm -rf /tmp/*
     sudo rm -rf /opt/kotlin-compiler/

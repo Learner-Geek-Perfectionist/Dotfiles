@@ -56,7 +56,7 @@ fi
 download_and_extract "$zip_Dotfiles_file" "$dest_Dotfiles" "$Dotfiles_REPO_URL"
 
 # 打印提示消息
-print_centered_message "${GREEN}Dotfile 完成下载和解压${NC}"
+print_centered_message "${GREEN}Dotfiles 完成下载和解压${NC}"
 
 # 定义字体的源目录
 font_source="./${dest_Fonts}/fonts"

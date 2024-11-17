@@ -48,10 +48,6 @@ download_and_extract_kotlin() {
     NAME=$3
     FILE_NAME=$(basename $URL)
 
-    # 清理临时文件
-    sudo rm -rf /tmp/*
-    sudo rm -rf /opt/kotlin-compiler/
-
     # 输出最新的版本号，添加颜色
     print_centered_message "${LIGHT_BLUE}正在下载 ${NAME}...... ${NC}" "true" "false"
     echo -e "${CYAN}The Latest Version is ${RED}$LATEST_VERSION${CYAN}${NC}"
@@ -66,9 +62,9 @@ download_and_extract_kotlin() {
     echo -e "${YELLOW}Installing ${GREEN}$FILE_NAME${YELLOW} to ${BLUE}$TARGET_DIR${YELLOW}...${NC}"
     sudo mkdir -p $TARGET_DIR
     if [[ $FILE_NAME == *.tar.gz ]]; then
-        sudo tar -xzf "/tmp/$FILE_NAME" -C $TARGET_DIR --strip-components=1
+        sudo tar -xzf "/tmp/$FILE_NAME" -C $TARGET_DIR --strip-components=1 --overwrite
     elif [[ $FILE_NAME == *.zip ]]; then
-        sudo unzip "/tmp/$FILE_NAME" -d $TARGET_DIR
+        sudo unzip -o "/tmp/$FILE_NAME" -d $TARGET_DIR
     fi
 
     echo -e "${GREEN}\n$FILE_NAME has been installed successfully to $TARGET_DIR${NC}"

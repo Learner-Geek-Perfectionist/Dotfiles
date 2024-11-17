@@ -35,26 +35,10 @@ export LC_ALL=zh_CN.UTF-8
 
 sudo localedef -c -f UTF-8 -i zh_CN zh_CN.UTF-8
 
-# 检查 SDKMAN 是否已安装
-if [ ! -d "$HOME/.sdkman" ]; then
-    echo -e "${YELLOW}SDKMAN not found, installing...${NC}"
 
-    # 下载并安装 SDKMAN
-    /bin/bash -c "$(curl -fsSL https://get.sdkman.io)"
-
-    echo -e "${GREEN}SDKMAN installed successfully.${NC}"
-else
-    echo -e "${BLUE}SDKMAN is already installed.${NC}"
-fi
-
-# 初始化SDKMAN环境
-source "$HOME/.sdkman/bin/sdkman-init.sh"
-
-# 安装 kotlin
-command -v kotlin > /dev/null && echo "Kotlin已安装，无需再次安装。" || (echo "Kotlin未安装，现在开始安装。" && sdk install kotlin)
-
-# 安装 Kotlin/Native
-install_kotlin_native "linux"
+# 安装 Kotlin/Native 和 Kotlin
+download_and_extract $KOTLIN_NATIVE_URL $INSTALL_DIR
+download_and_extract $KOTLIN_COMPILER_URL $COMPILER_INSTALL_DIR
 
 # 调用函数以安装和配置 Docker
 install_and_configure_docker

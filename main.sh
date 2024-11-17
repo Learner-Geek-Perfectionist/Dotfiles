@@ -25,13 +25,11 @@ source ./package.sh
 # 加载辅助函数
 source ./auxiliary_function.sh
 
-# 获取当前操作系统类型
-OS_TYPE=$(uname)
 
-if [[ $OS_TYPE == "Darwin" ]]; then
+if [[ $(uname -s) == "Darwin" ]]; then
     source ./macos_install.sh
 
-elif [[ $OS_TYPE == "Linux" ]]; then
+elif [[ $(uname -s) == "Linux" ]]; then
 
     # 检测操作系统
     os_type=$(grep '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"')

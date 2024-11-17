@@ -35,9 +35,7 @@ print_centered_message() {
 }
 
 LATEST_VERSION=""
-
 get_latest_version() {
-
     # 使用 curl 获取 GitHub releases 最新的重定向地址，并且 grep 最新的版本号
     LATEST_VERSION=$(curl -s -L -I https://github.com/JetBrains/kotlin/releases/latest | grep -i location | sed -E 's/.*tag\/(v[0-9\.]+).*/\1/')
     # 输出最新的版本号，添加颜色
@@ -45,103 +43,83 @@ get_latest_version() {
     echo -e "${CYAN}The Latest Version of Kotlin/Native is $LATEST_VERSION${NC}"
 }
 
-install_kotlin_native() {
-    # 获取系统类型参数
-    SYSTEM_TYPE=$1
+# 下载和解压函数
+download_and_extract() {
+    URL=$1
+    TARGET_DIR=$2
+    FILE_NAME=$(basename $URL)
 
-    # 获取最新版本号
-    get_latest_version
+    echo -e "${YELLOW}Downloading $FILE_NAME from $URL...${NC}"
+    curl -L $URL -o "/tmp/$FILE_NAME"
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Failed to download $FILE_NAME. Please check your internet connection and URL.${NC}"
+        return 0
+    fi
 
+    echo -e "${YELLOW}Installing $FILE_NAME to $TARGET_DIR...${NC}"
+    mkdir -p $TARGET_DIR
+    if [[ $FILE_NAME == *.tar.gz ]]; then
+        tar -xzf "/tmp/$FILE_NAME" -C $TARGET_DIR --strip-components=1
+    elif [[ $FILE_NAME == *.zip ]]; then
+        unzip "/tmp/$FILE_NAME" -d $TARGET_DIR
+    fi
+
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Failed to extract $FILE_NAME. Check the downloaded file.${NC}"
+        return 0
+    fi
+
+    # 清理临时文件
+    rm "/tmp/$FILE_NAME"
+    echo -e "${GREEN}$FILE_NAME has been installed successfully to $TARGET_DIR${NC}"
+}
+
+KOTLIN_NATIVE_URL=""
+KOTLIN_COMPILER_URL=""
+# 主安装函数
+install_kotlin() {
     # 获取系统架构
     ARCH=$(uname -m)
 
+    # 安装目录初始化
+    INSTALL_DIR="/opt/kotlin-native/"
+    COMPILER_INSTALL_DIR="/opt/kotlin-compiler/"
+
+    # 架构映射
     case "$ARCH" in
-        arm64 | armd64)
-            ARCH="aarch64" # 将 arm64 和 armd64 统一处理为 aarch64
+        arm64 | aarch64)
+            ARCH="aarch64"
             ;;
         x86_64)
             ARCH="x86_64"
             ;;
         *)
-            echo "Unsupported architecture: $ARCH"
+            echo -e "${RED}Unsupported architecture: $ARCH${NC}"
+            exit 1
             ;;
     esac
 
-    # 判断系统类型和架构支持
-    case "$SYSTEM_TYPE" in
-        "macos" | "linux")
-            if [[ "$ARCH" == "x86_64" || "$ARCH" == "aarch64" ]]; then
-                # 根据系统类型和架构构造下载 URL 和安装目录
-                SUFFIX="kotlin-native-prebuilt-${SYSTEM_TYPE}-${ARCH}-${LATEST_VERSION#v}.tar.gz"
-                DOWNLOAD_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/$SUFFIX"
-                INSTALL_DIR="/opt/kotlin-native/"
-            else
-                echo "不支持的 ${SYSTEM_TYPE} 架构: $ARCH"
-                return 0
-            fi
+    # 获取最新的 Kotlin 版本
+    get_latest_version
+
+    # 确定系统类型
+    case "$(uname -s)" in
+        Darwin)
+            SYSTEM_TYPE="macos"
+            ;;
+        Linux)
+            SYSTEM_TYPE="linux"
             ;;
         *)
-            echo "未知系统类型，请使用 'macos' 或 'linux' 作为参数。"
-            return 0
+            echo -e "${RED}Unsupported system type: $(uname -s)${NC}"
+            exit 1
             ;;
     esac
 
-    # 显示下载和安装信息
-    echo -e "${MAGENTA}下载 URL: $DOWNLOAD_URL${NC}"
-    echo -e "${BLUE}安装目录: $INSTALL_DIR${NC}"
-
-    # 检查是否已安装 Kotlin/Native
-    if [ -d "$INSTALL_DIR" ]; then
-        echo -e "${GREEN}Kotlin/Native 已安装在 $INSTALL_DIR。跳过安装。${NC}"
-        return 0
-    fi
-
-    # 检查下载链接是否有效
-    echo -e "${YELLOW}Checking the validity of the download URL: $DOWNLOAD_URL${NC}"
-
-    HTTP_STATUS=$(curl -L -o /dev/null -s -w "%{http_code}" "$DOWNLOAD_URL")
-
-    if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
-        echo -e "${GREEN}下载链接有效，开始下载。${NC}"
-    else
-        print_centered_message "${RED}下载链接无效，HTTP 状态码: $HTTP_STATUS。请检查版本号或网络连接。${NC}" "false" "true"
-        return 0
-    fi
-
-    # 下载 Kotlin/Native 二进制包
-    echo "Downloading Kotlin/Native from: $DOWNLOAD_URL"
-    curl -L $DOWNLOAD_URL -o /tmp/kotlin-native.tar.gz
-
-    if [ $? -ne 0 ]; then
-        print_centered_message "下载失败，请检查网络连接和下载地址。"
-        return 0
-    fi
-
-    # 解压并安装
-    echo "Installing Kotlin/Native to: $INSTALL_DIR"
-    sudo mkdir -p $INSTALL_DIR
-    sudo tar -xzf /tmp/kotlin-native.tar.gz -C $INSTALL_DIR --strip-components=1
-
-    if [ $? -ne 0 ]; then
-        echo "解压失败，检查下载的文件是否正确。"
-        return 0
-    fi
-
-    # 清理临时文件
-    rm /tmp/kotlin-native.tar.gz
-
-    # 检查是否成功安装
-    if [ -d "$INSTALL_DIR" ]; then
-        echo "Kotlin/Native $LATEST_VERSION 已成功安装到 $INSTALL_DIR"
-    else
-        echo "安装失败，目标目录未找到。"
-        return 0
-    fi
+    # 构建下载 URL
+    KOTLIN_NATIVE_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-native-prebuilt-${SYSTEM_TYPE}-${ARCH}-${LATEST_VERSION#v}.tar.gz"
+    KOTLIN_COMPILER_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-compiler-${LATEST_VERSION#v}.zip"
 }
-
-# 使用方法：传递 macos 或 linux 作为参数
-# 示例： install_kotlin_native macos
-# 示例： install_kotlin_native linux
 
 # 定义 packages 安装函数，接受一个包组(packages group)作为参数
 check_and_install_brew_packages() {

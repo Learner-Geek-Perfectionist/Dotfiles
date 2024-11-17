@@ -107,15 +107,6 @@ alias g1='git clone --depth=1'
 
 alias rm='rm -rf'
 
-case "$(uname -s)" in
-    Darwin)
-        alias find='fd --hidden'  # 在 macOS 上使用 fd 并包括隐藏文件
-        ;;
-    Linux)
-        command -v fdfind &>/dev/null && alias find='fdfind --hidden' || command -v fd &>/dev/null && alias find='fd --hidden' || echo "Neither fd nor fdfind is installed."
-        ;;
-esac
-
 
 # 检查 fzf 是否已安装
 if command -v fzf >/dev/null 2>&1; then

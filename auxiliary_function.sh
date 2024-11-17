@@ -71,7 +71,7 @@ download_and_extract_kotlin() {
         sudo unzip "/tmp/$FILE_NAME" -d $TARGET_DIR
     fi
 
-    echo -e "${GREEN}\n$FILE_NAME has been installed successfully to $TARGET_DIR${NC}"
+    print_centered_message -e "${GREEN}\n$FILE_NAME has been installed successfully to $TARGET_DIR${NC}"
     # 清理临时文件
     sudo rm -rf /tmp/*
     sudo rm -rf /opt/kotlin-compiler/
@@ -225,7 +225,7 @@ install_and_configure_docker() {
     fi
 
     # 配置 Docker 镜像
-    echo -e "${YELLOW}配置 Docker 镜像...${NC}"
+    echo -e "${CYAN}配置 Docker 镜像...${NC}"
     sudo mkdir -p /etc/docker
 
     # 写入指定的镜像源到 daemon.json
@@ -240,7 +240,7 @@ install_and_configure_docker() {
     # 重启 Docker 服务以应用新的配置
     sudo systemctl restart docker
 
-    print_centered_message "${GREEN}Docker 镜像配置完成。${NC}" "false" "true"
+    print_centered_message "${GREEN}Docker 镜像配置完成。✅${NC}" "false" "true"
 }
 
 # 定义设置用户密码函数

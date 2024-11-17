@@ -35,13 +35,10 @@ for config in "${configs[@]}"; do
 done
 echo -e "${GREEN}🧹 Old configuration files removed and new ones copied.${NC}"
 
-
 # 在文件中添加以下代码
 [[ "$OSTYPE" == "darwin"* ]] && cp -r "$TMP_DIR/sh-script/" "$HOME/sh-script/"
 
-
 echo -e "${GREEN}✔️ New configuration files copied.${NC}"
-
 
 # 清理临时目录
 echo -e "${YELLOW}🧼 Cleaning up temporary files...${NC}"

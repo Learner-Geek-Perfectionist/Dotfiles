@@ -203,7 +203,7 @@ install_docker() {
         echo -e "${RED}安装 Docker 失败${NC}"
         exit 1
     }
-    print_centered_message -e "${YELLOW}将当前用户添加到 docker 组...${NC}"
+    echo -e "${YELLOW}将当前用户添加到 docker 组...${NC}"
     sudo usermod -aG docker ${USER} || {
         echo -e "${RED}添加用户到 docker 组失败${NC}"
         exit 1
@@ -216,34 +216,35 @@ install_docker() {
     echo -e "${GREEN}Docker 安装完成。请考虑重新登录或重启以使组设置生效。${NC}"
 }
 
+# Docker 安装和配置函数
 install_and_configure_docker() {
-    print_centered_message "检查 Docker 命令..." "true" "false"
+    print_centered_message "${YELLOW}检查 Docker 命令..." "" ""
 
     if grep -qi microsoft /proc/version; then
-        echo "在 WSL2 环境中运行"
+        echo -e "${YELLOW}在 WSL2 环境中运行${NC}"
         if command -v docker > /dev/null; then
             if [ "$(docker context show 2> /dev/null)" = "desktop-windows" ]; then
-                echo "检测到 Docker 运行在 Windows Docker Desktop 上。"
-                echo "准备在 WSL2 中安装独立的 Docker 版本..."
+                echo -e "${YELLOW}检测到 Docker 运行在 Windows Docker Desktop 上。${NC}"
+                echo -e "${YELLOW}准备在 WSL2 中安装独立的 Docker 版本...${NC}"
                 install_docker
             else
-                echo "Docker 已安装在 WSL2 中，跳过安装步骤。"
+                echo -e "${GREEN}Docker 已安装在 WSL2 中，跳过安装步骤。${NC}"
             fi
         else
-            echo "Docker 未安装，开始安装过程..."
+            echo -e "${YELLOW}Docker 未安装，开始安装过程...${NC}"
             install_docker
         fi
     else
         if command -v docker > /dev/null; then
-            echo "Docker 已安装，跳过安装步骤。"
+            echo -e "${GREEN}Docker 已安装，跳过安装步骤。${NC}"
         else
-            echo "Docker 未安装，开始安装过程..."
+            echo -e "${YELLOW}Docker 未安装，开始安装过程...${NC}"
             install_docker
         fi
     fi
 
     # 配置 Docker 镜像
-    echo "配置 Docker 镜像..."
+    echo -e "${YELLOW}配置 Docker 镜像...${NC}"
     sudo mkdir -p /etc/docker
 
     # 写入指定的镜像源到 daemon.json

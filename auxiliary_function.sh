@@ -40,7 +40,7 @@ get_latest_version() {
     LATEST_VERSION=$(curl -s -L -I https://github.com/JetBrains/kotlin/releases/latest | grep -i location | sed -E 's/.*tag\/(v[0-9\.]+).*/\1/')
     # 输出最新的版本号，添加颜色
     print_centered_message "${LIGHT_BLUE}正在下载Kotlin/Native...... ${NC}" "true" "false"
-    echo -e "${CYAN}The Latest Version of Kotlin/Native is $LATEST_VERSION${NC}"
+    echo -e "${CYAN}The Latest Version of Kotlin/Native is ${RED}$LATEST_VERSION${CYAN}${NC}"
 }
 
 KOTLIN_NATIVE_URL=""
@@ -51,15 +51,15 @@ download_and_extract_kotlin() {
     TARGET_DIR=$2
     FILE_NAME=$(basename $URL)
 
-    echo -e "${YELLOW}Downloading $FILE_NAME from $URL...${NC}"
+    echo -e "${YELLOW}Downloading ${BLUE}$FILE_NAME${YELLOW} from ${MAGENTA}$URL${YELLOW}...${NC}"
     curl -L $URL -o "/tmp/$FILE_NAME"
     if [ $? -ne 0 ]; then
         echo -e "${RED}Failed to download $FILE_NAME. Please check your internet connection and URL.${NC}"
         return 0
     fi
 
-    echo -e "${YELLOW}Installing $FILE_NAME to $TARGET_DIR...${NC}"
-    mkdir -p $TARGET_DIR
+    echo -e "${YELLOW}Installing ${GREEN}$FILE_NAME${YELLOW} to ${BLUE}$TARGET_DIR${YELLOW}...${NC}"
+    sudo mkdir -p $TARGET_DIR
     if [[ $FILE_NAME == *.tar.gz ]]; then
         tar -xzf "/tmp/$FILE_NAME" -C $TARGET_DIR --strip-components=1
     elif [[ $FILE_NAME == *.zip ]]; then

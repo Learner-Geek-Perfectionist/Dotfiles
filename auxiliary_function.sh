@@ -8,7 +8,7 @@ print_centered_message() {
     local message="$1"
     local single_flag="${2:-true}" # 如果没有提供第二个参数，默认为 true
     local double_flag="${3:-true}" # 如果没有提供第三个参数，默认为 true
-    local cols=$(tput cols)
+    local cols=$(stty size | cut -d ' ' -f 2)
     local line=''
 
     # 创建横线，长度与终端宽度相等

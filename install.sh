@@ -7,6 +7,5 @@ set -e
 echo "Cloning Dotfiles repository..."
 git clone --depth=1 git@github.com:Learner-Geek-Perfectionist/Dotfiles.git && cd Dotfiles && echo "Changed directory to Dotfiles."
 
-cd Dotfiles
-
+# 执行安装脚本
 source ./main.sh

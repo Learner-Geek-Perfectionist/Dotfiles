@@ -38,7 +38,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
     print_centered_message "${CYAN}检测到操作系统为: $os_type${NC}"
 
     # 询问是否创建用户
-    echo -e "${YELLOW}是否需要创建用户？(y/n): ${NC}"
+    echo -ne "${YELLOW}是否需要创建用户？(y/n): ${NC}"
     read -p "" create_confirm
 
     # 主逻辑

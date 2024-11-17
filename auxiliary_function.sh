@@ -258,13 +258,13 @@ set_password_if_needed() {
 
 # 定义提示头🔔函数
 prompt_download_fonts() {
-    echo -n "是否需要下载字体以支持终端模拟器的渲染？(y/n): "
+    echo -ne "${GREEN}是否需要下载字体以支持终端模拟器的渲染？(y/n): ${NC}"
     read download_confirm
     if [[ $download_confirm == 'y' ]]; then
-        print_centered_message "正在下载字体......"
+        print_centered_message "${GREEN}正在下载字体......${NC}"
         install_flag=true
     else
-        print_centered_message "跳过字体下载。"
+        print_centered_message "${GREEN}跳过字体下载。${NC}"
     fi
 }
 
@@ -300,28 +300,28 @@ download_and_extract() {
 
     # 检查 ZIP 文件是否存在，如果不存在则下载
     if [ ! -f "$zip_file" ]; then
-        print_centered_message "ZIP文件 '$zip_file' 不存在，开始下载..."
+        print_centered_message "${CYAN}ZIP文件 '$zip_file' 不存在，开始下载...${NC}"
         curl -L -f -o "${zip_file}" "$repo_url"
         if [ -f "$zip_file" ]; then
             echo -e "\n"
-            print_centered_message "ZIP文件 '$zip_file' 下载完成✅"
+            print_centered_message "${CYAN}ZIP文件 '$zip_file' 下载完成✅${NC}"
         else
-            print_centered_message "ZIP文件 '$zip_file' 下载失败☹️"
+            print_centered_message "${CYAN}ZIP文件 '$zip_file' 下载失败☹️${NC}"
         fi
     else
-        echo "ZIP文件 '$zip_file' 已存在，跳过下载。"
+        echo -e "${CYAN}ZIP文件 '$zip_file' 已存在，跳过下载。${NC}"
     fi
 
     # 解压 ZIP 文件
     if [ -f "$zip_file" ]; then
         if [ ! -d "$dest_dir" ]; then
-            echo "开始解压ZIP文件 '$zip_file' 到目录 '$dest_dir'..."
+            echo -e "${CYAN}开始解压ZIP文件 '$zip_file' 到目录 '$dest_dir'...${NC}"
             unzip -o "$zip_file"
         else
-            echo "目录 '$dest_dir' 已存在，跳过解压。"
+            echo -e "${CYAN}目录 '$dest_dir' 已存在，跳过解压。${NC}"
         fi
     else
-        echo "ZIP文件 '$zip_file' 不存在或损坏，无法进行解压。"
+        echo -e "${CYAN}ZIP文件 '$zip_file' 不存在或损坏，无法进行解压。${NC}"
     fi
 }
 
@@ -355,7 +355,7 @@ countdown() {
 install_fonts() {
     # 检查是否执行安装
     if [ "$install_flag" != "true" ]; then
-        print_centered_message "安装标志设置为 'false'，跳过字体安装。"
+        print_centered_message "${RED}安装标志设置为 'false'，跳过字体安装。${NC}"
         return 0 # 如果不安装，则正常退出
     fi
 

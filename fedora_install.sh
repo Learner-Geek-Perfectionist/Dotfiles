@@ -45,6 +45,14 @@ download_and_extract_kotlin $KOTLIN_COMPILER_URL $COMPILER_INSTALL_DIR "Kotlin-C
 install_and_configure_docker
 
 sudo dnf clean all && sudo dnf makecache
+
 # 安装缺失的手册，并且更新手册页的数据库
 packages_to_reinstall=$(rpm -qads --qf "PACKAGE: %{NAME}\n" | sed -n -E '/PACKAGE: /{s/PACKAGE: // ; h ; b }; /^not installed/ { g; p }' | uniq)
-[ -z "$packages_to_reinstall" ] && echo "没有找到需要重新安装的手册包。" || sudo dnf -y reinstall $packages_to_reinstall && sudo mandb -c
+if [ -z "$packages_to_reinstall" ]; then
+    echo "没有找到需要重新安装的手册包。"
+else
+    sudo dnf -y reinstall $packages_to_reinstall && sudo mandb -c
+fi
+
+# 配置 zsh
+source ./zsh_install.sh

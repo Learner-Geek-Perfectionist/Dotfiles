@@ -172,24 +172,24 @@ check_and_install_brew_packages() {
 }
 
 install_docker() {
-    echo -e "${YELLOW}获取 Docker 安装脚本...${NC}"
+    echo -e "${BLUE}获取 Docker 安装脚本...${NC}"
     curl -fsSL https://get.docker.com -o get-docker.sh || {
-        echo -e "${RED}下载安装脚本失败${NC}"
+        echo -e "${DARKRED}下载安装脚本失败${NC}"
         exit 1
     }
-    echo -e "${YELLOW}运行安装脚本...${NC}"
+    echo -e "${BLUE}运行安装脚本...${NC}"
     sudo sh get-docker.sh || {
-        echo -e "${RED}安装 Docker 失败${NC}"
+        echo -e "${DARKRED}安装 Docker 失败${NC}"
         exit 1
     }
-    echo -e "${YELLOW}将当前用户添加到 docker 组...${NC}"
+    echo -e "${BLUE}将当前用户添加到 docker 组...${NC}"
     sudo usermod -aG docker ${USER} || {
-        echo -e "${RED}添加用户到 docker 组失败${NC}"
+        echo -e "${DARKRED}添加用户到 docker 组失败${NC}"
         exit 1
     }
-    echo -e "${YELLOW}启动并设置 Docker 服务开机自启...${NC}"
+    echo -e "${BLUE}启动并设置 Docker 服务开机自启...${NC}"
     sudo systemctl start docker && sudo systemctl enable docker || {
-        echo -e "${RED}启动或设置开机自启失败${NC}"
+        echo -e "${DARKRED}启动或设置开机自启失败${NC}"
         exit 1
     }
     echo -e "${GREEN}Docker 安装完成。请考虑重新登录或重启以使组设置生效。${NC}"

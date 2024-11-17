@@ -18,6 +18,7 @@ ORANGE='\033[0;93m'
 MAGENTA='\033[0;35m'
 CYAN='\033[0;36m'
 LIGHT_BLUE='\033[1;34m'
+DARK_RED='\033[1;31m'
 NC='\033[0m' # 没有颜色
 
 # 加载 packages
@@ -34,28 +35,31 @@ elif [[ $(uname -s) == "Linux" ]]; then
     # 检测操作系统
     os_type=$(grep '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
 
-    print_centered_message "检测到操作系统为: $os_type"
+    print_centered_message "${CYAN}检测到操作系统为: $os_type${NC}"
 
     # 询问是否创建用户
-    read -p "是否需要创建用户？(y/n): " create_confirm
+    echo -e "${YELLOW}是否需要创建用户？(y/n): ${NC}"
+    read -p "" create_confirm
 
     # 主逻辑
     if [[ $create_confirm == 'y' ]]; then
-        read -p "请输入你想创建的用户名: " username
-        read -p "请输入默认密码（将用于新用户，若按下 Enter ，密码默认为 1）: " default_password
+        echo -e "${GREEN}请输入你想创建的用户名: ${NC}"
+        read username
+        echo -e "${GREEN}请输入默认密码（将用于新用户，若按下 Enter ，密码默认为 1）: ${NC}"
+        read default_password
         # 如果未输入任何内容，则默认密码为 1
         default_password="${default_password:-1}"
 
         if id "$username" &> /dev/null; then
-            echo "用户 $username 已存在。"
+            echo -e "${RED}用户 $username 已存在。${NC}"
             set_password_if_needed "$username" "$default_password"
         else
             sudo useradd -m "$username" # 创建用户
             echo "$username:$default_password" | sudo chpasswd
-            echo "用户 $username 已创建，密码设置为 $default_password"
+            echo -e "${GREEN}用户 $username 已创建，密码设置为 $default_password${NC}"
         fi
     else
-        echo "不创建用户"
+        echo -e "${ORANGE}不创建用户${NC}"
         # 默认密码为 1
         default_password=1
         # 如果 username 变量未设置或为空，则默认为当前登录用户的用户名
@@ -72,7 +76,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
 
     # 将用户添加到 sudoers 文件以免输入密码
     echo "$username ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers
-    print_centered_message "已配置用户 $username 无需 sudo 密码。"
+    print_centered_message "${LIGHT_BLUE}已配置用户 $username 无需 sudo 密码。${NC}"
 
     # 根据操作系统设置软件源
     if [[ $os_type == "ubuntu" ]]; then
@@ -82,11 +86,9 @@ elif [[ $(uname -s) == "Linux" ]]; then
         source ./fedora_install.sh
 
     else
-        print_centered_message -e "不支持的发行版，目前只支持 fedora、ubuntu"
+        print_centered_message "${RED}不支持的发行版，目前只支持 fedora、ubuntu${NC}"
     fi
 
 else
-    echo "未知的操作系统类型"
+    echo -e "${MAGENTA}未知的操作系统类型${NC}"
 fi
-
-source ./zsh_install.sh

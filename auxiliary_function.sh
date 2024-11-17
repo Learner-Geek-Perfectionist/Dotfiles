@@ -70,7 +70,7 @@ download_and_extract_kotlin() {
     elif [[ $FILE_NAME == *.zip ]]; then
         sudo unzip "/tmp/$FILE_NAME" -d $TARGET_DIR
     fi
-    
+
     echo -e "${GREEN}\n$FILE_NAME has been installed successfully to $TARGET_DIR${NC}"
     # 清理临时文件
     sudo rm -rf /tmp/*
@@ -174,22 +174,22 @@ check_and_install_brew_packages() {
 install_docker() {
     echo -e "${BLUE}获取 Docker 安装脚本...${NC}"
     curl -fsSL https://get.docker.com -o get-docker.sh || {
-        echo -e "${DARKRED}下载安装脚本失败${NC}"
+        echo -e "${DARK_RED}下载安装脚本失败${NC}"
         exit 1
     }
     echo -e "${BLUE}运行安装脚本...${NC}"
     sudo sh get-docker.sh || {
-        echo -e "${DARKRED}安装 Docker 失败${NC}"
+        echo -e "${DARK_RED}安装 Docker 失败${NC}"
         exit 1
     }
     echo -e "${BLUE}将当前用户添加到 docker 组...${NC}"
     sudo usermod -aG docker ${USER} || {
-        echo -e "${DARKRED}添加用户到 docker 组失败${NC}"
+        echo -e "${DARK_RED}添加用户到 docker 组失败${NC}"
         exit 1
     }
     echo -e "${BLUE}启动并设置 Docker 服务开机自启...${NC}"
     sudo systemctl start docker && sudo systemctl enable docker || {
-        echo -e "${DARKRED}启动或设置开机自启失败${NC}"
+        echo -e "${DARK_RED}启动或设置开机自启失败${NC}"
         exit 1
     }
     echo -e "${GREEN}Docker 安装完成。请考虑重新登录或重启以使组设置生效。${NC}"
@@ -197,8 +197,9 @@ install_docker() {
 
 # Docker 安装和配置函数
 install_and_configure_docker() {
-    print_centered_message "${LIGHT_BLUE}检查 Docker 命令..." "true" "false"
+    print_centered_message "${LIGHT_BLUE}开始检查 Docker 环境..." "true" "false"
 
+    # 检查是否在 WSL2 中运行
     if grep -qi microsoft /proc/version; then
         echo -e "${YELLOW}在 WSL2 环境中运行${NC}"
         if command -v docker > /dev/null; then
@@ -214,10 +215,9 @@ install_and_configure_docker() {
             install_docker
         fi
     else
+        # 检查是否在普通 Linux 环境中运行
         if command -v docker > /dev/null; then
             echo -e "${GREEN}Docker 已安装✅，跳过安装步骤。${NC}"
-            print_centered_message "" "false" "true"
-            return 0
         else
             echo -e "${YELLOW}Docker 未安装，开始安装过程...${NC}"
             install_docker

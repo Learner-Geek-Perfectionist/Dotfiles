@@ -54,10 +54,8 @@ print_centered_message "Dotfile 完成下载和解压"
 font_source="./${dest_Fonts}/fonts"
 # 根据操作系统设置字体的安装目录
 if [[ "$(uname)" == "Darwin" ]]; then
-    # macOS 用户目录，通常不需要 sudo 权限
     font_dest="$HOME/Library/Fonts"
 else
-    # Linux 用户目录，通常不需要 sudo 权限
     font_dest="$HOME/.local/share/fonts"
 fi
 
@@ -71,7 +69,7 @@ print_centered_message "接下来配置 zsh......"
 destination="$HOME"
 
 # 对 zsh 进行配置
-copy_config_files_to_home
+source ./zsh_config.sh
 
 echo -e "\n"
 # 打印提示消息

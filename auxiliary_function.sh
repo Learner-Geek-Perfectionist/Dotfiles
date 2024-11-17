@@ -57,7 +57,7 @@ install_kotlin_native() {
 
     case "$ARCH" in
         arm64 | armd64)
-            ARCH="aarch64"  # 将 arm64 和 armd64 统一处理为 aarch64
+            ARCH="aarch64" # 将 arm64 和 armd64 统一处理为 aarch64
             ;;
         x86_64)
             ARCH="x86_64"
@@ -86,7 +86,7 @@ install_kotlin_native() {
             ;;
     esac
 
-     # 显示下载和安装信息
+    # 显示下载和安装信息
     echo -e "${MAGENTA}下载 URL: $DOWNLOAD_URL${NC}"
     echo -e "${BLUE}安装目录: $INSTALL_DIR${NC}"
 
@@ -113,7 +113,7 @@ install_kotlin_native() {
     curl -L $DOWNLOAD_URL -o /tmp/kotlin-native.tar.gz
 
     if [ $? -ne 0 ]; then
-        print_centered_message   "下载失败，请检查网络连接和下载地址。"
+        print_centered_message "下载失败，请检查网络连接和下载地址。"
         return 0
     fi
 
@@ -195,23 +195,23 @@ check_and_install_brew_packages() {
 install_docker() {
     echo "获取 Docker 安装脚本..."
     curl -fsSL https://get.docker.com -o get-docker.sh || {
-                                                            echo "下载安装脚本失败"
-                                                                                             exit 1
+        echo "下载安装脚本失败"
+        exit 1
     }
     echo "运行安装脚本..."
     sudo sh get-docker.sh || {
-                               echo "安装 Docker 失败"
-                                                            exit 1
+        echo "安装 Docker 失败"
+        exit 1
     }
     echo "将当前用户添加到 docker 组..."
     sudo usermod -aG docker ${USER} || {
-                                         echo "添加用户到 docker 组失败"
-                                                                                  exit 1
+        echo "添加用户到 docker 组失败"
+        exit 1
     }
     echo "启动并设置 Docker 服务开机自启..."
     sudo systemctl start docker && sudo systemctl enable docker || {
-                                                                     echo "启动或设置开机自启失败"
-                                                                                                               exit 1
+        echo "启动或设置开机自启失败"
+        exit 1
     }
     echo "Docker 安装完成。请考虑重新登录或重启以使组设置生效。"
 }
@@ -300,7 +300,7 @@ prompt_open_proxy() {
         print_centered_message "正在下载 clash-verge-rev ......"
         brew install clash-verge-rev
         print_centered_message "重新执行脚本命令:" "true" "false"
-        print_centered_message '/bin/zsh -c "$(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/install.sh)"' "false" "true"
+        print_centered_message '/bin/zsh -c "$(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/main.sh)"' "false" "true"
         exit 1
     else
         print_centered_message "不开启代理，继续执行脚本"
@@ -345,10 +345,10 @@ download_and_extract() {
 
 # 定义倒计时函数
 countdown() {
-    local timeout=${1:-60}                # 默认倒计时时间为60秒，可通过函数参数定制
+    local timeout=${1:-60}                  # 默认倒计时时间为60秒，可通过函数参数定制
     local message=${2:-"Waiting for input"} # 默认提示信息
-    local str                             # 用户输入的字符串
-    local key_pressed=0                   # 标志是否有按键被按下
+    local str                               # 用户输入的字符串
+    local key_pressed=0                     # 标志是否有按键被按下
 
     # 开始倒计时
     for ((i = timeout; i > 0; i--)); do
@@ -412,38 +412,38 @@ install_fonts() {
 }
 
 # 进入目录并复制配置文件到用户的 home 目录的函数
-copy_config_files_to_home() {
-    print_centered_message "正在配置......"
-    local dir_name="${dest_Dotfiles}"
-    local files_to_copy=(".zshrc" ".zprofile" ".config")
-    local home_dir="$HOME"
-
-    # 删除已有的 zshrc、zprofile 和 config
-    print_centered_message "检查并删除已有的 .zshrc、.zprofile 和 .config 文件/文件夹..."
-    for file in ".zshrc" ".zprofile" ".config"; do
-        if [ -e "$home_dir/$file" ]; then
-            echo "删除 $home_dir/$file"
-            rm -rf "$home_dir/$file"
-        fi
-    done
-
-    # 进入仓库目录
-    if [ -d "$dir_name" ]; then
-        echo "已进入 '$dir_name' 目录。"
-        cd "$dir_name"
-    else
-        echo "目录 '$dir_name' 不存在，无法进入。"
-        return 1 # 返回非零状态表示失败
-    fi
-
-    # 循环遍历每个文件和目录
-    for item in "${files_to_copy[@]}"; do
-        if [ -e "$item" ]; then
-            echo "正在复制 $item 到 $destination"
-            # 复制文件或目录到 home 目录，如果存在则替换
-            cp -r "$item" "$destination"
-        else
-            echo "$item 不存在，跳过复制。"
-        fi
-    done
-}
+#copy_config_files_to_home() {
+#    print_centered_message "正在配置......"
+#    local dir_name="${dest_Dotfiles}"
+#    local files_to_copy=(".zshrc" ".zprofile" ".config")
+#    local home_dir="$HOME"
+#
+#    # 删除已有的 zshrc、zprofile 和 config
+#    print_centered_message "检查并删除已有的 .zshrc、.zprofile 和 .config 文件/文件夹..."
+#    for file in ".zshrc" ".zprofile" ".config"; do
+#        if [ -e "$home_dir/$file" ]; then
+#            echo "删除 $home_dir/$file"
+#            rm -rf "$home_dir/$file"
+#        fi
+#    done
+#
+#    # 进入仓库目录
+#    if [ -d "$dir_name" ]; then
+#        echo "已进入 '$dir_name' 目录。"
+#        cd "$dir_name"
+#    else
+#        echo "目录 '$dir_name' 不存在，无法进入。"
+#        return 1 # 返回非零状态表示失败
+#    fi
+#
+#    # 循环遍历每个文件和目录
+#    for item in "${files_to_copy[@]}"; do
+#        if [ -e "$item" ]; then
+#            echo "正在复制 $item 到 $destination"
+#            # 复制文件或目录到 home 目录，如果存在则替换
+#            cp -r "$item" "$destination"
+#        else
+#            echo "$item 不存在，跳过复制。"
+#        fi
+#    done
+#}

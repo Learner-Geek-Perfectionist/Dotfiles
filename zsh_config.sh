@@ -20,7 +20,7 @@ echo -e "${YELLOW}📥 Cloning repository into $TMP_DIR...${NC}"
 git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR"
 echo -e "${GREEN}✔️ Repository cloned.${NC}"
 
-# 删除当前用户家目录中的旧文件和目录（如果存在）
+# 删除当前用户家目录的 .zshenv、.zprofile、.zshrc、.config、sh-script
 echo -e "${YELLOW}🔍 Checking and removing old configuration files if they exist...${NC}"
 [ -f "$HOME/.zshenv" ] && echo -e "${RED}🗑️ Removing old .zshenv...${NC}" && rm -rf "$HOME/.zshenv"
 [ -f "$HOME/.zprofile" ] && echo -e "${RED}🗑️ Removing old .zprofile...${NC}" && rm -rf "$HOME/.zprofile"
@@ -35,6 +35,7 @@ cp "$TMP_DIR/.zshenv" "$HOME/.zshenv"
 cp "$TMP_DIR/.zprofile" "$HOME/.zprofile"
 cp "$TMP_DIR/.zshrc" "$HOME/.zshrc"
 cp -r "$TMP_DIR/.config" "$HOME/.config"
+cp -r "$TMP_DIR/sh-script" "$HOME/sh-script"
 # 在文件中添加以下代码
 if [[ "$OSTYPE" == "darwin"* ]]; then
     # 仅在 macOS 上拷贝

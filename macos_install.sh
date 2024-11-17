@@ -8,23 +8,20 @@
   # 进入 Documents 目录
   cd ~/Documents
 
-
-
-
-  if ! xcode-select --print-path &>/dev/null; then
+  if ! xcode-select --print-path &> /dev/null; then
     print_centered_message "⚠️ Xcode 命令行工具未安装"
-    xcode-select --install 2>/dev/null
+    xcode-select --install 2> /dev/null
     # 等待用户完成 Xcode 命令行工具的安装
     print_centered_message "请手动点击屏幕中的弹窗，选择“安装”，安装完成之后再次运行脚本(提示命令通常在终端的背面)"
     print_centered_message "脚本命令:" "true" "false"
     print_centered_message '/bin/zsh -c "$(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/install.sh)"' "false" "true"
     exit 1
-  fi
+fi
 
   # 检查 Homebrew 是否已安装
-  if command -v brew >/dev/null 2>&1; then
+  if command -v brew > /dev/null 2>&1; then
     print_centered_message "Homebrew 已经安装，跳过安装步骤。"
-  else
+else
     print_centered_message "正在安装 Homebrew..."
     #    /bin/zsh -c "$(curl -fsSL https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh)"
     curl -O "https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh"
@@ -34,7 +31,7 @@
     print_centered_message "重新加载 .zprofile 文件以启用 brew 环境变量 "
     # 刷新 brew 配置，启用 brew 环境变量
     source ${HOME}/.zprofile
-  fi
+fi
 
   [[ -f "./Homebrew.sh" ]] && rm "./Homebrew.sh" && echo "文件已被删除。" || echo "文件不存在。"
 
@@ -44,7 +41,6 @@
   prompt_open_proxy
 
   print_centered_message "正在安装 macOS 常用的开发工具......"
-
 
   echo -e "\n"
 

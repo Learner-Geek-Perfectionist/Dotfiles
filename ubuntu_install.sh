@@ -7,8 +7,7 @@ set -e
     sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list
 
     # 取消最小化安装
-    sudo apt update && sudo apt upgrade -y && apt search unminimize 2>/dev/null | grep -q "^unminimize/" && (sudo apt install unminimize -y && yes | sudo unminimize) || echo "unminimize包不可用。"
-
+    sudo apt update && sudo apt upgrade -y && apt search unminimize 2> /dev/null | grep -q "^unminimize/" && (sudo apt install unminimize -y && yes | sudo unminimize) || echo "unminimize包不可用。"
 
     # 设置 Debconf，允许非root用户捕获数据包
     echo "wireshark-common wireshark-common/install-setuid boolean true" | sudo debconf-set-selections
@@ -22,12 +21,9 @@ set -e
     # 2.将用户添加到 wireshark 组：
     sudo usermod -aG wireshark $USER
 
-
     # 安装必要的工具 🔧
     sudo apt update && sudo apt upgrade -y
     sudo apt install -y "${packages_ubuntu[@]}"
-
-
 
     # 设置时区
     sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
@@ -45,10 +41,10 @@ set -e
     FZF_DIR="$HOME/.fzf"
 
     # 检查 fzf 是否已安装
-    if command -v fzf >/dev/null 2>&1; then
+    if command -v fzf > /dev/null 2>&1; then
         # 目录存在，跳过安装
         echo "fzf 已安装，跳过安装。"
-    else
+else
         [ -d "$FZF_DIR" ] && rm -rf "$FZF_DIR"
 
         # 目录不存在，克隆并安装 fzf
@@ -56,13 +52,13 @@ set -e
         git clone --depth 1 https://github.com/junegunn/fzf.git "$FZF_DIR"
         yes | $FZF_DIR/install --no-update-rc
         echo "fzf 安装完成。"
-    fi
+fi
 
     # 手动安装 fastfetch
     # 检查 fastfetch 是否已经安装
-    if command -v fastfetch >/dev/null 2>&1; then
+    if command -v fastfetch > /dev/null 2>&1; then
         echo "fastfetch 已经安装。跳过安装步骤。"
-    else
+else
         echo "开始安装 fastfetch..."
 
         # 克隆 fastfetch 源码
@@ -81,7 +77,7 @@ set -e
         cd ../.. && rm -rf fastfetch
 
         echo "fastfetch 安装完成。"
-    fi
+fi
 
     # 安装 Kotlin/Native
     install_kotlin_native "linux"
@@ -97,14 +93,12 @@ set -e
         source "$HOME/.sdkman/bin/sdkman-init.sh"
 
         echo "SDKMAN installed successfully."
-    else
+else
         echo "SDKMAN is already installed."
-    fi
-
+fi
 
     # 检查 Java 是否已经安装
-    command -v java >/dev/null && echo "Java已经安装。" || (echo "开始安装Java..." && sdk install java && echo "Java安装完成。")
-
+    command -v java > /dev/null && echo "Java已经安装。" || (echo "开始安装Java..." && sdk install java && echo "Java安装完成。")
 
     # 调用函数以安装和配置 Docker
     install_and_configure_docker

@@ -26,31 +26,26 @@ zip_Dotfiles_file="Dotfiles-master.zip"
 dest_Fonts="Fonts-master"
 dest_Dotfiles="Dotfiles-master"
 
-
-
-
 # 对 Fonts 的处理：
 # 如果安装标志（$install_flag）为真，并且ZIP文件不存在，则下载并解压ZIP文件；如果ZIP文件已经存在，则检查目录是否存在，不存在则解压，存在则跳过解压。
 
 if [[ $install_flag == "true" ]]; then
-  if [ ! -f "$zip_Fonts_file" ]; then
-    print_centered_message "Fonts ZIP 文件不存在，开始下载..."
-    download_and_extract "$zip_Fonts_file" "$dest_Fonts" "$Fonts_REPO_URL"
-  else
-    print_centered_message "Fonts ZIP 文件已存在，不需要下载。"
-    if [ ! -d "$dest_Fonts" ]; then
-      print_centered_message "开始解压已存在的 Fonts ZIP 文件..."
-      unzip -o "$zip_Fonts_file" -d "$dest_Fonts"
+    if [ ! -f "$zip_Fonts_file" ]; then
+        print_centered_message "Fonts ZIP 文件不存在，开始下载..."
+        download_and_extract "$zip_Fonts_file" "$dest_Fonts" "$Fonts_REPO_URL"
     else
-      print_centered_message "Fonts 目录已存在，跳过解压。"
+        print_centered_message "Fonts ZIP 文件已存在，不需要下载。"
+        if [ ! -d "$dest_Fonts" ]; then
+            print_centered_message "开始解压已存在的 Fonts ZIP 文件..."
+            unzip -o "$zip_Fonts_file" -d "$dest_Fonts"
+        else
+            print_centered_message "Fonts 目录已存在，跳过解压。"
+        fi
     fi
-  fi
 fi
-
 
 # 总是下载和解压 Dotfiles
 download_and_extract "$zip_Dotfiles_file" "$dest_Dotfiles" "$Dotfiles_REPO_URL"
-
 
 # 打印提示消息
 print_centered_message "Dotfile 完成下载和解压"
@@ -59,11 +54,11 @@ print_centered_message "Dotfile 完成下载和解压"
 font_source="./${dest_Fonts}/fonts"
 # 根据操作系统设置字体的安装目录
 if [[ "$(uname)" == "Darwin" ]]; then
-  # macOS 用户目录，通常不需要 sudo 权限
-  font_dest="$HOME/Library/Fonts"
+    # macOS 用户目录，通常不需要 sudo 权限
+    font_dest="$HOME/Library/Fonts"
 else
-  # Linux 用户目录，通常不需要 sudo 权限
-  font_dest="$HOME/.local/share/fonts"
+    # Linux 用户目录，通常不需要 sudo 权限
+    font_dest="$HOME/.local/share/fonts"
 fi
 
 # 安装字体
@@ -89,7 +84,6 @@ print_centered_message "进入 zsh，准备下载 zsh 插件......"
 
 # 进入 zsh
 /bin/zsh
-
 
 print_centered_message "对于 macOS 的用户，XApp、腾讯文档、FastZip、State、WeLink 只能通过 App Store 手动安装！！！"
 

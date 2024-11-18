@@ -7,7 +7,7 @@ set -e
 sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list
 
 # 取消最小化安装
-sudo apt update && sudo apt upgrade -y && apt search unminimize 2> /dev/null | grep -q "^unminimize/" && (sudo apt install unminimize -y && yes | sudo unminimize) || echo "unminimize包不可用。"
+sudo apt update -y && sudo apt upgrade -y && sudo apt search unminimize 2> /dev/null | grep -q "^unminimize/" && (sudo apt install unminimize -y && yes | sudo unminimize) || echo "unminimize包不可用。"
 
 # 设置 Debconf，允许非root用户捕获数据包
 echo "wireshark-common wireshark-common/install-setuid boolean true" | sudo debconf-set-selections

@@ -11,7 +11,7 @@ TMP_DIR="/tmp/Dotfiles"
 
 # 浅克隆仓库到临时目录
 echo -e "${YELLOW}📥 Cloning repository into $TMP_DIR...${NC}"
-git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR"
+git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR" || { echo "Failed to clone repository"; exit 1; }
 echo -e "${GREEN}✔️ Repository cloned.${NC}"
 
 # 定义配置列表

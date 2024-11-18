@@ -3,6 +3,19 @@
 # 设置脚本在遇到错误时退出
 set -e
 
+# 定义颜色
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+ORANGE='\033[0;93m'
+MAGENTA='\033[0;35m'
+PURPLE='\033[0;35m'
+CYAN='\033[0;36m'
+LIGHT_BLUE='\033[1;34m'
+DARK_RED='\033[1;31m'
+NC='\033[0m' # 没有颜色
+
 echo -e "${GREEN}🚀 Starting script...${NC}"
 cd $HOME
 
@@ -43,7 +56,6 @@ echo -e "${GREEN}✔️ New configuration files copied.${NC}"
 echo -e "${YELLOW}🧼 Cleaning up temporary files...${NC}"
 rm -rf "$TMP_DIR"
 rm -rf /tmp/Fonts/
-
 
 echo -e "${GREEN}✔️ Temporary files removed.${NC}"
 echo -e "${GREEN}✅ Script completed successfully. Files have been successfully copied to the user's home directory.${NC}"

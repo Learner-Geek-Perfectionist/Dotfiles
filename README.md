@@ -21,7 +21,7 @@ caffeinate -i /bin/zsh -c "$(curl -H 'Cache-Control: no-cache' -fsSL "https://ra
 
 # Gitee
 
-caffeinate -i /bin/zsh -c "$(curl -H 'Cache-Control: no-cache' -fsSL "https://gitee.com/oyzxin/Dotfiles/raw/master/main.sh?$(date +%s)")"
+caffeinate -i /bin/zsh -c "$(curl -H 'Cache-Control: no-cache' -fsSL "https://gitee.com/oyzxin/Dotfiles/raw/master/install.sh?$(date +%s)")"
 
 # Linux
 
@@ -31,7 +31,7 @@ caffeinate -i /bin/zsh -c "$(curl -H 'Cache-Control: no-cache' -fsSL "https://gi
 
 # Gitee
 
-/bin/bash -c "$(curl -H 'Cache-Control: no-cache' -fsSL "https://gitee.com/oyzxin/Dotfiles/raw/master/main.sh?$(date +%s)")" 
+/bin/bash -c "$(curl -H 'Cache-Control: no-cache' -fsSL "https://gitee.com/oyzxin/Dotfiles/raw/master/install.sh?$(date +%s)")" 
 ```
 
 Only for zsh configuration

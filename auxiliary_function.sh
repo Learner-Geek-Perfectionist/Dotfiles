@@ -252,9 +252,6 @@ set_password_if_needed() {
     fi
 }
 
-# 打印提示消息
-print_centered_message "字体安装完成。✅" "false" "true"
-
 # 安装字体
 install_fonts() {
     echo -ne "${GREEN}是否需要下载字体以支持终端模拟器的渲染？(y/n): ${NC}"
@@ -312,6 +309,8 @@ install_fonts() {
         print_centered_message "在 Linux 上，刷新字体缓存" "false" "true"
         fc-cache -fv
     fi
+    # 打印提示消息
+    print_centered_message "字体安装完成。✅" "false" "true"
 
 }
 

@@ -14,16 +14,6 @@ echo "wireshark-common wireshark-common/install-setuid boolean true" | sudo debc
 # 以非交互模式安装 Wireshark
 sudo DEBIAN_FRONTEND=noninteractive apt install -y wireshark
 
-# 为了避免 Dockerfile 交互式
-if [ "$AUTO_RUN" == "true" ]; then
-    # 设置默认值
-    echo "在 Dockerfile 中，无需设置 $USER 权限"
-else
-    # 设置抓包权限
-    sudo setcap cap_net_raw,cap_net_admin=eip /usr/bin/dumpcap
-    sudo setcap cap_net_raw,cap_net_admin=eip /usr/sbin/tcpdump
-fi
-
 # 安装必要的工具 🔧
 sudo apt update && sudo apt upgrade -y
 sudo apt install -y "${packages_ubuntu[@]}"
@@ -39,6 +29,10 @@ sudo locale-gen zh_CN.UTF-8
 # 设置默认的语言环境
 export LANG=zh_CN.UTF-8
 export LC_ALL=zh_CN.UTF-8
+
+# 设置抓包权限
+sudo setcap cap_net_raw,cap_net_admin=eip /usr/bin/dumpcap
+sudo setcap cap_net_raw,cap_net_admin=eip /usr/sbin/tcpdump
 
 # 定义 fzf 的安装目录
 FZF_DIR="$HOME/.fzf"

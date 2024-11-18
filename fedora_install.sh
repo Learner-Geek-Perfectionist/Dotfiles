@@ -17,16 +17,6 @@ sudo sed -e 's|^metalink=|#metalink=|g' \
 sudo dnf -y update && sudo dnf install -y "${packages_fedora[@]}"
 sudo dnf install -y --setopt=tsflags= coreutils coreutils-common man-pages man-db && sudo dnf group install -y --setopt=strict=0 "c-development"
 
-# 为了避免 Dockerfile 交互式
-if [ "$AUTO_RUN" == "true" ]; then
-    # 设置默认值
-    echo "在 Dockerfile 中，无需设置 $USER 权限"
-else
-    # 设置抓包权限
-    sudo setcap cap_net_raw,cap_net_admin=eip /usr/bin/dumpcap
-    sudo setcap cap_net_raw,cap_net_admin=eip /usr/sbin/tcpdump
-fi
-
 # 设置时区
 sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 echo "Asia/Shanghai" | sudo tee /etc/timezone > /dev/null
@@ -36,6 +26,10 @@ export LANG=zh_CN.UTF-8
 export LC_ALL=zh_CN.UTF-8
 
 sudo localedef -c -f UTF-8 -i zh_CN zh_CN.UTF-8
+
+# 设置抓包权限
+sudo setcap cap_net_raw,cap_net_admin=eip /usr/bin/dumpcap
+sudo setcap cap_net_raw,cap_net_admin=eip /usr/sbin/tcpdump
 
 setup_kotlin_environment
 # 安装 Kotlin/Native 和 Kotlin-Complier

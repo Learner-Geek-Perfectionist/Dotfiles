@@ -3,7 +3,7 @@
 # macOS 逻辑
 echo -e "\n"
 
-print_centered_message "检测到 macOS 系统"
+print_centered_message "${CYAN}检测到操作系统为: macOS${NC}"
 
 # 进入 Documents 目录
 cd $HOME/Documents

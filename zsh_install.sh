@@ -25,8 +25,6 @@ echo -e "${RED}‼️ 宿主机一般需要良好的字体支持来确保所有�
 # 加载提示头
 prompt_download_fonts
 
-
-
 # 定义 Dotfiles 和 Fonts 链接
 Dotfiles_REPO_URL="https://github.com/Learner-Geek-Perfectionist/dotfiles/archive/refs/heads/master.zip"
 Fonts_REPO_URL="https://github.com/Learner-Geek-Perfectionist/Fonts/archive/refs/heads/master.zip"
@@ -69,8 +67,12 @@ else
     font_dest="$HOME/.local/share/fonts"
 fi
 
-# 安装字体
-install_fonts
+if [ "$AUTO_RUN" == "true" ]; then
+    echo "Dockerfile 中无需安装字体"
+else
+    # 安装字体
+    install_fonts
+fi
 
 # 打印提示消息
 print_centered_message "${YELLOW}接下来配置 zsh......${NC}"

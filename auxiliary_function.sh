@@ -255,7 +255,7 @@ set_password_if_needed() {
 # 打印提示消息
 print_centered_message "字体安装完成。✅" "false" "true"
 
-# 定义提示头🔔函数
+# 安装字体
 install_fonts() {
     echo -ne "${GREEN}是否需要下载字体以支持终端模拟器的渲染？(y/n): ${NC}"
 
@@ -282,7 +282,7 @@ install_fonts() {
 
     # 确认字体源目录存在
     if [ ! -d "$font_source" ]; then
-        echo "字体目录 '$font_source' 不存在，请确认当前目录下有 ${dest_Fonts} 文件夹。" "false" "false"
+        echo "字体目录 '$font_source' 不存在，请确认当前目录下有 ${dest_Fonts} 文件夹。"
         exit 1
     fi
 

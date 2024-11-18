@@ -7,9 +7,9 @@ set -e
 
 # 安装 git、sudo
 if grep -q 'ID=ubuntu' /etc/os-release; then
-    apt update -y && apt install -y git sudo
+    sudo apt update -y && sudo apt install -y git
 elif grep -q 'ID=fedora' /etc/os-release; then
-    dnf update -y && dnf install -y git sudo
+    sudo dnf update -y && sudo dnf install -y git
 fi
 
 echo "Cloning Dotfiles repository..."

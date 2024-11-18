@@ -258,9 +258,16 @@ print_centered_message "字体安装完成。✅" "false" "true"
 # 安装字体
 install_fonts() {
     echo -ne "${GREEN}是否需要下载字体以支持终端模拟器的渲染？(y/n): ${NC}"
+    # 为了避免 Dockerfile 交互式
+    if [ "$AUTO_RUN" == "true" ]; then
+        return 0
+    else
+        # 如果不是自动运行，读取用户输入
+        read download_confirm
+    fi
 
     read download_confirm
-    if [[ $download_confirm != 'y' || "$AUTO_RUN" == "true" ]]; then
+    if [[ $download_confirm != 'y' ]]; then
         print_centered_message "${GREEN}跳过字体下载。${NC}"
         return 0
     fi

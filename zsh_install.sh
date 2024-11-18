@@ -23,34 +23,6 @@ echo -e "${RED}‼️ 宿主机一般需要良好的字体支持来确保所有�
 # 加载提示头
 install_fonts
 
-#if [[ "$install_flag" == true ]]; then
-#    git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Fonts.git /tmp/Fonts/
-#    # 打印提示消息
-#    print_centered_message "${GREEN}✅Fonts 完成下载${NC}" "true" "false"
-#    # 定义字体的源目录
-#    font_source="/tmp/Fonts/"
-#
-#    # 根据操作系统设置字体的安装目录
-#    if [[ "$(uname)" == "Darwin" ]]; then
-#        font_dest="$HOME/Library/Fonts"
-#    else
-#        font_dest="$HOME/.local/share/fonts"
-#    fi
-#
-#    if [ "$AUTO_RUN" == "true" ]; then
-#        echo "Dockerfile 中无需安装字体"
-#    else
-#        # 安装字体
-#        install_fonts
-#
-#        # 打印提示消息
-#        print_centered_message "${GREEN}Fonts 完成安装${NC}" "false" "false"
-#    fi
-#else
-#    print_centered_message "${RED}❌不安装 Fonts${NC}" "true" "false"
-#fi
-
-# 打印提示消息
 print_centered_message "${GREEN}接下来配置 zsh......${NC}" "false" "false"
 
 # 对 zsh 进行配置

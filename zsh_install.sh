@@ -20,7 +20,7 @@ echo -e "${GREEN}\t2️⃣ 在 Docker 容器（或 WSL）中运行时，通常�
 echo -e "${RED}‼️ 宿主机一般需要良好的字体支持来确保所有应用和终端模拟器都能正常渲染字符。${NC}"
 
 
-# 加载提示头
+# 是否安装字体
 install_fonts
 
 print_centered_message "${GREEN}接下来配置 zsh......${NC}" "false" "false"

@@ -17,13 +17,19 @@ sudo sed -e 's|^metalink=|#metalink=|g' \
 sudo dnf -y update && sudo dnf install -y "${packages_fedora[@]}"
 sudo dnf install -y --setopt=tsflags= coreutils coreutils-common man-pages man-db && sudo dnf group install -y --setopt=strict=0 "c-development"
 
-# 设置 wireshark 权限
-# 1. 将 dumpcap 设置为允许 wireshark 组的成员执行：
-sudo chgrp wireshark /usr/bin/dumpcap
-sudo chmod 4755 /usr/bin/dumpcap
-sudo setcap cap_net_raw,cap_net_admin=eip /usr/bin/dumpcap
-# 2.将用户添加到 wireshark 组：
-sudo usermod -aG wireshark $USER
+# 为了避免 Dockerfile 交互式
+if [ "$AUTO_RUN" == "true" ]; then
+    # 设置默认值
+    echo "在 Dockerfile 中，无需设置 $USER 权限"
+else
+    # 设置 wireshark 权限
+    # 1. 将 dumpcap 设置为允许 wireshark 组的成员执行：
+    sudo chgrp wireshark /usr/bin/dumpcap
+    sudo chmod 4755 /usr/bin/dumpcap
+    sudo setcap cap_net_raw,cap_net_admin=eip /usr/bin/dumpcap
+    # 2.将用户添加到 wireshark 组：
+    sudo usermod -aG wireshark $USER
+fi
 
 # 设置时区
 sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
@@ -35,14 +41,20 @@ export LC_ALL=zh_CN.UTF-8
 
 sudo localedef -c -f UTF-8 -i zh_CN zh_CN.UTF-8
 
-setup_kotlin_environment 
+setup_kotlin_environment
 # 安装 Kotlin/Native 和 Kotlin-Complier
 download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR "Kotlin/Native"
 
 download_and_extract_kotlin $KOTLIN_COMPILER_URL $COMPILER_INSTALL_DIR "Kotlin-Complier"
 
-# 调用函数以安装和配置 Docker
-install_and_configure_docker
+# 为了避免 Dockerfile 交互式
+if [ "$AUTO_RUN" == "true" ]; then
+    # 设置默认值
+    echo "在 Docker 中无需安装 Docker"
+else
+    # 调用函数以安装和配置 Docker
+    install_and_configure_docker
+fi
 
 sudo dnf clean all && sudo dnf makecache
 

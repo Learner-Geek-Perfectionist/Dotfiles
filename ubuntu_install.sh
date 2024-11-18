@@ -13,11 +13,12 @@ sudo apt update && sudo apt upgrade -y && apt search unminimize 2> /dev/null | g
 echo "wireshark-common wireshark-common/install-setuid boolean true" | sudo debconf-set-selections
 # 以非交互模式安装 Wireshark
 sudo DEBIAN_FRONTEND=noninteractive apt install -y wireshark
+
 # 为了避免 Dockerfile 交互式
 if [ "$AUTO_RUN" == "true" ]; then
-    echo "Dockerfile 中无需设置 $USER 权限"
+    # 设置默认值
+    echo "在 Dockerfile 中，无需设置 $USER 权限"
 else
-    # 如果不是自动运行，设置 $USER 权限
     # 设置 wireshark 权限
     # 1. 将 dumpcap 设置为允许 wireshark 组的成员执行：
     sudo chgrp wireshark /usr/bin/dumpcap
@@ -93,8 +94,14 @@ download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR "Kotlin/Native"
 jdk_version=$(apt search openjdk | grep -oP 'openjdk-\d+-jdk' | sort -V | tail -n1)
 [ -z "$jdk_version" ] && echo "没有找到可用的 OpenJDK 版本。" && exit 1 || echo "找到最新的 OpenJDK 版本: $jdk_version"
 
-# 调用函数以安装和配置 Docker
-install_and_configure_docker
+# 为了避免 Dockerfile 交互式
+if [ "$AUTO_RUN" == "true" ]; then
+    # 设置默认值
+    echo "在 Docker 中无需安装 Docker"
+else
+    # 调用函数以安装和配置 Docker
+    install_and_configure_docker
+fi
 
 # 配置 zsh
 source ./zsh_install.sh

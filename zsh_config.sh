@@ -5,14 +5,18 @@ set -e
 
 echo -e "${GREEN}🚀 Starting script...${NC}"
 
-rm -rf /tmp/Dotfiles
 # 定义临时目录路径
 TMP_DIR="/tmp/Dotfiles"
 
-# 浅克隆仓库到临时目录
-echo -e "${YELLOW}📥 Cloning repository into $TMP_DIR...${NC}"
-git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR" || { echo "Failed to clone repository"; exit 1; }
-echo -e "${GREEN}✔️ Repository cloned.${NC}"
+if [[ ! -d /tmp/Dotfiles ]]; then
+    # 浅克隆仓库到临时目录
+    echo -e "${YELLOW}📥 Cloning repository into $TMP_DIR...${NC}"
+    git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR" || {
+        echo "Failed to clone repository"
+        exit 1
+    }
+    echo -e "${GREEN}✔️ Repository cloned.${NC}"
+fi
 
 # 定义配置列表
 configs=(".zshenv" ".zprofile" ".zshrc" ".config")

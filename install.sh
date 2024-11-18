@@ -3,7 +3,7 @@
 # 一旦错误，就退出
 set -e
 
-[ -d "/tmp/Dotfiles/" ] && rm -rf /tmp/Dotfiles
+[ -d "/tmp/Dotfiles/" ] && rm -rf /tmp/Dotfiles/
 
 # 安装 git、sudo
 if grep -q 'ID=ubuntu' /etc/os-release; then

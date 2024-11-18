@@ -19,68 +19,36 @@ echo -e "${GREEN}\t2️⃣ 在 Docker 容器（或 WSL）中运行时，通常�
 
 echo -e "${RED}‼️ 宿主机一般需要良好的字体支持来确保所有应用和终端模拟器都能正常渲染字符。${NC}"
 
-# 定义是否安装字体的标志符
-install_flag=false
 
 # 加载提示头
-prompt_download_fonts
+install_fonts
 
-## 定义 Dotfiles 和 Fonts 链接
-#Dotfiles_REPO_URL="https://github.com/Learner-Geek-Perfectionist/dotfiles/archive/refs/heads/master.zip"
-#Fonts_REPO_URL="https://github.com/Learner-Geek-Perfectionist/Fonts/archive/refs/heads/master.zip"
+#if [[ "$install_flag" == true ]]; then
+#    git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Fonts.git /tmp/Fonts/
+#    # 打印提示消息
+#    print_centered_message "${GREEN}✅Fonts 完成下载${NC}" "true" "false"
+#    # 定义字体的源目录
+#    font_source="/tmp/Fonts/"
 #
-## 定义文件和目标目录名称
-#zip_Fonts_file="Fonts-master.zip"
-#zip_Dotfiles_file="Dotfiles-master.zip"
-#
-#dest_Fonts="Fonts-master"
-#dest_Dotfiles="Dotfiles-master"
-
-# 对 Fonts 的处理：
-#if [[ $install_flag == "true" ]]; then
-#    if [ ! -f "$zip_Fonts_file" ]; then
-#        print_centered_message "${YELLOW}Fonts ZIP 文件不存在，开始下载...${NC}"
-#        download_and_extract "$zip_Fonts_file" "$dest_Fonts" "$Fonts_REPO_URL"
+#    # 根据操作系统设置字体的安装目录
+#    if [[ "$(uname)" == "Darwin" ]]; then
+#        font_dest="$HOME/Library/Fonts"
 #    else
-#        print_centered_message "${YELLOW}Fonts ZIP 文件已存在，不需要下载。${NC}"
-#        if [ ! -d "$dest_Fonts" ]; then
-#            print_centered_message "${GREEN}开始解压已存在的 Fonts ZIP 文件...${NC}"
-#            unzip -o "$zip_Fonts_file" -d "$dest_Fonts"
-#        else
-#            print_centered_message "${GREEN}Fonts 目录已存在，跳过解压。${NC}"
-#        fi
+#        font_dest="$HOME/.local/share/fonts"
 #    fi
+#
+#    if [ "$AUTO_RUN" == "true" ]; then
+#        echo "Dockerfile 中无需安装字体"
+#    else
+#        # 安装字体
+#        install_fonts
+#
+#        # 打印提示消息
+#        print_centered_message "${GREEN}Fonts 完成安装${NC}" "false" "false"
+#    fi
+#else
+#    print_centered_message "${RED}❌不安装 Fonts${NC}" "true" "false"
 #fi
-
-## 总是下载和解压 Dotfiles
-#download_and_extract "$zip_Dotfiles_file" "$dest_Dotfiles" "$Dotfiles_REPO_URL"
-if [[ "$install_flag" == true ]]; then
-    git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Fonts.git /tmp/Fonts/
-    # 打印提示消息
-    print_centered_message "${GREEN}✅Dotfiles 完成下载和解压${NC}" "true" "false"
-else
-    print_centered_message "${RED}❌Dotfiles 完成下载和解压${NC}" "true" "false"
-fi
-
-# 打印提示消息
-print_centered_message "${GREEN}Dotfiles 完成下载和解压${NC}"
-
-# 定义字体的源目录
-font_source="/tmp/Fonts/"
-
-# 根据操作系统设置字体的安装目录
-if [[ "$(uname)" == "Darwin" ]]; then
-    font_dest="$HOME/Library/Fonts"
-else
-    font_dest="$HOME/.local/share/fonts"
-fi
-
-if [ "$AUTO_RUN" == "true" ]; then
-    echo "Dockerfile 中无需安装字体"
-else
-    # 安装字体
-    install_fonts
-fi
 
 # 打印提示消息
 print_centered_message "${GREEN}接下来配置 zsh......${NC}" "false" "false"

@@ -33,6 +33,7 @@ print_centered_message() {
         echo "$line"
     fi
 }
+
 LATEST_VERSION=""
 get_latest_version() {
     # 使用 curl 获取 GitHub releases 最新的重定向地址，并且 grep 最新的版本号
@@ -70,7 +71,7 @@ download_and_extract_kotlin() {
     echo -e "${GREEN}\n$FILE_NAME has been installed successfully to $TARGET_DIR${NC}"
 }
 
-# 主安装函数
+# 设置 kotlin 安装环境
 setup_kotlin_environment() {
     # 获取系统架构
     ARCH=$(uname -m)
@@ -251,21 +252,60 @@ set_password_if_needed() {
     fi
 }
 
+# 打印提示消息
+print_centered_message "字体安装完成。✅" "false" "true"
+
 # 定义提示头🔔函数
-prompt_download_fonts() {
+install_fonts() {
     echo -ne "${GREEN}是否需要下载字体以支持终端模拟器的渲染？(y/n): ${NC}"
 
-    if [ "$AUTO_RUN" = "true" ]; then
+    read download_confirm
+    if [[ $download_confirm != 'y' || "$AUTO_RUN" == "true" ]]; then
+        print_centered_message "${GREEN}跳过字体下载。${NC}"
         return 0
     fi
 
-    read download_confirm
-    if [[ $download_confirm == 'y' ]]; then
-        print_centered_message "${GREEN}正在下载字体......${NC}"
-        install_flag=true
+    git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Fonts.git /tmp/Fonts/ && print_centered_message "${GREEN}✅Fonts 完成下载${NC}" "true" "false"
+
+    # 定义字体的源目录
+    font_source="/tmp/Fonts/"
+
+    # 根据操作系统设置字体的安装目录
+    if [[ "$(uname)" == "Darwin" ]]; then
+        font_dest="$HOME/Library/Fonts"
     else
-        print_centered_message "${GREEN}跳过字体下载。${NC}"
+        font_dest="$HOME/.local/share/fonts/"
     fi
+
+    # 打印提示消息
+    print_centered_message "正在安装字体......" "true" "false"
+
+    # 确认字体源目录存在
+    if [ ! -d "$font_source" ]; then
+        echo "字体目录 '$font_source' 不存在，请确认当前目录下有 ${dest_Fonts} 文件夹。" "false" "false"
+        exit 1
+    fi
+
+    # 创建目标目录如果它不存在
+    sudo mkdir -p "$font_dest"
+
+    # 复制字体文件到目标目录
+    print_centered_message "正在复制字体文件到 $font_dest..." "false" "false"
+
+    # 使用 find 来查找字体源目录中的字体文件，排除 README 文件
+    find "$font_source" -type f \( -iname "*.ttf" -o -iname "*.otf" \) ! -iname "README*" -exec cp -v {} "$font_dest" \;
+
+    # 更新字体缓存
+    print_centered_message "更新字体缓存..."
+    if [ "$(uname)" == "Darwin" ]; then
+        # macOS 不需要手动更新字体缓存
+        print_centered_message "在 macOS 上，字体缓存将自动更新。" "false" "true"
+    else
+        # Linux
+        print_centered_message "在 Linux 上，刷新字体缓存" "false" "true"
+        fc-cache -fv
+    fi
+
 }
 
 # 定义提示头🔔函数
@@ -286,42 +326,6 @@ prompt_open_proxy() {
         exit 1
     else
         print_centered_message "不开启代理，继续执行脚本"
-    fi
-}
-
-# 定义下载、解压函数
-download_and_extract() {
-    # 压缩包名称
-    local zip_file="$1"
-    # 目录
-    local dest_dir="$2"
-    # 压缩包 URL
-    local repo_url="$3"
-
-    # 检查 ZIP 文件是否存在，如果不存在则下载
-    if [ ! -f "$zip_file" ]; then
-        print_centered_message "${CYAN}ZIP文件 '$zip_file' 不存在，开始下载...${NC}"
-        curl -L -f -o "${zip_file}" "$repo_url"
-        if [ -f "$zip_file" ]; then
-            echo -e "\n"
-            print_centered_message "${CYAN}ZIP文件 '$zip_file' 下载完成✅${NC}"
-        else
-            print_centered_message "${CYAN}ZIP文件 '$zip_file' 下载失败☹️${NC}"
-        fi
-    else
-        echo -e "${CYAN}ZIP文件 '$zip_file' 已存在，跳过下载。${NC}"
-    fi
-
-    # 解压 ZIP 文件
-    if [ -f "$zip_file" ]; then
-        if [ ! -d "$dest_dir" ]; then
-            echo -e "${CYAN}开始解压ZIP文件 '$zip_file' 到目录 '$dest_dir'...${NC}"
-            unzip -o "$zip_file"
-        else
-            echo -e "${CYAN}目录 '$dest_dir' 已存在，跳过解压。${NC}"
-        fi
-    else
-        echo -e "${CYAN}ZIP文件 '$zip_file' 不存在或损坏，无法进行解压。${NC}"
     fi
 }
 
@@ -349,45 +353,4 @@ countdown() {
         echo -e "\nUser input received: '$str'\n"
         return 0 # 返回 0 表示成功接收到用户输入
     fi
-}
-
-# 定义安装字体函数
-install_fonts() {
-    # 检查是否执行安装
-    if [ "$install_flag" != "true" ]; then
-        print_centered_message "${RED}安装标志设置为 'false'，跳过字体安装。${NC}"
-        return 0 # 如果不安装，则正常退出
-    fi
-
-    # 打印提示消息
-    print_centered_message "正在安装字体......" "true" "false"
-
-    # 确认字体源目录存在
-    if [ ! -d "$font_source" ]; then
-        echo "字体目录 '$font_source' 不存在，请确认当前目录下有 ${dest_Fonts} 文件夹。" "false" "true"
-        exit 1
-    fi
-
-    # 创建目标目录如果它不存在
-    mkdir -p "$font_dest"
-
-    # 复制字体文件到目标目录
-    print_centered_message "正在复制字体文件到 $font_dest..." "false" "true"
-
-    # 使用 find 来查找字体源目录中的字体文件，排除 README 文件
-    find "$font_source" -type f \( -iname "*.ttf" -o -iname "*.otf" \) ! -iname "README*" -exec cp -v {} "$font_dest" \;
-
-    # 更新字体缓存
-    print_centered_message "更新字体缓存..."
-    if [ "$OS_TYPE" = "Darwin" ]; then
-        # macOS 不需要手动更新字体缓存
-        print_centered_message "在 macOS 上，字体缓存将自动更新。" "false" "true"
-    else
-        # Linux
-        print_centered_message "在 Linux 上，刷新字体缓存" "false" "true"
-        fc-cache -fv
-    fi
-
-    # 打印提示消息
-    print_centered_message "字体安装完成。✅" "false" "true"
 }

@@ -56,7 +56,7 @@ download_and_extract_kotlin() {
 
     # 使用 curl 下载文件，检查 URL 的有效性
     curl -L -f -s -S "$URL" -o "/tmp/$FILE_NAME" || {
-        echo -e "${RED}❌Failed to download $FILE_NAME.Please check your internet connection and URL.${NC}"
+        echo -e "${RED}❌ Failed to download $FILE_NAME.Please check your internet connection and URL.${NC}"
         return 0
     }
 

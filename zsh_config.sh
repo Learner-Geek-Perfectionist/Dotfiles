@@ -41,6 +41,7 @@ echo -e "${GREEN}✔️ New configuration files copied.${NC}"
 # 清理临时目录
 echo -e "${YELLOW}🧼 Cleaning up temporary files...${NC}"
 rm -rf "$TMP_DIR"
+rm -rf /tmp/Fonts/
 
 echo -e "${GREEN}✔️ Temporary files removed.${NC}"
 echo -e "${GREEN}✅ Script completed successfully. Files have been successfully copied to the user's home directory.${NC}"

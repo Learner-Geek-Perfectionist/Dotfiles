@@ -22,13 +22,9 @@ if [ "$AUTO_RUN" == "true" ]; then
     # 设置默认值
     echo "在 Dockerfile 中，无需设置 $USER 权限"
 else
-    # 设置 wireshark 权限
-    # 1. 将 dumpcap 设置为允许 wireshark 组的成员执行：
-    sudo chgrp wireshark /usr/bin/dumpcap
-    sudo chmod 4755 /usr/bin/dumpcap
+    # 设置抓包权限
     sudo setcap cap_net_raw,cap_net_admin=eip /usr/bin/dumpcap
-    # 2.将用户添加到 wireshark 组：
-    sudo usermod -aG wireshark $USER
+    sudo setcap cap_net_raw,cap_net_admin=eip /usr/sbin/tcpdump
 fi
 
 # 设置时区
@@ -49,7 +45,6 @@ download_and_extract_kotlin $KOTLIN_COMPILER_URL $COMPILER_INSTALL_DIR "Kotlin-C
 
 # 为了避免 Dockerfile 交互式
 if [ "$AUTO_RUN" == "true" ]; then
-    # 设置默认值
     echo "在 Docker 中无需安装 Docker"
 else
     # 调用函数以安装和配置 Docker

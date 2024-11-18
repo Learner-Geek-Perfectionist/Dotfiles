@@ -22,11 +22,6 @@ LIGHT_BLUE='\033[1;34m'
 DARK_RED='\033[1;31m'
 NC='\033[0m' # 没有颜色
 
-if [ "$AUTO_RUN" = "true" ]; then
-    # 设置默认值
-    answer="n"
-fi
-
 # 加载 packages
 source ./package.sh
 
@@ -47,7 +42,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
     echo -ne "${YELLOW}是否需要创建用户？(y/n): ${NC}"
 
     # 为了避免 Dockerfile 交互式
-    if [ "$AUTO_RUN" = "true" ]; then
+    if [ "$AUTO_RUN" == "true" ]; then
         # 设置默认值
         create_confirm="n"
     fi

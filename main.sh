@@ -46,7 +46,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
         # 设置默认值
         create_confirm="n"
     fi
-    read -p "" create_confirm
+    read  create_confirm
 
     # 主逻辑
     if [[ $create_confirm == 'y' ]]; then

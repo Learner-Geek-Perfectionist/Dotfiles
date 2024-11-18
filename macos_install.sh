@@ -47,7 +47,7 @@ echo -e "\n"
 print_centered_message "准备安装 Kotlin/Native"
 
 # 安装 Kotlin/Native
-install_kotlin_native "macos"
+download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR "Kotlin/Native"
 
 # 安装 brew_formulas 包
 check_and_install_brew_packages "brew_formulas"

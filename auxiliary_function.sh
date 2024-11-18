@@ -68,9 +68,6 @@ download_and_extract_kotlin() {
     fi
 
     echo -e "${GREEN}\n$FILE_NAME has been installed successfully to $TARGET_DIR${NC}"
-    # 清理临时文件
-    sudo rm -rf /tmp/*
-    sudo rm -rf /opt/kotlin-compiler/
 }
 
 # 主安装函数
@@ -363,11 +360,11 @@ install_fonts() {
     fi
 
     # 打印提示消息
-    print_centered_message "正在安装字体......"
+    print_centered_message "正在安装字体......" "true" "false"
 
     # 确认字体源目录存在
     if [ ! -d "$font_source" ]; then
-        echo "字体目录 '$font_source' 不存在，请确认当前目录下有 ${dest_Fonts} 文件夹。"
+        echo "字体目录 '$font_source' 不存在，请确认当前目录下有 ${dest_Fonts} 文件夹。" "false" "true"
         exit 1
     fi
 
@@ -375,7 +372,7 @@ install_fonts() {
     mkdir -p "$font_dest"
 
     # 复制字体文件到目标目录
-    print_centered_message "正在复制字体文件到 $font_dest..."
+    print_centered_message "正在复制字体文件到 $font_dest..." "false" "true"
 
     # 使用 find 来查找字体源目录中的字体文件，排除 README 文件
     find "$font_source" -type f \( -iname "*.ttf" -o -iname "*.otf" \) ! -iname "README*" -exec cp -v {} "$font_dest" \;
@@ -384,50 +381,13 @@ install_fonts() {
     print_centered_message "更新字体缓存..."
     if [ "$OS_TYPE" = "Darwin" ]; then
         # macOS 不需要手动更新字体缓存
-        print_centered_message "\n在 macOS 上，字体缓存将自动更新。\n"
+        print_centered_message "在 macOS 上，字体缓存将自动更新。" "false" "true"
     else
         # Linux
-        print_centered_message "\n在 Linux 上，刷新字体缓存\n"
+        print_centered_message "在 Linux 上，刷新字体缓存" "false" "true"
         fc-cache -fv
     fi
 
     # 打印提示消息
-    print_centered_message "字体安装完成。✅"
+    print_centered_message "字体安装完成。✅" "false" "true"
 }
-
-# 进入目录并复制配置文件到用户的 home 目录的函数
-#copy_config_files_to_home() {
-#    print_centered_message "正在配置......"
-#    local dir_name="${dest_Dotfiles}"
-#    local files_to_copy=(".zshrc" ".zprofile" ".config")
-#    local home_dir="$HOME"
-#
-#    # 删除已有的 zshrc、zprofile 和 config
-#    print_centered_message "检查并删除已有的 .zshrc、.zprofile 和 .config 文件/文件夹..."
-#    for file in ".zshrc" ".zprofile" ".config"; do
-#        if [ -e "$home_dir/$file" ]; then
-#            echo "删除 $home_dir/$file"
-#            rm -rf "$home_dir/$file"
-#        fi
-#    done
-#
-#    # 进入仓库目录
-#    if [ -d "$dir_name" ]; then
-#        echo "已进入 '$dir_name' 目录。"
-#        cd "$dir_name"
-#    else
-#        echo "目录 '$dir_name' 不存在，无法进入。"
-#        return 1 # 返回非零状态表示失败
-#    fi
-#
-#    # 循环遍历每个文件和目录
-#    for item in "${files_to_copy[@]}"; do
-#        if [ -e "$item" ]; then
-#            echo "正在复制 $item 到 $destination"
-#            # 复制文件或目录到 home 目录，如果存在则替换
-#            cp -r "$item" "$destination"
-#        else
-#            echo "$item 不存在，跳过复制。"
-#        fi
-#    done
-#}

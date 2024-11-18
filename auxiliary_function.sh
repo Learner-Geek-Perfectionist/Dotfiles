@@ -255,6 +255,11 @@ set_password_if_needed() {
 # 定义提示头🔔函数
 prompt_download_fonts() {
     echo -ne "${GREEN}是否需要下载字体以支持终端模拟器的渲染？(y/n): ${NC}"
+
+    if [ "$AUTO_RUN" = "true" ]; then
+        return 0
+    fi
+
     read download_confirm
     if [[ $download_confirm == 'y' ]]; then
         print_centered_message "${GREEN}正在下载字体......${NC}"

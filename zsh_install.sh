@@ -25,6 +25,8 @@ echo -e "${RED}‼️ 宿主机一般需要良好的字体支持来确保所有�
 # 加载提示头
 prompt_download_fonts
 
+
+
 # 定义 Dotfiles 和 Fonts 链接
 Dotfiles_REPO_URL="https://github.com/Learner-Geek-Perfectionist/dotfiles/archive/refs/heads/master.zip"
 Fonts_REPO_URL="https://github.com/Learner-Geek-Perfectionist/Fonts/archive/refs/heads/master.zip"

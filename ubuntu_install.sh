@@ -13,13 +13,19 @@ sudo apt update && sudo apt upgrade -y && apt search unminimize 2> /dev/null | g
 echo "wireshark-common wireshark-common/install-setuid boolean true" | sudo debconf-set-selections
 # 以非交互模式安装 Wireshark
 sudo DEBIAN_FRONTEND=noninteractive apt install -y wireshark
-# 设置 wireshark 权限
-# 1. 将 dumpcap 设置为允许 wireshark 组的成员执行：
-sudo chgrp wireshark /usr/bin/dumpcap
-sudo chmod 4755 /usr/bin/dumpcap
-sudo setcap cap_net_raw,cap_net_admin=eip /usr/bin/dumpcap
-# 2.将用户添加到 wireshark 组：
-sudo usermod -aG wireshark $USER
+# 为了避免 Dockerfile 交互式
+if [ "$AUTO_RUN" == "true" ]; then
+    echo "Dockerfile 中无需设置 $USER 权限"
+else
+    # 如果不是自动运行，设置 $USER 权限
+    # 设置 wireshark 权限
+    # 1. 将 dumpcap 设置为允许 wireshark 组的成员执行：
+    sudo chgrp wireshark /usr/bin/dumpcap
+    sudo chmod 4755 /usr/bin/dumpcap
+    sudo setcap cap_net_raw,cap_net_admin=eip /usr/bin/dumpcap
+    # 2.将用户添加到 wireshark 组：
+    sudo usermod -aG wireshark $USER
+fi
 
 # 安装必要的工具 🔧
 sudo apt update && sudo apt upgrade -y

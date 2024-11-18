@@ -76,18 +76,22 @@ elif [[ $(uname -s) == "Linux" ]]; then
         set_password_if_needed "$username" "$default_password"
     fi
 
-    # 赋予用户 sudo 权限
-    if [[ $os_type == "ubuntu" ]]; then
-        sudo usermod -aG sudo "$username"
-    elif [[ $os_type == "fedora" ]]; then
-        sudo usermod -aG wheel "$username"
+    if [ "$AUTO_RUN" == "true" ]; then
+        echo "Dockerfile 中无需设置 $USER 权限"
+    else
+        # 赋予用户 sudo 权限
+        if [[ $os_type == "ubuntu" ]]; then
+            sudo usermod -aG sudo "$username"
+        elif [[ $os_type == "fedora" ]]; then
+            sudo usermod -aG wheel "$username"
+        fi
     fi
 
     # 将用户添加到 sudoers 文件以免输入密码
     echo "$username ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers
     print_centered_message "${LIGHT_BLUE}已配置用户 $username 无需 sudo 密码。${NC}"
 
-    # 根据操作系统设置软件源
+    # 根据操作系统安装......
     if [[ $os_type == "ubuntu" ]]; then
         source ./ubuntu_install.sh
 

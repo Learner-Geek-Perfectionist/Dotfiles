@@ -32,7 +32,7 @@ export LC_ALL=zh_CN.UTF-8
 
 # 设置抓包权限
 sudo setcap cap_net_raw,cap_net_admin=eip /usr/bin/dumpcap
-sudo setcap cap_net_raw,cap_net_admin=eip /usr/sbin/tcpdump
+sudo setcap cap_net_raw,cap_net_admin=eip /usr/bin/tcpdump
 
 # 定义 fzf 的安装目录
 FZF_DIR="$HOME/.fzf"

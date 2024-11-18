@@ -29,7 +29,7 @@ sudo localedef -c -f UTF-8 -i zh_CN zh_CN.UTF-8
 
 # 设置抓包权限
 sudo setcap cap_net_raw,cap_net_admin=eip /usr/bin/dumpcap
-sudo setcap cap_net_raw,cap_net_admin=eip /usr/sbin/tcpdump
+sudo setcap cap_net_raw,cap_net_admin=eip /usr/bin/tcpdump
 
 setup_kotlin_environment
 # 安装 Kotlin/Native 和 Kotlin-Complier

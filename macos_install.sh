@@ -8,46 +8,52 @@ print_centered_message "检测到 macOS 系统"
 # 进入 Documents 目录
 cd $HOME/Documents
 
+# 定义颜色
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m' # 没有颜色
+
 if ! xcode-select --print-path &> /dev/null; then
-    print_centered_message "⚠️ Xcode 命令行工具未安装"
+    print_centered_message "${RED}⚠️ Xcode 命令行工具未安装${NC}"
     xcode-select --install 2> /dev/null
-    # 等待用户完成 Xcode 命令行工具的安装
-    echo -e "请手动点击屏幕中的弹窗，选择“安装”，安装完成之后再次运行脚本(提示命令通常在终端的背面)"
-    echo -e "脚本命令:" "true" "false"
-    echo -e '/bin/zsh -c "$(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/install.sh)"' "false" "true"
+    print_centered_message "${RED}请手动点击屏幕中的弹窗，选择“安装”，安装完成之后再次运行脚本(提示命令通常在终端的背面)${NC}"
+    print_centered_message "${RED}脚本命令: true false${NC}"
+    print_centered_message "${RED}/bin/zsh -c \"$(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/install.sh)\" false true${NC}"
     exit 1
 fi
 
 # 检查 Homebrew 是否已安装
 if command -v brew > /dev/null 2>&1; then
-    print_centered_message "Homebrew 已经安装，跳过安装步骤。"
+    print_centered_message "${GREEN}Homebrew 已经安装，跳过安装步骤。${NC}"
 else
-    print_centered_message "正在安装 Homebrew..."
-    #    /bin/zsh -c "$(curl -fsSL https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh)"
+    print_centered_message "${GREEN}正在安装 Homebrew...${NC}"
     curl -O "https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh"
     chmod +x ./Homebrew.sh
-    ./Homebrew.sh
-    echo -e "\n"
-    print_centered_message "重新加载 .zprofile 文件以启用 brew 环境变量 "
+    source ./Homebrew.sh
+    print_centered_message "${GREEN}重新加载 .zprofile 文件以启用 brew 环境变量 ${NC}"
     # 刷新 brew 配置，启用 brew 环境变量
     source ${HOME}/.zprofile
 fi
 
 [[ -f "./Homebrew.sh" ]] && rm "./Homebrew.sh" && echo "文件已被删除。"
 
-echo -e "为了能顺利安装 Homebrew 的 cask 包，请打开代理软件，否则下载速度很慢（推荐选择香港 🇭🇰  或者 新加坡 🇸🇬  节点，如果速度还是太慢，可以通过客户端查看代理情况）"
-echo -e "如果下载进度条卡住，在代理客户端中，多次切换「全局模式」或者「规则模式」，并且打开 TUN 选项。"
+# 定义颜色
+YELLOW='\033[0;33m'
+GREEN='\033[0;32m'
+NC='\033[0m' # 没有颜色
+
+# 提示开启代理
+echo -e "${YELLOW}为了能顺利安装 Homebrew 的 cask 包，请打开代理软件，否则下载速度很慢（推荐选择香港 🇭🇰  或者 新加坡 🇸🇬  节点，如果速度还是太慢，可以通过客户端查看代理情况）${NC}"
+echo -e "${YELLOW}如果下载进度条卡住，在代理客户端中，多次切换「全局模式」或者「规则模式」，并且打开 TUN 选项。${NC}"
 
 prompt_open_proxy
 
 print_centered_message "正在安装 macOS 常用的开发工具......"
 
-echo -e "\n"
-
 # 安装 brew_formulas 包
 check_and_install_brew_packages "brew_formulas"
 
-print_centered_message "开发工具安装完成✅"
+print_centered_message "${GREEN}开发工具安装完成✅${NC}"
 
 print_centered_message "正在安装 macOS 常用的带图形用户界面的应用程序......"
 
@@ -59,7 +65,7 @@ brew install --cask wireshark
 
 brew cleanup
 
-print_centered_message "图形界面安装完成✅"
+print_centered_message "${GREEN}图形界面安装完成✅"
 
 print_centered_message "准备安装 Kotlin/Native" "true" "false"
 # 安装 Kotlin/Native

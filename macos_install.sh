@@ -12,9 +12,9 @@ if ! xcode-select --print-path &> /dev/null; then
     print_centered_message "⚠️ Xcode 命令行工具未安装"
     xcode-select --install 2> /dev/null
     # 等待用户完成 Xcode 命令行工具的安装
-    print_centered_message "请手动点击屏幕中的弹窗，选择“安装”，安装完成之后再次运行脚本(提示命令通常在终端的背面)"
-    print_centered_message "脚本命令:" "true" "false"
-    print_centered_message '/bin/zsh -c "$(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/install.sh)"' "false" "true"
+    echo -e "请手动点击屏幕中的弹窗，选择“安装”，安装完成之后再次运行脚本(提示命令通常在终端的背面)"
+    echo -e "脚本命令:" "true" "false"
+    echo -e '/bin/zsh -c "$(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/install.sh)"' "false" "true"
     exit 1
 fi
 
@@ -35,8 +35,8 @@ fi
 
 [[ -f "./Homebrew.sh" ]] && rm "./Homebrew.sh" && echo "文件已被删除。" || echo "文件不存在。"
 
-print_centered_message "为了能顺利安装 Homebrew 的 cask 包，请打开代理软件，否则下载速度很慢（推荐选择香港 🇭🇰  或者 新加坡 🇸🇬  节点，如果速度还是太慢，可以通过客户端查看代理情况）" "true" "false"
-print_centered_message "如果下载进度条卡住，在代理客户端中，多次切换「全局模式」或者「规则模式」，并且打开 TUN 选项。" "false" "true"
+echo -e "为了能顺利安装 Homebrew 的 cask 包，请打开代理软件，否则下载速度很慢（推荐选择香港 🇭🇰  或者 新加坡 🇸🇬  节点，如果速度还是太慢，可以通过客户端查看代理情况）" "true" "false"
+echo -e "如果下载进度条卡住，在代理客户端中，多次切换「全局模式」或者「规则模式」，并且打开 TUN 选项。" "false" "true"
 
 prompt_open_proxy
 

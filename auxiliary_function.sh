@@ -179,21 +179,21 @@ install_docker() {
         exit 1
     }
     if [ "$AUTO_RUN" == "true" ]; then
-        echo "Dockerfile 中无需设置 $USER 权限"
+        echo "Dockerfile 中无需设置 $USER 权限以及 systemd 服务"
     else
         echo -e "${BLUE}将当前用户添加到 docker 组...${NC}"
         sudo usermod -aG docker ${USER} || {
             echo -e "${DARK_RED}添加用户到 docker 组失败${NC}"
             exit 1
         }
+        echo -e "${BLUE}启动并设置 Docker 服务开机自启...${NC}"
+        sudo systemctl start docker && sudo systemctl enable docker || {
+            echo -e "${DARK_RED}启动或设置开机自启失败${NC}"
+            exit 1
+        }
+        echo -e "${GREEN}Docker 安装完成。请考虑重新登录或重启以使组设置生效。${NC}"
     fi
 
-    echo -e "${BLUE}启动并设置 Docker 服务开机自启...${NC}"
-    sudo systemctl start docker && sudo systemctl enable docker || {
-        echo -e "${DARK_RED}启动或设置开机自启失败${NC}"
-        exit 1
-    }
-    echo -e "${GREEN}Docker 安装完成。请考虑重新登录或重启以使组设置生效。${NC}"
 }
 
 # Docker 安装和配置函数

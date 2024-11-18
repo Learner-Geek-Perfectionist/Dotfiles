@@ -60,7 +60,7 @@ function unproxy() {
 
 
 # ip 映射到 ip-script
-[[ "$OSTYPE" == "darwin"* ]] && alias ip="$HOME/sh-script/get-my-ip.sh"
+[[ "$(uname)" == "Darwin" ]] && alias ip="$HOME/sh-script/get-my-ip.sh"
 
 # 禁用忽略以空格开头的命令的历史记录功能。
 setopt no_hist_ignore_space

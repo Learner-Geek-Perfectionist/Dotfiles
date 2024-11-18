@@ -6,7 +6,7 @@ echo -e "\n"
 print_centered_message "检测到 macOS 系统"
 
 # 进入 Documents 目录
-cd ~/Documents
+cd $HOME/Documents
 
 if ! xcode-select --print-path &> /dev/null; then
     print_centered_message "⚠️ Xcode 命令行工具未安装"
@@ -44,11 +44,6 @@ print_centered_message "正在安装 macOS 常用的开发工具......"
 
 echo -e "\n"
 
-print_centered_message "准备安装 Kotlin/Native"
-
-# 安装 Kotlin/Native
-download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR "Kotlin/Native"
-
 # 安装 brew_formulas 包
 check_and_install_brew_packages "brew_formulas"
 
@@ -65,6 +60,10 @@ brew install --cask wireshark
 brew cleanup
 
 print_centered_message "图形界面安装完成✅"
+
+print_centered_message "准备安装 Kotlin/Native" "true" "false"
+# 安装 Kotlin/Native
+download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR "Kotlin/Native" "false" "true"
 
 # 通过 UUID 安装 Application，但是目前 macOS 15 sequoia 不支持！
 # print_centered_message "通过 uuid 安装 Application"

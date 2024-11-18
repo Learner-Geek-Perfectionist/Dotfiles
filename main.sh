@@ -45,8 +45,10 @@ elif [[ $(uname -s) == "Linux" ]]; then
     if [ "$AUTO_RUN" == "true" ]; then
         # 设置默认值
         create_confirm="n"
+    else
+        # 如果不是自动运行，读取用户输入
+        read create_confirm
     fi
-    read  create_confirm
 
     # 主逻辑
     if [[ $create_confirm == 'y' ]]; then

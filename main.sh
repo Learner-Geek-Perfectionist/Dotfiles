@@ -65,7 +65,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
     fi
 
     if [ "$AUTO_RUN" == "true" ]; then
-        echo "Dockerfile 中无需设置 $USER 权限"
+        echo "Dockerfile 中无需设置 $(whoami) 权限"
     else
         # 赋予用户 sudo 权限
         if [[ $os_type == "ubuntu" ]]; then

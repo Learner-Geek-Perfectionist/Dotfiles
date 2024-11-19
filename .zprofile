@@ -8,6 +8,7 @@ zmodload zsh/zprof
 # 删除 $HOME 目录下的 .zcompdump 缓存文件
 [[ -f $HOME/.zcompdump ]] && rm "$HOME/.zcompdump" && echo "已成功删除 $HOME/.zcompdump。"
 
+# 添加 homebrew 的环境变量
 if [ -x "/opt/homebrew/bin/brew" ]; then
     eval $(/opt/homebrew/bin/brew shellenv)
 fi

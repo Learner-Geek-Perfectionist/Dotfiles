@@ -102,7 +102,7 @@ download_and_extract_kotlin() {
     fi
 
     # 输出最新的版本号，添加颜色
-    print_centered_message "${LIGHT_BLUE}正在下载 ${FILE_NAME}...... ${NC}" "true" "false"
+    print_centered_message "${LIGHT_BLUE}正在下载 ${FILE_NAME}...... ${NC}" "false" "true"
     echo -e "${CYAN}The Latest Version is ${RED}$LATEST_VERSION${CYAN}${NC}"
     echo -e "${YELLOW}Downloading ${BLUE}$FILE_NAME${YELLOW} from ${MAGENTA}$URL${YELLOW}...${NC}"
 
@@ -166,9 +166,9 @@ check_and_install_brew_packages() {
     # 总结结果
     if [[ ${#uninstalled_packages[@]} -gt 0 ]]; then
         echo "⚠️ 以下包未能成功安装或找到，详情请查看 ${log_file}："
-        printf '🚫 %s\n' "${uninstalled_packages[@]}"
+        printf '🚫 %s\n' "${uninstalled_packages[@]}" "false" "true"
     else
-        print_centered_message "🎉 所有包均已成功处理。"
+        print_centered_message "🎉 所有包均已成功处理。" "false" "true"
     fi
 }
 

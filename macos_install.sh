@@ -17,7 +17,7 @@ fi
 
 # 检查 Homebrew 是否已安装
 if command -v brew > /dev/null 2>&1; then
-    print_centered_message "${GREEN}Homebrew 已经安装，跳过安装步骤。${NC}" "true" "false"
+    print_centered_message "${GREEN}Homebrew 已经安装${NC}" "true" "true"
 else
     print_centered_message "${GREEN}正在安装 Homebrew...${NC}" "true" "false"
     curl -O "https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh"
@@ -29,18 +29,13 @@ else
     [[ -f "./Homebrew.sh" ]] && rm "./Homebrew.sh" && echo "Homebrew.sh 文件已被删除。"
 fi
 
-# 定义颜色
-YELLOW='\033[0;33m'
-GREEN='\033[0;32m'
-NC='\033[0m' # 没有颜色
-
 # 提示开启代理
 echo -e "${YELLOW}为了能顺利安装 Homebrew 的 cask 包，请打开代理软件，否则下载速度很慢（推荐选择香港 🇭🇰  或者 新加坡 🇸🇬  节点，如果速度还是太慢，可以通过客户端查看代理情况）${NC}"
 echo -e "${YELLOW}如果下载进度条卡住，在代理客户端中，多次切换「全局模式」或者「规则模式」，并且打开 TUN 选项。${NC}"
 
 prompt_open_proxy
 
-print_centered_message "正在安装 macOS 常用的开发工具......" "true" "false"
+print_centered_message "${RED}正在安装 macOS 常用的开发工具......${NC}" "true" "false"
 
 # 安装 brew_formulas 包
 check_and_install_brew_packages "brew_formulas"

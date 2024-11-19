@@ -3,3 +3,7 @@
 
 # 删除 $HOME 目录下的 .zcompdump 缓存文件
 [[ -f $HOME/.zcompdump ]] && rm "$HOME/.zcompdump" && echo "已成功删除 $HOME/.zcompdump。"
+
+if [ -x "/opt/homebrew/bin/brew" ]; then
+    eval $(/opt/homebrew/bin/brew shellenv)
+fi

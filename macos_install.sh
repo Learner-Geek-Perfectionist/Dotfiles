@@ -108,3 +108,6 @@ download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR "Kotlin/Native" && p
 #  done
 
 print_centered_message "${GREEN}所有应用安装完成。🎉${NC}"
+
+# 配置 zsh
+source ./zsh_install.sh

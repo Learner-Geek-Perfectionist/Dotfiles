@@ -47,6 +47,11 @@ download_and_extract_kotlin() {
     URL=$1
     TARGET_DIR=$2
     FILE_NAME=$(basename $URL)
+    # 检测 Kotlin 是否已经安装
+    if [ -d "$TARGET_DIR" ]; then
+        print_centered_message "${GREEN} is already installed in $TARGET_DIR.${NC}" "true" "true"
+        return 0
+    fi
 
     # 输出最新的版本号，添加颜色
     print_centered_message "${LIGHT_BLUE}正在下载 ${FILE_NAME}...... ${NC}" "true" "false"
@@ -67,7 +72,7 @@ download_and_extract_kotlin() {
         sudo unzip -o "/tmp/$FILE_NAME" -d $TARGET_DIR
     fi
 
-    echo -e "${GREEN}\n$FILE_NAME has been installed successfully to $TARGET_DIR${NC}"
+    echo -e "${GREEN}$FILE_NAME has been installed successfully to $TARGET_DIR${NC}"
 }
 
 # 设置 kotlin 安装环境

@@ -41,8 +41,8 @@ fi
 INSTALL_DIR="/opt/kotlin-native/"
 COMPILER_INSTALL_DIR="/opt/kotlin-compiler/kotlinc/"
 # 最后统一将 Kotlin/Native 安装路径添加到 PATH
-[[ -n "$INSTALL_DIR" ]] && export PATH="$PATH:/opt/kotlin-native/bin/"
-[[ -n "$COMPILER_INSTALL_DIR" ]] && export PATH="$PATH:/opt/kotlin-compiler/kotlinc/bin/"
+[[ -d "$INSTALL_DIR" ]] && export PATH="$PATH:/opt/kotlin-native/bin/"
+[[ -d "$COMPILER_INSTALL_DIR" ]] && export PATH="$PATH:/opt/kotlin-compiler/kotlinc/bin/"
 
 ## 代理配置
 function proxy() {

@@ -6,11 +6,6 @@ print_centered_message "${CYAN}检测到操作系统为: macOS${NC}" "true" "fal
 # 进入 Documents 目录
 cd $HOME/Documents
 
-# 定义颜色
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-NC='\033[0m' # 没有颜色
-
 if ! xcode-select --print-path &> /dev/null; then
     print_centered_message "${RED}⚠️ Xcode 命令行工具未安装${NC}" "true" "false"
     xcode-select --install 2> /dev/null

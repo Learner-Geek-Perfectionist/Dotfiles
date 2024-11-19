@@ -142,7 +142,7 @@ check_and_install_brew_packages() {
     local installed_packages=($(brew list))
 
     for package in "${packages[@]}"; do
-        echo "🔍 检查是否已安装 ${RED}$package ...${NC}"
+        echo -e "🔍 检查是否已安装 ${RED}$package${NC} ..."
 
         # 直接使用 brew list 检查包是否已安装
         if brew list "$package" &> /dev/null; then

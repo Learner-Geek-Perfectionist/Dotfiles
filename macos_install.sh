@@ -35,7 +35,7 @@ echo -e "${YELLOW}如果下载进度条卡住，在代理客户端中，多次�
 
 prompt_open_proxy
 
-print_centered_message "${RED}正在安装 macOS 常用的开发工具......${NC}" "true" "false"
+print_centered_message "${RED}正在安装 macOS 常用的开发工具......${NC}" "true" "true"
 
 # 安装 brew_formulas 包
 check_and_install_brew_packages "brew_formulas"
@@ -96,7 +96,7 @@ download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR "Kotlin/Native" && p
 #    echo "$app 安装完成"
 #  done
 
-print_centered_message "${GREEN}所有应用安装完成。🎉${NC}"
+print_centered_message "${GREEN}所有应用安装完成。🎉${NC}" "false" "true"
 
 # 配置 zsh
 source ./zsh_install.sh

@@ -31,9 +31,8 @@ else
     print_centered_message "${GREEN}重新加载 .zprofile 文件以启用 brew 环境变量 ${NC}" "false" "true"
     # 刷新 brew 配置，启用 brew 环境变量
     source ${HOME}/.zprofile
+    [[ -f "./Homebrew.sh" ]] && rm "./Homebrew.sh" && echo "Homebrew.sh 文件已被删除。"
 fi
-
-[[ -f "./Homebrew.sh" ]] && rm "./Homebrew.sh" && echo "Homebrew.sh 文件已被删除。"
 
 # 定义颜色
 YELLOW='\033[0;33m'

@@ -1,8 +1,6 @@
 #!/bin/bash
 
 # macOS 逻辑
-echo -e "\n"
-
 print_centered_message "${CYAN}检测到操作系统为: macOS${NC}"
 
 # 进入 Documents 目录
@@ -16,8 +14,8 @@ NC='\033[0m' # 没有颜色
 if ! xcode-select --print-path &> /dev/null; then
     print_centered_message "${RED}⚠️ Xcode 命令行工具未安装${NC}" "true" "false"
     xcode-select --install 2> /dev/null
-    print_centered_message "${RED}请手动点击屏幕中的弹窗，选择“安装”，安装完成之后再次运行脚本(提示命令通常在终端的背面)${NC}" "false" "true"
-    print_centered_message "${RED}脚本命令: ${NC}" "false" "true"
+    print_centered_message "${RED}请手动点击屏幕中的弹窗，选择“安装”，安装完成之后再次运行脚本(提示命令通常在终端的背面)${NC}" "false" "false"
+    echo -e "${RED}脚本命令: ${NC}"
     print_centered_message "${RED}/bin/zsh -c \"$(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/install.sh)\"${NC}" "false" "true"
     exit 1
 fi
@@ -48,14 +46,14 @@ echo -e "${YELLOW}如果下载进度条卡住，在代理客户端中，多次�
 
 prompt_open_proxy
 
-print_centered_message "正在安装 macOS 常用的开发工具......"
+print_centered_message "正在安装 macOS 常用的开发工具......" "true" "false"
 
 # 安装 brew_formulas 包
 check_and_install_brew_packages "brew_formulas"
 
-print_centered_message "${GREEN}开发工具安装完成✅${NC}"
+print_centered_message "${GREEN}开发工具安装完成✅${NC}" "false" "true"
 
-print_centered_message "正在安装 macOS 常用的带图形用户界面的应用程序......"
+print_centered_message "正在安装 macOS 常用的带图形用户界面的应用程序......" "false" "false"
 
 # 安装 brew_casks 包
 check_and_install_brew_packages "brew_casks"
@@ -65,7 +63,7 @@ brew install --cask wireshark
 
 brew cleanup
 
-print_centered_message "${GREEN}图形界面安装完成✅"
+print_centered_message "${GREEN}图形界面安装完成✅" "false" "true"
 
 print_centered_message "准备安装 Kotlin/Native" "true" "false"
 # 安装 Kotlin/Native

@@ -9,18 +9,6 @@ LOG_FILE="install.log"
 # 重定向整个脚本的输出到日志文件，并覆盖之前的日志
 exec > >(tee "$LOG_FILE") 2>&1
 
-# 定义颜色
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-ORANGE='\033[0;93m'
-MAGENTA='\033[0;35m'
-PURPLE='\033[0;35m'
-CYAN='\033[0;36m'
-LIGHT_BLUE='\033[1;34m'
-DARK_RED='\033[1;31m'
-NC='\033[0m' # 没有颜色
 
 # 加载 packages
 source ./package.sh

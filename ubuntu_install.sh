@@ -92,6 +92,6 @@ else
     # 调用函数以安装和配置 Docker
     install_and_configure_docker
 fi
-
+pwd
 # 配置 zsh
 source ./zsh_install.sh

@@ -52,13 +52,13 @@ brew install --cask wireshark
 
 brew cleanup
 
-print_centered_message "${GREEN}图形界面安装完成✅${NC}" "false" "true"
+print_centered_message "${GREEN}图形界面安装完成✅${NC}" "false" "false"
 
 # 设置 Kotlin 的变量
 setup_kotlin_environment
 
 # 安装 Kotlin/Native
-download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR "Kotlin/Native" && print_centered_message "Kotlin/Native 安装完成" "false" "true"
+download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR "Kotlin/Native"
 
 # 通过 UUID 安装 Application，但是目前 macOS 15 sequoia 不支持！
 # print_centered_message "通过 uuid 安装 Application"

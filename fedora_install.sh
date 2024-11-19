@@ -55,6 +55,6 @@ if [ -z "$packages_to_reinstall" ]; then
 else
     sudo dnf -y reinstall $packages_to_reinstall && sudo mandb -c
 fi
-
+pwd
 # 配置 zsh
 source ./zsh_install.sh

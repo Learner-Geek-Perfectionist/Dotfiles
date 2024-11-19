@@ -3,6 +3,12 @@
 # 一旦错误，就退出
 set -e
 
+# 定义全局变量
+KOTLIN_NATIVE_URL=""
+KOTLIN_COMPILER_URL=""
+INSTALL_DIR=""
+COMPILER_INSTALL_DIR=""
+LATEST_VERSION=""
 # 定义打印居中消息的函数
 print_centered_message() {
     local message="$1"
@@ -34,45 +40,9 @@ print_centered_message() {
     fi
 }
 
-LATEST_VERSION=""
 get_latest_version() {
     # 使用 curl 获取 GitHub releases 最新的重定向地址，并且 grep 最新的版本号
     LATEST_VERSION=$(curl -s -L -I https://github.com/JetBrains/kotlin/releases/latest | grep -i location | sed -E 's/.*tag\/(v[0-9\.]+).*/\1/')
-}
-
-KOTLIN_NATIVE_URL=""
-KOTLIN_COMPILER_URL=""
-# 下载和解压函数
-download_and_extract_kotlin() {
-    URL=$1
-    TARGET_DIR=$2
-    FILE_NAME=$(basename $URL)
-    # 检测 Kotlin 是否已经安装
-    if [ -d "$TARGET_DIR" ]; then
-        print_centered_message "${GREEN} is already installed in $TARGET_DIR.${NC}" "true" "true"
-        return 0
-    fi
-
-    # 输出最新的版本号，添加颜色
-    print_centered_message "${LIGHT_BLUE}正在下载 ${FILE_NAME}...... ${NC}" "true" "false"
-    echo -e "${CYAN}The Latest Version is ${RED}$LATEST_VERSION${CYAN}${NC}"
-    echo -e "${YELLOW}Downloading ${BLUE}$FILE_NAME${YELLOW} from ${MAGENTA}$URL${YELLOW}...${NC}"
-
-    # 使用 curl 下载文件，检查 URL 的有效性
-    curl -L -f -s -S "$URL" -o "/tmp/$FILE_NAME" || {
-        echo -e "${RED}❌ Failed to download $FILE_NAME.Please check your internet connection and URL.${NC}"
-        return 0
-    }
-
-    echo -e "${YELLOW}Installing ${GREEN}$FILE_NAME${YELLOW} to ${BLUE}$TARGET_DIR${YELLOW}...${NC}"
-    sudo mkdir -p $TARGET_DIR
-    if [[ $FILE_NAME == *.tar.gz ]]; then
-        sudo tar -xzf "/tmp/$FILE_NAME" -C $TARGET_DIR --strip-components=1 --overwrite
-    elif [[ $FILE_NAME == *.zip ]]; then
-        sudo unzip -o "/tmp/$FILE_NAME" -d $TARGET_DIR
-    fi
-
-    echo -e "${GREEN}$FILE_NAME has been installed successfully to $TARGET_DIR${NC}"
 }
 
 # 设置 kotlin 安装环境
@@ -118,6 +88,39 @@ setup_kotlin_environment() {
     # 构建下载 URL
     KOTLIN_NATIVE_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-native-prebuilt-${SYSTEM_TYPE}-${ARCH}-${LATEST_VERSION#v}.tar.gz"
     KOTLIN_COMPILER_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-compiler-${LATEST_VERSION#v}.zip"
+}
+
+# 下载和解压 Kotlin
+download_and_extract_kotlin() {
+    URL=$1
+    TARGET_DIR=$2
+    FILE_NAME=$(basename $URL)
+    # 检测 Kotlin 是否已经安装
+    if [ -d "$TARGET_DIR" ]; then
+        print_centered_message "${GREEN} is already installed in $TARGET_DIR.${NC}" "true" "true"
+        return 0
+    fi
+
+    # 输出最新的版本号，添加颜色
+    print_centered_message "${LIGHT_BLUE}正在下载 ${FILE_NAME}...... ${NC}" "true" "false"
+    echo -e "${CYAN}The Latest Version is ${RED}$LATEST_VERSION${CYAN}${NC}"
+    echo -e "${YELLOW}Downloading ${BLUE}$FILE_NAME${YELLOW} from ${MAGENTA}$URL${YELLOW}...${NC}"
+
+    # 使用 curl 下载文件，检查 URL 的有效性
+    curl -L -f -s -S "$URL" -o "/tmp/$FILE_NAME" || {
+        echo -e "${RED}❌ Failed to download $FILE_NAME.Please check your internet connection and URL.${NC}"
+        return 0
+    }
+
+    echo -e "${YELLOW}Installing ${GREEN}$FILE_NAME${YELLOW} to ${BLUE}$TARGET_DIR${YELLOW}...${NC}"
+    sudo mkdir -p $TARGET_DIR
+    if [[ $FILE_NAME == *.tar.gz ]]; then
+        sudo tar -xzf "/tmp/$FILE_NAME" -C $TARGET_DIR --strip-components=1 --overwrite
+    elif [[ $FILE_NAME == *.zip ]]; then
+        sudo unzip -o "/tmp/$FILE_NAME" -d $TARGET_DIR
+    fi
+
+    echo -e "${GREEN}$FILE_NAME has been installed successfully to $TARGET_DIR${NC}"
 }
 
 # 定义 packages 安装函数，接受一个包组(packages group)作为参数

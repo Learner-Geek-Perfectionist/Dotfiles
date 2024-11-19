@@ -71,6 +71,7 @@ packages_ubuntu=(
     eza
     hyperfine
     autoconf
+    systemd
 )
 
 #fedora
@@ -117,4 +118,5 @@ packages_fedora=(
     openssl
     hyperfine
     autoconf
+    systemd
 )

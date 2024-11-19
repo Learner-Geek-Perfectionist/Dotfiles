@@ -14,11 +14,11 @@ GREEN='\033[0;32m'
 NC='\033[0m' # 没有颜色
 
 if ! xcode-select --print-path &> /dev/null; then
-    print_centered_message "${RED}⚠️ Xcode 命令行工具未安装${NC}"
+    print_centered_message "${RED}⚠️ Xcode 命令行工具未安装${NC}" "true" "false"
     xcode-select --install 2> /dev/null
-    print_centered_message "${RED}请手动点击屏幕中的弹窗，选择“安装”，安装完成之后再次运行脚本(提示命令通常在终端的背面)${NC}"
-    print_centered_message "${RED}脚本命令: true false${NC}"
-    print_centered_message "${RED}/bin/zsh -c \"$(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/install.sh)\" false true${NC}"
+    print_centered_message "${RED}请手动点击屏幕中的弹窗，选择“安装”，安装完成之后再次运行脚本(提示命令通常在终端的背面)${NC}" "false" "true"
+    print_centered_message "${RED}脚本命令: ${NC}" "false" "true"
+    print_centered_message "${RED}/bin/zsh -c \"$(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/install.sh)\"${NC}" "false" "true"
     exit 1
 fi
 
@@ -26,16 +26,16 @@ fi
 if command -v brew > /dev/null 2>&1; then
     print_centered_message "${GREEN}Homebrew 已经安装，跳过安装步骤。${NC}"
 else
-    print_centered_message "${GREEN}正在安装 Homebrew...${NC}"
+    print_centered_message "${GREEN}正在安装 Homebrew...${NC}" "true" "false"
     curl -O "https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh"
     chmod +x ./Homebrew.sh
     source ./Homebrew.sh
-    print_centered_message "${GREEN}重新加载 .zprofile 文件以启用 brew 环境变量 ${NC}"
+    print_centered_message "${GREEN}重新加载 .zprofile 文件以启用 brew 环境变量 ${NC}" "false" "true"
     # 刷新 brew 配置，启用 brew 环境变量
     source ${HOME}/.zprofile
 fi
 
-[[ -f "./Homebrew.sh" ]] && rm "./Homebrew.sh" && echo "文件已被删除。"
+[[ -f "./Homebrew.sh" ]] && rm "./Homebrew.sh" && echo "Homebrew.sh 文件已被删除。"
 
 # 定义颜色
 YELLOW='\033[0;33m'
@@ -69,7 +69,7 @@ print_centered_message "${GREEN}图形界面安装完成✅"
 
 print_centered_message "准备安装 Kotlin/Native" "true" "false"
 # 安装 Kotlin/Native
-download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR "Kotlin/Native" "false" "true"
+download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR "Kotlin/Native" && print_centered_message "Kotlin/Native 安装完成" "false" "true"
 
 # 通过 UUID 安装 Application，但是目前 macOS 15 sequoia 不支持！
 # print_centered_message "通过 uuid 安装 Application"

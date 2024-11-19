@@ -1,3 +1,7 @@
+# 加载 zprof 模块，分析 Zsh 脚本的性能。 执行 zprof 命令。
+zmodload zsh/zprof
+
+
 # 删除 Apple Terminal 的 .zsh_sessions 文件
 [[ -e "$HOME/.zsh_sessions" ]] && rm -r "$HOME/.zsh_sessions" && echo "已成功删除 $HOME/.zsh_sessions。"
 

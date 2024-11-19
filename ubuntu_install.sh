@@ -76,6 +76,7 @@ else
     echo "fastfetch 安装完成。"
 fi
 
+# 设置 Kotlin 的变量
 setup_kotlin_environment
 # 安装 Kotlin/Native
 download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR

@@ -31,6 +31,7 @@ sudo localedef -c -f UTF-8 -i zh_CN zh_CN.UTF-8
 sudo setcap cap_net_raw,cap_net_admin=eip /usr/bin/dumpcap
 sudo setcap cap_net_raw,cap_net_admin=eip /usr/sbin/tcpdump
 
+# 设置 Kotlin 的变量
 setup_kotlin_environment
 # 安装 Kotlin/Native 和 Kotlin-Complier
 download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR

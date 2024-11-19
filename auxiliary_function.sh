@@ -166,7 +166,7 @@ check_and_install_brew_packages() {
     # 总结结果
     if [[ ${#uninstalled_packages[@]} -gt 0 ]]; then
         echo "⚠️ 以下包未能成功安装或找到，详情请查看 ${log_file}："
-        printf '🚫 %s\n' "${uninstalled_packages[@]}" "false" "true"
+        printf '🚫 %s\n' "${uninstalled_packages[@]}"
     else
         print_centered_message "🎉 所有包均已成功处理。" "false" "true"
     fi

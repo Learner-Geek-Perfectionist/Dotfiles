@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # macOS 逻辑
-print_centered_message "${CYAN}检测到操作系统为: macOS${NC}"
+print_centered_message "${CYAN}检测到操作系统为: macOS${NC}" "true" "false"
 
 # 进入 Documents 目录
 cd $HOME/Documents
@@ -22,7 +22,7 @@ fi
 
 # 检查 Homebrew 是否已安装
 if command -v brew > /dev/null 2>&1; then
-    print_centered_message "${GREEN}Homebrew 已经安装，跳过安装步骤。${NC}"
+    print_centered_message "${GREEN}Homebrew 已经安装，跳过安装步骤。${NC}" "true" "false"
 else
     print_centered_message "${GREEN}正在安装 Homebrew...${NC}" "true" "false"
     curl -O "https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh"

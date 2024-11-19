@@ -73,14 +73,14 @@ zstyle ':fzf-tab:complete:_zlua:*' query-string input
 zstyle ':fzf-tab:complete:kill:argument-rest' fzf-preview 'ps --pid=$word -o cmd --no-headers -w -w'
 zstyle ':fzf-tab:complete:kill:argument-rest' fzf-flags '--preview-window=down:3:wrap'
 zstyle ':fzf-tab:complete:kill:*' popup-pad 0 3
-zstyle ':fzf-tab:complete:cd:*' fzf-preview 'exa -1 --color=always $realpath'
+zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --color=always $realpath'
 zstyle ':fzf-tab:complete:cd:*' popup-pad 30 0
 zstyle ":fzf-tab:*" fzf-flags --color=bg+:23
 zstyle ':fzf-tab:*' fzf-command ftb-tmux-popup
 zstyle ':fzf-tab:*' switch-group ',' '.'
 zstyle ":completion:*:git-checkout:*" sort false
 zstyle ':completion:*' file-sort modification
-zstyle ':completion:*:exa' sort false
+zstyle ':completion:*:eza' sort false
 zstyle ':completion:files' sort false
 
 # 添加 _fzf 补全函数 
@@ -113,8 +113,8 @@ zinit ice wait lucid depth=1;zinit light zdharma-continuum/fast-syntax-highlight
 # 	•	设置 kill 命令的 fzf 预览窗口的样式，使其显示在下方、高度为 3 行，并允许文本换行。
 # 	4.	zstyle ‘:fzf-tab:complete:kill:*’ popup-pad 0 3
 # 	•	设置 kill 命令的弹出补全菜单的内边距为上下 0 行、左右 3 字符。
-# 	5.	zstyle ‘:fzf-tab:complete:cd:*’ fzf-preview ‘exa -1 –color=always $realpath’
-# 	•	对于 cd 命令的补全，设置一个预览窗口来显示 exa 命令（一个现代化的 ls 替代品）的输出，其中 $realpath 是补全候选的实际路径。
+# 	5.	zstyle ‘:fzf-tab:complete:cd:*’ fzf-preview ‘eza -1 –color=always $realpath’
+# 	•	对于 cd 命令的补全，设置一个预览窗口来显示 eza 命令（一个现代化的 ls 替代品）的输出，其中 $realpath 是补全候选的实际路径。
 # 	6.	zstyle ‘:fzf-tab:complete:cd:*’ popup-pad 30 0
 # 	•	设置 cd 命令的弹出补全菜单的内边距为上下 30 行、左右 0 字符。
 # 	7.	zstyle “:fzf-tab:*” fzf-flags –color=bg+:23
@@ -127,8 +127,8 @@ zinit ice wait lucid depth=1;zinit light zdharma-continuum/fast-syntax-highlight
 # 	•	禁用对 git checkout 命令的补全结果排序。
 # 	11.	zstyle ‘:completion:*’ file-sort modification
 # 	•	设置文件补全的排序方式为按修改时间。
-# 	12.	zstyle ‘:completion:*:exa’ sort false
-# 	•	禁用对 exa 命令的补全结果排序。
+# 	12.	zstyle ‘:completion:*:eza’ sort false
+# 	•	禁用对 eza 命令的补全结果排序。
 # 	13.	zstyle ‘:completion:files’ sort false
 # 	•	禁用对文件补全结果的排序。
 

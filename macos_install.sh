@@ -23,11 +23,11 @@ else
     print_centered_message "${GREEN}重新加载 .zprofile 文件以启用 brew 环境变量 ${NC}" "false" "true"
     # 刷新 brew 配置，启用 brew 环境变量
     source ${HOME}/.zprofile
-    [[ -f "./Homebrew.sh" ]] && rm "./Homebrew.sh" && echo "Homebrew.sh 文件已被删除。"
+    [[ -f "$HOME/Documents/Homebrew.sh" ]] && rm "$HOME/Documents/Homebrew.sh" && echo "$HOME/Documents/Homebrew.sh 文件已被删除。"
 fi
 
 # 提示开启代理
-echo -e "${YELLOW}为了能顺利安装 Homebrew 的 cask 包，请打开代理软件，否则下载速度很慢（推荐选择香港 🇭🇰  或者 新加坡 🇸🇬  节点，如果速度还是太慢，可以通过客户端查看代理情况）${NC}"
+echo -e "${YELLOW}为了能顺利安装 Homebrew 的 cask 包，请打开代理软件，否则下载速度很慢（推荐选择香港 🇭🇰 或者 新加坡 🇸🇬 节点，如果速度还是太慢，可以通过客户端查看代理情况）${NC}"
 echo -e "${YELLOW}如果下载进度条卡住，在代理客户端中，多次切换「全局模式」或者「规则模式」，并且打开 TUN 选项。${NC}"
 
 prompt_open_proxy
@@ -39,7 +39,7 @@ check_and_install_brew_packages "brew_formulas"
 
 print_centered_message "${GREEN}开发工具安装完成✅${NC}" "false" "true"
 
-print_centered_message "正在安装 macOS 常用的带图形用户界面的应用程序......" "false" "false"
+print_centered_message "${RED}正在安装 macOS 常用的带图形用户界面的应用程序......${NC}" "false" "true"
 
 # 安装 brew_casks 包
 check_and_install_brew_packages "brew_casks"

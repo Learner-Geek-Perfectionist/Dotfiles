@@ -92,6 +92,6 @@ else
     # 调用函数以安装和配置 Docker
     install_and_configure_docker
 fi
-pwd
+echo -e "${RED}当前目录: $(pwd) ${NC}"
 # 配置 zsh
 source ./zsh_install.sh

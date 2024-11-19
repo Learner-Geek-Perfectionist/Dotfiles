@@ -3,9 +3,6 @@
 # macOS 逻辑
 print_centered_message "${CYAN}检测到操作系统为: macOS${NC}" "true" "false"
 
-# 进入 Documents 目录
-cd $HOME/Documents
-
 if ! xcode-select --print-path &> /dev/null; then
     print_centered_message "${RED}⚠️ Xcode 命令行工具未安装${NC}" "true" "false"
     xcode-select --install 2> /dev/null
@@ -20,9 +17,9 @@ if command -v brew > /dev/null 2>&1; then
     print_centered_message "${GREEN}Homebrew 已经安装${NC}" "true" "true"
 else
     print_centered_message "${GREEN}正在安装 Homebrew...${NC}" "true" "false"
-    curl -O "https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh"
-    chmod +x ./Homebrew.sh
-    source ./Homebrew.sh
+    curl -o $HOME/Documents/Homebrew.sh "https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh"
+    chmod +x $HOME/Documents/Homebrew.sh
+    source $HOME/Documents/Homebrew.sh
     print_centered_message "${GREEN}重新加载 .zprofile 文件以启用 brew 环境变量 ${NC}" "false" "true"
     # 刷新 brew 配置，启用 brew 环境变量
     source ${HOME}/.zprofile
@@ -52,7 +49,7 @@ brew install --cask wireshark
 
 brew cleanup
 
-print_centered_message "${GREEN}图形界面安装完成✅${NC}" "false" "false"
+print_centered_message "${GREEN}图形界面安装完成✅${NC}" "true" "false"
 
 # 设置 Kotlin 的变量
 setup_kotlin_environment
@@ -99,6 +96,6 @@ download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR "Kotlin/Native"
 #  done
 
 print_centered_message "${GREEN}所有应用安装完成。🎉${NC}" "false" "true"
-pwd
+echo -e "${RED}当前目录: $(pwd) ${NC}"
 # 配置 zsh
 source ./zsh_install.sh

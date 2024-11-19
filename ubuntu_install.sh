@@ -78,7 +78,7 @@ fi
 
 setup_kotlin_environment
 # 安装 Kotlin/Native
-download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR "Kotlin/Native"
+download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR
 
 # 搜索可用的 OpenJDK 包并尝试获取最新版本
 jdk_version=$(apt search openjdk | grep -oP 'openjdk-\d+-jdk' | sort -V | tail -n1)

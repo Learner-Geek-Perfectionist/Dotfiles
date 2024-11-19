@@ -46,11 +46,10 @@ KOTLIN_COMPILER_URL=""
 download_and_extract_kotlin() {
     URL=$1
     TARGET_DIR=$2
-    NAME=$3
     FILE_NAME=$(basename $URL)
 
     # 输出最新的版本号，添加颜色
-    print_centered_message "${LIGHT_BLUE}正在下载 ${NAME}...... ${NC}" "true" "false"
+    print_centered_message "${LIGHT_BLUE}正在下载 ${FILE_NAME}...... ${NC}" "true" "false"
     echo -e "${CYAN}The Latest Version is ${RED}$LATEST_VERSION${CYAN}${NC}"
     echo -e "${YELLOW}Downloading ${BLUE}$FILE_NAME${YELLOW} from ${MAGENTA}$URL${YELLOW}...${NC}"
 

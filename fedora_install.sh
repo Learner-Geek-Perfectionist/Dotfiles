@@ -33,9 +33,9 @@ sudo setcap cap_net_raw,cap_net_admin=eip /usr/sbin/tcpdump
 
 setup_kotlin_environment
 # 安装 Kotlin/Native 和 Kotlin-Complier
-download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR "Kotlin/Native"
+download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR
 
-download_and_extract_kotlin $KOTLIN_COMPILER_URL $COMPILER_INSTALL_DIR "Kotlin-Complier"
+download_and_extract_kotlin $KOTLIN_COMPILER_URL $COMPILER_INSTALL_DIR
 
 # 为了避免 Dockerfile 交互式
 if [ "$AUTO_RUN" == "true" ]; then

@@ -63,9 +63,9 @@ brew install --cask wireshark
 
 brew cleanup
 
-print_centered_message "${GREEN}图形界面安装完成✅" "false" "true"
+print_centered_message "${GREEN}图形界面安装完成✅${NC}" "false" "true"
 
-print_centered_message "准备安装 Kotlin/Native" "true" "false"
+print_centered_message "准备安装 Kotlin/Native" "false" "false"
 # 安装 Kotlin/Native
 download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR "Kotlin/Native" && print_centered_message "Kotlin/Native 安装完成" "false" "true"
 
@@ -107,4 +107,4 @@ download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR "Kotlin/Native" && p
 #    echo "$app 安装完成"
 #  done
 
-print_centered_message "所有应用安装完成。"
+print_centered_message "${GREEN}所有应用安装完成。🎉${NC}"

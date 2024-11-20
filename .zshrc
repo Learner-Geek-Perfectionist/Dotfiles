@@ -22,6 +22,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
     export PATH="/Applications/CLion.app/Contents/MacOS:$PATH"
     export PATH="/Applications/PyCharm.app/Contents/MacOS:$PATH"
     export PATH="/Applications/IntelliJ IDEA.app/Contents/MacOS:$PATH"
+    export PATH="/opt/homebrew/anaconda3/bin:$PATH"
     export HOMEBREW_NO_ENV_HINTS=1
     
 elif [[ -f /etc/os-release ]]; then

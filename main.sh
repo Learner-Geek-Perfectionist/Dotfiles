@@ -9,7 +9,6 @@ LOG_FILE="install.log"
 # 重定向整个脚本的输出到日志文件，并覆盖之前的日志
 exec > >(tee "$LOG_FILE") 2>&1
 
-
 # 加载 packages
 source ./package.sh
 
@@ -89,6 +88,11 @@ elif [[ $(uname -s) == "Linux" ]]; then
     else
         print_centered_message "${RED}不支持的发行版，目前只支持 fedora、ubuntu${NC}"
     fi
+
+    # 设置抓包权限
+    sudo setcap cap_net_raw,cap_net_admin=eip $(which tshrak)
+    sudo setcap cap_net_raw,cap_net_admin=eip $(which tcpdump)
+    sudo setcap cap_net_raw,cap_net_admin=eip $(which dumpcap)
 
 else
     echo -e "${MAGENTA}未知的操作系统类型${NC}"

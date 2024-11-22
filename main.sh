@@ -90,7 +90,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
     fi
 
     # 设置抓包权限
-    sudo setcap cap_net_raw,cap_net_admin=eip $(which tshrak)
+    sudo setcap cap_net_raw,cap_net_admin=eip $(which tshark)
     sudo setcap cap_net_raw,cap_net_admin=eip $(which tcpdump)
     sudo setcap cap_net_raw,cap_net_admin=eip $(which dumpcap)
     # 修改默认的登录 shell 为 zsh

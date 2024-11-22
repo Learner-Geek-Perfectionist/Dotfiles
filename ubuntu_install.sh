@@ -17,11 +17,6 @@ sudo apt update && sudo apt upgrade -y
 # 安装必要的工具 🔧
 install_packages "packages_ubuntu"
 
-# 设置 Debconf，允许非root用户捕获数据包
-echo "wireshark-common wireshark-common/install-setuid boolean true" | sudo debconf-set-selections
-# 以非交互模式安装 Wireshark
-sudo DEBIAN_FRONTEND=noninteractive apt install -y wireshark
-
 # 设置时区
 sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 echo "Asia/Shanghai" | sudo tee /etc/timezone > /dev/null

@@ -7,9 +7,9 @@ set -e
 sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list
 
 # 取消最小化安装
-sudo apt update -y && sudo apt upgrade -y && sudo apt search unminimize 2> /dev/null | grep -q "^unminimize/" && (sudo apt install unminimize -y && yes | sudo unminimize) || echo "${RED}unminimize包不可用。${NC}"
+sudo apt update -y && sudo apt upgrade -y && sudo apt search unminimize 2> /dev/null | grep -q "^unminimize/" && (sudo apt install unminimize -y && yes | sudo unminimize) || echo -e "${RED}unminimize包不可用。${NC}"
 # 在 oracular (24.10)  之后的 Ubuntu 发行版才有 eza
-sudo apt update -y && sudo apt upgrade -y && sudo apt search eza 2> /dev/null | grep -q "^eza/" && (sudo apt install eza -y) || echo "${RED}eza包不可用。${NC}"
+sudo apt update -y && sudo apt upgrade -y && sudo apt search eza 2> /dev/null | grep -q "^eza/" && (sudo apt install eza -y) || echo -e "${RED}eza包不可用。${NC}"
 
 # 更新索引
 sudo apt update && sudo apt upgrade -y

@@ -13,7 +13,7 @@ sudo apt update -y && sudo apt upgrade -y && sudo apt search unminimize 2> /dev/
 sudo apt update && sudo apt upgrade -y
 
 # 安装必要的工具 🔧
-install_packages
+install_packages "${packages_ubuntu}"
 
 # 设置 Debconf，允许非root用户捕获数据包
 echo "wireshark-common wireshark-common/install-setuid boolean true" | sudo debconf-set-selections

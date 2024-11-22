@@ -17,8 +17,6 @@ sudo DEBIAN_FRONTEND=noninteractive apt install -y fastfetch
 # 取消最小化安装
 sudo apt update -y && sudo apt upgrade -y && sudo apt search unminimize 2> /dev/null | grep -q "^unminimize/" && (sudo apt install unminimize -y && yes | sudo unminimize) || echo -e "${RED}unminimize包不可用。${NC}"
 # 在 oracular (24.10)  之后的 Ubuntu 发行版才有 eza
-# 安装 eza
-cargo install eza
 
 # 更新索引
 sudo apt update && sudo apt upgrade -y
@@ -53,6 +51,9 @@ else
     yes | $FZF_DIR/install --no-update-rc
     echo -e "${RED}fzf 安装完成。${NC}"
 fi
+
+# 安装 eza
+cargo install eza
 
 # 设置 Kotlin 的变量
 setup_kotlin_environment

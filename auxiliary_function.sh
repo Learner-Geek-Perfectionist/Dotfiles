@@ -177,10 +177,11 @@ install_packages() {
 
     # 筛选出尚未安装的包
     for package in "${packages[@]}"; do
-        if [[ ! " $installed_packages " =~ " $package " ]]; then
+        if ! grep -q -w "^$package$" <<< "$installed_packages"; then
             uninstalled_packages+=("$package")
         fi
     done
+
 
     # 如果未安装包的数组为空，打印消息并返回
     if [[ ${#uninstalled_packages[@]} -eq 0 ]]; then

@@ -196,7 +196,7 @@ install_packages() {
     
     # 一次性安装所有未安装的包
     print_centered_message "${LIGHT_BLUE}Installing ${#uninstalled_packages[@]} packages...${NC}"
-    $package_manager install -y "${uninstalled_packages[@]}"
+    sudo $package_manager install -y "${uninstalled_packages[@]}"
 }
 
 

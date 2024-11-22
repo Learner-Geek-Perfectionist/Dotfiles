@@ -90,9 +90,10 @@ elif [[ $(uname -s) == "Linux" ]]; then
     fi
 
     # 设置抓包权限
-    sudo chmod u+s $(which tshark)
+    
     sudo chmod u+s $(which tcpdump)
     sudo chmod u+s $(which dumpcap)
+    sudo chmod u+s $(which tshark)
 
     # 修改默认的登录 shell 为 zsh
     [[ $SHELL != */zsh ]] && echo "修改默认的 shell 为 zsh " && sudo chsh -s $(which zsh)

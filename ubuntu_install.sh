@@ -27,7 +27,6 @@ sudo dpkg-reconfigure --frontend noninteractive tzdata
 
 # 设置地区
 sudo locale-gen zh_CN.UTF-8
-
 # 设置默认的语言环境
 export LANG=zh_CN.UTF-8
 export LC_ALL=zh_CN.UTF-8

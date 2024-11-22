@@ -230,19 +230,17 @@ install_packages() {
             echo "- $package"
         done
     fi
-    
-    
-
-        
 
     # 一次性安装所有未安装的包
     print_centered_message "${LIGHT_BLUE}Installing ${#uninstalled_packages[@]} packages...${NC}"
-    if $package_manager install -y "${uninstalled_packages[@]}" >> "$log_file" 2>&1; then
-        print_centered_message "🎉 ${GREEN}All new packages have been successfully installed.${NC}"
-    else
-        print_centered_message "⚠️ ${RED}Some packages failed to install. Check the log at $log_file for details.${NC}"
-        parse_installation_log "$log_file" "${uninstalled_packages[@]}"
-    fi
+    $package_manager install -y "${uninstalled_packages[@]}
+    
+    # if $package_manager install -y "${uninstalled_packages[@]}" >> "$log_file" 2>&1; then
+    #     print_centered_message "🎉 ${GREEN}All new packages have been successfully installed.${NC}"
+    # else
+    #     print_centered_message "⚠️ ${RED}Some packages failed to install. Check the log at $log_file for details.${NC}"
+    #     parse_installation_log "$log_file" "${uninstalled_packages[@]}"
+    # fi
 }
 
 

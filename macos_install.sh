@@ -35,14 +35,14 @@ prompt_open_proxy
 print_centered_message "${RED}正在安装 macOS 常用的开发工具......${NC}" "true" "true"
 
 # 安装 brew_formulas 包
-check_and_install_brew_packages "brew_formulas"
+install_packages "brew_formulas"
 
 print_centered_message "${GREEN}开发工具安装完成✅${NC}" "false" "true"
 
 print_centered_message "${RED}正在安装 macOS 常用的带图形用户界面的应用程序......${NC}" "false" "true"
 
 # 安装 brew_casks 包
-check_and_install_brew_packages "brew_casks"
+install_packages "brew_casks"
 
 # 安装 wireshark --cask 工具，因为 wireshark 既有命令行版本又有 cask 版本，因此手动加上 --cask 参数
 brew install --cask wireshark

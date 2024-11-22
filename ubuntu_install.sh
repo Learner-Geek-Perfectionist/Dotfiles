@@ -43,7 +43,7 @@ if command -v fzf > /dev/null 2>&1; then
     # 目录存在，跳过安装
     echo -e  "${GREEN}fzf 已安装，跳过安装。${NC}"
 else
-    [ -d "$FZF_DIR" ] && rm -rf "$FZF_DIR"
+    [[ -d "$FZF_DIR" ]] && rm -rf "$FZF_DIR"
 
     # 目录不存在，克隆并安装 fzf
     echo -e "${RED}正在安装 fzf...${NC}"

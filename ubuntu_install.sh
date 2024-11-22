@@ -9,14 +9,16 @@ sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 htt
 # 取消最小化安装
 sudo apt update -y && sudo apt upgrade -y && sudo apt search unminimize 2> /dev/null | grep -q "^unminimize/" && (sudo apt install unminimize -y && yes | sudo unminimize) || echo "unminimize包不可用。"
 
+# 更新索引
+sudo apt update && sudo apt upgrade -y
+
+# 安装必要的工具 🔧
+install_packages
+
 # 设置 Debconf，允许非root用户捕获数据包
 echo "wireshark-common wireshark-common/install-setuid boolean true" | sudo debconf-set-selections
 # 以非交互模式安装 Wireshark
 sudo DEBIAN_FRONTEND=noninteractive apt install -y wireshark
-
-# 安装必要的工具 🔧
-sudo apt update && sudo apt upgrade -y
-sudo apt install -y "${packages_ubuntu[@]}"
 
 # 设置时区
 sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
@@ -29,6 +31,7 @@ sudo locale-gen zh_CN.UTF-8
 # 设置默认的语言环境
 export LANG=zh_CN.UTF-8
 export LC_ALL=zh_CN.UTF-8
+
 
 # 定义 fzf 的安装目录
 FZF_DIR="$HOME/.fzf"

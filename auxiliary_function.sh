@@ -9,6 +9,7 @@ KOTLIN_COMPILER_URL=""
 INSTALL_DIR=""
 COMPILER_INSTALL_DIR=""
 LATEST_VERSION=""
+
 # 定义打印居中消息的函数
 print_centered_message() {
     local message="$1"
@@ -123,7 +124,6 @@ download_and_extract_kotlin() {
     echo -e "${GREEN}$FILE_NAME has been installed successfully to $TARGET_DIR${NC}"
 }
 
-
 # 获取系统类型和相应的包管理器命令
 detect_package_manager() {
     case "$(uname -s)" in
@@ -145,48 +145,11 @@ detect_package_manager() {
     esac
 }
 
-# 解析安装日志以确定失败的原因
-parse_installation_log() {
-    local log_file="$1"
-    shift  # 移除第一个参数（日志文件路径），使得后续参数（包名）可以遍历
-
-    local failed_packages=()
-    local unavailable_packages=()
-
-    # 现在 $@ 包含除日志文件路径外的所有包
-    for package in "$@"; do
-        # 使用grep搜索特定的失败模式
-        if grep -q "Error: No available formula for $package" "$log_file"; then
-            unavailable_packages+=("$package")
-        elif grep -q "Error:" "$log_file"; then
-            failed_packages+=("$package")
-        fi
-    done
-
-    # 打印不可用的包
-    if [[ ${#unavailable_packages[@]} -gt 0 ]]; then
-        echo -e "${YELLOW}The following packages are not available and were not installed:${NC}"
-        for pkg in "${unavailable_packages[@]}"; do
-            echo -e "${RED}- $pkg${NC}"
-        done
-    fi
-
-    # 打印安装失败的包
-    if [[ ${#failed_packages[@]} -gt 0 ]]; then
-        echo -e "${YELLOW}The following packages failed to install:${NC}"
-        for pkg in "${failed_packages[@]}"; do
-            echo -e "${RED}- $pkg${NC}"
-        done
-    fi
-}
-
 # 主函数
 install_packages() {
     local package_manager=$(detect_package_manager)
     local package_group_name="$1"
     local packages
-    local timestamp=$(date +"%Y%m%d_%H%M%S")
-    local log_file="${HOME}/package_install_logs/failed_to_install_$timestamp.txt"
     local uninstalled_packages=()
 
     # 确保日志目录存在
@@ -230,17 +193,10 @@ install_packages() {
             echo "- $package"
         done
     fi
-
+    
     # 一次性安装所有未安装的包
     print_centered_message "${LIGHT_BLUE}Installing ${#uninstalled_packages[@]} packages...${NC}"
-    $package_manager install -y "${uninstalled_packages[@]}
-    
-    # if $package_manager install -y "${uninstalled_packages[@]}" >> "$log_file" 2>&1; then
-    #     print_centered_message "🎉 ${GREEN}All new packages have been successfully installed.${NC}"
-    # else
-    #     print_centered_message "⚠️ ${RED}Some packages failed to install. Check the log at $log_file for details.${NC}"
-    #     parse_installation_log "$log_file" "${uninstalled_packages[@]}"
-    # fi
+    $package_manager install -y "${uninstalled_packages[@]}"
 }
 
 

@@ -19,9 +19,9 @@ sudo apt update -y && sudo apt upgrade -y && sudo apt search unminimize 2> /dev/
 # 在 oracular (24.10)  之后的 Ubuntu 发行版才有 eza
 # 安装 eza
 cargo install eza
+
 # 更新索引
 sudo apt update && sudo apt upgrade -y
-
 # 安装必要的工具 🔧
 install_packages "packages_ubuntu"
 

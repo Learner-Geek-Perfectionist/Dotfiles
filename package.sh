@@ -67,6 +67,7 @@ packages_ubuntu=(
     locales
     man-db
     jq
+    wireshark
     tshark
     hyperfine
     autoconf

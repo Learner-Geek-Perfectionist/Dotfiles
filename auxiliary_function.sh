@@ -145,6 +145,41 @@ detect_package_manager() {
     esac
 }
 
+# 解析安装日志以确定失败的原因
+parse_installation_log() {
+    local log_file="$1"
+    shift  # 移除第一个参数（日志文件路径），使得后续参数（包名）可以遍历
+
+    local failed_packages=()
+    local unavailable_packages=()
+
+    # 现在 $@ 包含除日志文件路径外的所有包
+    for package in "$@"; do
+        # 使用grep搜索特定的失败模式
+        if grep -q "Error: No available formula for $package" "$log_file"; then
+            unavailable_packages+=("$package")
+        elif grep -q "Error:" "$log_file"; then
+            failed_packages+=("$package")
+        fi
+    done
+
+    # 打印不可用的包
+    if [[ ${#unavailable_packages[@]} -gt 0 ]]; then
+        echo -e "${YELLOW}The following packages are not available and were not installed:${NC}"
+        for pkg in "${unavailable_packages[@]}"; do
+            echo -e "${RED}- $pkg${NC}"
+        done
+    fi
+
+    # 打印安装失败的包
+    if [[ ${#failed_packages[@]} -gt 0 ]]; then
+        echo -e "${YELLOW}The following packages failed to install:${NC}"
+        for pkg in "${failed_packages[@]}"; do
+            echo -e "${RED}- $pkg${NC}"
+        done
+    fi
+}
+
 # 主函数
 install_packages() {
     local package_manager=$(detect_package_manager)

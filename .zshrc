@@ -33,8 +33,9 @@ elif [[ -f /etc/os-release ]]; then
 
     # 检查是否是 Ubuntu 系统
     if grep -q 'ID=ubuntu' /etc/os-release; then
-        # 对于 Ubuntu 系统，添加 fzf 的环境变量
+        # 对于 Ubuntu 系统，添加 fzf、eza 的环境变量
         export PATH="$HOME/.fzf/bin:$PATH"
+        export PATH="$HOME/.cargo/bin:$PATH"
     fi
 fi
 

@@ -234,14 +234,13 @@ install_and_configure_docker() {
     # 检查是否在 WSL2 中运行
     if grep -qi microsoft /proc/version; then
         echo -e "${YELLOW}在 WSL2 环境中运行${NC}"
-        if command -v docker > /dev/null; then
-            if [ "$(docker context show 2> /dev/null)" = "desktop-windows" ]; then
-                echo -e "${YELLOW}检测到 Docker 运行在 Windows Docker Desktop 上。${NC}"
-                echo -e "${YELLOW}准备在 WSL2 中安装独立的 Docker 版本...${NC}"
-                install_docker
-            else
-                echo -e "${GREEN}Docker 已安装在 WSL2 中，跳过安装步骤。${NC}"
-            fi
+        docker_path=$(command -v docker)
+        if [ -n "$docker_path" ] && [[ "$docker_path" == "/mnt/c/"* ]]; then
+            echo -e "${YELLOW}检测到 Docker 运行在 Windows Docker Desktop 上。${NC}"
+            echo -e "${YELLOW}准备在 WSL2 中安装独立的 Docker 版本...${NC}"
+            install_docker
+        elif [ -n "$docker_path" ]; then
+            echo -e "${GREEN}Docker 已安装在 WSL2 中，跳过安装步骤。${NC}"
         else
             echo -e "${YELLOW}Docker 未安装，开始安装过程...${NC}"
             install_docker

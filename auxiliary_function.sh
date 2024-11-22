@@ -186,11 +186,11 @@ install_packages() {
     local package_group_name="$1"
     local packages
     local timestamp=$(date +"%Y%m%d_%H%M%S")
-    local log_file="./package_install_logs/failed_to_install_$timestamp.txt"
+    local log_file="${HOME}/package_install_logs/failed_to_install_$timestamp.txt"
     local uninstalled_packages=()
 
     # 确保日志目录存在
-    mkdir -p ./package_install_logs
+    mkdir -p ${HOME}/package_install_logs
 
     # 获取要安装的包数组
     eval "packages=(\"\${${package_group_name}[@]}\")"

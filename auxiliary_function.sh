@@ -123,26 +123,6 @@ download_and_extract_kotlin() {
     echo -e "${GREEN}$FILE_NAME has been installed successfully to $TARGET_DIR${NC}"
 }
 
-# 获取系统类型和相应的包管理器命令
-detect_package_manager() {
-    case "$(uname -s)" in
-        Linux)
-            if type apt > /dev/null 2>&1; then
-                echo "apt"
-            elif type dnf > /dev/null 2>&1; then
-                echo "dnf"
-            else
-                echo -e "${RED}Unsupported package manager${NC}"
-            fi
-            ;;
-        Darwin)
-            echo "brew"
-            ;;
-        *)
-            echo -e "${RED}Unsupported operating system${NC}"
-            ;;
-    esac
-}
 
 # 获取系统类型和相应的包管理器命令
 detect_package_manager() {

@@ -274,11 +274,12 @@ install_fonts() {
         print_centered_message "${GREEN}跳过字体下载。${NC}"
         return 0
     fi
-
-    git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Fonts.git /tmp/Fonts/ && print_centered_message "${GREEN}✅Fonts 完成下载${NC}" "true" "false"
-
+    
     # 定义字体的源目录
     font_source="/tmp/Fonts/"
+    
+    git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Fonts.git ${font_source} && print_centered_message "${GREEN}✅Fonts 完成下载${NC}" "true" "false"
+
 
     # 根据操作系统设置字体的安装目录
     if [[ "$(uname)" == "Darwin" ]]; then

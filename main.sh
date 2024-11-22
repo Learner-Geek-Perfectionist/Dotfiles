@@ -89,14 +89,12 @@ elif [[ $(uname -s) == "Linux" ]]; then
         print_centered_message "${RED}不支持的发行版，目前只支持 fedora、ubuntu${NC}"
     fi
 
-    # 设置抓包权限
-    
-    sudo chmod u+s $(which tcpdump)
-    sudo chmod u+s $(which dumpcap)
-    sudo chmod u+s $(which tshark)
-
     # 修改默认的登录 shell 为 zsh
     [[ $SHELL != */zsh ]] && echo "修改默认的 shell 为 zsh " && sudo chsh -s $(which zsh)
+    
+    # 设置工具权限
+    /bin/zsh -c 'sudo chmod u+s $(which tcpdump); sudo chmod u+s $(which dumpcap); sudo chmod u+s $(which tshark)'
+
 
 else
     echo -e "${MAGENTA}未知的操作系统类型${NC}"

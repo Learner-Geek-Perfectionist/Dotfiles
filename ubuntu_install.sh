@@ -87,7 +87,7 @@ jdk_version=$(apt search openjdk | grep -oP 'openjdk-\d+-jdk' | sort -V | tail -
 [ -z "$jdk_version" ] && echo -e "{RED}没有找到可用的 OpenJDK 版本。${NC}" && exit 1 || echo -e "${GREEN}找到最新的 OpenJDK 版本: ${jdk_version} ${NC}"
 
 # 为了避免 Dockerfile 交互式
-if [ "$AUTO_RUN" == "true" ]; then
+if [[ "$AUTO_RUN" == "true" ]]; then
     echo -e "${GREEN}在 Docker 中无需安装 Docker${NC}"
 else
     # 调用函数以安装和配置 Docker

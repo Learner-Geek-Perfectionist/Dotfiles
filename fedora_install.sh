@@ -17,7 +17,7 @@ sudo sed -e 's|^metalink=|#metalink=|g' \
 sudo dnf install -y --setopt=tsflags= coreutils coreutils-common man-pages man-db && sudo dnf group install -y --setopt=strict=0 "c-development"
 
 # 安装必要的工具 🔧
-sinstall_packages
+install_packages "${packages_fedora}"
 
 # 设置时区
 sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime

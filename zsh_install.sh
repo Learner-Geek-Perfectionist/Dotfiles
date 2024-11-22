@@ -34,7 +34,7 @@ source ./zsh_config.sh
 print_centered_message "${GREEN}zsh 配置文件已复制到 Home 目录${NC}" "true" "false"
 
 # 修改默认的登录 shell 为 zsh
-[[ $SHELL != */zsh ]] && echo "修改默认的 shell 为 zsh " && chsh -s $(which zsh)
+[[ $SHELL != */zsh ]] && echo "修改默认的 shell 为 zsh " && sudo chsh -s $(which zsh)
 
 print_centered_message "${GREEN}进入 zsh ......${NC}" "true" "true"
 

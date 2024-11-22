@@ -223,7 +223,17 @@ install_packages() {
     if [[ ${#uninstalled_packages[@]} -eq 0 ]]; then
         print_centered_message "🎉 ${GREEN}All packages were already installed.${NC}"
         return 0
+    else
+        # 如果数组不为空，打印需要安装的包
+        print_centered_message "${RED}The following packages need to be installed:${NC}"
+        for package in "${uninstalled_packages[@]}"; do
+            echo "- $package"
+        done
     fi
+    
+    
+
+        
 
     # 一次性安装所有未安装的包
     print_centered_message "${LIGHT_BLUE}Installing ${#uninstalled_packages[@]} packages...${NC}"

@@ -74,7 +74,7 @@ else
     # 清理（可选）
     cd ../.. && rm -rf fastfetch
 
-    echo -e "${RED}fastfetch 安装完成。${NC}"
+    echo -e "${GREEN}fastfetch 安装完成。${NC}"
 fi
 
 # 设置 Kotlin 的变量

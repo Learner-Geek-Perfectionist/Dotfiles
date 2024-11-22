@@ -40,23 +40,23 @@ FZF_DIR="$HOME/.fzf"
 # 检查 fzf 是否已安装
 if command -v fzf > /dev/null 2>&1; then
     # 目录存在，跳过安装
-    echo "fzf 已安装，跳过安装。"
+    echo -e  "${GREEN}fzf 已安装，跳过安装。${NC}"
 else
     [ -d "$FZF_DIR" ] && rm -rf "$FZF_DIR"
 
     # 目录不存在，克隆并安装 fzf
-    echo "正在安装 fzf..."
+    echo -e "${RED}正在安装 fzf...${NC}"
     git clone --depth 1 https://github.com/junegunn/fzf.git "$FZF_DIR"
     yes | $FZF_DIR/install --no-update-rc
-    echo "fzf 安装完成。"
+    echo -e "${RED}fzf 安装完成。${NC}"
 fi
 
 # 手动安装 fastfetch
 # 检查 fastfetch 是否已经安装
 if command -v fastfetch > /dev/null 2>&1; then
-    echo "fastfetch 已经安装。跳过安装步骤。"
+    echo -e "${GREEN}fastfetch 已经安装。跳过安装步骤。${NC}"
 else
-    echo "开始安装 fastfetch..."
+    echo -e "${GREEN}开始安装 fastfetch...${NC}"
 
     # 克隆 fastfetch 源码
     git clone --depth=1 https://github.com/LinusDierheimer/fastfetch.git
@@ -73,7 +73,7 @@ else
     # 清理（可选）
     cd ../.. && rm -rf fastfetch
 
-    echo "fastfetch 安装完成。"
+    echo -e "${RED}fastfetch 安装完成。${NC}"
 fi
 
 # 设置 Kotlin 的变量
@@ -83,11 +83,11 @@ download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR
 
 # 搜索可用的 OpenJDK 包并尝试获取最新版本
 jdk_version=$(apt search openjdk | grep -oP 'openjdk-\d+-jdk' | sort -V | tail -n1)
-[ -z "$jdk_version" ] && echo "没有找到可用的 OpenJDK 版本。" && exit 1 || echo "找到最新的 OpenJDK 版本: $jdk_version"
+[ -z "$jdk_version" ] && echo -e "{RED}没有找到可用的 OpenJDK 版本。${NC}" && exit 1 || echo -e "${GREEN}找到最新的 OpenJDK 版本: ${jdk_version} ${NC}"
 
 # 为了避免 Dockerfile 交互式
 if [ "$AUTO_RUN" == "true" ]; then
-    echo "在 Docker 中无需安装 Docker"
+    echo -e "${GREEN}在 Docker 中无需安装 Docker${NC}"
 else
     # 调用函数以安装和配置 Docker
     install_and_configure_docker

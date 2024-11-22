@@ -29,7 +29,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
     echo -ne "${YELLOW}是否需要创建用户？(y/n): ${NC}"
 
     # 为了避免 Dockerfile 交互式
-    if [ "$AUTO_RUN" == "true" ]; then
+    if [[ "$AUTO_RUN" == "true" ]]; then
         # 设置默认值
         create_confirm="n"
     else
@@ -63,7 +63,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
         set_password_if_needed "$username" "$default_password"
     fi
 
-    if [ "$AUTO_RUN" == "true" ]; then
+    if [[ "$AUTO_RUN" == "true" ]]; then
         echo "Dockerfile 中无需设置 $(whoami) 权限"
     else
         # 赋予用户 sudo 权限

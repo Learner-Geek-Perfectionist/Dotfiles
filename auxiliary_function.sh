@@ -290,7 +290,7 @@ set_password_if_needed() {
 # 安装字体
 install_fonts() {
     # 为了避免 Dockerfile 交互式
-    if [ "$AUTO_RUN" == "true" ]; then
+    if [[ "$AUTO_RUN" == "true" ]]; then
         return 0
     fi
 

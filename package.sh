@@ -68,7 +68,6 @@ packages_ubuntu=(
     man-db
     jq
     tshark
-    eza
     hyperfine
     autoconf
     systemd

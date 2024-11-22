@@ -103,7 +103,7 @@ download_and_extract_kotlin() {
     fi
 
     # 输出最新的版本号，添加颜色
-    print_centered_message "${LIGHT_BLUE}正在下载 ${FILE_NAME}...... ${NC}" "false" "true"
+    print_centered_message "${LIGHT_BLUE}正在下载 ${FILE_NAME}...... ${NC}" "true" "false"
     echo -e "${CYAN}The Latest Version is ${RED}$LATEST_VERSION${CYAN}${NC}"
     echo -e "${YELLOW}Downloading ${BLUE}$FILE_NAME${YELLOW} from ${MAGENTA}$URL${YELLOW}...${NC}"
 

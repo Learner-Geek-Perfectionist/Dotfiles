@@ -13,9 +13,11 @@ sudo sed -e 's|^metalink=|#metalink=|g' \
     /etc/yum.repos.d/fedora.repo \
     /etc/yum.repos.d/fedora-updates.repo
 
-# 安装必要的工具 🔧
-sudo dnf -y update && sudo dnf install -y "${packages_fedora[@]}"
+
 sudo dnf install -y --setopt=tsflags= coreutils coreutils-common man-pages man-db && sudo dnf group install -y --setopt=strict=0 "c-development"
+
+# 安装必要的工具 🔧
+sinstall_packages
 
 # 设置时区
 sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
@@ -24,7 +26,7 @@ echo "Asia/Shanghai" | sudo tee /etc/timezone > /dev/null
 # 设置语言环境变量
 export LANG=zh_CN.UTF-8
 export LC_ALL=zh_CN.UTF-8
-
+# 设置地区
 sudo localedef -c -f UTF-8 -i zh_CN zh_CN.UTF-8
 
 # 设置抓包权限

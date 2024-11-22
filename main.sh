@@ -93,6 +93,8 @@ elif [[ $(uname -s) == "Linux" ]]; then
     sudo setcap cap_net_raw,cap_net_admin=eip $(which tshrak)
     sudo setcap cap_net_raw,cap_net_admin=eip $(which tcpdump)
     sudo setcap cap_net_raw,cap_net_admin=eip $(which dumpcap)
+    # 修改默认的登录 shell 为 zsh
+    [[ $SHELL != */zsh ]] && echo "修改默认的 shell 为 zsh " && sudo chsh -s $(which zsh)
 
 else
     echo -e "${MAGENTA}未知的操作系统类型${NC}"

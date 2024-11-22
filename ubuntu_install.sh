@@ -14,6 +14,9 @@ sudo DEBIAN_FRONTEND=noninteractive apt install -y wireshark
 sudo DEBIAN_FRONTEND=noninteractive add-apt-repository -y ppa:zhangsongcui3371/fastfetch && sudo apt update
 sudo DEBIAN_FRONTEND=noninteractive apt install -y fastfetch
 
+# 安装 eza
+cargo install eza
+
 # 取消最小化安装
 sudo apt update -y && sudo apt upgrade -y && sudo apt search unminimize 2> /dev/null | grep -q "^unminimize/" && (sudo apt install unminimize -y && yes | sudo unminimize) || echo -e "${RED}unminimize包不可用。${NC}"
 # 在 oracular (24.10)  之后的 Ubuntu 发行版才有 eza

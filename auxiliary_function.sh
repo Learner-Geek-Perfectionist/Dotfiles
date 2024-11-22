@@ -175,9 +175,9 @@ install_packages() {
             ;;
     esac
 
-    # 筛选出尚未安装的包
+   # 筛选出尚未安装的包
     for package in "${packages[@]}"; do
-        if ! grep -q -w "^$package$" <<< "$installed_packages"; then
+        if ! echo "$installed_packages" | grep -q -E "^$package(:.*)?$"; then
             uninstalled_packages+=("$package")
         fi
     done

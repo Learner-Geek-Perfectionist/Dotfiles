@@ -123,54 +123,103 @@ download_and_extract_kotlin() {
     echo -e "${GREEN}$FILE_NAME has been installed successfully to $TARGET_DIR${NC}"
 }
 
-# 定义 packages 安装函数，接受一个包组(packages group)作为参数
-check_and_install_brew_packages() {
+# 获取系统类型和相应的包管理器命令
+detect_package_manager() {
+    case "$(uname -s)" in
+        Linux)
+            if type apt > /dev/null 2>&1; then
+                echo "apt"
+            elif type dnf > /dev/null 2>&1; then
+                echo "dnf"
+            else
+                echo -e "${RED}Unsupported package manager${NC}"
+            fi
+            ;;
+        Darwin)
+            echo "brew"
+            ;;
+        *)
+            echo -e "${RED}Unsupported operating system${NC}"
+            ;;
+    esac
+}
+
+# 获取系统类型和相应的包管理器命令
+detect_package_manager() {
+    case "$(uname -s)" in
+        Linux)
+            if type apt > /dev/null 2>&1; then
+                echo "apt"
+            elif type dnf > /dev/null 2>&1; then
+                echo "dnf"
+            else
+                echo -e "${RED}Unsupported package manager${NC}"
+            fi
+            ;;
+        Darwin)
+            echo "brew"
+            ;;
+        *)
+            echo -e "${RED}Unsupported operating system${NC}"
+            ;;
+    esac
+}
+
+# 主函数
+install_packages() {
+    local package_manager=$(detect_package_manager)
     local package_group_name="$1"
-    local package
+    local packages
+    local timestamp=$(date +"%Y%m%d_%H%M%S")
+    local log_file="./package_install_logs/failed_to_install_$timestamp.txt"
     local uninstalled_packages=()
-    local timestamp
-    local log_file
 
-    # 生成时间戳和日志文件名
-    timestamp=$(date +"%Y%m%d_%H%M%S")
-    log_file="./brew_install_logs/failed_to_install_$timestamp.txt" # 指定日志文件路径
+    # 确保日志目录存在
+    mkdir -p ./package_install_logs
 
-    # 确保日志文件目录存在
-    mkdir -p ./brew_install_logs
-
-    # 获取需要安装的包的数组
+    # 获取要安装的包数组
     eval "packages=(\"\${${package_group_name}[@]}\")"
 
-    # 获取通过 Homebrew 已安装的包
-    local installed_packages=($(brew list))
+    # 根据包管理器获取已安装的包
+    case "$package_manager" in
+        brew)
+            installed_packages=$(brew list)
+            ;;
+        apt)
+            installed_packages=$(dpkg -l | awk '{print $2}')
+            ;;
+        dnf)
+            installed_packages=$(dnf list installed | awk '{print $1}')
+            ;;
+        *)
+            echo -e "${RED}Unsupported package manager${NC}"
+            return 1
+            ;;
+    esac
 
+    # 筛选出尚未安装的包
     for package in "${packages[@]}"; do
-        echo -e "🔍 检查是否已安装 ${RED}$package${NC} ..."
-
-        # 直接使用 brew list 检查包是否已安装
-        if brew list "$package" &> /dev/null; then
-            print_centered_message "🟢 $package 已通过 Homebrew 安装。" "false" "true"
-        else
-            print_centered_message "❌ $package 未安装，尝试通过 Homebrew 安装..." "false" "false"
-            # 如果包未安装，则通过 Homebrew 安装
-            if brew install "$package"; then
-                print_centered_message "✅ $package 安装成功。" "false" "true"
-            else
-                print_centered_message "☹️ 通过 Homebrew 安装 $package 失败。" "false" "true"
-                uninstalled_packages+=("$package")
-                echo "📝 $package 安装失败。" >> "$log_file"
-            fi
+        if [[ ! " $installed_packages " =~ " $package " ]]; then
+            uninstalled_packages+=("$package")
         fi
     done
 
-    # 总结结果
-    if [[ ${#uninstalled_packages[@]} -gt 0 ]]; then
-        echo "⚠️ 以下包未能成功安装或找到，详情请查看 ${log_file}："
-        printf '🚫 %s\n' "${uninstalled_packages[@]}"
+    # 如果未安装包的数组为空，打印消息并返回
+    if [[ ${#uninstalled_packages[@]} -eq 0 ]]; then
+        print_centered_message "🎉 ${GREEN}All packages were already installed.${NC}"
+        return 0
+    fi
+
+    # 一次性安装所有未安装的包
+    print_centered_message "${LIGHT_BLUE}Installing ${#uninstalled_packages[@]} packages...${NC}"
+    if $package_manager install "${uninstalled_packages[@]}" >> "$log_file" 2>&1; then
+        print_centered_message "🎉 ${GREEN}All new packages have been successfully installed.${NC}"
     else
-        print_centered_message "🎉 所有包均已成功处理。" "false" "true"
+        print_centered_message "⚠️ ${RED}Some packages failed to install. Check the log at $log_file for details.${NC}"
+        parse_installation_log "$log_file" "${uninstalled_packages[@]}"
     fi
 }
+
 
 install_docker() {
     echo -e "${BLUE}获取 Docker 安装脚本...${NC}"

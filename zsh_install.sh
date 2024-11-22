@@ -31,8 +31,6 @@ print_centered_message "${GREEN}接下来配置 zsh......${NC}" "false" "false"
 source ./zsh_config.sh
 
 # 打印提示消息
-print_centered_message "${GREEN}zsh 配置文件已复制到 Home 目录${NC}" "true" "false"
-
 print_centered_message "${GREEN}进入 zsh ......${NC}" "true" "true"
 
 # 进入 zsh

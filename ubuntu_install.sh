@@ -6,9 +6,13 @@ set -e
 # 设置国内源
 sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list
 
+# 安装 wireshark
 sudo DEBIAN_FRONTEND=noninteractive add-apt-repository -y ppa:wireshark-dev/stable && sudo apt update
 sudo DEBIAN_FRONTEND=noninteractive apt install -y wireshark
 
+# 安装 fastfetch
+sudo DEBIAN_FRONTEND=noninteractive add-apt-repository -y ppa:zhangsongcui3371/fastfetch && sudo apt update
+sudo DEBIAN_FRONTEND=noninteractive apt install -y fastfetch
 
 # 取消最小化安装
 sudo apt update -y && sudo apt upgrade -y && sudo apt search unminimize 2> /dev/null | grep -q "^unminimize/" && (sudo apt install unminimize -y && yes | sudo unminimize) || echo -e "${RED}unminimize包不可用。${NC}"
@@ -50,31 +54,6 @@ else
     git clone --depth 1 https://github.com/junegunn/fzf.git "$FZF_DIR"
     yes | $FZF_DIR/install --no-update-rc
     echo -e "${RED}fzf 安装完成。${NC}"
-fi
-
-# 手动安装 fastfetch
-# 检查 fastfetch 是否已经安装
-if command -v fastfetch > /dev/null 2>&1; then
-    echo -e "${GREEN}fastfetch 已经安装。跳过安装步骤。${NC}"
-else
-    echo -e "${GREEN}开始安装 fastfetch...${NC}"
-
-    # 克隆 fastfetch 源码
-    git clone --depth=1 https://github.com/LinusDierheimer/fastfetch.git
-    cd fastfetch
-
-    # 创建构建目录并编译项目
-    mkdir build && cd build
-    cmake ..
-    make -j32
-
-    # 安装 fastfetch
-    sudo make install
-
-    # 清理（可选）
-    cd ../.. && rm -rf fastfetch
-
-    echo -e "${GREEN}fastfetch 安装完成。${NC}"
 fi
 
 # 设置 Kotlin 的变量

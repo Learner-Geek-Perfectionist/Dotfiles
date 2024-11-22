@@ -39,7 +39,7 @@ download_and_extract_kotlin $KOTLIN_COMPILER_URL $COMPILER_INSTALL_DIR
 
 # 为了避免 Dockerfile 交互式
 if [ "$AUTO_RUN" == "true" ]; then
-    echo "在 Docker 中无需安装 Docker"
+    echo -e "${GREEN}在 Docker 中无需安装 Docker${NC}"
 else
     # 调用函数以安装和配置 Docker
     install_and_configure_docker
@@ -50,7 +50,7 @@ sudo dnf clean all && sudo dnf makecache
 # 安装缺失的手册，并且更新手册页的数据库
 packages_to_reinstall=$(rpm -qads --qf "PACKAGE: %{NAME}\n" | sed -n -E '/PACKAGE: /{s/PACKAGE: // ; h ; b }; /^not installed/ { g; p }' | uniq)
 if [ -z "$packages_to_reinstall" ]; then
-    echo "没有找到需要重新安装的手册包。"
+    echo -e "${GREEN}没有找到需要重新安装的手册包。${NC}"
 else
     sudo dnf -y reinstall $packages_to_reinstall && sudo mandb -c
 fi

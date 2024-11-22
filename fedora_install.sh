@@ -38,7 +38,7 @@ download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR
 download_and_extract_kotlin $KOTLIN_COMPILER_URL $COMPILER_INSTALL_DIR
 
 # 为了避免 Dockerfile 交互式
-if [ "$AUTO_RUN" == "true" ]; then
+if [[ "$AUTO_RUN" == "true" ]]; then
     echo -e "${GREEN}在 Docker 中无需安装 Docker${NC}"
 else
     # 调用函数以安装和配置 Docker

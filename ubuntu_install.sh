@@ -7,6 +7,7 @@ set -e
 sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list
 
 sudo DEBIAN_FRONTEND=noninteractive add-apt-repository -y ppa:wireshark-dev/stable
+sudo DEBIAN_FRONTEND=noninteractive apt install -y wireshark
 
 
 # 取消最小化安装
@@ -20,7 +21,6 @@ sudo apt update && sudo apt upgrade -y
 # 安装必要的工具 🔧
 install_packages "packages_ubuntu"
 
-sudo DEBIAN_FRONTEND=noninteractive apt install -y wireshark
 
 
 # 设置时区

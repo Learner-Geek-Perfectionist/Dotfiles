@@ -29,9 +29,6 @@ export LC_ALL=zh_CN.UTF-8
 # 设置地区
 sudo localedef -c -f UTF-8 -i zh_CN zh_CN.UTF-8
 
-# 设置抓包权限
-sudo setcap cap_net_raw,cap_net_admin=eip /usr/bin/dumpcap
-sudo setcap cap_net_raw,cap_net_admin=eip /usr/sbin/tcpdump
 
 # 设置 Kotlin 的变量
 setup_kotlin_environment

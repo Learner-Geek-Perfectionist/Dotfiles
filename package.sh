@@ -116,6 +116,7 @@ packages_fedora=(
     eza
     openssl
     hyperfine
+    sudo
     autoconf
     systemd
     cargo

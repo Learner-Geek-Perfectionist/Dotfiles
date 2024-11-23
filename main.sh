@@ -91,11 +91,15 @@ elif [[ $(uname -s) == "Linux" ]]; then
 
     # 修改默认的登录 shell 为 zsh
     [[ $SHELL != */zsh ]] && echo "修改默认的 shell 为 zsh " && sudo chsh -s $(which zsh)
+    
     echo $(which tcpdump)
     echo $(which dumpcap)
     echo $(which tshark)
     # 设置工具权限
     /bin/zsh -c 'sudo chmod u+s $(which tcpdump); sudo chmod u+s $(which dumpcap); sudo chmod u+s $(which tshark)'
+
+    # 配置 zsh
+    source ./zsh_install.sh
 
 
 else

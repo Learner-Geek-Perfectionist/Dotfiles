@@ -16,10 +16,8 @@ sudo DEBIAN_FRONTEND=noninteractive apt install -y fastfetch
 
 # 检查 kitty 是否已安装，若未安装则执行安装脚本
 if ! command -v kitty > /dev/null 2>&1; then
-    curl  -o /tmp/kitty_installer.sh https://sw.kovidgoyal.net/kitty/installer.sh 
-    chmod +x /tmp/kitty_installer.sh
-    source /tmp/kitty_installer.sh
-    rm -rf /tmp/kitty_installer.sh
+    curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin \
+    launch=n
 fi
 
 

@@ -28,7 +28,7 @@ if [[ $(uname -s) == "Linux" ]]; then
 fi
 
 echo -e "${BLUE}Cloning Dotfiles repository...${NC}"
-git clone --depth=1 https://github.com/Learner-Geek-Perfectionist/Dotfiles.git /tmp/Dotfiles && cd /tmp/Dotfiles && echo -e "${GREEN}Changed directory to $(pwd).${NC}"
+git clone --depth=1 https://github.com/Learner-Geek-Perfectionist/Dotfiles.git /tmp/Dotfiles && cd /tmp/Dotfiles && echo -e "${GREEN}Changed directory to ${RED}$(pwd).${NC}"
 
 # 执行安装脚本
 source ./main.sh

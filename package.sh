@@ -51,7 +51,6 @@ packages_ubuntu=(
     fontconfig
     python3
     iproute2
-    kitty
     wget
     pkg-config
     graphviz

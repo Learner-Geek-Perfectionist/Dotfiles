@@ -24,6 +24,10 @@ if [[ "$(uname)" == "Darwin" ]]; then
     export PATH="/Applications/IntelliJ IDEA.app/Contents/MacOS:$PATH"
     export PATH="/opt/homebrew/anaconda3/bin:$PATH"
     export HOMEBREW_NO_ENV_HINTS=1
+    # clion 映射到 cl
+    alias cl=clion
+    # pycharm 映射到 py
+    alias py=pycharm
     
 elif [[ -f /etc/os-release ]]; then
 
@@ -96,11 +100,6 @@ alias clear='clear && printf '\''\e[3J'\'''
 # python3 映射到 python
 alias python=python3 
 
-# pycharm 映射到 py
-alias py=pycharm
-
-# clion 映射到 cl
-alias cl=clion
 
 # reload 映射到重启 .zshrc
 alias reload="source ~/.zshrc;rm -rf $HOME/.cache/zsh/.zcompdump "

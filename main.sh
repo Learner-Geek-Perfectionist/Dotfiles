@@ -25,44 +25,6 @@ elif [[ $(uname -s) == "Linux" ]]; then
 
     print_centered_message "${CYAN}检测到操作系统为: $os_type${NC}"
 
-    # 询问是否创建用户
-    echo -ne "${YELLOW}是否需要创建用户？(y/n): ${NC}"
-
-    # 为了避免 Dockerfile 交互式
-    if [[ "$AUTO_RUN" == "true" ]]; then
-        # 设置默认值
-        create_confirm="n"
-    else
-        # 如果不是自动运行，读取用户输入
-        read create_confirm
-    fi
-
-    # 主逻辑
-    if [[ $create_confirm == 'y' ]]; then
-        echo -e "${GREEN}请输入你想创建的用户名: ${NC}"
-        read username
-        echo -e "${GREEN}请输入默认密码（将用于新用户，若按下 Enter ，密码默认为 1）: ${NC}"
-        read default_password
-        # 如果未输入任何内容，则默认密码为 1
-        default_password="${default_password:-1}"
-
-        if id "$username" &> /dev/null; then
-            echo -e "${RED}用户 $username 已存在。${NC}"
-            set_password_if_needed "$username" "$default_password"
-        else
-            sudo useradd -m "$username" # 创建用户
-            echo "$username:$default_password" | sudo chpasswd
-            echo -e "${GREEN}用户 $username 已创建，密码设置为 $default_password${NC}"
-        fi
-    else
-        echo -e "${ORANGE}不创建用户${NC}"
-        # 默认密码为 1
-        default_password=1
-        # 如果 username 变量未设置或为空，则默认为当前登录用户的用户名
-        username="${username:-$(whoami)}"
-        set_password_if_needed "$username" "$default_password"
-    fi
-
     if [[ "$AUTO_RUN" == "true" ]]; then
         echo "Dockerfile 中无需设置 $(whoami) 权限"
     else
@@ -98,7 +60,8 @@ else
     echo -e "${MAGENTA}未知的操作系统类型${NC}"
 fi
 
-# 配置 zsh
+
+# 针对 macos、linux 统一配置 zsh
 source ./zsh_install.sh
 
     

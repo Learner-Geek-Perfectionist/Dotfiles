@@ -74,10 +74,6 @@ elif [[ $(uname -s) == "Linux" ]]; then
         fi
     fi
 
-    # 将用户添加到 sudoers 文件以免输入密码
-    echo "$username ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers
-    print_centered_message "${LIGHT_BLUE}已配置用户 $username 无需 sudo 密码。${NC}"
-
     # 根据操作系统安装......
     if [[ $os_type == "ubuntu" ]]; then
         source ./ubuntu_install.sh

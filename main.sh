@@ -42,10 +42,6 @@ elif [[ $(uname -s) == "Linux" ]]; then
     # 如果当前shell不是zsh，则更改为zsh
     [[ "$(command -v zsh)" != "$current_shell" ]] && sudo chsh -s "$(command -v zsh)" "$(whoami)"
     
-    
-    echo $(which tcpdump)
-    echo $(which dumpcap)
-    echo $(which tshark)
     # 设置工具权限
     sudo chmod u+s $(which tcpdump); sudo chmod u+s $(which dumpcap); sudo chmod u+s $(which tshark)
     

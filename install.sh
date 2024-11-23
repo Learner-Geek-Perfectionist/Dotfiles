@@ -20,7 +20,7 @@ NC='\033[0m' # 没有颜色
 
 if [[ $(uname -s) == "Linux" ]]; then
 
-    # 为了避免 Dockerfile 交互式
+    # 如果是在 Dockerfile 中......
     if [[ "$AUTO_RUN" == "true" ]]; then
         echo -e "${GREEN}在 Docker 中无需设置密码${NC}"
     else

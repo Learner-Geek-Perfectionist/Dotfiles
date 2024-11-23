@@ -20,6 +20,15 @@ NC='\033[0m' # 没有颜色
 
 if [[ $(uname -s) == "Linux" ]]; then
 
+    local default_password=1
+    if ! sudo passwd -S "$(whoami)" | grep -q ' P '; then
+        echo -n "用户 $(whoami) 的密码未设置，现在将密码设置为 「${RED}${default_pass}${NC}」 。"
+        echo "$(whoami):${default_password}" | sudo chpasswd
+        echo "密码已设置。"
+    else
+        echo "用户 $user 的密码已经存在。"
+    fi
+    
     # 将用户添加到 sudoers 文件以免输入密码
     echo "$(whoami) ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers
     echo -e  "${LIGHT_BLUE}已配置用户 $(whoami) 无需 sudo 密码。${NC}"

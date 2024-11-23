@@ -6,6 +6,14 @@ set -e
 # 设置国内源
 sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list
 
+# 安装 wireshark
+sudo DEBIAN_FRONTEND=noninteractive add-apt-repository -y ppa:wireshark-dev/stable && sudo apt update
+sudo DEBIAN_FRONTEND=noninteractive apt install -y wireshark
+
+# 安装 fastfetch
+sudo DEBIAN_FRONTEND=noninteractive add-apt-repository -y ppa:zhangsongcui3371/fastfetch && sudo apt update
+sudo DEBIAN_FRONTEND=noninteractive apt install -y fastfetch
+
 # 更新索引
 sudo apt update && sudo apt upgrade -y
 # 安装必要的工具 🔧
@@ -14,6 +22,8 @@ install_packages "packages_ubuntu"
 # 取消最小化安装
 sudo apt update -y && sudo apt upgrade -y && sudo apt search unminimize 2> /dev/null | grep -q "^unminimize/" && (sudo apt install unminimize -y && yes | sudo unminimize) || echo -e "${RED}unminimize包不可用。${NC}"
 
+# 安装 eza, 在 oracular (24.10)  之后的 Ubuntu 发行版才有 eza
+cargo install eza
 
 # 检查 kitty 是否已安装，若未安装则执行安装脚本
 if ! command -v kitty > /dev/null 2>&1; then
@@ -21,13 +31,6 @@ if ! command -v kitty > /dev/null 2>&1; then
     launch=n
 fi
 
-# 安装 wireshark
-sudo DEBIAN_FRONTEND=noninteractive add-apt-repository -y ppa:wireshark-dev/stable && sudo apt update
-sudo DEBIAN_FRONTEND=noninteractive apt install -y wireshark
-
-# 安装 fastfetch
-sudo DEBIAN_FRONTEND=noninteractive add-apt-repository -y ppa:zhangsongcui3371/fastfetch && sudo apt update
-sudo DEBIAN_FRONTEND=noninteractive apt install -y fastfetch
 
 # 设置时区
 sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
@@ -57,9 +60,6 @@ else
     yes | $FZF_DIR/install --no-update-rc
     echo -e "${RED}fzf 安装完成。${NC}"
 fi
-
-# 安装 eza, 在 oracular (24.10)  之后的 Ubuntu 发行版才有 eza
-cargo install eza
 
 # 设置 Kotlin 的变量
 setup_kotlin_environment

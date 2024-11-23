@@ -11,16 +11,15 @@ sudo apt update && sudo apt upgrade -y
 # 安装必要的工具 🔧
 install_packages "packages_ubuntu"
 
+# 取消最小化安装
+sudo apt update -y && sudo apt upgrade -y && sudo apt search unminimize 2> /dev/null | grep -q "^unminimize/" && (sudo apt install unminimize -y && yes | sudo unminimize) || echo -e "${RED}unminimize包不可用。${NC}"
+
+
 # 检查 kitty 是否已安装，若未安装则执行安装脚本
 if ! command -v kitty > /dev/null 2>&1; then
     curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin \
     launch=n
 fi
-
-
-# 取消最小化安装
-sudo apt update -y && sudo apt upgrade -y && sudo apt search unminimize 2> /dev/null | grep -q "^unminimize/" && (sudo apt install unminimize -y && yes | sudo unminimize) || echo -e "${RED}unminimize包不可用。${NC}"
-
 
 # 安装 wireshark
 sudo DEBIAN_FRONTEND=noninteractive add-apt-repository -y ppa:wireshark-dev/stable && sudo apt update

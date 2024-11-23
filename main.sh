@@ -43,7 +43,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
     echo $(which dumpcap)
     echo $(which tshark)
     # 设置工具权限
-    /bin/zsh -c 'sudo chmod u+s $(which tcpdump); sudo chmod u+s $(which dumpcap); sudo chmod u+s $(which tshark)'
+    sudo chmod u+s $(which tcpdump); sudo chmod u+s $(which dumpcap); sudo chmod u+s $(which tshark)
     
 else
     echo -e "${MAGENTA}未知的操作系统类型${NC}"

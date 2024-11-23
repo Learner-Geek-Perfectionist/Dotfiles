@@ -152,9 +152,6 @@ install_packages() {
     local packages
     local uninstalled_packages=()
 
-    # 确保日志目录存在
-    mkdir -p ${HOME}/package_install_logs
-
     # 获取要安装的包数组
     eval "packages=(\"\${${package_group_name}[@]}\")"
 

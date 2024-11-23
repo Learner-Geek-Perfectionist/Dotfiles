@@ -99,5 +99,3 @@ print_centered_message "${GREEN}所有应用安装完成。🎉${NC}" "false" "t
 echo -e "${RED}当前目录: $(pwd) ${NC}"
 
 sudo chown $(whoami):admin /dev/bpf*
-# 配置 zsh
-source ./zsh_install.sh

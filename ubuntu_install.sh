@@ -72,5 +72,3 @@ else
     install_and_configure_docker
 fi
 echo -e "${RED}当前目录: $(pwd) ${NC}"
-# 配置 zsh
-source ./zsh_install.sh

@@ -16,7 +16,6 @@ sudo DEBIAN_FRONTEND=noninteractive apt install -y fastfetch
 
 # 取消最小化安装
 sudo apt update -y && sudo apt upgrade -y && sudo apt search unminimize 2> /dev/null | grep -q "^unminimize/" && (sudo apt install unminimize -y && yes | sudo unminimize) || echo -e "${RED}unminimize包不可用。${NC}"
-# 在 oracular (24.10)  之后的 Ubuntu 发行版才有 eza
 
 # 更新索引
 sudo apt update && sudo apt upgrade -y
@@ -52,7 +51,7 @@ else
     echo -e "${RED}fzf 安装完成。${NC}"
 fi
 
-# 安装 eza
+# 安装 eza, 在 oracular (24.10)  之后的 Ubuntu 发行版才有 eza
 cargo install eza
 
 # 设置 Kotlin 的变量
@@ -62,7 +61,8 @@ download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR
 
 # 搜索可用的 OpenJDK 包并尝试获取最新版本
 jdk_version=$(apt search openjdk | grep -oP 'openjdk-\d+-jdk' | sort -V | tail -n1)
-[ -z "$jdk_version" ] && echo -e "{RED}没有找到可用的 OpenJDK 版本。${NC}" && exit 1 || echo -e "${GREEN}找到最新的 OpenJDK 版本: ${jdk_version} ${NC}"
+[[ -z "$jdk_version" ]] && echo -e "${RED}没有找到可用的 OpenJDK 版本。${NC}" && exit 1 || (echo -e "${GREEN}找到最新的 OpenJDK 版本: ${jdk_version}${NC}" && sudo apt install -y $jdk_version && echo -e "${GREEN}成功安装 ${jdk_version}${NC}" || echo -e "${RED}安装 ${jdk_version} 失败。${NC}" && exit 1)
+
 
 # 为了避免 Dockerfile 交互式
 if [[ "$AUTO_RUN" == "true" ]]; then

@@ -274,19 +274,6 @@ install_and_configure_docker() {
     print_centered_message "${GREEN}Docker 镜像配置完成。✅${NC}" "false" "true"
 }
 
-# 定义设置用户密码函数
-set_password_if_needed() {
-    local user=$1
-    local default_password=$2
-    if ! sudo passwd -S "$user" | grep -q ' P '; then
-        echo -n "用户 $user 的密码未设置，现在将密码设置为 「$default_password」 。"
-        echo "$user:$default_password" | sudo chpasswd
-        echo "密码已设置。"
-    else
-        echo "用户 $user 的密码已经存在。"
-    fi
-}
-
 # 安装字体
 install_fonts() {
     # 为了避免 Dockerfile 交互式

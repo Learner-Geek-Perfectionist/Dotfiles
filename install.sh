@@ -24,7 +24,7 @@ if [[ $(uname -s) == "Linux" ]]; then
     if [[ "$AUTO_RUN" == "true" ]]; then
         echo -e "${GREEN}在 Docker 中无需设置密码${NC}"
     else
-        local default_password=1
+        default_password=1
         if ! sudo passwd -S "$(whoami)" | grep -q ' P '; then
             echo -n "用户 $(whoami) 的密码未设置，现在将密码设置为 「${RED}${default_pass}${NC}」 。"
             echo "$(whoami):${default_password}" | sudo chpasswd

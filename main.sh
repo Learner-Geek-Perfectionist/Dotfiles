@@ -97,11 +97,12 @@ elif [[ $(uname -s) == "Linux" ]]; then
     echo $(which tshark)
     # 设置工具权限
     /bin/zsh -c 'sudo chmod u+s $(which tcpdump); sudo chmod u+s $(which dumpcap); sudo chmod u+s $(which tshark)'
-
-    # 配置 zsh
-    source ./zsh_install.sh
-
-
+    
 else
     echo -e "${MAGENTA}未知的操作系统类型${NC}"
 fi
+
+# 配置 zsh
+source ./zsh_install.sh
+
+    

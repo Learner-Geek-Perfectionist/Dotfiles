@@ -14,6 +14,15 @@ sudo DEBIAN_FRONTEND=noninteractive apt install -y wireshark
 sudo DEBIAN_FRONTEND=noninteractive add-apt-repository -y ppa:zhangsongcui3371/fastfetch && sudo apt update
 sudo DEBIAN_FRONTEND=noninteractive apt install -y fastfetch
 
+# 检查 kitty 是否已安装，若未安装则执行安装脚本
+if ! command -v kitty &> /dev/null; then
+    curl -sL https://sw.kovidgoyal.net/kitty/installer.sh -o kitty_installer.sh
+    chmod +x kitty_installer.sh
+    source ./kitty_installer.sh
+    rm -rf kitty_installer.sh
+fi
+
+
 # 取消最小化安装
 sudo apt update -y && sudo apt upgrade -y && sudo apt search unminimize 2> /dev/null | grep -q "^unminimize/" && (sudo apt install unminimize -y && yes | sudo unminimize) || echo -e "${RED}unminimize包不可用。${NC}"
 

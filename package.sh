@@ -59,7 +59,6 @@ packages_ubuntu=(
     kotlin
     golang
     rustc
-    software-properties-common
     valgrind
     curl
     tar

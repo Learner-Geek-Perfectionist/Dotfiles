@@ -28,9 +28,9 @@ if [[ $(uname -s) == "Linux" ]]; then
         if ! sudo passwd -S "$(whoami)" | grep -q ' P '; then
             echo -n "用户 $(whoami) 的密码未设置，现在将密码设置为 「${RED}${default_pass}${NC}」 。"
             echo "$(whoami):${default_password}" | sudo chpasswd
-            echo "密码已设置。"
+            echo "${GREEN}密码已设置。${NC}"
         else
-            echo "用户 $(whoami) 的密码已经存在。"
+            echo "${GREEN}用户 $(whoami) 的密码已经存在。${NC}"
         fi
         
         # 将用户添加到 sudoers 文件以免输入密码

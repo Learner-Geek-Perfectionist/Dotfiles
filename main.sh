@@ -25,17 +25,6 @@ elif [[ $(uname -s) == "Linux" ]]; then
 
     print_centered_message "${CYAN}检测到操作系统为: $os_type${NC}"
 
-    if [[ "$AUTO_RUN" == "true" ]]; then
-        echo "Dockerfile 中无需设置 $(whoami) 权限"
-    else
-        # 赋予用户 sudo 权限
-        if [[ $os_type == "ubuntu" ]]; then
-            sudo usermod -aG sudo "$username"
-        elif [[ $os_type == "fedora" ]]; then
-            sudo usermod -aG wheel "$username"
-        fi
-    fi
-
     # 根据操作系统安装......
     if [[ $os_type == "ubuntu" ]]; then
         source ./ubuntu_install.sh

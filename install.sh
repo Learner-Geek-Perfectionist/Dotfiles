@@ -26,7 +26,7 @@ if [[ $(uname -s) == "Linux" ]]; then
         echo "$(whoami):${default_password}" | sudo chpasswd
         echo "密码已设置。"
     else
-        echo "用户 $user 的密码已经存在。"
+        echo "用户 $(whoami) 的密码已经存在。"
     fi
     
     # 将用户添加到 sudoers 文件以免输入密码

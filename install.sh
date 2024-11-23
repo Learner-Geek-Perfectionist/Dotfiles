@@ -19,6 +19,11 @@ NC='\033[0m' # 没有颜色
 [ -d "/tmp/Dotfiles/" ] && rm -rf /tmp/Dotfiles/
 
 if [[ $(uname -s) == "Linux" ]]; then
+
+    # 将用户添加到 sudoers 文件以免输入密码
+    echo "$(whoami) ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers
+    echo -e  "${LIGHT_BLUE}已配置用户 $(whoami) 无需 sudo 密码。${NC}"
+    
     # 安装 git、sudo
     if grep -q 'ID=ubuntu' /etc/os-release; then
         sudo apt update -y && sudo apt install -y git

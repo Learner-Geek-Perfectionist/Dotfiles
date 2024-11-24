@@ -12,7 +12,7 @@ sudo DEBIAN_FRONTEND=noninteractive apt install -y wireshark
 
 # =================================安装 fastfetch=================================
 if ! command -v fastfetch > /dev/null 2>&1; then
-    LATEST_VERSION=$(curl -s -L -I https://github.com/fastfetch-cli/fastfetch/releases/latest | grep -i location | sed -E 's|.*tag/([0-9\.]+).*|\1|')
+    FASTFETCH_LATEST_VERSION=$(curl -s -L -I https://github.com/fastfetch-cli/fastfetch/releases/latest | grep -i location | sed -E 's|.*tag/([0-9\.]+).*|\1|')
     
     # 确定架构
     ARCH=$(uname -m)
@@ -34,9 +34,9 @@ if ! command -v fastfetch > /dev/null 2>&1; then
             ;;
     esac
     
-    echo -e "${CYAN}The Latest Version is ${RED}$LATEST_VERSION${CYAN}${NC}"
+    echo -e "${CYAN}The Latest Version is ${RED}$FASTFETCH_LATEST_VERSION${CYAN}${NC}"
     
-    URL="https://github.com/fastfetch-cli/fastfetch/releases/download/${LATEST_VERSION}/fastfetch-${SYSTEM_TYPE}-${FASTFETCH_ARCH}.deb"
+    URL="https://github.com/fastfetch-cli/fastfetch/releases/download/${FASTFETCH_LATEST_VERSION}/fastfetch-${SYSTEM_TYPE}-${FASTFETCH_ARCH}.deb"
     FILE_NAME=$(basename $URL)
     
     
@@ -52,6 +52,7 @@ if ! command -v fastfetch > /dev/null 2>&1; then
 fi
 
 # =================================安装 fastfetch=================================
+
 
 
 

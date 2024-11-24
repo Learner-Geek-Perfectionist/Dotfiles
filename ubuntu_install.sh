@@ -7,12 +7,18 @@ set -e
 sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list
 
 # =================================安装 wireshark=================================
-if  (sudo DEBIAN_FRONTEND=noninteractive apt-add-repository -y "ppa:wireshark-dev/stable" >/dev/null 2>&1 && sudo apt update >/dev/null 2>&1); then
-    echo "${RED}PPA支持您的Ubuntu版本 ✅。继续安装...${RED}" 
-    sudo DEBIAN_FRONTEND=noninteractive apt install -y wireshark
+if ! command -v wireshark >/dev/null 2>&1; then
+    if  (sudo DEBIAN_FRONTEND=noninteractive apt-add-repository -y "ppa:wireshark-dev/stable" >/dev/null 2>&1 && sudo apt update >/dev/null 2>&1); then
+        echo -e "${GREEN}PPA支持您的Ubuntu版本 ✅。继续安装...${NC}"
+        sudo DEBIAN_FRONTEND=noninteractive apt install -y wireshark
+        echo -e  "${GREEN}Wireshark 安装完成${NC}"
+    else
+        echo -e "${RED}❌ PPA不支持您的Ubuntu版本...${NC}"
+        sudo add-apt-repository -r -y "ppa:wireshark-dev/stable" >/dev/null 2>&1  # 移除PPA
+    fi
+
 else
-    echo "${RED}❌ PPA不支持您的Ubuntu版本...${RED}"
-    sudo add-apt-repository -r -y "ppa:wireshark-dev/stable" >/dev/null 2>&1  # 移除PPA，也隐藏错误
+    echo -e  "${GREEN}Wireshark 已安装，跳过安装。${NC}"
 fi
 # =================================安装 wireshark=================================
 

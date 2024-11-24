@@ -152,7 +152,7 @@ download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR
 
 # 搜索可用的 OpenJDK 包并尝试获取最新版本
 jdk_version=$(apt search openjdk | grep -oP 'openjdk-\d+-jdk' | sort -V | tail -n1)
-sudo apt install -y $jdk_version && echo -e "${GREEN}成功安装 ${jdk_version}${NC}"
+sudo apt install -y $jdk_version && print_centered_message  "${GREEN}成功安装 ${jdk_version}${NC}" "true" "false"
 
 
 # 为了避免 Dockerfile 交互式

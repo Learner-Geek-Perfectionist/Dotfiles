@@ -6,9 +6,6 @@ set -e
 # 设置国内源
 sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list
 
-# 安装 wireshark
-sudo DEBIAN_FRONTEND=noninteractive add-apt-repository -y ppa:wireshark-dev/stable && sudo apt update
-sudo DEBIAN_FRONTEND=noninteractive apt install -y wireshark
 
 # =================================安装 fastfetch=================================
 if ! command -v fastfetch > /dev/null 2>&1; then
@@ -64,13 +61,10 @@ install_packages "packages_ubuntu"
 # 取消最小化安装
 sudo apt update -y && sudo apt upgrade -y && sudo apt search unminimize 2> /dev/null | grep -q "^unminimize/" && (sudo apt install unminimize -y && yes | sudo unminimize) || echo -e "${RED}unminimize包不可用。${NC}"
 
-# 安装 eza, 在 oracular (24.10)  之后的 Ubuntu 发行版才有 eza
-cargo install eza
-
-# 检查 kitty 是否已安装，若未安装则执行安装脚本
-if ! command -v kitty > /dev/null 2>&1; then
-    curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin \
-    launch=n
+# 安装 eza
+if ! command -v eza > /dev/null 2>&1; then
+    # 安装 eza, 在 oracular (24.10)  之后的 Ubuntu 发行版才有 eza
+    cargo install eza
 fi
 
 

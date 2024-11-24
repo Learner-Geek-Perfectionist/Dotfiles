@@ -30,6 +30,7 @@ brew_formulas=(
 packages_ubuntu=(
     openssh-server
     debconf-utils
+    ncurses-bin
     net-tools
     git
     unzip

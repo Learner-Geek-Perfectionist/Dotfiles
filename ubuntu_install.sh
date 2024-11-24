@@ -9,7 +9,7 @@ sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 htt
 # =================================开始安装 wireshark=================================
 if ! command -v wireshark >/dev/null 2>&1; then
     if  (sudo DEBIAN_FRONTEND=noninteractive apt-add-repository -y "ppa:wireshark-dev/stable" >/dev/null 2>&1 && sudo apt update >/dev/null 2>&1); then
-        echo -e "${GREEN}PPA支持您的Ubuntu版本 ✅。继续安装...${NC}"
+        echo -e "${GREEN}PPA支持您的Ubuntu版本 ✅。继续安装${RED}wireshark...${NC}"
         sudo DEBIAN_FRONTEND=noninteractive apt install -y wireshark
         echo -e  "${GREEN}Wireshark 安装完成${NC}"
     else
@@ -47,7 +47,7 @@ if ! command -v fastfetch > /dev/null 2>&1; then
             ;;
     esac
     
-    echo -e "${CYAN}The Latest Version is ${RED}$FASTFETCH_LATEST_VERSION${CYAN}${NC}"
+    print_centered_message  "${CYAN}The Latest Version is ${RED}$FASTFETCH_LATEST_VERSION${CYAN}${NC}"
     
     URL="https://github.com/fastfetch-cli/fastfetch/releases/download/${FASTFETCH_LATEST_VERSION}/fastfetch-${SYSTEM_TYPE}-${FASTFETCH_ARCH}.deb"
     FILE_NAME=$(basename $URL)

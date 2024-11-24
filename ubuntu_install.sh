@@ -18,7 +18,7 @@ if ! command -v wireshark >/dev/null 2>&1; then
     fi
 
 else
-    print_centered_message   "${GREEN}Wireshark 已安装，跳过安装。${NC}" "false" "false"
+    print_centered_message   "${GREEN}Wireshark 已安装，跳过安装。${NC}" "false" "true"
 fi
 # =================================结束安装 wireshark=================================
 
@@ -64,7 +64,8 @@ if ! command -v fastfetch > /dev/null 2>&1; then
     sudo apt install -y /tmp/${FILE_NAME}
     
     print_centered_message "${GREEN} ${FILE_NAME} 安装完成 ✅${NC}" "false" "false"
-
+else
+     print_centered_message   "${GREEN} fastfetch 已安装，跳过安装。${NC}" "true" "true"
 fi
 
 # =================================结束安装 fastfetch=================================
@@ -96,7 +97,7 @@ print_centered_message "${GREEN} kitty 安装完成" "false" "false"
 
 # =================================开始安装 fzf=================================
 if command -v fzf > /dev/null 2>&1; then
-    print_centered_message  "${GREEN}fzf 已安装，跳过安装。${NC}"  "true" "false"
+    print_centered_message  "${GREEN}fzf 已安装，跳过安装。${NC}"  "true" "true"
 else
     print_centered_message  "${RED}开始安装 fzf... ${NC}" "true" "false"
     [[ -d "$HOME/.fzf" ]] && rm -rf "$HOME/.fzf"

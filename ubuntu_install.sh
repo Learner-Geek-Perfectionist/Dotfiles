@@ -4,7 +4,7 @@
 set -e
 
 # 设置国内源
-sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list
+sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list && sudo apt update 
 
 # =================================开始安装 wireshark=================================
 if ! command -v wireshark >/dev/null 2>&1; then

@@ -31,7 +31,7 @@ fi
 
 # =================================开始安装 kitty=================================
 if ! command -v kitty > /dev/null 2>&1; then
-    print_centered_message  "${RED}开始安装 kitty... ${NC}" "true" "false"
+    print_centered_message  "${GREEN}开始安装 kitty... ${NC}" "true" "false"
     curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n
     echo -e  "${GREEN}kitty 安装完成 ✅" 
     # 检查是否在 WSL2 中运行或在自动化脚本环境中
@@ -61,7 +61,7 @@ fi
 if command -v fzf > /dev/null 2>&1; then
     print_centered_message  "${GREEN}fzf 已安装，跳过安装。${NC}"  "false" "true"
 else
-    print_centered_message  "${RED}开始安装 fzf... ${NC}" "true" "false"
+    print_centered_message  "${GREEN}开始安装 fzf... ${NC}" "true" "false"
     [[ -d "$HOME/.fzf" ]] && rm -rf "$HOME/.fzf"
 
     git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"

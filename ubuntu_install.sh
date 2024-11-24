@@ -9,16 +9,16 @@ sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 htt
 # =================================开始安装 wireshark=================================
 if ! command -v wireshark >/dev/null 2>&1; then
     if  (sudo DEBIAN_FRONTEND=noninteractive apt-add-repository -y "ppa:wireshark-dev/stable" >/dev/null 2>&1 && sudo apt update >/dev/null 2>&1); then
-        echo -e "${GREEN}PPA支持您的Ubuntu版本 ✅。继续安装${RED}wireshark...${NC}"
+        print_centered_message  "${GREEN}PPA支持您的Ubuntu版本 ✅。继续安装${RED}wireshark...${NC}"  "false" "true"
         sudo DEBIAN_FRONTEND=noninteractive apt install -y wireshark
-        echo -e  "${GREEN}Wireshark 安装完成${NC}"
+        print_centered_message   "${GREEN}Wireshark 安装完成${NC}"  "false" "false"
     else
-        echo -e "${RED}❌ PPA不支持您的Ubuntu版本...${NC}"
+        print_centered_message  "${RED}❌ PPA不支持您的Ubuntu版本...${NC}" "false" "false"
         sudo add-apt-repository -r -y "ppa:wireshark-dev/stable" >/dev/null 2>&1  # 移除PPA
     fi
 
 else
-    echo -e  "${GREEN}Wireshark 已安装，跳过安装。${NC}"
+    print_centered_message   "${GREEN}Wireshark 已安装，跳过安装。${NC}" "false" "false"
 fi
 # =================================结束安装 wireshark=================================
 
@@ -57,11 +57,14 @@ if ! command -v fastfetch > /dev/null 2>&1; then
     
     # 使用 curl 下载文件，检查 URL 的有效性
     curl -L -f -s -S "${URL}" -o "/tmp/$FILE_NAME" || {
-        echo -e "${RED}❌ Failed to download ${FILE_NAME}.Please check your internet connection and URL.${NC}"
+        print_centered_message  "${RED}❌ Failed to download ${FILE_NAME}.Please check your internet connection and URL.${NC}" "false" "false"
         return 0
     }
     
     sudo apt install -y /tmp/${FILE_NAME}
+    
+    print_centered_message "${GREEN} ${FILE_NAME} 安装完成 ✅${NC}" "false" "false"
+
 fi
 
 # =================================结束安装 fastfetch=================================
@@ -72,8 +75,9 @@ curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n
 
 # 检查是否在 WSL2 中运行或在自动化脚本环境中
 if grep -qi microsoft /proc/version || [[ "$AUTO_RUN" == "true" ]]; then
-    echo -e "${RED}在 WSL2 中或者 Dockerfile 中不需要安装 kitty 桌面图标${NC}"
+    print_centered_message  "${RED}在 WSL2 中或者 Dockerfile 中不需要安装 kitty 桌面图标${NC}" "true" "false"
 else
+    print_centered_message  "${RED}开始安装 kitty... ${NC}" "true" "false"
     sudo ln -s ~/.local/kitty.app/bin/kitty /usr/local/bin/
     # For Application Launcher:
     cp ~/.local/kitty.app/share/applications/kitty.desktop ~/.local/share/applications/
@@ -85,20 +89,22 @@ else
     gio set ~/Desktop/kitty*.desktop metadata::trusted true
     chmod a+x ~/Desktop/kitty*.desktop
 fi
+print_centered_message "${GREEN} kitty 安装完成" "false" "false"
+
 # =================================结束安装 kitty=================================
 
 
 # =================================开始安装 fzf=================================
 if command -v fzf > /dev/null 2>&1; then
-    echo -e  "${GREEN}fzf 已安装，跳过安装。${NC}"
+    print_centered_message  "${GREEN}fzf 已安装，跳过安装。${NC}"  "true" "false"
 else
+    print_centered_message  "${RED}开始安装 fzf... ${NC}" "true" "false"
     [[ -d "$HOME/.fzf" ]] && rm -rf "$HOME/.fzf"
-    
-    echo -e "${RED}正在安装 fzf...${NC}"
+
     git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
     yes | $HOME/.fzf/install --no-update-rc
-    echo -e "${RED}fzf 安装完成。${NC}"
-fi
+    print_centered_message  "${RED}fzf 安装完成。${NC}" "false" "true"
+fi 
 # =================================结束安装 fzf=================================
 
 

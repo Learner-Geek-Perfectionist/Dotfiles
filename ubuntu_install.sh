@@ -67,7 +67,38 @@ fi
 # =================================安装 fastfetch=================================
 
 
+# =================================安装 kitty=================================
+sudo apt install curl -y
+curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n
+# 检查是否在 WSL2 中运行
+if ! grep -qi microsoft /proc/version; then
+    sudo mkdir -p /usr/local/bin/ ~/.local/share/applications/
+    sudo ln -s ~/.local/kitty.app/bin/kitty /usr/local/bin/
+    # For Application Launcher:
+    cp ~/.local/kitty.app/share/applications/kitty.desktop ~/.local/share/applications/
+    cp ~/.local/kitty.app/share/applications/kitty-open.desktop ~/.local/share/applications/
+    # Add Icon:
+    sed -i "s|Icon=kitty|Icon=/home/$USER/.local/kitty.app/share/icons/hicolor/256x256/apps/kitty.png|g" ~/.local/share/applications/kitty*.desktop
+    sed -i "s|Exec=kitty|Exec=/home/$USER/.local/kitty.app/bin/kitty|g" ~/.local/share/applications/kitty*.desktop
+    # Allow-launching of the shortcut:
+    gio set ~/Desktop/kitty*.desktop metadata::trusted true
+    chmod a+x ~/Desktop/kitty*.desktop
+fi
 
+# =================================安装 kitty=================================
+
+# =================================安装 fzf=================================
+if command -v fzf > /dev/null 2>&1; then
+    echo -e  "${GREEN}fzf 已安装，跳过安装。${NC}"
+else
+    [[ -d "$HOME/.fzf" ]] && rm -rf "$HOME/.fzf"
+    
+    echo -e "${RED}正在安装 fzf...${NC}"
+    git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
+    yes | $HOME/.fzf/install --no-update-rc
+    echo -e "${RED}fzf 安装完成。${NC}"
+fi
+# =================================安装 fzf=================================
 
 # 更新索引
 sudo apt update && sudo apt upgrade -y
@@ -95,18 +126,6 @@ sudo locale-gen zh_CN.UTF-8
 export LANG=zh_CN.UTF-8
 export LC_ALL=zh_CN.UTF-8
 
-# =================================安装 fzf=================================
-if command -v fzf > /dev/null 2>&1; then
-    echo -e  "${GREEN}fzf 已安装，跳过安装。${NC}"
-else
-    [[ -d "$HOME/.fzf" ]] && rm -rf "$HOME/.fzf"
-    
-    echo -e "${RED}正在安装 fzf...${NC}"
-    git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
-    yes | $HOME/.fzf/install --no-update-rc
-    echo -e "${RED}fzf 安装完成。${NC}"
-fi
-# =================================安装 fzf=================================
 
 # 设置 Kotlin 的变量
 setup_kotlin_environment

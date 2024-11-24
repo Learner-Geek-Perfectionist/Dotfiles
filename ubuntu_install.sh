@@ -97,12 +97,10 @@ export LC_ALL=zh_CN.UTF-8
 
 # =================================安装 fzf=================================
 if command -v fzf > /dev/null 2>&1; then
-    # 目录存在，跳过安装
     echo -e  "${GREEN}fzf 已安装，跳过安装。${NC}"
 else
     [[ -d "$HOME/.fzf" ]] && rm -rf "$HOME/.fzf"
-
-    # 目录不存在，克隆并安装 fzf
+    
     echo -e "${RED}正在安装 fzf...${NC}"
     git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
     yes | $HOME/.fzf/install --no-update-rc

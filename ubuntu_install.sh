@@ -6,7 +6,7 @@ set -e
 # 设置国内源
 sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list
 
-# =================================安装 wireshark=================================
+# =================================开始安装 wireshark=================================
 if ! command -v wireshark >/dev/null 2>&1; then
     if  (sudo DEBIAN_FRONTEND=noninteractive apt-add-repository -y "ppa:wireshark-dev/stable" >/dev/null 2>&1 && sudo apt update >/dev/null 2>&1); then
         echo -e "${GREEN}PPA支持您的Ubuntu版本 ✅。继续安装...${NC}"
@@ -20,10 +20,10 @@ if ! command -v wireshark >/dev/null 2>&1; then
 else
     echo -e  "${GREEN}Wireshark 已安装，跳过安装。${NC}"
 fi
-# =================================安装 wireshark=================================
+# =================================结束安装 wireshark=================================
 
 
-# =================================安装 fastfetch=================================
+# =================================开始安装 fastfetch=================================
 if ! command -v fastfetch > /dev/null 2>&1; then
     FASTFETCH_LATEST_VERSION=$(curl -s -L -I https://github.com/fastfetch-cli/fastfetch/releases/latest | grep -i location | sed -E 's|.*tag/([0-9\.]+).*|\1|')
     
@@ -64,29 +64,29 @@ if ! command -v fastfetch > /dev/null 2>&1; then
     sudo apt install -y /tmp/${FILE_NAME}
 fi
 
-# =================================安装 fastfetch=================================
+# =================================结束安装 fastfetch=================================
 
 
-# =================================安装 kitty=================================
-sudo apt install curl -y
+# =================================开始安装 kitty=================================
 curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n
-# 检查是否在 WSL2 中运行
-if  grep -qi microsoft /proc/version || "$AUTO_RUN" == "true" ; then
-    echo "${RED}在 WSL2 中或者 Dockerfile 中不需要安装 kitty 桌面图标${NC}"
+
+# 检查是否在 WSL2 中运行或在自动化脚本环境中
+if grep -qi microsoft /proc/version || [[ "$AUTO_RUN" == "true" ]]; then
+    echo -e "${RED}在 WSL2 中或者 Dockerfile 中不需要安装 kitty 桌面图标${NC}"
 else
     sudo ln -s ~/.local/kitty.app/bin/kitty /usr/local/bin/
     # For Application Launcher:
     cp ~/.local/kitty.app/share/applications/kitty.desktop ~/.local/share/applications/
     cp ~/.local/kitty.app/share/applications/kitty-open.desktop ~/.local/share/applications/
     # Add Icon:
-    sed -i "s|Icon=kitty|Icon=/home/$USER/.local/kitty.app/share/icons/hicolor/256x256/apps/kitty.png|g" ~/.local/share/applications/kitty*.desktop
-    sed -i "s|Exec=kitty|Exec=/home/$USER/.local/kitty.app/bin/kitty|g" ~/.local/share/applications/kitty*.desktop
+    sed -i "s|Icon=kitty|Icon=$HOME/.local/kitty.app/share/icons/hicolor/256x256/apps/kitty.png|g" ~/.local/share/applications/kitty*.desktop
+    sed -i "s|Exec=kitty|Exec=$HOME/.local/kitty.app/bin/kitty|g" ~/.local/share/applications/kitty*.desktop
     # Allow-launching of the shortcut:
     gio set ~/Desktop/kitty*.desktop metadata::trusted true
     chmod a+x ~/Desktop/kitty*.desktop
 fi
+# =================================结束安装 kitty=================================
 
-# =================================安装 kitty=================================
 
 # =================================安装 fzf=================================
 if command -v fzf > /dev/null 2>&1; then
@@ -101,6 +101,7 @@ else
 fi
 # =================================安装 fzf=================================
 
+
 # 更新索引
 sudo apt update && sudo apt upgrade -y
 # 安装必要的工具 🔧
@@ -109,12 +110,14 @@ install_packages "packages_ubuntu"
 # 取消最小化安装
 sudo apt update -y && sudo apt upgrade -y && sudo apt search unminimize 2> /dev/null | grep -q "^unminimize/" && (sudo apt install unminimize -y && yes | sudo unminimize) || echo -e "${RED}unminimize包不可用。${NC}"
 
+
 # =================================安装 eza=================================
 if ! command -v eza > /dev/null 2>&1; then
     # 安装 eza, 在 oracular (24.10)  之后的 Ubuntu 发行版才有 eza
     cargo install eza
 fi
 # =================================安装 eza=================================
+
 
 # 设置时区
 sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime

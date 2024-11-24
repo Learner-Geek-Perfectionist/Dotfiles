@@ -11,6 +11,7 @@ sudo DEBIAN_FRONTEND=noninteractive add-apt-repository -y ppa:wireshark-dev/stab
 sudo DEBIAN_FRONTEND=noninteractive apt install -y wireshark
 
 # =================================安装 fastfetch=================================
+if ! command -v fastfetch > /dev/null 2>&1; then
 
 LATEST_VERSION=$(curl -s -L -I https://github.com/fastfetch-cli/fastfetch/releases/latest | grep -i location | sed -E 's|.*tag/([0-9\.]+).*|\1|')
 
@@ -45,6 +46,8 @@ echo -e "${YELLOW}Downloading ${BLUE}${FILE_NAME}${YELLOW} from ${MAGENTA}${URL}
 curl -L -f -s -S "$URL" -o "/tmp/${FILE_NAME}"
 
 sudo apt install -y /tmp/${FILE_NAME}
+
+fi
 
 # =================================安装 fastfetch=================================
 

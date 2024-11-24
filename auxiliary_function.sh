@@ -316,7 +316,8 @@ install_fonts() {
     print_centered_message "正在复制字体文件到 $font_dest..." "false" "false"
 
     # 使用 find 来查找字体源目录中的字体文件，排除 README 文件
-    find "$font_source" -type f \( -iname "*.ttf" -o -iname "*.otf" \) ! -iname "README*" -exec cp -v {} "$font_dest" \;
+    find "$font_source" -type f \( -iname "*.ttf" -o -iname "*.otf" \) ! -iname "README*" -exec sudo cp -v {} "$font_dest" \;
+
 
     # 更新字体缓存
     print_centered_message "更新字体缓存..."

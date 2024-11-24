@@ -4,7 +4,7 @@
 set -e
 
 # 设置国内源
-sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list && sudo apt update 
+sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list && sudo apt update && sudo apt upgrade -y 
 
 # =================================开始安装 wireshark=================================
 if ! command -v wireshark >/dev/null 2>&1; then
@@ -87,7 +87,7 @@ else
     print_centered_message  "${RED}开始安装 eza... ${NC}" "true" "false"
     # 安装 eza, 在 oracular (24.10)  之后的 Ubuntu 发行版才有 eza
     cargo install eza
-    print_centered_message "${GREEN} eza 安装完成 ✅" "true" "false"
+    print_centered_message "${GREEN} eza 安装完成 ✅" "false" "true"
 fi 
 # =================================结束安装 eza=================================
 
@@ -121,4 +121,7 @@ else
     # 调用函数以安装和配置 Docker
     install_and_configure_docker
 fi
+
+sudo apt clean
+
 echo -e "${RED}当前目录: $(pwd) ${NC}"

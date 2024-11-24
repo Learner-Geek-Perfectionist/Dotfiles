@@ -71,8 +71,9 @@ fi
 sudo apt install curl -y
 curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n
 # 检查是否在 WSL2 中运行
-if ! grep -qi microsoft /proc/version; then
-    sudo mkdir -p /usr/local/bin/ ~/.local/share/applications/
+if  grep -qi microsoft /proc/version || "$AUTO_RUN" == "true" ; then
+    echo "${RED}在 WSL2 中或者 Dockerfile 中不需要安装 kitty 桌面图标${NC}"
+else
     sudo ln -s ~/.local/kitty.app/bin/kitty /usr/local/bin/
     # For Application Launcher:
     cp ~/.local/kitty.app/share/applications/kitty.desktop ~/.local/share/applications/

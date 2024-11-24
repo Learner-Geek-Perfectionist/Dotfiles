@@ -18,7 +18,7 @@ if ! command -v wireshark >/dev/null 2>&1; then
     fi
 
 else
-    print_centered_message   "${GREEN}Wireshark 已安装，跳过安装。${NC}" "false" "true"
+    print_centered_message   "${GREEN}Wireshark 已安装，跳过安装。${NC}" "false" "false"
 fi
 # =================================结束安装 wireshark=================================
 

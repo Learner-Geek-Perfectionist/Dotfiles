@@ -107,7 +107,7 @@ else
 
     git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
     yes | $HOME/.fzf/install --no-update-rc
-    print_centered_message "${GREEN} fzf 安装完成 ✅" "true" "false"
+    print_centered_message "${GREEN} fzf 安装完成 ✅" "false" "true"
 fi 
 # =================================结束安装 fzf=================================
 

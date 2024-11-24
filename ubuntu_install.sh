@@ -51,7 +51,7 @@ if ! command -v fastfetch > /dev/null 2>&1; then
     FILE_NAME=$(basename $URL)
     
     print_centered_message "${LIGHT_BLUE}正在下载 ${FILE_NAME}...... ${NC}" "true" "false"
-    echo -e "${CYAN}The Latest Version is ${RED}${LATEST_VERSION}${NC}"
+    echo -e "${CYAN}The Latest Version is ${RED}${FASTFETCH_LATEST_VERSION}${NC}"
     echo -e "${YELLOW}Downloading ${BLUE}${FILE_NAME}${YELLOW} from ${MAGENTA}${URL}${NC}"
     
     

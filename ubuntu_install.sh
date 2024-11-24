@@ -12,7 +12,7 @@ if ! command -v wireshark >/dev/null 2>&1; then
     sudo DEBIAN_FRONTEND=noninteractive add-apt-repository -y ppa:wireshark-dev/stable
     sudo DEBIAN_FRONTEND=noninteractive apt install -y wireshark
 else
-    print_centered_message   "${GREEN}Wireshark 已安装，跳过安装。${NC}" "false" "false"
+    print_centered_message   "${GREEN}Wireshark 已安装，跳过安装。${NC}" "true" "false"
 fi
 # =================================结束安装 wireshark=================================
 

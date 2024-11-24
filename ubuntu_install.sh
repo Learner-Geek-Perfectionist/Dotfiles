@@ -59,7 +59,7 @@ fi
 
 # =================================开始安装 fzf=================================
 if command -v fzf > /dev/null 2>&1; then
-    print_centered_message  "${GREEN}fzf 已安装，跳过安装。${NC}"  "false" "true"
+    print_centered_message  "${GREEN}fzf 已安装，跳过安装。${NC}"  "true" "true"
 else
     print_centered_message  "${GREEN}开始安装 fzf... ${NC}" "true" "false"
     [[ -d "$HOME/.fzf" ]] && rm -rf "$HOME/.fzf"

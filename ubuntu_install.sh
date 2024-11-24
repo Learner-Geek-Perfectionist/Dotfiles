@@ -77,12 +77,12 @@ install_packages "packages_ubuntu"
 # 取消最小化安装
 sudo apt update -y && sudo apt upgrade -y && sudo apt search unminimize 2> /dev/null | grep -q "^unminimize/" && (sudo apt install unminimize -y && yes | sudo unminimize) || echo -e "${RED}unminimize包不可用。${NC}"
 
-# 安装 eza
+# =================================安装 eza=================================
 if ! command -v eza > /dev/null 2>&1; then
     # 安装 eza, 在 oracular (24.10)  之后的 Ubuntu 发行版才有 eza
     cargo install eza
 fi
-
+# =================================安装 eza=================================
 
 # 设置时区
 sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime

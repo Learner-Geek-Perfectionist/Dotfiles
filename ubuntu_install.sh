@@ -10,9 +10,45 @@ sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 htt
 sudo DEBIAN_FRONTEND=noninteractive add-apt-repository -y ppa:wireshark-dev/stable && sudo apt update
 sudo DEBIAN_FRONTEND=noninteractive apt install -y wireshark
 
-# 安装 fastfetch
-sudo DEBIAN_FRONTEND=noninteractive add-apt-repository -y ppa:zhangsongcui3371/fastfetch && sudo apt update
-sudo DEBIAN_FRONTEND=noninteractive apt install -y fastfetch
+# =================================安装 fastfetch=================================
+
+LATEST_VERSION=$(curl -s -L -I https://github.com/fastfetch-cli/fastfetch/releases/latest | grep -i location | sed -E 's|.*tag/([0-9\.]+).*|\1|')
+
+# 确定架构
+ARCH=$(uname -m)
+case "$ARCH" in
+    x86_64) FASTFETCH_ARCH="${RED}amd64${NC}" ;;
+    aarch64) FASTFETCH_ARCH="${RED}aarch64${NC}" ;;
+    *) echo "Unsupported architecture: $ARCH" && exit 1 ;;
+esac
+
+
+# 确定系统类型
+case "$(uname -s)" in
+    Linux)
+        SYSTEM_TYPE="linux"
+        ;;
+    *)
+        echo -e "${RED}Unsupported system type: $(uname -s)${NC}"
+        exit 1
+        ;;
+esac
+
+echo -e "${CYAN}The Latest Version is ${RED}$LATEST_VERSION${CYAN}${NC}"
+
+URL="https://github.com/fastfetch-cli/fastfetch/releases/download/${LATEST_VERSION}/fastfetch-${SYSTEM_TYPE}-${FASTFETCH_ARCH}.deb"
+FILE_NAME=$(basename $URL)
+
+
+echo -e "${YELLOW}Downloading ${BLUE}${FILE_NAME}${YELLOW} from ${MAGENTA}${URL}${YELLOW}...${NC}"
+
+curl -L -f -s -S "$URL" -o "/tmp/${FILE_NAME}"
+
+sudo apt install -y /tmp/${FILE_NAME}
+
+# =================================安装 fastfetch=================================
+
+
 
 # 更新索引
 sudo apt update && sudo apt upgrade -y

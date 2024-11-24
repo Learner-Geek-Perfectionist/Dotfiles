@@ -72,25 +72,26 @@ fi
 
 
 # =================================开始安装 kitty=================================
-curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n
-
-# 检查是否在 WSL2 中运行或在自动化脚本环境中
-if grep -qi microsoft /proc/version || [[ "$AUTO_RUN" == "true" ]]; then
-    print_centered_message  "${RED}在 WSL2 中或者 Dockerfile 中不需要安装 kitty 桌面图标${NC}" "true" "false"
-else
+if ! command -v kitty > /dev/null 2>&1; then
     print_centered_message  "${RED}开始安装 kitty... ${NC}" "true" "false"
-    sudo ln -s ~/.local/kitty.app/bin/kitty /usr/local/bin/
-    # For Application Launcher:
-    cp ~/.local/kitty.app/share/applications/kitty.desktop ~/.local/share/applications/
-    cp ~/.local/kitty.app/share/applications/kitty-open.desktop ~/.local/share/applications/
-    # Add Icon:
-    sed -i "s|Icon=kitty|Icon=$HOME/.local/kitty.app/share/icons/hicolor/256x256/apps/kitty.png|g" ~/.local/share/applications/kitty*.desktop
-    sed -i "s|Exec=kitty|Exec=$HOME/.local/kitty.app/bin/kitty|g" ~/.local/share/applications/kitty*.desktop
-    # Allow-launching of the shortcut:
-    gio set ~/Desktop/kitty*.desktop metadata::trusted true
-    chmod a+x ~/Desktop/kitty*.desktop
+    curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n
+    # 检查是否在 WSL2 中运行或在自动化脚本环境中
+    if grep -qi microsoft /proc/version || [[ "$AUTO_RUN" == "true" ]]; then
+        print_centered_message  "${RED}在 WSL2 中或者 Dockerfile 中不需要安装 kitty 桌面图标${NC}" "true" "false"
+    else
+        sudo ln -s ~/.local/kitty.app/bin/kitty /usr/local/bin/
+        # For Application Launcher:
+        cp ~/.local/kitty.app/share/applications/kitty.desktop ~/.local/share/applications/
+        cp ~/.local/kitty.app/share/applications/kitty-open.desktop ~/.local/share/applications/
+        # Add Icon:
+        sed -i "s|Icon=kitty|Icon=$HOME/.local/kitty.app/share/icons/hicolor/256x256/apps/kitty.png|g" ~/.local/share/applications/kitty*.desktop
+        sed -i "s|Exec=kitty|Exec=$HOME/.local/kitty.app/bin/kitty|g" ~/.local/share/applications/kitty*.desktop
+        # Allow-launching of the shortcut:
+        gio set ~/Desktop/kitty*.desktop metadata::trusted true
+        chmod a+x ~/Desktop/kitty*.desktop
+    fi
+    print_centered_message "${GREEN} kitty 安装完成" "false" "false"
 fi
-print_centered_message "${GREEN} kitty 安装完成" "false" "false"
 
 # =================================结束安装 kitty=================================
 

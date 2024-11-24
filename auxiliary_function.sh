@@ -105,7 +105,7 @@ download_and_extract_kotlin() {
     # 输出最新的版本号，添加颜色
     print_centered_message "${LIGHT_BLUE}正在下载 ${FILE_NAME}...... ${NC}" "true" "false"
     echo -e "${CYAN}The Latest Version is ${RED}${LATEST_VERSION}${NC}"
-    echo -e "${YELLOW}Downloading ${BLUE}$FILE_NAME${YELLOW} from ${MAGENTA}${URL}${NC}"
+    echo -e "${YELLOW}Downloading ${BLUE}${FILE_NAME}${YELLOW} from ${MAGENTA}${URL}${NC}"
 
     # 使用 curl 下载文件，检查 URL 的有效性
     curl -L -f -s -S "${URL}" -o "/tmp/${FILE_NAME}" || {

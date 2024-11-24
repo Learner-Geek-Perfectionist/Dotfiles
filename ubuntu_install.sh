@@ -91,6 +91,8 @@ if ! command -v kitty > /dev/null 2>&1; then
         chmod a+x ~/Desktop/kitty*.desktop
     fi
     print_centered_message "${GREEN} kitty 安装完成" "false" "false"
+else
+    print_centered_message   "${GREEN} kitty 已安装，跳过安装。${NC}" "true" "false"
 fi
 
 # =================================结束安装 kitty=================================

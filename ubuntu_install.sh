@@ -30,9 +30,9 @@ if ! command -v fastfetch > /dev/null 2>&1; then
     # 确定架构
     ARCH=$(uname -m)
     case "$ARCH" in
-        x86_64) FASTFETCH_ARCH="${RED}amd64${NC}" ;;
-        aarch64) FASTFETCH_ARCH="${RED}aarch64${NC}" ;;
-        *) echo "Unsupported architecture: $ARCH" && exit 1 ;;
+        x86_64) FASTFETCH_ARCH="amd64" ;;
+        aarch64) FASTFETCH_ARCH="aarch64" ;;
+        *) echo -e "${RED}Unsupported architecture: $ARCH${NC}" && exit 1 ;;
     esac
     
     

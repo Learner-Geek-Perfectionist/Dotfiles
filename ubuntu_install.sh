@@ -46,7 +46,8 @@ if ! command -v kitty > /dev/null 2>&1; then
         sed -i "s|Icon=kitty|Icon=$HOME/.local/kitty.app/share/icons/hicolor/256x256/apps/kitty.png|g" ~/.local/share/applications/kitty*.desktop
         sed -i "s|Exec=kitty|Exec=$HOME/.local/kitty.app/bin/kitty|g" ~/.local/share/applications/kitty*.desktop
         # Allow-launching of the shortcut:
-        gio set ~/Desktop/kitty*.desktop metadata::trusted true
+        DESKTOP_PATH=$(xdg-user-dir DESKTOP)
+        gio set ${DESKTOP_PATH}/kitty*.desktop metadata::trusted true
         chmod a+x ~/Desktop/kitty*.desktop
     fi
 else

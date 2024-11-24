@@ -6,6 +6,16 @@ set -e
 # 设置国内源
 sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list
 
+# =================================安装 wireshark=================================
+if  (sudo DEBIAN_FRONTEND=noninteractive apt-add-repository -y "ppa:wireshark-dev/stable" >/dev/null 2>&1 && sudo apt update >/dev/null 2>&1); then
+    echo "${RED}PPA支持您的Ubuntu版本 ✅。继续安装...${RED}" 
+    sudo DEBIAN_FRONTEND=noninteractive apt install -y wireshark
+else
+    echo "${RED}❌ PPA不支持您的Ubuntu版本...${RED}"
+    sudo add-apt-repository -r -y "ppa:wireshark-dev/stable" >/dev/null 2>&1  # 移除PPA，也隐藏错误
+fi
+# =================================安装 wireshark=================================
+
 
 # =================================安装 fastfetch=================================
 if ! command -v fastfetch > /dev/null 2>&1; then

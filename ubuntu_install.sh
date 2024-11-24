@@ -122,7 +122,7 @@ sudo apt update -y && sudo apt upgrade -y && sudo apt search unminimize 2> /dev/
 
 
 # =================================开始安装 eza=================================
-if ${HOME}/.cargo/bin/eza > /dev/null 2>&1; then
+if command -v eza > /dev/null 2>&1; then
     print_centered_message  "${GREEN}eza 已安装，跳过安装。${NC}"  "true" "true"
 else
     print_centered_message  "${RED}开始安装 eza... ${NC}" "true" "false"

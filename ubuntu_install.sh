@@ -75,7 +75,7 @@ fi
 if ! command -v kitty > /dev/null 2>&1; then
     print_centered_message  "${RED}开始安装 kitty... ${NC}" "true" "false"
     curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n
-    echo -e  "${GREEN} kitty 安装完成 ✅" "false" "false"
+    echo -e  "${GREEN}kitty 安装完成 ✅" "false" "false"
     # 检查是否在 WSL2 中运行或在自动化脚本环境中
     if grep -qi microsoft /proc/version || [[ "$AUTO_RUN" == "true" ]]; then
         print_centered_message  "${RED}在 WSL2 中或者 Dockerfile 中不需要安装 kitty 桌面图标${NC}" "false" "true"

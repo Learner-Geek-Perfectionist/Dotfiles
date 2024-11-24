@@ -84,7 +84,7 @@ sudo apt update -y && sudo apt upgrade -y && sudo apt search unminimize 2> /dev/
 if command -v eza > /dev/null 2>&1; then
     print_centered_message  "${GREEN}eza 已安装，跳过安装。${NC}"  "true" "true"
 else
-    print_centered_message  "${RED}开始安装 eza... ${NC}" "true" "false"
+    print_centered_message  "${GREEN}开始安装 eza... ${NC}" "true" "false"
     # 安装 eza, 在 oracular (24.10)  之后的 Ubuntu 发行版才有 eza
     cargo install eza
     print_centered_message "${GREEN} eza 安装完成 ✅" "false" "true"

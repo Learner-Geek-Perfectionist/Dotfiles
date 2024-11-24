@@ -71,9 +71,6 @@ packages_ubuntu=(
     autoconf
     systemd
     cargo
-    wireshark
-    kitty
-    
 )
 
 #fedora

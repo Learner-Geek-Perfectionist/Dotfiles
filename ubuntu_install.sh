@@ -9,9 +9,9 @@ sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 htt
 # =================================开始安装 wireshark=================================
 if ! command -v wireshark >/dev/null 2>&1; then
     if  (sudo DEBIAN_FRONTEND=noninteractive apt-add-repository -y "ppa:wireshark-dev/stable" >/dev/null 2>&1 && sudo apt update >/dev/null 2>&1); then
-        print_centered_message  "${GREEN}PPA支持您的Ubuntu版本 ✅。继续安装${RED}wireshark...${NC}"  "false" "true"
+        print_centered_message  "${GREEN}PPA支持您的Ubuntu版本 ✅。继续安装 ${RED}wireshark...${NC}"  "false" "true"
         sudo DEBIAN_FRONTEND=noninteractive apt install -y wireshark
-        print_centered_message   "${GREEN}Wireshark 安装完成${NC}"  "false" "false"
+        print_centered_message   "${GREEN}Wireshark 安装完成 ✅${NC}"  "false" "false"
     else
         print_centered_message  "${RED}❌ PPA不支持您的Ubuntu版本...${NC}" "false" "false"
         sudo add-apt-repository -r -y "ppa:wireshark-dev/stable" >/dev/null 2>&1  # 移除PPA
@@ -75,9 +75,10 @@ fi
 if ! command -v kitty > /dev/null 2>&1; then
     print_centered_message  "${RED}开始安装 kitty... ${NC}" "true" "false"
     curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n
+    print_centered_message "${GREEN} kitty 安装完成 ✅" "false" "false"
     # 检查是否在 WSL2 中运行或在自动化脚本环境中
     if grep -qi microsoft /proc/version || [[ "$AUTO_RUN" == "true" ]]; then
-        print_centered_message  "${RED}在 WSL2 中或者 Dockerfile 中不需要安装 kitty 桌面图标${NC}" "true" "false"
+        print_centered_message  "${RED}在 WSL2 中或者 Dockerfile 中不需要安装 kitty 桌面图标${NC}" "false" "true"
     else
         sudo ln -s ~/.local/kitty.app/bin/kitty /usr/local/bin/
         # For Application Launcher:
@@ -90,7 +91,6 @@ if ! command -v kitty > /dev/null 2>&1; then
         gio set ~/Desktop/kitty*.desktop metadata::trusted true
         chmod a+x ~/Desktop/kitty*.desktop
     fi
-    print_centered_message "${GREEN} kitty 安装完成" "false" "false"
 else
     print_centered_message   "${GREEN} kitty 已安装，跳过安装。${NC}" "true" "false"
 fi
@@ -107,7 +107,7 @@ else
 
     git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
     yes | $HOME/.fzf/install --no-update-rc
-    print_centered_message  "${RED}fzf 安装完成。${NC}" "false" "true"
+    print_centered_message "${GREEN} fzf 安装完成 ✅" "false" "false"
 fi 
 # =================================结束安装 fzf=================================
 
@@ -122,10 +122,14 @@ sudo apt update -y && sudo apt upgrade -y && sudo apt search unminimize 2> /dev/
 
 
 # =================================开始安装 eza=================================
-if ! command -v eza > /dev/null 2>&1; then
+if command -v eza > /dev/null 2>&1; then
+    print_centered_message  "${GREEN}eza 已安装，跳过安装。${NC}"  "true" "true"
+else
+    print_centered_message  "${RED}开始安装 eza... ${NC}" "true" "false"
     # 安装 eza, 在 oracular (24.10)  之后的 Ubuntu 发行版才有 eza
     cargo install eza
-fi
+    print_centered_message "${GREEN} eza 安装完成 ✅" "false" "false"
+fi 
 # =================================结束安装 eza=================================
 
 

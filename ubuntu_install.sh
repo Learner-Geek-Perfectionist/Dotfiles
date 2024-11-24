@@ -95,23 +95,20 @@ sudo locale-gen zh_CN.UTF-8
 export LANG=zh_CN.UTF-8
 export LC_ALL=zh_CN.UTF-8
 
-
-# 定义 fzf 的安装目录
-FZF_DIR="$HOME/.fzf"
-
-# 检查 fzf 是否已安装
+# =================================安装 fzf=================================
 if command -v fzf > /dev/null 2>&1; then
     # 目录存在，跳过安装
     echo -e  "${GREEN}fzf 已安装，跳过安装。${NC}"
 else
-    [[ -d "$FZF_DIR" ]] && rm -rf "$FZF_DIR"
+    [[ -d "$HOME/.fzf" ]] && rm -rf "$HOME/.fzf"
 
     # 目录不存在，克隆并安装 fzf
     echo -e "${RED}正在安装 fzf...${NC}"
-    git clone --depth 1 https://github.com/junegunn/fzf.git "$FZF_DIR"
-    yes | $FZF_DIR/install --no-update-rc
+    git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
+    yes | $HOME/.fzf/install --no-update-rc
     echo -e "${RED}fzf 安装完成。${NC}"
 fi
+# =================================安装 fzf=================================
 
 # 设置 Kotlin 的变量
 setup_kotlin_environment

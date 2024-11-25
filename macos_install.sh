@@ -6,12 +6,13 @@ print_centered_message "${CYAN}检测到操作系统为: macOS${NC}" "true" "fal
 if ! xcode-select --version &> /dev/null; then
     print_centered_message "${RED}⚠️ Xcode 命令行工具未安装${NC}" "true" "false"
     xcode-select --install 2> /dev/null
-    sudo xcode-select --reset
     print_centered_message "${RED}请手动点击屏幕中的弹窗，选择"安装"，安装完成之后再次运行脚本(提示命令通常在终端的背面)${NC}" "false" "false"
     echo -e "${RED}脚本命令: ${NC}"
     print_centered_message "${RED}/bin/zsh -c \"$(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/install.sh)\"${NC}" "false" "true"
     exit 1
 fi
+
+sudo xcode-select --reset
 
 # 检查 Homebrew 是否已安装
 if command -v brew > /dev/null 2>&1; then
@@ -96,5 +97,5 @@ sudo chmod -R a+rw /opt/kotlin-native
 
 print_centered_message "${GREEN}所有应用安装完成。🎉${NC}" "false" "true"
 echo -e "${RED}当前目录: $(pwd) ${NC}"
-
+# 设置 tcpdump 等权限
 sudo chown $(whoami):admin /dev/bpf*

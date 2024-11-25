@@ -21,7 +21,6 @@ else
     print_centered_message "${GREEN}重新加载 .zprofile 文件以启用 brew 环境变量 ${NC}" "false" "true"
     # 刷新 brew 配置，启用 brew 环境变量
     source ${HOME}/.zprofile
-    [[ -f "$HOME/Documents/Homebrew.sh" ]] && rm "$HOME/Documents/Homebrew.sh" && echo "$HOME/Documents/Homebrew.sh 文件已被删除。"
 fi
 
 # 提示开启代理

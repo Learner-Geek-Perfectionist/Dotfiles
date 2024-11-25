@@ -44,9 +44,9 @@ install_packages "brew_casks"
 # 安装 wireshark --cask 工具，因为 wireshark 既有命令行版本又有 cask 版本，因此手动加上 --cask 参数
 brew install --cask wireshark
 
-brew cleanup --prune=all
+print_centered_message "${GREEN}图形界面安装完成✅${NC}" "false" "false"
 
-print_centered_message "${GREEN}图形界面安装完成✅${NC}" "true" "false"
+brew cleanup --prune=all
 
 # 设置 Kotlin 的变量
 setup_kotlin_environment

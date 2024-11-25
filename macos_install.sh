@@ -3,7 +3,7 @@
 # macOS 逻辑
 print_centered_message "${CYAN}检测到操作系统为: macOS${NC}" "true" "false"
 
-if ! xcode-select --print-path &> /dev/null; then
+if ! xcode-select --install &> /dev/null; then
     print_centered_message "${RED}⚠️ Xcode 命令行工具未安装${NC}" "true" "false"
     xcode-select --install 2> /dev/null
     print_centered_message "${RED}请手动点击屏幕中的弹窗，选择"安装"，安装完成之后再次运行脚本(提示命令通常在终端的背面)${NC}" "false" "false"

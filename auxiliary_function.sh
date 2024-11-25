@@ -331,8 +331,7 @@ install_fonts() {
 
 
     # 更新字体缓存
-    print_centered_message "更新字体缓存..."
-    if [ "$(uname)" == "Darwin" ]; then
+    if [[ "$(uname)" == "Darwin" ]]; then
         # macOS 不需要手动更新字体缓存
         print_centered_message "在 macOS 上，字体缓存将自动更新。" "false" "true"
     else

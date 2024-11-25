@@ -197,7 +197,7 @@ install_packages() {
     
     # brew 无需 sudo
     if [[ "$package_manager" == "brew" ]];then
-        $package_manager install -y "${uninstalled_packages[@]}"
+        $package_manager install "${uninstalled_packages[@]}"
     else 
         sudo $package_manager install -y "${uninstalled_packages[@]}"
     fi

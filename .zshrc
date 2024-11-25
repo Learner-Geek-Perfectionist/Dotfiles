@@ -23,6 +23,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
     export PATH="/Applications/PyCharm.app/Contents/MacOS:$PATH"
     export PATH="/Applications/IntelliJ IDEA.app/Contents/MacOS:$PATH"
     export PATH="/opt/homebrew/anaconda3/bin:$PATH"
+    export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
     export HOMEBREW_NO_ENV_HINTS=1
     # clion 映射到 cl
     alias cl=clion

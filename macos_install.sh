@@ -36,7 +36,7 @@ install_packages "brew_formulas"
 
 print_centered_message "${GREEN}开发工具安装完成✅${NC}" "false" "true"
 
-print_centered_message "${RED}正在安装 macOS 常用的带图形用户界面的应用程序......${NC}" "false" "true"
+print_centered_message "${RED}正在安装 macOS 常用的带图形用户界面的应用程序......${NC}" "false" "false"
 
 # 安装 brew_casks 包
 install_packages "brew_casks"

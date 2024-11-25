@@ -182,7 +182,7 @@ install_packages() {
 
     # 如果未安装包的数组为空，打印消息并返回
     if [[ ${#uninstalled_packages[@]} -eq 0 ]]; then
-        print_centered_message "🎉 ${GREEN}All packages were already installed.${NC}"
+        print_centered_message "🎉 ${GREEN}All packages were already installed.${NC}" "false" "true"
         return 0
     else
         # 如果数组不为空，打印需要安装的包

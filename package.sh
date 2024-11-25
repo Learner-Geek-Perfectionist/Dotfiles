@@ -5,7 +5,7 @@ set -e
 
 # macOS
 brew_casks=(
-    alfred videofusion wpsoffice-cn tencent-meeting google-chrome
+    videofusion wpsoffice-cn tencent-meeting google-chrome
     orbstack dingtalk baidunetdisk anaconda iina KeepingYouAwake
     pycharm android-studio input-source-pro qq chatgpt fleet
     intellij-idea qqmusic jetbrains-gateway telegram

@@ -194,7 +194,13 @@ install_packages() {
     
     # 一次性安装所有未安装的包
     print_centered_message "${LIGHT_BLUE}Installing ${#uninstalled_packages[@]} packages...${NC}"
-    sudo $package_manager install -y "${uninstalled_packages[@]}"
+    
+    # brew 无需 sudo
+    if [[ "$package_manager" == "brew" ]];then
+        $package_manager install -y "${uninstalled_packages[@]}"
+    else 
+        sudo $package_manager install -y "${uninstalled_packages[@]}"
+    fi
 }
 
 

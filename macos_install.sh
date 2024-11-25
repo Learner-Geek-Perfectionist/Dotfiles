@@ -29,7 +29,7 @@ echo -e "${YELLOW}如果下载进度条卡住，在代理客户端中，多次�
 
 prompt_open_proxy
 
-print_centered_message "${RED}正在安装 macOS 常用的开发工具......${NC}" "true" "true"
+print_centered_message "${RED}正在安装 macOS 常用的开发工具......${NC}" "true" "false"
 
 # 安装 brew_formulas 包
 install_packages "brew_formulas"

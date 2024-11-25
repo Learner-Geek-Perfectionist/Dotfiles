@@ -17,9 +17,7 @@ if command -v brew > /dev/null 2>&1; then
     print_centered_message "${GREEN}Homebrew 已经安装${NC}" "true" "true"
 else
     print_centered_message "${GREEN}正在安装 Homebrew...${NC}" "true" "false"
-    curl -o $HOME/Documents/Homebrew.sh "https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh"
-    chmod +x $HOME/Documents/Homebrew.sh
-    source $HOME/Documents/Homebrew.sh
+    /bin/zsh -c "$(curl -fsSL https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh)"
     print_centered_message "${GREEN}重新加载 .zprofile 文件以启用 brew 环境变量 ${NC}" "false" "true"
     # 刷新 brew 配置，启用 brew 环境变量
     source ${HOME}/.zprofile

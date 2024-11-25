@@ -23,7 +23,7 @@ brew_formulas=(
     fastfetch libuv lzip z3 tree rust autoconf
     fd libvterm make readline zstd eza less
     fzf libyaml mpdecimal ripgrep go
-    gcc ninja wget mas pkg-config jq
+    gcc ninja wget mas pkgconf jq
 )
 
 #ubuntu

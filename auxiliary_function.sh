@@ -116,7 +116,12 @@ download_and_extract_kotlin() {
     echo -e "${YELLOW}Installing ${GREEN}$FILE_NAME${YELLOW} to ${BLUE}$TARGET_DIR${YELLOW}...${NC}"
     sudo mkdir -p $TARGET_DIR
     if [[ $FILE_NAME == *.tar.gz ]]; then
-        sudo tar -xzf "/tmp/$FILE_NAME" -C $TARGET_DIR --strip-components=1 --overwrite
+        if [[ $(uname) == "Darwin" ]];then
+            # macOS 不支持 --overwrite 选项
+            sudo tar -xzf "/tmp/$FILE_NAME" -C $TARGET_DIR --strip-components=1 
+        else
+            sudo tar -xzf "/tmp/$FILE_NAME" -C $TARGET_DIR --strip-components=1 --overwrite
+        fi
     elif [[ $FILE_NAME == *.zip ]]; then
         sudo unzip -o "/tmp/$FILE_NAME" -d $TARGET_DIR
     fi

@@ -31,7 +31,7 @@ print_centered_message "${GREEN}接下来配置 zsh......${NC}" "false" "false"
 source ./zsh_config.sh
 
 # 打印提示消息
-print_centered_message "${GREEN}进入 zsh ......${NC}" "true" "true"
+print_centered_message "${GREEN}进入 zsh ......${NC}" "true" "false"
 
 # 进入 zsh
 /bin/zsh

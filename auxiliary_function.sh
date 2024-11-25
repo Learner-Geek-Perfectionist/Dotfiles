@@ -179,7 +179,7 @@ install_packages() {
 
    # 筛选出尚未安装的包
     for package in "${packages[@]}"; do
-        if ! echo "$installed_packages" | grep -q -E "^$package.*$"; then
+        if ! echo "$installed_packages" | grep -qi -E "^$package.*$"; then
             uninstalled_packages+=("$package")
         fi
     done

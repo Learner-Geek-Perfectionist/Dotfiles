@@ -18,7 +18,7 @@ brew_formulas=(
     brotli git lpeg ncurses sqlite openjdk grep
     c-ares htop lua neovim tree-sitter bash tcpdump
     ca-certificates icu4c luajit node unibilium
-    cmake libnghttp2 luv openssl@3 vim perl cargo
+    cmake libnghttp2 luv openssl@3 vim perl
     cmake-docs libsodium lz4 pcre2 xz llvm
     fastfetch libuv lzip z3 tree rust autoconf
     fd libvterm make readline zstd eza less

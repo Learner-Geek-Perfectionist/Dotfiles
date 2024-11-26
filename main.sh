@@ -43,6 +43,9 @@ else
     echo -e "${MAGENTA}未知的操作系统类型${NC}"
 fi
 
+# 更改 kotlin 目录权限
+[[ -d "/opt/kotlin-native/" ]] && sudo chmod -R a+rw /opt/kotlin-native/
+[[ -d "/opt/kotlin-compiler/" ]] && sudo chmod -R a+rw /opt/kotlin-compiler/
 
 # 针对 macos、linux 统一配置 zsh
 source ./zsh_install.sh

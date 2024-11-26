@@ -30,7 +30,7 @@ if [[ $(uname -s) == "Linux" ]]; then
     else
         default_password=1
         if ! sudo passwd -S "$(whoami)" | grep -q ' P '; then
-            echo -en "用户 $(whoami) 的密码未设置，现在将密码设置为 「${RED}${default_password}${NC}」 。"
+            echo -en "用户 $(whoami) 的密码未设置，现在将密码设置为「${RED}${default_password}${NC}」。"
             echo "$(whoami):${default_password}" | sudo chpasswd
             echo -e "${GREEN}密码已设置。${NC}"
         else

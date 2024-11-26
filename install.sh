@@ -18,6 +18,10 @@ NC='\033[0m' # 没有颜色
 
 [ -d "/tmp/Dotfiles/" ] && rm -rf /tmp/Dotfiles/
 
+# 将用户添加到 sudoers 文件以免输入密码
+echo "$(whoami) ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers
+echo -e  "${LIGHT_BLUE}已配置用户 $(whoami) 无需 sudo 密码。${NC}"
+
 if [[ $(uname -s) == "Linux" ]]; then
 
     # 如果是在 Dockerfile 中......
@@ -32,10 +36,6 @@ if [[ $(uname -s) == "Linux" ]]; then
         else
             echo -e "${GREEN}用户 $(whoami) 的密码已经存在。${NC}"
         fi
-        
-        # 将用户添加到 sudoers 文件以免输入密码
-        echo "$(whoami) ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers
-        echo -e  "${LIGHT_BLUE}已配置用户 $(whoami) 无需 sudo 密码。${NC}"
     fi
     
     

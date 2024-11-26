@@ -98,7 +98,7 @@ download_and_extract_kotlin() {
     FILE_NAME=$(basename $URL)
     # 检测 Kotlin 是否已经安装
     if [ -d "$TARGET_DIR" ]; then
-        print_centered_message "${GREEN}${FILE_NAME}${NC} is already installed in ${YELLOW}${TARGET_DIR}${NC}." "true" "true"
+        print_centered_message "${GREEN}${FILE_NAME}${NC} is already installed in ${YELLOW}${TARGET_DIR}${NC}." "true" "false"
         return 0
     fi
 

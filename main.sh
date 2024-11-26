@@ -33,7 +33,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
     # 修改默认的登录 shell 为 zsh
     # 获取当前用户的默认 shell
     current_shell=$(getent passwd "$(whoami)" | cut -d: -f7)
-    # 如果当前shell不是zsh，则更改为zsh
+    # 如果当前 shell 不是 zsh，则更改为 zsh
     [[ "$(command -v zsh)" != "$current_shell" ]] && sudo chsh -s "$(command -v zsh)" "$(whoami)"
     
     # 设置工具权限

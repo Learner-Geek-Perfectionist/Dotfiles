@@ -37,7 +37,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
     [[ "$(command -v zsh)" != "$current_shell" ]] && sudo chsh -s "$(command -v zsh)" "$(whoami)"
     
     # 设置工具权限
-    sudo chmod u+s $(which tcpdump); sudo chmod u+s $(which dumpcap); sudo chmod u+s $(which tshark)
+    sudo chmod u+s $(command -v tcpdump); sudo chmod u+s $(command -v dumpcap); sudo chmod u+s $(command -v tshark)
     
 else
     echo -e "${MAGENTA}未知的操作系统类型${NC}"

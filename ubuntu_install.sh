@@ -69,22 +69,36 @@ if ! command -v kitty > /dev/null 2>&1; then
     print_centered_message  "${GREEN}开始安装 kitty... ${NC}" "true" "false"
     curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n
     
+    # 定义基础URL
+    BASE_URL="http://kr.archive.ubuntu.com/ubuntu/pool/universe/k/kitty/"
+    
     # 使用curl获取页面内容，并解析出最新的 kitty-terminfo .deb 文件的版本号
-    TERMINFO_LATEST_VERSION=$(curl -s "http://kr.archive.ubuntu.com/ubuntu/pool/universe/k/kitty/" | grep -oP 'href="kitty-terminfo_[^"]*\.deb"' | sed -E 's|.*kitty-terminfo_([^"]*)\.deb.*|\1|' | sort -V | tail -1)
+    TERMINFO_LATEST_VERSION=$(curl -s "$BASE_URL" | grep -oP 'href="kitty-terminfo_[^"]*\.deb"' | sed -E 's|.*kitty-terminfo_([^"]*)\.deb.*|\1|' | sort -V | tail -1)
+    
+    # 如果找不到文件，则退出
+    if [ -z "$TERMINFO_LATEST_VERSION" ]; then
+        echo -e "${RED}Failed to find the kitty-terminfo .deb file.${NC}"
+        exit 1
+    fi
     
     # 构建完整的.deb文件下载URL
     TERMINFO_URL="${BASE_URL}kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb"
     
-    # 如果找不到文件，则退出
-    if [ -z "$TERMINFO_LATEST_VERSION" ]; then
-        echo "${RED}Failed to find the kitty-terminfo .deb file.${NC}"
+    # 下载和安装包
+    echo -e "Downloading ${RED}kitty-terminfo${NC} version ${GREEN}${TERMINFO_LATEST_VERSION}${NC}"
+    if curl -s -O "$TERMINFO_URL"; then
+        echo "Installing kitty-terminfo..."
+        if sudo dpkg -i "kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb"; then
+            echo -e "${GREEN}kitty 安装完成 ✅${NC}"
+        else
+            echo -e "${RED}Installation failed.${NC}"
+            exit 1
+        fi
+    else
+        echo -e "${RED}Download failed.${NC}"
         exit 1
     fi
-    
-    # 下载和安装包
-    echo "${GREEN}Downloading kitty-terminfo version $TERMINFO_LATEST_VERSION...${NC}"
-    curl -s -O $TERMINFO_URL && echo "Installing kitty-terminfo..." && sudo dpkg -i "kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb"
-    
+
     # 清理下载的文件
     sudo rm -rf "kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb"
 
@@ -96,8 +110,8 @@ if ! command -v kitty > /dev/null 2>&1; then
         sudo mkdir -p /usr/local/bin/ ~/.local/share/applications/
         sudo ln -s ~/.local/kitty.app/bin/kitty /usr/local/bin/
         # For Application Launcher:
-        cp ~/.local/kitty.app/share/applications/kitty.desktop ~/.local/share/applications/
-        cp ~/.local/kitty.app/share/applications/kitty-open.desktop ~/.local/share/applications/
+        sudo cp ~/.local/kitty.app/share/applications/kitty.desktop ~/.local/share/applications/
+        sudo cp ~/.local/kitty.app/share/applications/kitty-open.desktop ~/.local/share/applications/
         # Add Icon:
         sed -i "s|Icon=kitty|Icon=$HOME/.local/kitty.app/share/icons/hicolor/256x256/apps/kitty.png|g" ~/.local/share/applications/kitty*.desktop
         sed -i "s|Exec=kitty|Exec=$HOME/.local/kitty.app/bin/kitty|g" ~/.local/share/applications/kitty*.desktop

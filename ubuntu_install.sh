@@ -102,7 +102,6 @@ if ! command -v kitty > /dev/null 2>&1; then
     # 清理下载的文件
     sudo rm -rf "kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb"
 
-    echo -e  "${GREEN}kitty 安装完成 ✅" 
     # 检查是否在 WSL2 中运行或在自动化脚本环境中
     if grep -qi microsoft /proc/version || [[ "$AUTO_RUN" == "true" ]]; then
         print_centered_message  "${RED}在 WSL2 中或者 Dockerfile 中不需要安装 kitty 桌面图标${NC}" "false" "false"
@@ -113,8 +112,8 @@ if ! command -v kitty > /dev/null 2>&1; then
         sudo cp ~/.local/kitty.app/share/applications/kitty.desktop ~/.local/share/applications/
         sudo cp ~/.local/kitty.app/share/applications/kitty-open.desktop ~/.local/share/applications/
         # Add Icon:
-        sed -i "s|Icon=kitty|Icon=$HOME/.local/kitty.app/share/icons/hicolor/256x256/apps/kitty.png|g" ~/.local/share/applications/kitty*.desktop
-        sed -i "s|Exec=kitty|Exec=$HOME/.local/kitty.app/bin/kitty|g" ~/.local/share/applications/kitty*.desktop
+        sudo sed -i "s|Icon=kitty|Icon=$HOME/.local/kitty.app/share/icons/hicolor/256x256/apps/kitty.png|g" ~/.local/share/applications/kitty*.desktop
+        sudo sed -i "s|Exec=kitty|Exec=$HOME/.local/kitty.app/bin/kitty|g" ~/.local/share/applications/kitty*.desktop
         # Allow-launching of the shortcut:
         DESKTOP_PATH=$(xdg-user-dir DESKTOP)
         gio set $HOME/.local/kitty.app/share/applications/kitty-open.desktop metadata::trusted true && gio set $HOME/.local/kitty.app/share/applications/kitty.desktop metadata::trusted true && gio set $HOME/.local/share/applications/kitty-open.desktop metadata::trusted true && gio set $HOME/.local/share/applications/kitty.desktop metadata::trusted true

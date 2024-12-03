@@ -116,7 +116,6 @@ if ! command -v kitty > /dev/null 2>&1; then
         sudo sed -i "s|Exec=kitty|Exec=$HOME/.local/kitty.app/bin/kitty|g" ~/.local/share/applications/kitty*.desktop
         # Allow-launching of the shortcut:
         DESKTOP_PATH=$(xdg-user-dir DESKTOP)
-        gio set $HOME/.local/kitty.app/share/applications/kitty-open.desktop metadata::trusted true && gio set $HOME/.local/kitty.app/share/applications/kitty.desktop metadata::trusted true && gio set $HOME/.local/share/applications/kitty-open.desktop metadata::trusted true && gio set $HOME/.local/share/applications/kitty.desktop metadata::trusted true
         chmod a+x $HOME/.local/kitty.app/share/applications/kitty-open.desktop $HOME/.local/kitty.app/share/applications/kitty.desktop $HOME/.local/share/applications/kitty-open.desktop $HOME/.local/share/applications/kitty.desktop
     fi
 else

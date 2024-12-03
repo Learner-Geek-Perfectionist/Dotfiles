@@ -68,6 +68,26 @@ fi
 if ! command -v kitty > /dev/null 2>&1; then
     print_centered_message  "${GREEN}开始安装 kitty... ${NC}" "true" "false"
     curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n
+    
+    # 使用curl获取页面内容，并解析出最新的 kitty-terminfo .deb 文件的版本号
+    TERMINFO_LATEST_VERSION=$(curl -s "http://kr.archive.ubuntu.com/ubuntu/pool/universe/k/kitty/" | grep -oP 'href="kitty-terminfo_[^"]*\.deb"' | sed -E 's|.*kitty-terminfo_([^"]*)\.deb.*|\1|' | sort -V | tail -1)
+    
+    # 构建完整的.deb文件下载URL
+    TERMINFO_URL="${BASE_URL}kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb"
+    
+    # 如果找不到文件，则退出
+    if [ -z "$TERMINFO_LATEST_VERSION" ]; then
+        echo "${RED}Failed to find the kitty-terminfo .deb file.${NC}"
+        exit 1
+    fi
+    
+    # 下载和安装包
+    echo "${GREEN}Downloading kitty-terminfo version $TERMINFO_LATEST_VERSION...${NC}"
+    curl -s -O $TERMINFO_URL && echo "Installing kitty-terminfo..." && sudo dpkg -i "kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb"
+    
+    # 清理下载的文件
+    sudo rm -rf "kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb"
+
     echo -e  "${GREEN}kitty 安装完成 ✅" 
     # 检查是否在 WSL2 中运行或在自动化脚本环境中
     if grep -qi microsoft /proc/version || [[ "$AUTO_RUN" == "true" ]]; then

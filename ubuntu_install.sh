@@ -116,7 +116,7 @@ if ! command -v kitty > /dev/null 2>&1; then
         sudo sed -i "s|Exec=kitty|Exec=$HOME/.local/kitty.app/bin/kitty|g" ~/.local/share/applications/kitty*.desktop
         # Allow-launching of the shortcut:
         DESKTOP_PATH=$(xdg-user-dir DESKTOP)
-        chmod a+x $HOME/.local/kitty.app/share/applications/kitty-open.desktop $HOME/.local/kitty.app/share/applications/kitty.desktop $HOME/.local/share/applications/kitty-open.desktop $HOME/.local/share/applications/kitty.desktop
+        sudo chmod a+x $HOME/.local/kitty.app/share/applications/kitty-open.desktop $HOME/.local/kitty.app/share/applications/kitty.desktop $HOME/.local/share/applications/kitty-open.desktop $HOME/.local/share/applications/kitty.desktop
     fi
 else
     print_centered_message   "${GREEN} kitty 已安装，跳过安装。${NC}" "true" "false"

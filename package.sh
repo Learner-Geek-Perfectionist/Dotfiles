@@ -33,7 +33,6 @@ packages_ubuntu_22_04_plus=(
     ncurses-bin
     net-tools
     git
-    unzip
     zip
     ninja-build
     neovim
@@ -71,7 +70,7 @@ packages_ubuntu_22_04_plus=(
     autoconf
     systemd
     cargo
-    bc
+    language-pack-zh-hans
 )
 
 packages_ubuntu_20_04=(
@@ -80,7 +79,6 @@ packages_ubuntu_20_04=(
     ncurses-bin
     net-tools
     git
-    unzip
     zip
     ninja-build
     neovim
@@ -116,7 +114,7 @@ packages_ubuntu_20_04=(
     autoconf
     systemd
     cargo
-    bc
+    language-pack-zh-hans
 )
 
 #fedora
@@ -158,6 +156,7 @@ packages_fedora=(
     rust
     glibc-locale-source
     glibc-langpack-zh
+    langpacks-zh_CN
     jq
     eza
     openssl

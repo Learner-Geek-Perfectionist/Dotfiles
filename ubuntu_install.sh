@@ -170,7 +170,7 @@ else
     print_centered_message  "${GREEN}开始安装 eza... ${NC}" "true" "false"
     # 安装 eza, 在 oracular (24.10)  之后的 Ubuntu 发行版才有 eza
     cargo install eza
-    print_centered_message "${GREEN} eza 安装完成 ✅" "false" "true${NC}"
+    print_centered_message "${GREEN} eza 安装完成 ✅${NC}" "false" "true"
 fi 
 # =================================结束安装 eza=================================
 
@@ -180,12 +180,14 @@ sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 echo "Asia/Shanghai" | sudo tee /etc/timezone > /dev/null
 sudo dpkg-reconfigure --frontend noninteractive tzdata
 
-# 生成指定的 locale 数据
+# 设置 UTF-8 字符集
 sudo locale-gen zh_CN.UTF-8
 
-# 合并写入 LANG 和 LC_ALL 设置到 /etc/default/locale
+# 设置中文语言输出信息
 echo "LANG=zh_CN.UTF-8" | sudo tee /etc/default/locale
 echo "LC_ALL=zh_CN.UTF-8" | sudo tee -a /etc/default/locale
+
+sudo localedef -i zh_CN -f UTF-8 zh_CN.UTF-8
 
 # 可选：立即应用这些设置
 source /etc/default/locale

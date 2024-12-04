@@ -19,16 +19,21 @@ sudo dnf install -y --setopt=tsflags= coreutils coreutils-common man-pages man-d
 # 安装必要的工具 🔧
 install_packages "packages_fedora"
 
+# 设置 UTF-8 字符集
+sudo localectl set-locale LANG=zh_CN.UTF-8
+
 # 设置时区
 sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 echo "Asia/Shanghai" | sudo tee /etc/timezone > /dev/null
 
-# 写入 LANG 和 LC_ALL 设置到 /etc/locale.conf
+# 设置中文语言输出信息
 echo "LANG=zh_CN.UTF-8" | sudo tee /etc/locale.conf
 echo "LC_ALL=zh_CN.UTF-8" | sudo tee -a /etc/locale.conf
 
-# 设置地区
 sudo localedef -c -f UTF-8 -i zh_CN zh_CN.UTF-8
+
+# 可选：立即应用这些设置
+source /etc/default/locale
 
 
 # 设置 Kotlin 的变量

@@ -137,10 +137,16 @@ fi
 # =================================结束安装 fzf=================================
 
 
+# =================================开始安装 Kotlin/Native =================================
+# 设置 Kotlin 的变量
+setup_kotlin_environment
+# 安装 Kotlin/Native
+download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR
+# =================================结束安装 Kotlin/Native =================================
+
+
 # 更新索引
 sudo apt update && sudo apt upgrade -y
-# 安装必要的工具 🔧
-#install_packages "packages_ubuntu_22-04_plus"
 
 
 # 获取Ubuntu版本号并比较
@@ -179,11 +185,6 @@ sudo locale-gen zh_CN.UTF-8
 export LANG=zh_CN.UTF-8
 export LC_ALL=zh_CN.UTF-8
 
-
-# 设置 Kotlin 的变量
-setup_kotlin_environment
-# 安装 Kotlin/Native
-download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR
 
 # 搜索可用的 OpenJDK 包并尝试获取最新版本
 jdk_version=$(apt search openjdk | grep -oP 'openjdk-\d+-jdk' | sort -V | tail -n1)

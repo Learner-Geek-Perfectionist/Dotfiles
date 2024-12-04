@@ -71,6 +71,7 @@ packages_ubuntu_22_04_plus=(
     autoconf
     systemd
     cargo
+    bc
 )
 
 packages_ubuntu_20_04=(
@@ -115,6 +116,7 @@ packages_ubuntu_20_04=(
     autoconf
     systemd
     cargo
+    bc
 )
 
 #fedora
@@ -164,4 +166,5 @@ packages_fedora=(
     autoconf
     systemd
     cargo
+    bc
 )

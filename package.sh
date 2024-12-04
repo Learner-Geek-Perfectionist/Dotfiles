@@ -103,7 +103,6 @@ packages_ubuntu_20_04=(
     graphviz
     sudo
     tcpdump
-    kotlin
     golang
     rustc
     valgrind

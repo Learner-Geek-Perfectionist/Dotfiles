@@ -144,12 +144,11 @@ sudo apt update && sudo apt upgrade -y
 
 
 # 获取Ubuntu版本号并比较
-version=$(lsb_release -sr)
-
-if [[ $(echo "$version >= 22.04" | bc) -eq 1 ]]; then
+if [[ $(echo "$(lsb_release -sr) >= 22.04" | bc) -eq 1 ]]; then
     install_packages "packages_ubuntu_22_04_plus"
 else
     install_packages "packages_ubuntu_20_04"
+    download_and_extract_kotlin $KOTLIN_COMPILER_URL $COMPILER_INSTALL_DIR
 fi
 
 

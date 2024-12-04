@@ -189,8 +189,6 @@ echo "LC_ALL=zh_CN.UTF-8" | sudo tee -a /etc/default/locale
 
 sudo localedef -i zh_CN -f UTF-8 zh_CN.UTF-8
 
-# 可选：立即应用这些设置
-source /etc/default/locale
 
 
 

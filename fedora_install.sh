@@ -34,9 +34,6 @@ echo "LC_ALL=zh_CN.UTF-8" | sudo tee -a /etc/locale.conf
 
 sudo localedef -c -f UTF-8 -i zh_CN zh_CN.UTF-8
 
-# 可选：立即应用这些设置
-source /etc/default/locale
-
 
 # 设置 Kotlin 的变量
 setup_kotlin_environment

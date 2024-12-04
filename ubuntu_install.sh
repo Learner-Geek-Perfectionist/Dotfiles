@@ -132,7 +132,7 @@ else
 
     git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
     yes | $HOME/.fzf/install --no-update-rc
-    print_centered_message "${GREEN} fzf 安装完成 ✅${NC}" "false" "true"
+    print_centered_message "${GREEN} fzf 安装完成 ✅${NC}" "false" "false"
 fi 
 # =================================结束安装 fzf=================================
 
@@ -153,8 +153,9 @@ sudo apt update && sudo apt upgrade -y
 if [[ $(echo "$(lsb_release -sr) >= 22.04" | bc) -eq 1 ]]; then
     install_packages "packages_ubuntu_22_04_plus"
 else
-    install_packages "packages_ubuntu_20_04"
     download_and_extract_kotlin $KOTLIN_COMPILER_URL $COMPILER_INSTALL_DIR
+    install_packages "packages_ubuntu_20_04"
+
 fi
 
 
@@ -169,7 +170,7 @@ else
     print_centered_message  "${GREEN}开始安装 eza... ${NC}" "true" "false"
     # 安装 eza, 在 oracular (24.10)  之后的 Ubuntu 发行版才有 eza
     cargo install eza
-    print_centered_message "${GREEN} eza 安装完成 ✅" "false" "true"
+    print_centered_message "${GREEN} eza 安装完成 ✅" "false" "true${NC}"
 fi 
 # =================================结束安装 eza=================================
 

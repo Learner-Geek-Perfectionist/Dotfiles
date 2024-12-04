@@ -140,7 +140,18 @@ fi
 # 更新索引
 sudo apt update && sudo apt upgrade -y
 # 安装必要的工具 🔧
-install_packages "packages_ubuntu_22-04_plus"
+#install_packages "packages_ubuntu_22-04_plus"
+
+
+# 获取Ubuntu版本号并比较
+version=$(lsb_release -sr)
+
+if [[ $(echo "$version >= 22.04" | bc) -eq 1 ]]; then
+    install_packages "packages_ubuntu_22_04_plus"
+else
+    install_packages "packages_ubuntu_20_04"
+fi
+
 
 # 取消最小化安装
 sudo apt update -y && sudo apt upgrade -y && sudo apt search unminimize 2> /dev/null | grep -q "^unminimize/" && (sudo apt install unminimize -y && yes | sudo unminimize) || echo -e "${RED}unminimize包不可用。${NC}"

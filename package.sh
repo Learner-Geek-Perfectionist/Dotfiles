@@ -27,7 +27,7 @@ brew_formulas=(
 )
 
 #ubuntu
-packages_ubuntu_22-04_plus=(
+packages_ubuntu_22_04_plus=(
     openssh-server
     debconf-utils
     ncurses-bin
@@ -73,7 +73,7 @@ packages_ubuntu_22-04_plus=(
     cargo
 )
 
-packages_ubuntu_20-04=(
+packages_ubuntu_20_04=(
     openssh-server
     debconf-utils
     ncurses-bin

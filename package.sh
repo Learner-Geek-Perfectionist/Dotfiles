@@ -73,8 +73,6 @@ packages_ubuntu_22-04_plus=(
     cargo
 )
 
-
-
 packages_ubuntu_20-04=(
     openssh-server
     debconf-utils

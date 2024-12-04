@@ -19,12 +19,14 @@ sudo dnf install -y --setopt=tsflags= coreutils coreutils-common man-pages man-d
 # 安装必要的工具 🔧
 install_packages "packages_fedora"
 
-# 设置 UTF-8 字符集
-sudo localectl set-locale LANG=zh_CN.UTF-8
+
 
 # 设置时区
 sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 echo "Asia/Shanghai" | sudo tee /etc/timezone > /dev/null
+
+# 设置 UTF-8 字符集
+sudo localectl set-locale LANG=zh_CN.UTF-8
 
 # 设置中文语言输出信息
 echo "LANG=zh_CN.UTF-8" | sudo tee /etc/locale.conf

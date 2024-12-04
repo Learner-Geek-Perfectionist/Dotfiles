@@ -27,7 +27,7 @@ brew_formulas=(
 )
 
 #ubuntu
-packages_ubuntu=(
+packages_ubuntu_22-04_plus=(
     openssh-server
     debconf-utils
     ncurses-bin
@@ -68,6 +68,53 @@ packages_ubuntu=(
     jq
     tshark
     hyperfine
+    autoconf
+    systemd
+    cargo
+)
+
+
+
+packages_ubuntu_20-04=(
+    openssh-server
+    debconf-utils
+    ncurses-bin
+    net-tools
+    git
+    unzip
+    zip
+    ninja-build
+    neovim
+    ruby-full
+    fd-find
+    ripgrep
+    cmake
+    nodejs
+    iputils-ping
+    procps
+    htop
+    traceroute
+    tree
+    coreutils
+    zsh
+    fontconfig
+    python3
+    iproute2
+    wget
+    pkg-config
+    graphviz
+    sudo
+    tcpdump
+    kotlin
+    golang
+    rustc
+    valgrind
+    curl
+    tar
+    locales
+    man-db
+    jq
+    tshark
     autoconf
     systemd
     cargo

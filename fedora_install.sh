@@ -23,9 +23,10 @@ install_packages "packages_fedora"
 sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 echo "Asia/Shanghai" | sudo tee /etc/timezone > /dev/null
 
-# 设置语言环境变量
-export LANG=zh_CN.UTF-8
-export LC_ALL=zh_CN.UTF-8
+# 写入 LANG 和 LC_ALL 设置到 /etc/locale.conf
+echo "LANG=zh_CN.UTF-8" | sudo tee /etc/locale.conf
+echo "LC_ALL=zh_CN.UTF-8" | sudo tee -a /etc/locale.conf
+
 # 设置地区
 sudo localedef -c -f UTF-8 -i zh_CN zh_CN.UTF-8
 

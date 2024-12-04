@@ -179,11 +179,16 @@ sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 echo "Asia/Shanghai" | sudo tee /etc/timezone > /dev/null
 sudo dpkg-reconfigure --frontend noninteractive tzdata
 
-# 设置地区
+# 生成指定的 locale 数据
 sudo locale-gen zh_CN.UTF-8
-# 设置默认的语言环境
-export LANG=zh_CN.UTF-8
-export LC_ALL=zh_CN.UTF-8
+
+# 合并写入 LANG 和 LC_ALL 设置到 /etc/default/locale
+echo "LANG=zh_CN.UTF-8" | sudo tee /etc/default/locale
+echo "LC_ALL=zh_CN.UTF-8" | sudo tee -a /etc/default/locale
+
+# 可选：立即应用这些设置
+source /etc/default/locale
+
 
 
 # 搜索可用的 OpenJDK 包并尝试获取最新版本

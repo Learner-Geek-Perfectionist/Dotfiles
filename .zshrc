@@ -89,10 +89,12 @@ fi
 
 
 # Plugins
-source "$ZPLUGINDIR/homebrew.zsh"   
+source "$ZPLUGINDIR/homebrew.zsh"
 source "$ZPLUGINDIR/zinit.zsh"
 
 
+# 设置 fzf 的默认预览
+export FZF_DEFAULT_OPTS='--preview "${HOME}/.config/zsh/fzf/fzf-preview.sh {}"'
 
 # 禁用忽略以空格开头的命令的历史记录功能。
 setopt no_hist_ignore_space
@@ -109,11 +111,11 @@ setopt no_bang_hist              # 不对双引号当中的叹号做历史记录
 alias clear='clear && printf '\''\e[3J'\'''
 
 # python3 映射到 python
-alias python=python3 
+alias python=python3
 
 
 # reload 映射到重启 .zshrc
-alias reload="source ~/.zshrc;rm -rf $HOME/.cache/zsh/.zcompdump "
+alias reload="source ~/.zshrc;source ~/.zprofile;source ~/.zshenv;rm -rf $HOME/.cache/zsh/.zcompdump; "
 
 alias md='mkdir -p'
 

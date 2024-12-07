@@ -71,6 +71,8 @@ packages_ubuntu_22_04_plus=(
     systemd
     cargo
     language-pack-zh-hans
+    bat
+    chafa
 )
 
 packages_ubuntu_20_04=(
@@ -115,6 +117,7 @@ packages_ubuntu_20_04=(
     systemd
     cargo
     language-pack-zh-hans
+
 )
 
 #fedora
@@ -166,4 +169,6 @@ packages_fedora=(
     systemd
     cargo
     bc
+    bat
+    chafa
 )

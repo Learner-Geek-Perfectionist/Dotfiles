@@ -112,7 +112,7 @@ alias clear='clear && printf '\''\e[3J'\'''
 # python3 映射到 python
 alias python=python3
 
-
+alias cat=bat
 # reload 映射到重启 .zshrc
 alias reload="source ~/.zshrc;source ~/.zprofile;source ~/.zshenv;rm -rf $HOME/.cache/zsh/.zcompdump; "
 

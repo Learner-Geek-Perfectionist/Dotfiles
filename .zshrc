@@ -122,6 +122,8 @@ alias g1='git clone --depth=1'
 
 alias rm='rm -rf'
 
+alias show='kitty +kitten icat'
+
 
 # 检查 fzf 是否已安装
 if command -v fzf >/dev/null 2>&1; then

@@ -64,38 +64,32 @@ zinit ice wait lucid depth=1;zinit snippet OMZP::git/git.plugin.zsh
 # man
 zinit ice wait lucid depth=1;zinit snippet OMZ::plugins/colored-man-pages/colored-man-pages.plugin.zsh
 
-
-
-
-
-# == fzf-tab setting
-zstyle ':fzf-tab:complete:_zlua:*' query-string input
-zstyle ':fzf-tab:complete:kill:argument-rest' fzf-preview 'ps --pid=$word -o cmd --no-headers -w -w'
-zstyle ':fzf-tab:complete:kill:argument-rest' fzf-flags '--preview-window=down:3:wrap'
-zstyle ':fzf-tab:complete:kill:*' popup-pad 0 3
-zstyle ':fzf-tab:complete:cd:*x' fzf-preview 'eza -1 --color=always $realpath'
-zstyle ':fzf-tab:complete:cd:*' popup-pad 30 0
-zstyle ":fzf-tab:*" fzf-flags --color=bg+:23
-zstyle ':fzf-tab:*' fzf-command ftb-tmux-popup
-zstyle ':fzf-tab:*' switch-group ',' '.'
-zstyle ":completion:*:git-checkout:*" sort false
-zstyle ':completion:*' file-sort modification
-zstyle ':completion:*:eza' sort false
-zstyle ':completion:files' sort false
-
-# 添加 _fzf 补全函数 
-zinit ice as"completion"
-zinit snippet https://github.com/Learner-Geek-Perfectionist/Dotfiles/blob/master/.config/zsh/completion/_fzf
-
 # 1.make sure fzf is installed
 # 2.fzf-tab needs to be loaded 「after」 compinit, but 「before」 plugins which will wrap widgets, such as zsh-autosuggestions or fast-syntax-highlighting
 # 3.Completions should be configured before compinit, as stated in the zsh-completions manual installation guide.
 
-# zsh-completions 提供大量的补全定义
-zinit ice wait blockf lucid depth=1;zinit light zsh-users/zsh-completions
-
 # 设置插件加载的选项，加载 fzf-tab 插件
 zinit ice atinit"autoload -Uz compinit; compinit -C -d \"$ZSH_COMPDUMP\"; zpcdreplay" wait lucid depth=1;zinit light Aloxaf/fzf-tab
+
+
+
+# 配置 fzf-tab
+zstyle ':fzf-tab:complete:_zlua:*' query-string input
+zstyle ':fzf-tab:complete:kill:argument-rest' fzf-preview 'ps --pid=$word -o cmd --no-headers -w -w'
+zstyle ':fzf-tab:complete:kill:argument-rest' fzf-flags '--preview-window=down:3:wrap'
+zstyle ':fzf-tab:complete:kill:*' popup-pad 0 3
+zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --color=always $realpath'
+zstyle ':fzf-tab:complete:cd:*' popup-pad 30 0
+zstyle ":fzf-tab:*" fzf-flags --color=bg+:23
+zstyle ':fzf-tab:*' fzf-command ftb-tmux-popup
+zstyle ':fzf-tab:*' switch-group '<' '>'
+
+# 添加 _fzf 补全函数
+zinit ice as"completion"
+zinit snippet https://github.com/Learner-Geek-Perfectionist/Dotfiles/blob/master/.config/zsh/completion/_fzf
+
+# zsh-completions 提供大量的补全定义
+zinit ice wait blockf lucid depth=1;zinit light zsh-users/zsh-completions
 
 # autosuggestions，atload 用于保障启动 autosuggest 功能。
 zinit ice wait lucid depth=1 atload='_zsh_autosuggest_start';zinit light zsh-users/zsh-autosuggestions

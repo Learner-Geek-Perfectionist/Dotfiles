@@ -29,7 +29,9 @@ if [[ "$(uname)" == "Darwin" ]]; then
     alias cl=clion
     # pycharm 映射到 py
     alias py=pycharm
-    
+    # Setting fd as the default source for fzf
+    export FZF_DEFAULT_COMMAND='fd --type f --strip-cwd-prefix --hidden --follow --exclude .git'
+
 elif [[ -f /etc/os-release ]]; then
 
     # 设置默认的语言环境
@@ -41,8 +43,14 @@ elif [[ -f /etc/os-release ]]; then
         # 对于 Ubuntu 系统，添加 fzf、eza 的环境变量
         export PATH="$HOME/.fzf/bin:$PATH"
         export PATH="$HOME/.cargo/bin:$PATH"
-        export PATH="$HOME/.local/kitty.app/bin:$PATH" 
+        export PATH="$HOME/.local/kitty.app/bin:$PATH"
+        # Setting fd as the default source for fzf
+        export FZF_DEFAULT_COMMAND='fdfind --type f --strip-cwd-prefix --hidden --follow --exclude .git'
+    else
+        # Setting fd as the default source for fzf
+        export FZF_DEFAULT_COMMAND='fd --type f --strip-cwd-prefix --hidden --follow --exclude .git'
     fi
+
 fi
 
 

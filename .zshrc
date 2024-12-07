@@ -115,7 +115,7 @@ alias python=python3
 
 
 # reload 映射到重启 .zshrc
-alias reload="source ~/.zshrc;source ~/.zprofile;source ~/.zshenv;rm -rf $HOME/.cache/zsh/.zcompdump; "
+alias reload="source ~/.zshrc;source ~/.zprofile;source ~/.zshenv;rm -rf $HOME/.cache/zsh/.zcompdump;"
 
 alias md='mkdir -p'
 

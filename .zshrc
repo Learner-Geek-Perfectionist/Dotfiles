@@ -120,7 +120,7 @@ alias md='mkdir -p'
 
 alias g1='git clone --depth=1'
 
-alias rm='rm -rf'
+alias rm='sudo rm -rf'
 
 alias show='kitty +kitten icat'
 

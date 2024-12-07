@@ -23,13 +23,13 @@ cd $HOME
 TMP_DIR="/tmp/Dotfiles/"
 
 if [[ ! -d /tmp/Dotfiles ]]; then
-    # 浅克隆仓库到临时目录
-    echo -e "${YELLOW}📥 Cloning repository into $TMP_DIR...${NC}"
-    git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR" || {
-        echo "Failed to clone repository"
-        exit 1
-    }
-    echo -e "${GREEN}✔️ Repository cloned.${NC}"
+  # 浅克隆仓库到临时目录
+  echo -e "${YELLOW}📥 Cloning repository into $TMP_DIR...${NC}"
+  git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR" || {
+    echo "Failed to clone repository"
+    exit 1
+  }
+  echo -e "${GREEN}✔️ Repository cloned.${NC}"
 fi
 
 # 定义配置列表
@@ -38,18 +38,29 @@ configs=(".zshenv" ".zprofile" ".zshrc" ".config")
 # 删除旧配置和复制新配置
 echo -e "${YELLOW}🔍 Checking and removing old configuration files if they exist...${NC}"
 for config in "${configs[@]}"; do
-    if [ -f "$HOME/$config" ] || [ -d "$HOME/$config" ]; then
-        echo -e "${RED}🗑️ Removing old $config...${NC}"
-        rm -rf "$HOME/$config"
-    fi
-    echo -e "${PURPLE}📋 Copying new $config to $HOME...${NC}"
-    cp -r "$TMP_DIR/$config" "$HOME/$config"
+  if [[ -f "$HOME/$config" ]] || [[ -d "$HOME/$config" ]]; then
+    echo -e "${RED}🗑️ Removing old $config...${NC}"
+    rm -rf "$HOME/$config"
+  fi
+  echo -e "${PURPLE}📋 Copying new $config to $HOME...${NC}"
+  cp -r "$TMP_DIR/$config" "$HOME/$config"
 done
-echo -e "${GREEN}🧹 Old configuration files removed and new ones copied.${NC}"
 
 # 在文件中添加以下代码
 [[ "$(uname)" == "Darwin" ]] && cp -r "$TMP_DIR/sh-script/" "$HOME/sh-script/"
 
+# 添加 .hammerspoon 文件
+if [[ "$(uname)" == "Darwin" ]]; then
+  if [[ -d "$HOME/.hammerspoon" ]]; then
+    echo -e "${RED}🗑️ Removing old .hammerspoon...${NC}"
+    rm -rf "$HOME/.hammerspoon"
+  fi
+  echo -e "${PURPLE}📋 Copying new .hammerspoon to $HOME...${NC}"
+  cp -r "$TMP_DIR/.hammerspoon" "$HOME/.hammerspoon"
+fi
+
+
+echo -e "${GREEN}🧹 Old configuration files removed and new ones copied.${NC}"
 echo -e "${GREEN}✔️ New configuration files copied.${NC}"
 
 # 清理临时目录

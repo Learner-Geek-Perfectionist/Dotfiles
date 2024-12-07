@@ -117,7 +117,6 @@ packages_ubuntu_20_04=(
     systemd
     cargo
     language-pack-zh-hans
-
 )
 
 #fedora
@@ -171,4 +170,5 @@ packages_fedora=(
     bc
     bat
     chafa
+    lua
 )

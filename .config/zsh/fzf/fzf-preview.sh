@@ -72,3 +72,5 @@ elif command -v imgcat > /dev/null; then
 else
   file "$file"
 fi
+
+

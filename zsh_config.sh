@@ -55,7 +55,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
     echo -e "${RED}🗑️ Removing old .hammerspoon...${NC}"
     sudo rm -rf "${HOME}/.hammerspoon"
   fi
-  echo -e "${PURPLE}📋 Copying new .hammerspoon to $HOME...${NC}"
+  echo -e "${PURPLE}📋 Copying new .hammerspoon to "${HOME}/.hammerspoon"...${NC}"
   sudo cp -r "${TMP_DIR}/.hammerspoon" "${HOME}/.hammerspoon" && sudo chown -R $USER:$USER "${HOME}/.hammerspoon"
 fi
 

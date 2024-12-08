@@ -31,6 +31,6 @@ enableHotkeyForWindowsMatchingFilter = function(windowFilter, hotkey)
 end
 
 -- 加载 hyper.lua
-require('hyper')
+require('key-binding')
 
 hs.notify.new({ title = 'Hammerspoon', informativeText = 'Ready to rock 🤘' }):send()

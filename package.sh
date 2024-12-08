@@ -10,7 +10,7 @@ brew_casks=(
     pycharm android-studio input-source-pro qq chatgpt fleet
     intellij-idea qqmusic jetbrains-gateway telegram
     clion jordanbaird-ice visual-studio-code discord keycastr wechat
-    douyin kitty feishu microsoft-edge Eudic maccy
+    douyin kitty feishu microsoft-edge Eudic karabiner-elements
 )
 
 brew_formulas=(

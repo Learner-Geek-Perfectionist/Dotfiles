@@ -12,7 +12,7 @@ local ModsuperOpenApp = require("function")
 -- 遍历映射并绑定快捷键
 for _, appMapping in ipairs(hyperModeAppMappings) do
     local key, appID = appMapping[1], appMapping[2]
-    hs.hotkey.bind({ 'cmd', 'shift' }, key, function()
+    hs.hotkey.bind({ 'ctrl', 'alt', 'cmd', 'shift' }, key, function()
         ModsuperOpenApp.superOpenApp(appID)
     end)
 end

@@ -4,9 +4,10 @@
 -- this file, save it as `hyper-apps.lua`, and edit the table below to configure
 -- your preferred shortcuts.
 return {
-  { 'w', 'WeChat' },            -- "W" for "WeChat"
-  { 'f', 'Finder' },            -- "F" for "Finder"
-  { 'g', 'ChatGPT' },           -- "G" ChatGPT"
-  { 'r', 'Safari' },            -- "R" for "Safari"
-  { 't', 'kitty' },             -- "T" for "kitty"
+  { 'w', 'com.tencent.xinWeChat' }, -- "W" for "WeChat"
+  { 'f', 'com.apple.finder' },      -- "F" for "Finder"
+  { 'g', 'com.openai.chat' },    -- "G" for "ChatGPT"
+  { 'r', 'com.apple.Safari' },      -- "R" for "Safari"
+  { 't', 'net.kovidgoyal.kitty' },  -- "T" for "kitty"
+  { 'v', 'com.microsoft.VSCode' },  -- "T" for "VSCode"
 }

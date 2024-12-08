@@ -6,21 +6,10 @@ if not status then
     return  -- 加载失败时提前退出
 end
 
+-- 加载 function 模块
+local ModsuperOpenApp = require("function")
+
 -- 遍历映射并绑定快捷键
-for i, mapping in ipairs(hyperModeAppMappings) do
-    local key = mapping[1]
-    local app = mapping[2]
-    hs.hotkey.bind({ 'cmd', 'shift' }, key, function()
-        -- 根据 app 类型来执行不同操作
-        if type(app) == 'string' then
-            -- 如果是字符串，尝试打开应用
-            hs.application.open(app)
-        elseif type(app) == 'function' then
-            -- 如果是函数，直接调用
-            app()
-        else
-            -- 记录无效的映射
-            hs.logger.new('hyper', 'error'):e('Invalid mapping for Hyper + ' .. key)
-        end
-    end)
+for key, appID in ipairs(hyperModeAppMappings) do
+    hs.hotkey.bind({ 'cmd', 'shift' }, key, ModsuperOpenApp.superOpenApp(appID))
 end

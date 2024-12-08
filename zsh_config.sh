@@ -38,12 +38,12 @@ configs=(".zshenv" ".zprofile" ".zshrc" ".config/kitty" ".config/zsh")
 # 删除旧配置和复制新配置
 echo -e "${YELLOW}🔍 Checking and removing old configuration files if they exist...${NC}"
 for config in "${configs[@]}"; do
-  if [[ -f "$HOME/$config" ]] || [[ -d "$HOME/$config" ]]; then
-    echo -e "${RED}🗑️ Removing old $config...${NC}"
-    sudo rm -rf "$HOME/$config"
+  if [[ -f "${HOME}/${config}" ]] || [[ -d "${HOME}/${config}" ]]; then
+    echo -e "${RED}🗑️ Removing old ${config}...${NC}"
+    sudo rm -rf "${HOME}/$config"
   fi
-  echo -e "${PURPLE}📋 Copying new $config to $HOME...${NC}"
-  cp -r "$TMP_DIR/$config" "$HOME/$config"
+  echo -e "${PURPLE}📋 Copying new ${config} to ${HOME}...${NC}"
+  cp -r "${TMP_DIR}/${config}" "${HOME}/${config}"
 done
 
 # 在文件中添加以下代码
@@ -51,14 +51,23 @@ done
 
 # 添加 .hammerspoon 文件
 if [[ "$(uname)" == "Darwin" ]]; then
-  if [[ -d "$HOME/.hammerspoon" ]]; then
+  if [[ -f "${HOME}/.hammerspoon" ]]; then
     echo -e "${RED}🗑️ Removing old .hammerspoon...${NC}"
-    sudo rm -rf "$HOME/.hammerspoon"
+    sudo rm -rf "${HOME}/.hammerspoon"
   fi
   echo -e "${PURPLE}📋 Copying new .hammerspoon to $HOME...${NC}"
-  cp -r "$TMP_DIR/.hammerspoon" "$HOME/.hammerspoon"
+  sudo cp -r "${TMP_DIR}/.hammerspoon" "${HOME}/.hammerspoon"
 fi
 
+# 添加 Karabiner 配置文件
+if [[ "$(uname)" == "Darwin" ]]; then
+  if [[ -f "${HOME}/.config/karabiner/assets/complex_modifications/capslock2hyper.json" ]]; then
+    echo -e "${RED}🗑️ Removing old capslock2hyper.json...${NC}"
+    sudo rm -rf "${HOME}/.config/karabiner/assets/complex_modifications/capslock2hyper.json"
+  fi
+  echo -e "${PURPLE}📋 Copying new capslock2hyper.json to ${HOME}/.config/karabiner/assets/complex_modifications/capslock2hyper.json...${NC}"
+  sudo cp -r "${TMP_DIR}/capslock2hyper.json" "${HOME}/.config/karabiner/assets/complex_modifications/capslock2hyper.json"
+fi
 
 echo -e "${GREEN}🧹 Old configuration files removed and new ones copied.${NC}"
 echo -e "${GREEN}✔️ New configuration files copied.${NC}"

@@ -9,5 +9,6 @@ return {
   { 'g', 'com.openai.chat' },         -- "G" for "ChatGPT"
   { 'r', 'com.apple.Safari' },      -- "R" for "Safari"
   { 't', 'net.kovidgoyal.kitty' },  -- "T" for "kitty"
-  { 'v', 'com.microsoft.VSCode' },  -- "T" for "VSCode"
+  { 'v', 'com.microsoft.VSCode' },  -- "V" for "VSCode"
+  { 'q', 'com.tencent.qq' },  -- "T" for "QQ"
 }

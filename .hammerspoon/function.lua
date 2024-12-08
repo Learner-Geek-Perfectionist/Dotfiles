@@ -8,15 +8,18 @@ function mod.launchOrToggleAppByBundleID(bundleID)
         if app:isFrontmost() then
             app:hide()  -- 如果应用已经是最前端，则隐藏它
         else
-            app:activate()  -- 否则，激活应用
+            if bundleID == "com.apple.finder" then
+                hs.execute("open -a Finder")  -- 使用系统命令强制激活Finder
+            else
+                app:activate()  -- 否则，激活应用
+            end
         end
     else
-        -- 特别处理Finder
         if bundleID == "com.apple.finder" then
-            -- 如果是Finder且没有窗口，打开一个新的Finder窗口
-            hs.applescript('tell application "Finder" to make new Finder window')
+            hs.execute("open -a Finder")  -- 使用系统命令强制启动和激活Finder
+        else
+            hs.application.launchOrFocusByBundleID(bundleID)  -- 如果应用没有运行或没有窗口，启动它
         end
-        hs.application.launchOrFocusByBundleID(bundleID)  -- 如果应用没有运行或没有窗口，启动它
     end
 end
 

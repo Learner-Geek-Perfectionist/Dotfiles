@@ -49,17 +49,17 @@ done
 # 在文件中添加以下代码
 [[ "$(uname)" == "Darwin" ]] && cp -r "$TMP_DIR/sh-script/" "$HOME/sh-script/"
 
-# 添加 .hammerspoon 文件
+# 添加 .hammerspoon 文件夹
 if [[ "$(uname)" == "Darwin" ]]; then
-  if [[ -f "${HOME}/.hammerspoon" ]]; then
+  if [[ -d "${HOME}/.hammerspoon" ]]; then
     echo -e "${RED}🗑️ Removing old .hammerspoon...${NC}"
     sudo rm -rf "${HOME}/.hammerspoon"
   fi
   echo -e "${PURPLE}📋 Copying new .hammerspoon to $HOME...${NC}"
-  sudo cp -r "${TMP_DIR}/.hammerspoon" "${HOME}/.hammerspoon"
+  sudo cp -r "${TMP_DIR}/.hammerspoon" "${HOME}/.hammerspoon" && sudo chown -R $USER:$USER "${HOME}/.hammerspoon"
 fi
 
-# 添加 Karabiner 配置文件
+# 添加 Karabiner 配置文件：capslock2hyper.json
 if [[ "$(uname)" == "Darwin" ]]; then
   if [[ -f "${HOME}/.config/karabiner/assets/complex_modifications/capslock2hyper.json" ]]; then
     echo -e "${RED}🗑️ Removing old capslock2hyper.json...${NC}"

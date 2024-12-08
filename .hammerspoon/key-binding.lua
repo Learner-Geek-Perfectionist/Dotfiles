@@ -13,6 +13,6 @@ local mod = require("function")
 for _, appMapping in ipairs(hyperModeAppMappings) do
     local key, appID = appMapping[1], appMapping[2]
     hs.hotkey.bind({ 'ctrl', 'alt', 'cmd', 'shift' }, key, function()
-        mod.launchAppByBundleID(appID)
+        mod.launchOrToggleAppByBundleID(appID)
     end)
 end

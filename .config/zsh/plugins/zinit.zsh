@@ -80,6 +80,8 @@ zstyle ':fzf-tab:complete:kill:argument-rest' fzf-flags '--preview-window=down:1
 zstyle ':fzf-tab:complete:kill:*' popup-pad 0 3
 zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --color=always $realpath'
 zstyle ':fzf-tab:complete:cd:*' popup-pad 30 0
+zstyle ':fzf-tab:complete:code:*' fzf-preview 'eza -1 --color=always $realpath'
+zstyle ':fzf-tab:complete:code:*' popup-pad 30 0
 zstyle ":fzf-tab:*" fzf-flags --color=bg+:23
 zstyle ':fzf-tab:*' fzf-command ftb-tmux-popup
 zstyle ':fzf-tab:*' switch-group '<' '>'

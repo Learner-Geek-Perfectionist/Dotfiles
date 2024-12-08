@@ -56,7 +56,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
     sudo rm -rf "${HOME}/.hammerspoon"
   fi
   echo -e "${PURPLE}📋 Copying new .hammerspoon to "${HOME}/.hammerspoon"...${NC}"
-  sudo cp -r "${TMP_DIR}/.hammerspoon" "${HOME}/.hammerspoon" && sudo chown -R $USER:$USER "${HOME}/.hammerspoon"
+  sudo cp -r "${TMP_DIR}/.hammerspoon" "${HOME}/.hammerspoon" && sudo chown -R $USER:$(id -gn) "${HOME}/.hammerspoon"
 fi
 
 # 添加 Karabiner 配置文件：capslock2hyper.json

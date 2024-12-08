@@ -33,14 +33,14 @@ if [[ ! -d /tmp/Dotfiles ]]; then
 fi
 
 # 定义配置列表
-configs=(".zshenv" ".zprofile" ".zshrc" ".config")
+configs=(".zshenv" ".zprofile" ".zshrc" ".config/kitty" ".config/zsh")
 
 # 删除旧配置和复制新配置
 echo -e "${YELLOW}🔍 Checking and removing old configuration files if they exist...${NC}"
 for config in "${configs[@]}"; do
   if [[ -f "$HOME/$config" ]] || [[ -d "$HOME/$config" ]]; then
     echo -e "${RED}🗑️ Removing old $config...${NC}"
-    rm -rf "$HOME/$config"
+    sudo rm -rf "$HOME/$config"
   fi
   echo -e "${PURPLE}📋 Copying new $config to $HOME...${NC}"
   cp -r "$TMP_DIR/$config" "$HOME/$config"
@@ -53,7 +53,7 @@ done
 if [[ "$(uname)" == "Darwin" ]]; then
   if [[ -d "$HOME/.hammerspoon" ]]; then
     echo -e "${RED}🗑️ Removing old .hammerspoon...${NC}"
-    rm -rf "$HOME/.hammerspoon"
+    sudo rm -rf "$HOME/.hammerspoon"
   fi
   echo -e "${PURPLE}📋 Copying new .hammerspoon to $HOME...${NC}"
   cp -r "$TMP_DIR/.hammerspoon" "$HOME/.hammerspoon"
@@ -65,8 +65,8 @@ echo -e "${GREEN}✔️ New configuration files copied.${NC}"
 
 # 清理临时目录
 echo -e "${YELLOW}🧼 Cleaning up temporary files...${NC}"
-rm -rf "$TMP_DIR"
-rm -rf /tmp/Fonts/
+sudo rm -rf "$TMP_DIR"
+sudo rm -rf /tmp/Fonts/
 
 echo -e "${GREEN}✔️ Temporary files removed.${NC}"
 echo -e "${GREEN}✅ Script completed successfully. Files have been successfully copied to the user's home directory.${NC}"

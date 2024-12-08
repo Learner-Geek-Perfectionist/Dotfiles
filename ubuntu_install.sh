@@ -196,6 +196,8 @@ sudo localedef -i zh_CN -f UTF-8 zh_CN.UTF-8
 jdk_version=$(apt search openjdk | grep -oP 'openjdk-\d+-jdk' | sort -V | tail -n1)
 sudo apt install -y $jdk_version && print_centered_message  "${GREEN}成功安装 ${jdk_version}${NC}" "true" "false"
 
+# 安装最新的 lua
+sudo apt install -y $(apt search '^lua[0-9.]*$' --names-only | grep -oP 'lua\d+\.\d+' | sort -V | tail -n 1)
 
 # 为了避免 Dockerfile 交互式
 if [[ "$AUTO_RUN" == "true" ]]; then

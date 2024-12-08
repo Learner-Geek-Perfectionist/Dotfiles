@@ -10,4 +10,5 @@ return {
   { 'r', 'com.apple.Safari' },      -- "R" for "Safari"
   { 't', 'net.kovidgoyal.kitty' },  -- "T" for "kitty"
   { 'v', 'com.microsoft.VSCode' },  -- "T" for "VSCode"
+  { 'f', 'com.apple.finder' },  -- "T" for "VSCode"
 }

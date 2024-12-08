@@ -124,8 +124,6 @@ alias rm='sudo rm -rf'
 
 alias show='kitty +kitten icat'
 
-alias code='sudo code'
-
 
 # 检查 fzf 是否已安装
 if command -v fzf >/dev/null 2>&1; then

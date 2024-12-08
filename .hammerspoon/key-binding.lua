@@ -1,8 +1,8 @@
-local status, hyperModeAppMappings = pcall(require, 'hyper-apps')
+local status, hyperModeAppMappings = pcall(require, 'key-mapping')
 
 -- 检查模块是否成功加载
 if not status then
-    hs.logger.new('hyper', 'error'):e('Failed to load hyper-apps module')
+    hs.logger.new('hyper', 'error'):e('Failed to load key-mapping module')
     return  -- 加载失败时提前退出
 end
 

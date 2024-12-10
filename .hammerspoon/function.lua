@@ -6,19 +6,22 @@ function mod.launchOrToggleAppByBundleID(bundleID)
     -- 检查应用是否存在且有打开的窗口
     if app and #app:allWindows() > 0 then
         if app:isFrontmost() then
-            app:hide()  -- 如果应用已经是最前端，则隐藏它
-        else
-            if bundleID == "com.apple.finder" then
-                hs.execute("open -a Finder")  -- 使用系统命令强制激活Finder
+            -- 如果应用已经是最前端，而且不是Finder或特定应用，尝试重新激活而不是隐藏
+            if bundleID ~= "com.apple.finder" and bundleID ~= "party.mihomo.app" then
+                hs.execute("open -b '" .. bundleID .. "'")  -- 强制激活应用
             else
-                app:activate()  -- 否则，激活应用
+                app:hide()  -- 如果是Finder等，可以选择隐藏
             end
+        else
+            -- 应用不是最前端，尝试激活
+            hs.execute("open -b '" .. bundleID .. "'")
         end
     else
-        if bundleID == "com.apple.finder" then
-            hs.execute("open -a Finder")  -- 使用系统命令强制启动和激活Finder
+        -- 应用未运行或无窗口
+        if bundleID == "com.apple.finder" or bundleID == "party.mihomo.app" then
+            hs.execute("open -a '" .. (bundleID == "com.apple.finder" and "Finder" or "Mihomo Party") .. "'")
         else
-            hs.application.launchOrFocusByBundleID(bundleID)  -- 如果应用没有运行或没有窗口，启动它
+            hs.execute("open -b '" .. bundleID .. "'")  -- 启动并激活应用
         end
     end
 end

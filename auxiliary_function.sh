@@ -344,26 +344,6 @@ install_fonts() {
 
 }
 
-# 定义提示头🔔函数
-prompt_open_proxy() {
-    # 首先检查 clash-verge-rev 是否已经安装
-    if brew list clash-verge-rev &> /dev/null; then
-        print_centered_message "${RED}clash-verge-rev${NC} 已安装，无需重新下载" "true" "false"
-        return 0 # 如果已安装，直接退出函数
-    fi
-
-    echo -n "是否需要开启代理软件？(y/n): "
-    read open_confirm
-    if [[ $open_confirm == 'y' ]]; then
-        print_centered_message "正在下载 ${RED}clash-verge-rev${NC} ......"
-        brew install clash-verge-rev
-        print_centered_message "重新执行脚本命令:" "true" "false"
-        print_centered_message '/bin/zsh -c "$(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/main.sh)"' "false" "true"
-        exit 1
-    else
-        print_centered_message "不开启代理，继续执行脚本"
-    fi
-}
 
 # 定义倒计时函数
 countdown() {

@@ -21,8 +21,8 @@
                         "key_code": "spacebar"
                     },
                     "parameters": {
-                        "basic.to_if_held_down_threshold_milliseconds": 150, // 降低检测长按的时间阈值
-                        "basic.to_delayed_action_delay_milliseconds": 50   // 减少执行动作的延迟
+                        "basic.to_if_held_down_threshold_milliseconds": 150,
+                        "basic.to_delayed_action_delay_milliseconds": 50
                     },
                     "type": "basic"
                 }

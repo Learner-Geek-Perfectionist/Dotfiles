@@ -6,7 +6,7 @@
             "manipulators": [
                 {
                     "from": {
-                        "key_code": "caps_lock",
+                        "key_code": "spacebar",
                         "modifiers": {
                             "optional": ["any"]
                         }

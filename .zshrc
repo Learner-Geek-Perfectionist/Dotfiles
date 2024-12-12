@@ -38,6 +38,8 @@ if [[ "$(uname)" == "Darwin" ]]; then
     alias cl=clion
     # pycharm 映射到 py
     alias py=pycharm
+
+    alias fd='fd --type f --strip-cwd-prefix --hidden --follow --exclude .git'
     # Setting fd as the default source for fzf
     export FZF_DEFAULT_COMMAND='fd --type f --strip-cwd-prefix --hidden --follow --exclude .git'
 
@@ -58,6 +60,7 @@ elif [[ -f /etc/os-release ]]; then
     else
         # Setting fd as the default source for fzf
         export FZF_DEFAULT_COMMAND='fd --type f --strip-cwd-prefix --hidden --follow --exclude .git'
+        alias fd='fd --type f --strip-cwd-prefix --hidden --follow --exclude .git'
     fi
 
 fi

@@ -53,43 +53,14 @@ setup_kotlin_environment
 
 # 安装 Kotlin/Native
 download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR "Kotlin/Native"
-# 通过 UUID 安装 Application，但是目前 macOS 15 sequoia 不支持！
-# print_centered_message "通过 uuid 安装 Application"
 
-# 定义一个包含应用 UUID 的数组
-# declare -A 来声明关联数组（也称为哈希表），在 Bash 4.0 版本中引入的。因此 macOS(的 shell 版本为 3.2.57)不支持。
-# declare -A apps
-# apps=(
-#   ["XApp-应用程序完全卸载清理专家"]="2116250207"
-#   ["腾讯文档"]="1370780836"
-#   ["FastZip - 专业的 RAR 7Z ZIP 解压缩工具"]="1565629813"
-#   ["State-管理电脑CPU、温度、风扇、内存、硬盘运行状态"]="1472818562"
-#   ["HUAWEI CLOUD WeLink-办公软件"]="1530487795"
-# )
 
-#  # 检查是否已安装mas
-#  if ! command -v mas &>/dev/null; then
-#    echo "mas-cli 未安装。正在通过Homebrew安装..."
-#    brew install mas
-#    if [ $? -ne 0 ]; then
-#      echo "安装mas失败，请手动安装后重试。"
-#      exit 1
-#    fi
-#  fi
-#
-#  # 登录App Store（如果尚未登录）
-#  if ! mas account >/dev/null; then
-#    echo "你尚未登录App Store。请先登录。"
-#    open -a "App Store"
-#    read -p "登录后请按回车继续..."
-#  fi
-#
-#  # 安装应用
-#  for app in "${!apps[@]}"; do
-#    echo "正在安装: $app"
-#    mas install ${apps[$app]}
-#    echo "$app 安装完成"
-#  done
+# 添加 Mihomo Party 的 Tap
+brew tap mihomo-party-org/mihomo-party
+# 安装
+brew install --cask mihomo-party
+
+
 
 print_centered_message "${GREEN}所有应用安装完成。🎉${NC}" "false" "true"
 echo -e "${RED}当前目录: $(pwd) ${NC}"

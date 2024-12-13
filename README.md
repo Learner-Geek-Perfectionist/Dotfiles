@@ -64,5 +64,4 @@ Manual install
 
 ```shell
 
-osascript -e 'tell application "System Events" to get bundle identifier of every application process' | tr ',' '\n' | fzf
-```
+mdls -name kMDItemCFBundleIdentifier /Applications/*.app | fzf```

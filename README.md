@@ -64,4 +64,5 @@ Manual install
 
 ```shell
 
-mdls -name kMDItemCFBundleIdentifier /Applications/*.app | fzf```
+mdls -name kMDItemCFBundleIdentifier /Applications/*.app | fzf
+```

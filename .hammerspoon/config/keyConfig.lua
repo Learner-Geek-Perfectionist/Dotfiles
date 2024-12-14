@@ -16,13 +16,6 @@ keyConfig = {
 -- 区分大小写
 HyperKey = { "ctrl", "alt", "cmd", "shift" }
 
-keyStatus = {
-  left = false,
-  right = false,
-  up = false,
-  down = false
-}
-
 windowsConfig = {
   'left',
   'right',

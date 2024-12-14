@@ -24,7 +24,8 @@ echo -e "${YELLOW}🔍 Checking and removing old configuration files if they exi
 declare -a FILES_TO_REMOVE=(
     "$HOME/.zprofile"
     "$HOME/.zshrc"
-    "$HOME/.config"
+    "$HOME/.config/zsh"
+    "$HOME/.config/kitty"
     "$HOME/powerlevel10k"
     "$HOME/clipboard.zsh"
     "$HOME/completion.zsh"

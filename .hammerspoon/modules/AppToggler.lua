@@ -1,6 +1,6 @@
-local mod = {}  -- 创建一个新的表作为模块
+---@diagnostic disable: lowercase-global
 
-function mod.launchOrToggleAppByBundleID(bundleID)
+function AppToggler(bundleID)
     local app = hs.application.get(bundleID)  -- 获取应用对象
 
     if app and #app:allWindows() > 0 then
@@ -16,5 +16,4 @@ function mod.launchOrToggleAppByBundleID(bundleID)
         hs.execute("open -b '" .. bundleID .. "'")
     end
 end
-
-return mod  -- 返回这个表作为模块的输出
+ 

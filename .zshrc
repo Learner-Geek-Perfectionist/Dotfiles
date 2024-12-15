@@ -117,6 +117,7 @@ setopt nocaseglob                # 路径名匹配时忽略大小写
 setopt notify                    # 后台任务完成后通知
 setopt no_beep                   # 关闭终端提示音
 setopt no_bang_hist              # 不对双引号当中的叹号做历史记录拓展 "!"
+setopt GLOB_DOTS                 # 文件名展开（globbing）包括以点(dot)开始的文件
 
 # 清除整个屏幕
 alias clear='clear && printf '\''\e[3J'\'''

@@ -64,8 +64,9 @@ setup_kotlin_environment
 # 安装 Kotlin/Native
 download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR "Kotlin/Native"
 
-
-
+# 安装 白霜拼音 词库
+git clone --depth 1 https://github.com/gaboolic/rime-frost /tmp/rime-frost
+mv /tmp/rime-frost/* ${HOME}/Library/Rime
 
 print_centered_message "${GREEN}所有应用安装完成。🎉${NC}" "false" "true"
 echo -e "${RED}当前目录: $(pwd) ${NC}"

@@ -16,9 +16,9 @@ for _, key in ipairs(windowsConfig) do
 end
 
 -- 绑定切换 App 窗口的快捷键
-hs.hotkey.bind(HyperKey, '`', function()
-    switchFocusedAppWindow()
-end)
+--hs.hotkey.bind(HyperKey, '`', function()
+--    switchFocusedAppWindow()
+--end)
 
 -- 初始化提示
 hs.alert.show("Window management keybindings with corners enabled")

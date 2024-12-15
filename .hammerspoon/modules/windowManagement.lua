@@ -1,4 +1,5 @@
 ---@diagnostic disable: lowercase-global
+
 -- 加载Hammerspoon的窗口管理模块
 local window = require "hs.window"
 -- 定义快捷键状态跟踪

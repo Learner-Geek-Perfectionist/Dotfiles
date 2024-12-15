@@ -1,32 +1,19 @@
 {
-    "title": "space2hyper",
-    "rules": [
+    "description": "Change spacebar to HyperKey if pressed with other keys, regular space if alone.",
+    "manipulators": [
         {
-            "description": "Space (held): ⌃⌥⇧⌘ (Hyper Key)",
-            "manipulators": [
+            "from": {
+                "key_code": "right_command",
+                "modifiers": { "optional": ["any"] }
+            },
+            "to": [
                 {
-                    "from": {
-                        "key_code": "spacebar",
-                        "modifiers": {
-                            "optional": ["any"]
-                        }
-                    },
-                    "to_if_held_down": [
-                        {
-                            "key_code": "left_control",
-                            "modifiers": ["left_command", "left_option", "left_shift"]
-                        }
-                    ],
-                    "to_if_alone": {
-                        "key_code": "spacebar"
-                    },
-                    "parameters": {
-                        "basic.to_if_held_down_threshold_milliseconds": 150,
-                        "basic.to_delayed_action_delay_milliseconds": 50
-                    },
-                    "type": "basic"
+                    "key_code": "left_control",
+                    "modifiers": ["left_command", "left_option", "left_shift"]
                 }
-            ]
+            ],
+            "to_if_alone": [{ "key_code": "right_control" }],
+            "type": "basic"
         }
     ]
 }

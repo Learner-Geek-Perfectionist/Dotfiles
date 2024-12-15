@@ -47,6 +47,13 @@ brew install --cask wireshark
 # 安装 squirrel 输入法
 brew install --cask squirrel
 
+
+# 添加 Mihomo Party 的 Tap
+brew tap mihomo-party-org/mihomo-party
+# 安装
+brew install --cask mihomo-party
+
+
 print_centered_message "${GREEN}图形界面安装完成✅${NC}" "false" "false"
 
 brew cleanup --prune=all
@@ -57,11 +64,6 @@ setup_kotlin_environment
 # 安装 Kotlin/Native
 download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR "Kotlin/Native"
 
-
-# 添加 Mihomo Party 的 Tap
-brew tap mihomo-party-org/mihomo-party
-# 安装
-brew install --cask mihomo-party
 
 
 

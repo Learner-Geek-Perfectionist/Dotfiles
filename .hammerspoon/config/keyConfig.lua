@@ -15,7 +15,8 @@ keyConfig = {
   { 'i', 'com.jetbrains.intellij' },   -- "I" for "IntelliJ IDEA"
   { 'a', 'com.google.android.studio' }, -- "A" for "Android Studio"
   { 'p', 'com.jetbrains.pycharm' },      -- "P" for "Pycharm"
-  { 'u', 'com.mac.utility.clipboard.paste' }      -- "U" for "Upaste"
+  { 'u', 'com.mac.utility.clipboard.paste' },      -- "U" for "Upaste"
+  { '.', 'com.apple.ActivityMonitor' }      -- "." for "ActivityMonitor"
 }
 -- 区分大小写
 HyperKey = { "ctrl", "alt", "cmd", "shift" }
@@ -40,6 +41,7 @@ inputMethodMap = {
   ["com.tencent.xinWeChat"] = "im.rime.inputmethod.Squirrel.Hans",
   ["com.hnc.Discord"] = "im.rime.inputmethod.Squirrel.Hans",  
   ["com.tencent.qq"] = "im.rime.inputmethod.Squirrel.Hans",  
-  ["com.apple.Safari"] = "im.rime.inputmethod.Squirrel.Hans",  
+  ["com.apple.Safari"] = "im.rime.inputmethod.Squirrel.Hans",
+  ["com.mac.utility.clipboard.paste"] = "im.rime.inputmethod.Squirrel.Hans",
   -- 在这里添加更多的应用程序和输入法映射
 }

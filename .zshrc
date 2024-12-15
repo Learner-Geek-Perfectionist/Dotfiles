@@ -39,9 +39,9 @@ if [[ "$(uname)" == "Darwin" ]]; then
     # pycharm 映射到 py
     alias py=pycharm
 
-    alias fd='fd --type f --strip-cwd-prefix --hidden --follow --exclude .git'
+    alias fd='fd --strip-cwd-prefix --hidden --follow --exclude .git'
     # Setting fd as the default source for fzf
-    export FZF_DEFAULT_COMMAND='fd --type f --strip-cwd-prefix --hidden --follow --exclude .git'
+    export FZF_DEFAULT_COMMAND='fd --strip-cwd-prefix --hidden --follow --exclude .git'
 
 elif [[ -f /etc/os-release ]]; then
 
@@ -56,11 +56,11 @@ elif [[ -f /etc/os-release ]]; then
         export PATH="$HOME/.cargo/bin:$PATH"
         export PATH="$HOME/.local/kitty.app/bin:$PATH"
         # Setting fd as the default source for fzf
-        export FZF_DEFAULT_COMMAND='fdfind --type f --strip-cwd-prefix --hidden --follow --exclude .git'
+        export FZF_DEFAULT_COMMAND='fdfind --strip-cwd-prefix --hidden --follow --exclude .git'
     else
         # Setting fd as the default source for fzf
-        export FZF_DEFAULT_COMMAND='fd --type f --strip-cwd-prefix --hidden --follow --exclude .git'
-        alias fd='fd --type f --strip-cwd-prefix --hidden --follow --exclude .git'
+        export FZF_DEFAULT_COMMAND='fd --strip-cwd-prefix --hidden --follow --exclude .git'
+        alias fd='fd --strip-cwd-prefix --hidden --follow --exclude .git'
     fi
 
 fi

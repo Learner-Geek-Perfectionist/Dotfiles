@@ -66,7 +66,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
     sudo rm -rf "${HOME}/.config/karabiner/assets/complex_modifications/capslock2hyper.json"
   fi
   echo -e "${PURPLE}📋 Copying new capslock2hyper.json to ${HOME}/.config/karabiner/assets/complex_modifications/capslock2hyper.json...${NC}"
-  sudo cp -r "${TMP_DIR}/capslock2hyper.json" "${HOME}/.config/karabiner/assets/complex_modifications/capslock2hyper.json"
+  sudo cp -r "${TMP_DIR}/capslock2hyper.json" "${HOME}/.config/karabiner/assets/complex_modifications/capslock2hyper.json" && sudo chown -R $USER:$(id -gn) "${HOME}/.config/karabiner/assets/complex_modifications/capslock2hyper.json"
 fi
 
 echo -e "${GREEN}🧹 Old configuration files removed and new ones copied.${NC}"

@@ -9,7 +9,6 @@ if ! command -v git &>/dev/null; then
   return
 fi
 
-zsh
 
 # 插件管理器 zinit 安装的路径
 ZINIT_HOME="${HOME}/.local/share/zinit/zinit.git"
@@ -27,7 +26,7 @@ if [[ ! -f "${ZINIT_HOME}/zinit.zsh" ]]; then
 fi
 
 # 执行 zinit.zsh，加载 zinit 插件管理器本身，将 zinit 命令引入 zsh 中。
-source "$ZINIT_HOME/zinit.zsh"
+/bin/zsh source "$ZINIT_HOME/zinit.zsh"
 
 # 1.Powerlevel10k 的 instant prompt 的缓存文件，用于加速启动
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-$USER.zsh" ]]; then

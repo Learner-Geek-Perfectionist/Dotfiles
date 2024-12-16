@@ -27,7 +27,7 @@ install_fonts
 
 print_centered_message "${GREEN}接下来配置 zsh......${NC}" "false" "false"
 
-/bin.zsh
+/bin/zsh
 
 # 对 zsh 进行配置
 source ./zsh_config.sh

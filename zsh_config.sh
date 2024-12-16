@@ -20,7 +20,7 @@ echo -e "${GREEN}🚀 Starting script...${NC}"
 cd $HOME
 
 # 定义临时目录路径
-TMP_DIR="/tmp/Dotfiles/"
+TMP_DIR="/tmp/Dotfiles"
 
 if [[ ! -d /tmp/Dotfiles ]]; then
   # 浅克隆仓库到临时目录

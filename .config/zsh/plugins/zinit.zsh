@@ -9,8 +9,6 @@ if ! command -v git &>/dev/null; then
   return
 fi
 
-zsh
-
 # 插件管理器 zinit 安装的路径
 export ZINIT_HOME="${HOME}/.local/share/zinit/zinit.git"
 

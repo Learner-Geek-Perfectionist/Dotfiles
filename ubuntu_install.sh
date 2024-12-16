@@ -194,7 +194,7 @@ sudo localedef -i zh_CN -f UTF-8 zh_CN.UTF-8
 
 # 搜索可用的 OpenJDK 包并尝试获取最新版本
 jdk_version=$(apt search openjdk | grep -oP 'openjdk-\d+-jdk' | sort -V | tail -n1)
-sudo apt install -y $jdk_version && print_centered_message  "${GREEN}成功安装 ${jdk_version}${NC}" "false" "true"
+sudo apt install -y $jdk_version && print_centered_message  "${GREEN}成功安装✅ ${jdk_version}${NC}" "false" "true"
 
 # 安装最新的 lua
 sudo apt install -y $(apt search '^lua[0-9.]*$' --names-only | grep -oP 'lua\d+\.\d+' | sort -V | tail -n 1)

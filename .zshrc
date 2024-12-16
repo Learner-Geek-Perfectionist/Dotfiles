@@ -1,8 +1,8 @@
 # Ensure XDG base directories exist
-mkdir -p "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME" "$XDG_DATA_HOME" "$XDG_STATE_HOME"
+sudo mkdir -p "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME" "$XDG_DATA_HOME" "$XDG_STATE_HOME"
 
 # Ensure Zsh directories exist
-mkdir -p "$ZPLUGINDIR" "$ZSCRIPTDIR"
+sudo mkdir -p "$ZPLUGINDIR" "$ZSCRIPTDIR"
 
 
 if [[ "$HISTFILE" != "$XDG_CACHE_HOME/zsh/.zsh_history" ]];then
@@ -129,7 +129,7 @@ alias cat=bat
 # reload 映射到重启 .zshrc
 alias reload="source ~/.zshrc;source ~/.zprofile;source ~/.zshenv;rm -rf $HOME/.cache/zsh/.zcompdump; "
 
-alias md='mkdir -p'
+alias md='sudo mkdir -p'
 
 alias g1='git clone --depth=1'
 

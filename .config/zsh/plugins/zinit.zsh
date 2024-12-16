@@ -10,12 +10,12 @@ if ! command -v git &>/dev/null; then
 fi
 
 # 插件管理器 zinit 安装的路径
-ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
+ZINIT_HOME="${HOME}/.local/share}/zinit/zinit.git"
 
 # 如果插件管理器 zinit 没有安装......
 if [[ ! -f "$ZINIT_HOME/zinit.zsh" ]]; then
   printf "\033[33m\033[220mInstalling ZDHARMA-CONTINUUM Initiative Plugin Manager...\033[0m\n"
-  mkdir -p "$(dirname $ZINIT_HOME)"
+  mkdir -p "${HOME}/.local/share}/zinit/zinit.git"
   if git clone --depth=1 https://github.com/zdharma-continuum/zinit "$ZINIT_HOME"; then
     printf "\033[33m\033[34mInstallation successful.\033[0m\n"
   else

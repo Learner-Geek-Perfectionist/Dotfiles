@@ -35,7 +35,7 @@ git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP
 # 定义配置列表
 configs=(".zshenv" ".zprofile" ".zshrc" ".config/kitty" ".config/zsh")
 
-sudo mkdir -p ${HOME}/.config/kitty ${HOME}/.config/zsh
+mkdir -p ${HOME}/.config/kitty ${HOME}/.config/zsh
 
 # 删除旧配置和复制新配置
 echo -e "${YELLOW}🔍 Checking and removing old configuration files if they exist...${NC}"
@@ -58,7 +58,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
     sudo rm -rf "${HOME}/.hammerspoon"
   fi
   echo -e "${PURPLE}📋 Copying new .hammerspoon to "${HOME}/.hammerspoon"...${NC}"
-  sudo cp -r "${TMP_DIR}/.hammerspoon" "${HOME}/.hammerspoon" && sudo chown -R $USER:$(id -gn) "${HOME}/.hammerspoon"
+  sudo cp -r "${TMP_DIR}/.hammerspoon" "${HOME}/.hammerspoon"
 fi
 
 # 添加 Karabiner 配置文件：capslock2hyper.json

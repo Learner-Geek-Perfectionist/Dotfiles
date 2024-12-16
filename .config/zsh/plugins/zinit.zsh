@@ -15,8 +15,8 @@ ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
 # 如果插件管理器 zinit 没有安装......
 if [[ ! -f "$ZINIT_HOME/zinit.zsh" ]]; then
   print -P "%F{33} %F{220}Installing ZDHARMA-CONTINUUM Initiative Plugin Manager...%f"
-  sudo mkdir -p "$(dirname $ZINIT_HOME)" && sudo chown -R $USER:$(id -gn) $HOME/.local/share/zinit
-  if sudo git clone --depth=1 https://github.com/zdharma-continuum/zinit "$ZINIT_HOME"; then
+  mkdir -p "$(dirname $ZINIT_HOME)"
+  if git clone --depth=1 https://github.com/zdharma-continuum/zinit "$ZINIT_HOME"; then
     print -P "%F{33} %F{34}Installation successful.%f%b"
   else
     print -P "%F{160} The clone has failed.%f%b"

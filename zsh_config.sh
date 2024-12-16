@@ -16,21 +16,20 @@ LIGHT_BLUE='\033[1;34m'
 DARK_RED='\033[1;31m'
 NC='\033[0m' # 没有颜色
 
+sudo rm -rf "$TMP_DIR"
+sudo rm -rf /tmp/Fonts/
 echo -e "${GREEN}🚀 Starting script...${NC}"
 cd $HOME
 
 # 定义临时目录路径
 TMP_DIR="/tmp/Dotfiles"
 
-if [[ ! -d /tmp/Dotfiles ]]; then
-  # 浅克隆仓库到临时目录
-  echo -e "${YELLOW}📥 Cloning repository into $TMP_DIR...${NC}"
-  git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR" || {
-    echo "Failed to clone repository"
-    exit 1
-  }
-  echo -e "${GREEN}✔️ Repository cloned.${NC}"
-fi
+# 浅克隆仓库到临时目录
+echo -e "${YELLOW}📥 Cloning repository into $TMP_DIR...${NC}"
+git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR" || {
+  echo "Failed to clone repository"
+  exit 1
+}
 
 # 定义配置列表
 configs=(".zshenv" ".zprofile" ".zshrc" ".config/kitty" ".config/zsh")
@@ -66,7 +65,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
     sudo rm -rf "${HOME}/.config/karabiner/assets/complex_modifications/capslock2hyper.json"
   fi
   echo -e "${PURPLE}📋 Copying new capslock2hyper.json to ${HOME}/.config/karabiner/assets/complex_modifications/capslock2hyper.json...${NC}"
-  sudo mv  "${TMP_DIR}/capslock2hyper.json" "${HOME}/.config/karabiner/assets/complex_modifications/capslock2hyper.json" && sudo chown -R $USER:$(id -gn) "${HOME}/.config/karabiner/assets/complex_modifications/capslock2hyper.json"
+  sudo mv "${TMP_DIR}/capslock2hyper.json" "${HOME}/.config/karabiner/assets/complex_modifications/capslock2hyper.json" && sudo chown -R $USER:$(id -gn) "${HOME}/.config/karabiner/assets/complex_modifications/capslock2hyper.json"
 fi
 
 echo -e "${GREEN}🧹 Old configuration files removed and new ones copied.${NC}"

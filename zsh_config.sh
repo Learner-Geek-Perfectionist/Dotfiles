@@ -43,7 +43,7 @@ for config in "${configs[@]}"; do
     sudo rm -rf "${HOME}/$config"
   fi
   echo -e "${PURPLE}📋 Moving new ${config} to ${HOME}...${NC}"
-  sudo mv -r "${TMP_DIR}/${config}" "${HOME}/${config}"
+  sudo mv "${TMP_DIR}/${config}" "${HOME}/${config}"
 done
 
 # 在文件中添加以下代码
@@ -56,7 +56,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
     sudo rm -rf "${HOME}/.hammerspoon"
   fi
   echo -e "${PURPLE}📋 Copying new .hammerspoon to "${HOME}/.hammerspoon"...${NC}"
-  sudo mv -r "${TMP_DIR}/.hammerspoon" "${HOME}/.hammerspoon" && sudo chown -R $USER:$(id -gn) "${HOME}/.hammerspoon"
+  sudo mv "${TMP_DIR}/.hammerspoon" "${HOME}/.hammerspoon" && sudo chown -R $USER:$(id -gn) "${HOME}/.hammerspoon"
 fi
 
 # 添加 Karabiner 配置文件：capslock2hyper.json
@@ -66,7 +66,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
     sudo rm -rf "${HOME}/.config/karabiner/assets/complex_modifications/capslock2hyper.json"
   fi
   echo -e "${PURPLE}📋 Copying new capslock2hyper.json to ${HOME}/.config/karabiner/assets/complex_modifications/capslock2hyper.json...${NC}"
-  sudo mv -r "${TMP_DIR}/capslock2hyper.json" "${HOME}/.config/karabiner/assets/complex_modifications/capslock2hyper.json" && sudo chown -R $USER:$(id -gn) "${HOME}/.config/karabiner/assets/complex_modifications/capslock2hyper.json"
+  sudo mv  "${TMP_DIR}/capslock2hyper.json" "${HOME}/.config/karabiner/assets/complex_modifications/capslock2hyper.json" && sudo chown -R $USER:$(id -gn) "${HOME}/.config/karabiner/assets/complex_modifications/capslock2hyper.json"
 fi
 
 echo -e "${GREEN}🧹 Old configuration files removed and new ones copied.${NC}"

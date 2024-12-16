@@ -44,8 +44,8 @@ install_packages "brew_casks"
 # 安装 wireshark --cask 工具，因为 wireshark 既有命令行版本又有 cask 版本，因此手动加上 --cask 参数
 brew install --cask wireshark
 
-# 安装 squirrel 输入法
-brew install --cask squirrel
+## 安装 squirrel 输入法
+#brew install --cask squirrel
 
 
 # 添加 Mihomo Party 的 Tap
@@ -64,9 +64,9 @@ setup_kotlin_environment
 # 安装 Kotlin/Native
 download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR "Kotlin/Native"
 
-# 安装 白霜拼音 词库
-git clone --depth 1 https://github.com/gaboolic/rime-frost /tmp/rime-frost
-mv /tmp/rime-frost/* ${HOME}/Library/Rime
+## 安装 白霜拼音 词库
+#git clone --depth 1 https://github.com/gaboolic/rime-frost /tmp/rime-frost
+#mv /tmp/rime-frost/* ${HOME}/Library/Rime
 
 print_centered_message "${GREEN}所有应用安装完成。🎉${NC}" "false" "true"
 echo -e "${RED}当前目录: $(pwd) ${NC}"

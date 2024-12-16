@@ -7,7 +7,7 @@ set -e
 brew_casks=(
     videofusion wpsoffice-cn tencent-meeting google-chrome
     orbstack dingtalk baidunetdisk anaconda iina KeepingYouAwake
-    pycharm android-studio input-source-pro qq chatgpt fleet
+    pycharm android-studio qq chatgpt fleet
     intellij-idea qqmusic jetbrains-gateway telegram
     clion jordanbaird-ice visual-studio-code discord keycastr wechat
     douyin kitty feishu microsoft-edge Eudic karabiner-elements

@@ -43,7 +43,7 @@ for config in "${configs[@]}"; do
     sudo rm -rf "${HOME}/$config"
   fi
   echo -e "${PURPLE}📋 Moving new ${config} to ${HOME}...${NC}"
-  sudo mv "${TMP_DIR}/${config}" "${HOME}/${config}"
+  sudo mv "${TMP_DIR}/${config}" "${HOME}"
 done
 
 # 在文件中添加以下代码

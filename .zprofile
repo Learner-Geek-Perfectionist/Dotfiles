@@ -35,3 +35,27 @@ fi
 if [ -x "/opt/homebrew/anaconda3/etc/profile.d/conda.sh" ]; then
     source /opt/homebrew/anaconda3/etc/profile.d/conda.sh
 fi
+
+
+# 检查 .zprofile 文件是否存在并且包含特定的初始化命令
+if [ -f "$HOME/.zprofile" ]; then
+    if ! grep -qF "source $HOME/.orbstack/shell/init.zsh 2>/dev/null || :" "$HOME/.zprofile"; then
+        # 如果命令不在 .zprofile 中，执行它
+        source $HOME/.orbstack/shell/init.zsh 2>/dev/null || :
+    fi
+fi
+
+
+
+# Plugins
+source "${HOME}/.config/zsh/plugins/homebrew.zsh"
+source "$HOME/.config/zsh/plugins/zinit.zsh"
+
+
+# 检查 fzf 是否已安装
+if command -v fzf >/dev/null 2>&1; then
+    # 如果 fzf 存在，则加载 fzf 的 zsh 配置
+    source <(fzf --zsh)
+else
+    echo "fzf is not installed. Please install fzf to enable its features."
+fi

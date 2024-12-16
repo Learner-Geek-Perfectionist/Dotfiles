@@ -95,8 +95,8 @@ fi
 
 
 # Plugins
-source "$ZPLUGINDIR/homebrew.zsh"
-source "$ZPLUGINDIR/zinit.zsh"
+source "${HOME}/.config/zsh/plugins/homebrew.zsh"
+source "$HOME/.config/zsh/plugins/zinit.zsh"
 
 
 # 设置 fzf 的默认预览

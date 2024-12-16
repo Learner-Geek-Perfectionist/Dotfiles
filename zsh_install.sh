@@ -30,10 +30,8 @@ print_centered_message "${GREEN}接下来配置 zsh......${NC}" "false" "false"
 # 对 zsh 进行配置
 source ./zsh_config.sh
 
-# 打印提示消息
-print_centered_message "${GREEN}进入 zsh ......${NC}" "true" "false"
-
-# 进入 zsh
-/bin/zsh
+# 安装 zsh 插件
+source "${HOME}/.config/zsh/plugins/homebrew.zsh"
+source "$HOME/.config/zsh/plugins/zinit.zsh"
 
 print_centered_message "对于 macOS 的用户，腾讯文档、FastZip、State、WeLink 只能通过 App Store 手动安装！！！"

@@ -47,7 +47,7 @@ for config in "${configs[@]}"; do
 done
 
 # 在文件中添加以下代码
-[[ "$(uname)" == "Darwin" ]] && sudo mv -r "$TMP_DIR/sh-script/" "$HOME/sh-script/"
+[[ "$(uname)" == "Darwin" ]] && sudo mv "$TMP_DIR/sh-script/" "$HOME/sh-script/"
 
 # 添加 .hammerspoon 文件夹
 if [[ "$(uname)" == "Darwin" ]]; then

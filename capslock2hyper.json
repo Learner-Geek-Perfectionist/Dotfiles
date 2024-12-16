@@ -1,19 +1,35 @@
 {
-    "description": "Change spacebar to HyperKey if pressed with other keys, regular space if alone.",
+    "description": "Map right_command and right_option to different keys with modifiers",
     "manipulators": [
         {
+            "type": "basic",
             "from": {
-                "key_code": "right_command",
-                "modifiers": { "optional": ["any"] }
+                "key_code": "right_option",
+                "modifiers": {
+                    "optional": ["any"]
+                }
             },
             "to": [
                 {
                     "key_code": "left_control",
                     "modifiers": ["left_command", "left_option", "left_shift"]
                 }
-            ],
-            "to_if_alone": [{ "key_code": "right_option" }],
-            "type": "basic"
+            ]
+        },
+        {
+            "type": "basic",
+            "from": {
+                "key_code": "right_command",
+                "modifiers": {
+                    "optional": ["any"]
+                }
+            },
+            "to": [
+                {
+                    "key_code": "left_control",
+                    "modifiers": ["left_command", "left_option", "left_shift"]
+                }
+            ]
         }
     ]
 }

@@ -43,11 +43,11 @@ for config in "${configs[@]}"; do
     sudo rm -rf "${HOME}/$config"
   fi
   echo -e "${PURPLE}📋 Copying new ${config} to ${HOME}...${NC}"
-  cp -r "${TMP_DIR}/${config}" "${HOME}/${config}"
+  sudo cp -r "${TMP_DIR}/${config}" "${HOME}/${config}"
 done
 
 # 在文件中添加以下代码
-[[ "$(uname)" == "Darwin" ]] && cp -r "$TMP_DIR/sh-script/" "$HOME/sh-script/"
+[[ "$(uname)" == "Darwin" ]] && sudo cp -r "$TMP_DIR/sh-script/" "$HOME/sh-script/"
 
 # 添加 .hammerspoon 文件夹
 if [[ "$(uname)" == "Darwin" ]]; then

@@ -69,10 +69,10 @@ if ! command -v kitty > /dev/null 2>&1; then
     print_centered_message  "${GREEN}开始安装 kitty... ${NC}" "true" "false"
     curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n
     
-    # 定义基础URL
+    # 定义基础 URL
     BASE_URL="http://kr.archive.ubuntu.com/ubuntu/pool/universe/k/kitty/"
     
-    # 使用curl获取页面内容，并解析出最新的 kitty-terminfo .deb 文件的版本号
+    # 使用 curl 获取页面内容，并解析出最新的 kitty-terminfo .deb 文件的版本号
     TERMINFO_LATEST_VERSION=$(curl -s "$BASE_URL" | grep -oP 'href="kitty-terminfo_[^"]*\.deb"' | sed -E 's|.*kitty-terminfo_([^"]*)\.deb.*|\1|' | sort -V | tail -1)
     
     # 如果找不到文件，则退出
@@ -81,7 +81,7 @@ if ! command -v kitty > /dev/null 2>&1; then
         exit 1
     fi
     
-    # 构建完整的.deb文件下载URL
+    # 构建完整的 .deb 文件下载 URL（kitty-terminfo）
     TERMINFO_URL="${BASE_URL}kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb"
     
     # 下载和安装包

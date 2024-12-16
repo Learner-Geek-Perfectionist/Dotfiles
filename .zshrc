@@ -1,9 +1,3 @@
-# Ensure XDG base directories exist
-mkdir -p "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME" "$XDG_DATA_HOME" "$XDG_STATE_HOME"
-
-# Ensure Zsh directories exist
-mkdir -p "$ZPLUGINDIR" "$ZSCRIPTDIR"
-
 
 if [[ "$HISTFILE" != "$XDG_CACHE_HOME/zsh/.zsh_history" ]];then
     export HISTFILE="$XDG_CACHE_HOME/zsh/.zsh_history"

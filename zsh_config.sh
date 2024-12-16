@@ -16,13 +16,14 @@ LIGHT_BLUE='\033[1;34m'
 DARK_RED='\033[1;31m'
 NC='\033[0m' # 没有颜色
 
+# 定义临时目录路径
+TMP_DIR="/tmp/Dotfiles"
+
 sudo rm -rf "$TMP_DIR"
 sudo rm -rf /tmp/Fonts/
 echo -e "${GREEN}🚀 Starting script...${NC}"
 cd $HOME
 
-# 定义临时目录路径
-TMP_DIR="/tmp/Dotfiles"
 
 # 浅克隆仓库到临时目录
 echo -e "${YELLOW}📥 Cloning repository into $TMP_DIR...${NC}"

@@ -1,35 +1,87 @@
 {
-    "description": "Map right_command and right_option to different keys with modifiers",
-    "manipulators": [
-        {
-            "type": "basic",
-            "from": {
-                "key_code": "right_option",
-                "modifiers": {
-                    "optional": ["any"]
-                }
-            },
-            "to": [
-                {
-                    "key_code": "left_control",
-                    "modifiers": ["left_command", "left_option", "left_shift"]
-                }
-            ]
-        },
-        {
-            "type": "basic",
-            "from": {
-                "key_code": "right_command",
-                "modifiers": {
-                    "optional": ["any"]
-                }
-            },
-            "to": [
-                {
-                    "key_code": "left_control",
-                    "modifiers": ["left_command", "left_option", "left_shift"]
-                }
-            ]
+  "manipulators": [
+    {
+      "description": "Change right_command to command+control+option+shift.",
+      "from": {
+        "key_code": "right_command",
+        "modifiers": {
+          "optional": [
+            "any"
+          ]
         }
-    ]
+      },
+      "to": [
+        {
+          "key_code": "left_shift",
+          "modifiers": [
+            "left_command",
+            "left_control",
+            "left_option"
+          ]
+        }
+      ],
+      "type": "basic"
+    },
+    {
+      "description": "Change right_option to command+control+option+shift.",
+      "from": {
+        "key_code": "right_option",
+        "modifiers": {
+          "optional": [
+            "any"
+          ]
+        }
+      },
+      "to": [
+        {
+          "key_code": "left_shift",
+          "modifiers": [
+            "left_command",
+            "left_control",
+            "left_option"
+          ]
+        }
+      ],
+      "type": "basic"
+    },
+    {
+      "description": "Change Caps to fn.",
+      "from": {
+        "key_code": "caps_lock",
+        "modifiers": {
+          "optional": [
+            "any"
+          ]
+        }
+      },
+      "to": [
+        {
+          "key_code": "fn"
+        }
+      ],
+      "type": "basic"
+    },
+    {
+      "description": "Change left_shift to fn.",
+      "from": {
+        "key_code": "left_shift",
+        "modifiers": {
+          "optional": [
+            "any"
+          ]
+        }
+      },
+      "to": [
+        {
+          "key_code": "left_shift"
+        }
+      ],
+      "to_if_alone": [
+        {
+          "key_code": "fn"
+        }
+      ],
+      "type": "basic"
+    }
+  ]
 }

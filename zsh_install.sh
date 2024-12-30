@@ -32,6 +32,5 @@ print_centered_message "${GREEN}接下来配置 zsh......${NC}" "false" "false"
 source ./zsh_config.sh
 
 # 安装 zsh 插件
-source "${HOME}/.config/zsh/plugins/homebrew.zsh"
-source "$HOME/.config/zsh/plugins/zinit.zsh"
+/bin/zsh
 

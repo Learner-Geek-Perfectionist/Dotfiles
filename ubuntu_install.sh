@@ -106,7 +106,7 @@ if ! command -v kitty > /dev/null 2>&1; then
     if grep -qi microsoft /proc/version || [[ "$AUTO_RUN" == "true" ]]; then
         print_centered_message  "${RED}在 WSL2 中或者 Dockerfile 中不需要安装 kitty 桌面图标${NC}" "false" "false"
     else
-        sudo mkdir -p /usr/local/bin/ ~/.local/share/applications/
+        mkdir -p /usr/local/bin/ ~/.local/share/applications/
         sudo ln -s ~/.local/kitty.app/bin/kitty /usr/local/bin/
         # For Application Launcher:
         sudo cp ~/.local/kitty.app/share/applications/kitty.desktop ~/.local/share/applications/

@@ -24,4 +24,4 @@ if [[ ! -f "${ZINIT_HOME}/zinit.zsh" ]]; then
   fi
 fi
 
-source ${HOME}/.config/zsh/plugins/zinit-plugin.zsh
+/bin/zsh ${HOME}/.config/zsh/plugins/zinit-plugin.zsh

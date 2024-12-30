@@ -35,4 +35,3 @@ source ./zsh_config.sh
 source "${HOME}/.config/zsh/plugins/homebrew.zsh"
 source "$HOME/.config/zsh/plugins/zinit.zsh"
 
-print_centered_message "对于 macOS 的用户，腾讯文档、FastZip、State、WeLink 只能通过 App Store 手动安装！！！"

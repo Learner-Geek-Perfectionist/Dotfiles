@@ -1,11 +1,11 @@
 
-if [[ "$HISTFILE" != "$XDG_CACHE_HOME/zsh/.zsh_history" ]];then
-    export HISTFILE="$XDG_CACHE_HOME/zsh/.zsh_history"
+if [[ "$HISTFILE" != "$HOME/.cache/zsh/.zsh_history" ]];then
+    export HISTFILE="$HOME/.cache/zsh/.zsh_history"
     readonly HISTFILE
 fi
 
-if [[ "$ZSH_COMPDUMP" != "$XDG_CACHE_HOME/zsh/.zcompdump" ]];then
-    export ZSH_COMPDUMP="$XDG_CACHE_HOME/zsh/.zcompdump"
+if [[ "$ZSH_COMPDUMP" != "$HOME/.cache/zsh/.zsh_history" ]];then
+    export ZSH_COMPDUMP="$HOME/.cache/zsh/.zsh_history"
     readonly ZSH_COMPDUMP
 fi
 
@@ -33,9 +33,9 @@ if [[ "$(uname)" == "Darwin" ]]; then
     # pycharm 映射到 py
     alias py=pycharm
 
-    alias fd='fd --strip-cwd-prefix --hidden --follow --exclude .git'
+    alias fd='fd --strip-cwd-prefix --hidden --follow --exclude .git --glob'
     # Setting fd as the default source for fzf
-    export FZF_DEFAULT_COMMAND='fd --strip-cwd-prefix --hidden --follow --exclude .git'
+    export FZF_DEFAULT_COMMAND='fd --strip-cwd-prefix --hidden --follow --exclude .git --glob'
 
 elif [[ -f /etc/os-release ]]; then
 
@@ -50,11 +50,11 @@ elif [[ -f /etc/os-release ]]; then
         export PATH="$HOME/.cargo/bin:$PATH"
         export PATH="$HOME/.local/kitty.app/bin:$PATH"
         # Setting fd as the default source for fzf
-        export FZF_DEFAULT_COMMAND='fdfind --strip-cwd-prefix --hidden --follow --exclude .git'
+        export FZF_DEFAULT_COMMAND='fdfind --strip-cwd-prefix --hidden --follow --exclude .git --glob'
     else
         # Setting fd as the default source for fzf
-        export FZF_DEFAULT_COMMAND='fd --strip-cwd-prefix --hidden --follow --exclude .git'
-        alias fd='fd --strip-cwd-prefix --hidden --follow --exclude .git'
+        export FZF_DEFAULT_COMMAND='fd --strip-cwd-prefix --hidden --follow --exclude .git --glob'
+        alias fd='fd --strip-cwd-prefix --hidden --follow --exclude .git --glob'
     fi
 
 fi
@@ -66,24 +66,25 @@ COMPILER_INSTALL_DIR="/opt/kotlin-compiler/kotlinc/"
 [[ -d "$INSTALL_DIR" ]] && export PATH="$PATH:/opt/kotlin-native/bin/"
 [[ -d "$COMPILER_INSTALL_DIR" ]] && export PATH="$PATH:/opt/kotlin-compiler/kotlinc/bin/"
 
-## 代理配置
-function proxy() {
-    export https_proxy="http://127.0.0.1:7897"
-    export http_proxy="http://127.0.0.1:7897"
-    export all_proxy="socks5://127.0.0.1:7897"
-    echo "Proxy enabled"
-}
-
-function unproxy() {
-    unset https_proxy
-    unset http_proxy
-    unset all_proxy
-    echo "Proxy disabled"
-}
-
 
 # ip 映射到 ip-script
 [[ "$(uname)" == "Darwin" ]] && alias ip="$HOME/sh-script/get-my-ip.sh"
+
+
+
+# 加载 Plugins
+source "${HOME}/.config/zsh/plugins/homebrew.zsh"
+source "$HOME/.config/zsh/plugins/zinit.zsh"
+
+
+# 检查 fzf 是否已安装
+if command -v fzf >/dev/null 2>&1; then
+    # 如果 fzf 存在，则加载 fzf 的 zsh 配置
+    source <(fzf --zsh)
+else
+    echo "fzf is not installed. Please install fzf to enable its features."
+fi
+
 
 
 
@@ -107,9 +108,11 @@ alias clear='clear && printf '\''\e[3J'\'''
 # python3 映射到 python
 alias python=python3
 
+# bat 映射到 cat
 alias cat=bat
+
 # reload 映射到重启 .zshrc
-alias reload="source ~/.zshrc;source ~/.zprofile;source ~/.zshenv;rm -rf $HOME/.cache/zsh/.zcompdump; "
+alias reload="source ~/.zshrc;source ~/.zprofile;source ~/.zshenv;rm -rf $HOME/.cache/zsh/.zcompdump;"
 
 alias md='mkdir -p'
 

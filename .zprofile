@@ -7,6 +7,8 @@ mkdir -p "$HOME/.config" "$HOME/.cache" "$HOME/.local/share" "$HOME/.local/state
 # Ensure Zsh directories exist
 mkdir -p "$HOME/.config/zsh/plugins"
 
+mkdir -p "$HOME/.cache/zsh"
+
 # 删除 Apple Terminal 的 .zsh_sessions 文件
 [[ -e "$HOME/.zsh_sessions" ]] && rm -r "$HOME/.zsh_sessions" && echo "已成功删除 $HOME/.zsh_sessions。"
 
@@ -32,16 +34,3 @@ if [ -f "$HOME/.zprofile" ]; then
 fi
 
 
-
-# Plugins
-source "${HOME}/.config/zsh/plugins/homebrew.zsh"
-source "$HOME/.config/zsh/plugins/zinit.zsh"
-
-
-# 检查 fzf 是否已安装
-if command -v fzf >/dev/null 2>&1; then
-    # 如果 fzf 存在，则加载 fzf 的 zsh 配置
-    source <(fzf --zsh)
-else
-    echo "fzf is not installed. Please install fzf to enable its features."
-fi

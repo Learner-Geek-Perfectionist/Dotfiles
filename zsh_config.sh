@@ -35,8 +35,6 @@ git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP
 # 定义配置列表
 configs=(".zshenv" ".zprofile" ".zshrc" ".config/kitty" ".config/zsh")
 
-mkdir -p ${HOME}/.config/kitty ${HOME}/.config/zsh
-
 # 删除旧配置和复制新配置
 echo -e "${YELLOW}🔍 Checking and removing old configuration files if they exist...${NC}"
 for config in "${configs[@]}"; do
@@ -68,7 +66,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
     sudo rm -rf "${HOME}/.config/karabiner/assets/complex_modifications/capslock2hyper.json"
   fi
   echo -e "${PURPLE}📋 Copying new capslock2hyper.json to ${HOME}/.config/karabiner/assets/complex_modifications/capslock2hyper.json...${NC}"
-    cp -r "${TMP_DIR}/capslock2hyper.json" "${HOME}/.config/karabiner/assets/complex_modifications/capslock2hyper.json" && sudo chown -R $USER:$(id -gn) "${HOME}/.config/karabiner/assets/complex_modifications/capslock2hyper.json"
+    cp -r "${TMP_DIR}/capslock2hyper.json" "${HOME}/.config/karabiner/assets/complex_modifications/capslock2hyper.json"
 fi
 
 echo -e "${GREEN}🧹 Old configuration files removed and new ones copied.${NC}"

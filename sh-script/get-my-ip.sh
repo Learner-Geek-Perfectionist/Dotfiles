@@ -9,7 +9,7 @@ MY_IP=$(curl -s https://api.ipify.org)  # 获取公网IP
 response=$(curl -s "https://ipinfo.io/${MY_IP}?token=${API_TOKEN}")
 
 # 检查是否成功获取信息
-if [ -z "$response" ]; then
+if [[ -z "$response" ]]; then
     echo -e "\033[1;31m❌ Failed to retrieve information for IP: $MY_IP\033[0m"
     exit 1
 fi
@@ -98,7 +98,7 @@ else
 fi
 
 # 检查是否成功获取私有IP
-if [ -z "$PRIVATE_IP" ]; then
+if [[ -z "$PRIVATE_IP" ]]; then
     echo -e "\033[1;31m❌ Failed to retrieve private IP address.\033[0m"
     exit 1
 fi

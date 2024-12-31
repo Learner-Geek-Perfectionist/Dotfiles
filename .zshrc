@@ -33,21 +33,21 @@ if [[ "$(uname)" == "Darwin" ]]; then
     # pycharm 映射到 py
     alias py=pycharm
 
-    alias fd='fd --strip-cwd-prefix --hidden --follow --exclude .git --glob'
     # Setting fd as the default source for fzf
     export FZF_DEFAULT_COMMAND='fd --strip-cwd-prefix --hidden --follow --exclude .git --glob'
+    alias fd='fd --strip-cwd-prefix --hidden --follow --exclude .git --glob'
 
 elif [[ -f /etc/os-release ]]; then
 
     # 检查是否是 Ubuntu 系统
     if grep -q 'ID=ubuntu' /etc/os-release; then
-        # 对于 Ubuntu 系统，添加 fzf、eza 的环境变量
+        # 对于 Ubuntu 系统，添加 fzf、kitty、cargo 的环境变量
         export PATH="$HOME/.fzf/bin:$PATH"
         export PATH="$HOME/.cargo/bin:$PATH"
         export PATH="$HOME/.local/kitty.app/bin:$PATH"
         # Setting fd as the default source for fzf
         export FZF_DEFAULT_COMMAND='fdfind --strip-cwd-prefix --hidden --follow --exclude .git --glob'
-        alias fd='fdfind --strip-cwd-prefix --hidden --follow --exclude .git --glob'
+        alias fdfind='fdfind --strip-cwd-prefix --hidden --follow --exclude .git --glob'
     else
         # Setting fd as the default source for fzf
         export FZF_DEFAULT_COMMAND='fd --strip-cwd-prefix --hidden --follow --exclude .git --glob'

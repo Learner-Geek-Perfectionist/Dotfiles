@@ -1,3 +1,4 @@
+
 # =============================================
 # ======== 安装并且加载 Zinit 插件管理器
 # =============================================
@@ -74,7 +75,7 @@ zinit ice atinit"autoload -Uz compinit; compinit -C -d \"$ZSH_COMPDUMP\"; zicdre
 
 # 配置 fzf-tab
 zstyle ':fzf-tab:complete:_zlua:*' query-string input
-zstyle ':fzf-tab:complete:kill:argument-rest' fzf-preview 'ps --pid=$word -o cmd --no-headers -w -w'
+zstyle ':fzf-tab:complete:kill:argument-rest' fzf-preview 'ps --pid=$word -o cmd --no-headers -w'
 zstyle ':fzf-tab:complete:kill:argument-rest' fzf-flags '--preview-window=down:15:wrap'
 zstyle ':fzf-tab:complete:kill:*' popup-pad 0 3
 zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --color=always $realpath'
@@ -93,7 +94,7 @@ zinit snippet https://github.com/Learner-Geek-Perfectionist/Dotfiles/blob/master
 zinit ice wait blockf lucid depth=1;zinit light zsh-users/zsh-completions
 
 # autosuggestions，atload 用于保障启动 autosuggest 功能。
-zinit ice wait lucid depth=1 atload='_zsh_autosuggest_start';zinit light zsh-users/zsh-autosuggestions
+zinit ice wait lucid depth=1 atload='!_zsh_autosuggest_start';zinit light zsh-users/zsh-autosuggestions
 # 必须在 zdharma-continuum/fast-syntax-highlighting 之前加载 autosuggestions，否则「粘贴代码」太亮了。
 zinit ice wait lucid depth=1;zinit light zdharma-continuum/fast-syntax-highlighting
 

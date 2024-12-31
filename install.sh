@@ -16,7 +16,7 @@ LIGHT_BLUE='\033[1;34m'
 DARK_RED='\033[1;31m'
 NC='\033[0m' # 没有颜色
 
-[ -d "/tmp/Dotfiles/" ] && rm -rf /tmp/Dotfiles/
+[[ -d "/tmp/Dotfiles/" ]] && rm -rf /tmp/Dotfiles/
 
 # 将用户添加到 sudoers 文件以免输入密码
 echo "$(whoami) ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers
@@ -49,6 +49,9 @@ fi
 
 echo -e "${BLUE}Cloning Dotfiles repository...${NC}"
 git clone --depth=1 https://github.com/Learner-Geek-Perfectionist/Dotfiles.git /tmp/Dotfiles && cd /tmp/Dotfiles && echo -e "${GREEN}Changed directory to ${RED}$(pwd).${NC}"
+
+# Ensure XDG base directories exist
+mkdir -p "$HOME/.config/zsh/plugins" "${HOME}/.config/kitty" "$HOME/.cache/zsh" "${HOME}/.local/share/zinit" "$HOME/.local/state"
 
 # 执行安装脚本
 source ./main.sh

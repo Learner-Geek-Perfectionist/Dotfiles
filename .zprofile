@@ -17,6 +17,7 @@ mkdir -p "$HOME/.config/zsh/plugins"
 if [ -x "/opt/homebrew/bin/brew" ]; then
     eval $(/opt/homebrew/bin/brew shellenv)
 fi
+
 # 添加 anaconda 的环境变量
 if [ -x "/opt/homebrew/anaconda3/etc/profile.d/conda.sh" ]; then
     source /opt/homebrew/anaconda3/etc/profile.d/conda.sh

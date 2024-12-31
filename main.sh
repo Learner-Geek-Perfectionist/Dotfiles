@@ -35,10 +35,12 @@ elif [[ $(uname -s) == "Linux" ]]; then
     current_shell=$(getent passwd "$(whoami)" | cut -d: -f7)
     # 如果当前 shell 不是 zsh，则更改为 zsh
     [[ "$(command -v zsh)" != "$current_shell" ]] && sudo chsh -s "$(command -v zsh)" "$(whoami)"
-    
+
     # 设置抓包工具权限
-    sudo chmod u+s $(command -v tcpdump); sudo chmod u+s $(command -v dumpcap); sudo chmod u+s $(command -v tshark)
-    
+    sudo chmod u+s $(command -v tcpdump)
+    sudo chmod u+s $(command -v dumpcap)
+    sudo chmod u+s $(command -v tshark)
+
 else
     echo -e "${MAGENTA}未知的操作系统类型${NC}"
 fi
@@ -49,5 +51,3 @@ fi
 
 # 针对 macos、linux 统一配置 zsh
 source ./zsh_install.sh
-
-    

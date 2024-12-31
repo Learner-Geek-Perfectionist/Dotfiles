@@ -32,6 +32,8 @@ git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP
   exit 1
 }
 
+mkdir -p "${HOME}/.config/kitty" "${HOME}/.config/zsh"
+
 # 定义配置列表
 configs=(".zshenv" ".zprofile" ".zshrc" ".config/kitty" ".config/zsh")
 

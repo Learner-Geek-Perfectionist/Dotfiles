@@ -69,7 +69,7 @@ zinit ice wait lucid depth=1;zinit snippet OMZ::plugins/colored-man-pages/colore
 # 3.Completions should be configured before compinit, as stated in the zsh-completions manual installation guide.
 
 # 设置插件加载的选项，加载 fzf-tab 插件
-zinit ice atinit"autoload -Uz compinit; compinit -C -d \"$ZSH_COMPDUMP\"; zpcdreplay" wait lucid depth=1;zinit light Aloxaf/fzf-tab
+zinit ice atinit"autoload -Uz compinit; compinit -C -d \"$ZSH_COMPDUMP\"; zicdreplay" wait lucid depth=1;zinit light Aloxaf/fzf-tab
 
 
 

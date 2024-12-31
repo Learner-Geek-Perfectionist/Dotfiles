@@ -62,6 +62,7 @@ Manual install
 
 ```
 
+查找 Application 的 BundleId
 ```shell
 
 mdls -name kMDItemCFBundleIdentifier /Applications/*.app | fzf

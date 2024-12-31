@@ -1,12 +1,16 @@
 
-if [[ "$HISTFILE" != "$HOME/.cache/zsh/.zsh_history" ]];then
+if [[ "$HISTFILE" != "$HOME/.cache/zsh/.zsh_history" ]]; then
     export HISTFILE="$HOME/.cache/zsh/.zsh_history"
-    if [[ -f "$HOME/.cache/zsh/.zsh_history" ]] readonly HISTFILE
+    if [[ -f "$HOME/.cache/zsh/.zsh_history" ]]; then
+        readonly HISTFILE
+    fi
 fi
 
 if [[ "$ZSH_COMPDUMP" != "$HOME/.cache/zsh/.zcompdump" ]]; then
     export ZSH_COMPDUMP="$HOME/.cache/zsh/.zcompdump"
-    if [[ -f "$HOME/.cache/zsh/.zcompdump" ]] readonly ZSH_COMPDUMP
+    if [[ -f "$HOME/.cache/zsh/.zcompdump" ]]; then
+        readonly ZSH_COMPDUMP
+    fi
 fi
 
 

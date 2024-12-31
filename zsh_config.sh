@@ -3,6 +3,37 @@
 # 设置脚本在遇到错误时退出
 set -e
 
+# 定义打印居中消息的函数
+print_centered_message() {
+    local message="$1"
+    local single_flag="${2:-true}" # 如果没有提供第二个参数，默认为 true
+    local double_flag="${3:-true}" # 如果没有提供第三个参数，默认为 true
+    local cols=$(stty size | cut -d ' ' -f 2)
+    local line=''
+
+    # 创建横线，长度与终端宽度相等
+    for ((i = 0; i < cols; i++)); do
+        line+='-'
+    done
+
+    if [[ $single_flag == "true" ]]; then
+        # 如果是 true，执行打印上边框的操作
+        echo "$line"
+    fi
+
+    # 计算居中的空格数
+    local pad_length=$(((cols - ${#message}) / 2))
+
+    # 打印居中的消息
+    printf "%${pad_length}s" '' # 打印左边的空格以居中对齐
+    echo -e "$message"
+
+    if [[ $double_flag == "true" ]]; then
+        # 如果是 true，执行打印下边框的操作
+        echo "$line"
+    fi
+}
+
 # 定义颜色
 RED='\033[0;31m'
 GREEN='\033[0;32m'

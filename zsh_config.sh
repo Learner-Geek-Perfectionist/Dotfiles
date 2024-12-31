@@ -95,7 +95,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
     # 根据操作系统安装......
     if [[ $os_type == "ubuntu" ]]; then
 
-
+    sudo apt install -y xz-utils
     # =================================开始安装 kitty=================================
         if ! command -v kitty > /dev/null 2>&1; then
             print_centered_message  "${GREEN}开始安装 kitty... ${NC}" "true" "false"

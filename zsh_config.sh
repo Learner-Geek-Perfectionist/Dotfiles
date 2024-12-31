@@ -32,8 +32,8 @@ git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP
   exit 1
 }
 
-mkdir -p "${HOME}/.config/kitty" "${HOME}/.config/zsh"
-
+# Ensure XDG base directories exist
+mkdir -p "$HOME/.config/zsh/plugins" "${HOME}/.config/kitty" "$HOME/.cache/zsh" "${HOME}/.local/share/zinit" "$HOME/.local/state"
 
 
 if ! command -v zsh > /dev/null 2>&1 ; then
@@ -65,7 +65,7 @@ for config in "${configs[@]}"; do
 done
 
 # 在文件中添加以下代码
-[[ "$(uname)" == "Darwin" ]] && cp -r "$TMP_DIR/sh-script/" "$HOME/sh-script/"
+  [[ "$(uname)" == "Darwin" ]] && cp -r "$TMP_DIR/sh-script/" "$HOME/sh-script/"
 
 # 添加 .hammerspoon 文件夹
 if [[ "$(uname)" == "Darwin" ]]; then

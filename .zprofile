@@ -2,10 +2,7 @@
 zmodload zsh/zprof
 
 # Ensure XDG base directories exist
-mkdir -p "$HOME/.config" "$HOME/.cache/zsh" "${HOME}/.local/share/zinit" "$HOME/.local/state"
-
-# Ensure Zsh directories exist
-mkdir -p "$HOME/.config/zsh/plugins"
+mkdir -p "$HOME/.config/zsh/plugins" "$HOME/.cache/zsh" "${HOME}/.local/share/zinit" "$HOME/.local/state"
 
 # 删除 Apple Terminal 的 .zsh_sessions 文件
 [[ -e "$HOME/.zsh_sessions" ]] && rm -r "$HOME/.zsh_sessions" && echo "已成功删除 $HOME/.zsh_sessions。"

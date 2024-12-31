@@ -95,6 +95,65 @@ elif [[ $(uname -s) == "Linux" ]]; then
     # 根据操作系统安装......
     if [[ $os_type == "ubuntu" ]]; then
 
+
+    # =================================开始安装 kitty=================================
+        if ! command -v kitty > /dev/null 2>&1; then
+            print_centered_message  "${GREEN}开始安装 kitty... ${NC}" "true" "false"
+            curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n
+
+            # 定义基础 URL
+            BASE_URL="http://kr.archive.ubuntu.com/ubuntu/pool/universe/k/kitty/"
+
+            # 使用 curl 获取页面内容，并解析出最新的 kitty-terminfo .deb 文件的版本号
+            TERMINFO_LATEST_VERSION=$(curl -s "$BASE_URL" | grep -oP 'href="kitty-terminfo_[^"]*\.deb"' | sed -E 's|.*kitty-terminfo_([^"]*)\.deb.*|\1|' | sort -V | tail -1)
+
+            # 如果找不到文件，则退出
+            if [ -z "$TERMINFO_LATEST_VERSION" ]; then
+                echo -e "${RED}Failed to find the kitty-terminfo .deb file.${NC}"
+                exit 1
+            fi
+
+            # 构建完整的 .deb 文件下载 URL（kitty-terminfo）
+            TERMINFO_URL="${BASE_URL}kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb"
+
+            # 下载和安装包（kitty-terminfo）
+            echo -e "Downloading ${RED}kitty-terminfo${NC} version ${GREEN}${TERMINFO_LATEST_VERSION}${NC}"
+            if curl -s -O "$TERMINFO_URL"; then
+                echo "Installing kitty-terminfo..."
+                if sudo dpkg -i "kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb"; then
+                    echo -e "${GREEN}kitty 安装完成 ✅${NC}"
+                else
+                    echo -e "${RED}Installation failed.${NC}"
+                    exit 1
+                fi
+            else
+                echo -e "${RED}Download failed.${NC}"
+                exit 1
+            fi
+
+            # 清理下载的文件
+            sudo rm -rf "kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb"
+
+            # 检查是否在 WSL2 中运行或在自动化脚本环境中
+            if grep -qi microsoft /proc/version || [[ "$AUTO_RUN" == "true" ]]; then
+                print_centered_message  "${RED}在 WSL2 中或者 Dockerfile 中不需要安装 kitty 桌面图标${NC}" "false" "false"
+            else
+                mkdir -p /usr/local/bin/ ~/.local/share/applications/
+                sudo ln -s ~/.local/kitty.app/bin/kitty /usr/local/bin/
+                # For Application Launcher:
+                sudo cp ~/.local/kitty.app/share/applications/kitty.desktop ~/.local/share/applications/
+                sudo cp ~/.local/kitty.app/share/applications/kitty-open.desktop ~/.local/share/applications/
+                # Add Icon:
+                sudo sed -i "s|Icon=kitty|Icon=$HOME/.local/kitty.app/share/icons/hicolor/256x256/apps/kitty.png|g" ~/.local/share/applications/kitty*.desktop
+                sudo sed -i "s|Exec=kitty|Exec=$HOME/.local/kitty.app/bin/kitty|g" ~/.local/share/applications/kitty*.desktop
+                sudo chmod a+x $HOME/.local/kitty.app/share/applications/kitty-open.desktop $HOME/.local/kitty.app/share/applications/kitty.desktop $HOME/.local/share/applications/kitty-open.desktop $HOME/.local/share/applications/kitty.desktop
+            fi
+        else
+            print_centered_message   "${GREEN} kitty 已安装，跳过安装。${NC}" "true" "false"
+        fi
+
+    # =================================结束安装 kitty=================================
+
     # =================================开始安装 fzf=================================
         if command -v fzf > /dev/null 2>&1; then
             print_centered_message  "${GREEN}fzf 已安装，跳过安装。${NC}"  "true" "false"
@@ -120,65 +179,6 @@ elif [[ $(uname -s) == "Linux" ]]; then
         print_centered_message "${GREEN} eza 安装完成 ✅${NC}" "false" "false"
     fi
     # =================================结束安装 eza=================================
-
-
-    # =================================开始安装 kitty=================================
-    if ! command -v kitty > /dev/null 2>&1; then
-        print_centered_message  "${GREEN}开始安装 kitty... ${NC}" "true" "false"
-        curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n
-
-        # 定义基础 URL
-        BASE_URL="http://kr.archive.ubuntu.com/ubuntu/pool/universe/k/kitty/"
-
-        # 使用 curl 获取页面内容，并解析出最新的 kitty-terminfo .deb 文件的版本号
-        TERMINFO_LATEST_VERSION=$(curl -s "$BASE_URL" | grep -oP 'href="kitty-terminfo_[^"]*\.deb"' | sed -E 's|.*kitty-terminfo_([^"]*)\.deb.*|\1|' | sort -V | tail -1)
-
-        # 如果找不到文件，则退出
-        if [ -z "$TERMINFO_LATEST_VERSION" ]; then
-            echo -e "${RED}Failed to find the kitty-terminfo .deb file.${NC}"
-            exit 1
-        fi
-
-        # 构建完整的 .deb 文件下载 URL（kitty-terminfo）
-        TERMINFO_URL="${BASE_URL}kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb"
-
-        # 下载和安装包（kitty-terminfo）
-        echo -e "Downloading ${RED}kitty-terminfo${NC} version ${GREEN}${TERMINFO_LATEST_VERSION}${NC}"
-        if curl -s -O "$TERMINFO_URL"; then
-            echo "Installing kitty-terminfo..."
-            if sudo dpkg -i "kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb"; then
-                echo -e "${GREEN}kitty 安装完成 ✅${NC}"
-            else
-                echo -e "${RED}Installation failed.${NC}"
-                exit 1
-            fi
-        else
-            echo -e "${RED}Download failed.${NC}"
-            exit 1
-        fi
-
-        # 清理下载的文件
-        sudo rm -rf "kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb"
-
-        # 检查是否在 WSL2 中运行或在自动化脚本环境中
-        if grep -qi microsoft /proc/version || [[ "$AUTO_RUN" == "true" ]]; then
-            print_centered_message  "${RED}在 WSL2 中或者 Dockerfile 中不需要安装 kitty 桌面图标${NC}" "false" "false"
-        else
-            mkdir -p /usr/local/bin/ ~/.local/share/applications/
-            sudo ln -s ~/.local/kitty.app/bin/kitty /usr/local/bin/
-            # For Application Launcher:
-            sudo cp ~/.local/kitty.app/share/applications/kitty.desktop ~/.local/share/applications/
-            sudo cp ~/.local/kitty.app/share/applications/kitty-open.desktop ~/.local/share/applications/
-            # Add Icon:
-            sudo sed -i "s|Icon=kitty|Icon=$HOME/.local/kitty.app/share/icons/hicolor/256x256/apps/kitty.png|g" ~/.local/share/applications/kitty*.desktop
-            sudo sed -i "s|Exec=kitty|Exec=$HOME/.local/kitty.app/bin/kitty|g" ~/.local/share/applications/kitty*.desktop
-            sudo chmod a+x $HOME/.local/kitty.app/share/applications/kitty-open.desktop $HOME/.local/kitty.app/share/applications/kitty.desktop $HOME/.local/share/applications/kitty-open.desktop $HOME/.local/share/applications/kitty.desktop
-        fi
-    else
-        print_centered_message   "${GREEN} kitty 已安装，跳过安装。${NC}" "true" "false"
-    fi
-
-    # =================================结束安装 kitty=================================
 
 
     elif [[ $os_type == "fedora" ]]; then

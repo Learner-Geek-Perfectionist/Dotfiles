@@ -117,7 +117,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
         # 安装 eza, 在 oracular (24.10)  之后的 Ubuntu 发行版才有
         ! command -v cargo > /dev/null 2>&1 && sudo apt install -y cargo
         cargo install eza
-        print_centered_message "${GREEN} eza 安装完成 ✅${NC}" "false" "true"
+        print_centered_message "${GREEN} eza 安装完成 ✅${NC}" "false" "false"
     fi
     # =================================结束安装 eza=================================
 

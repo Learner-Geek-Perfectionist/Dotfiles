@@ -20,5 +20,11 @@ hs.hotkey.bind(HyperKey, '`', function()
     switchFocusedAppWindow()
 end)
 
+
+-- fn + l，用于锁屏
+hs.hotkey.bind(HyperKey, "L", function()
+    hs.caffeinate.lockScreen()
+end)
+
 -- 初始化提示
 hs.alert.show("Window management keybindings with corners enabled")

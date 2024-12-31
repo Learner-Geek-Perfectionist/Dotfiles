@@ -41,13 +41,72 @@ if ! command -v zsh > /dev/null 2>&1 ; then
   exit 1
 fi
 
-# 修改默认的登录 shell 为 zsh
-# 获取当前用户的默认 shell
-current_shell=$(getent passwd "$(whoami)" | cut -d: -f7)
-# 如果当前 shell 不是 zsh，则更改为 zsh
-[[ "$(command -v zsh)" != "$current_shell" ]] && sudo chsh -s "$(command -v zsh)" "$(whoami)"
+# 安装依赖工具 eza、fzf
+
+if [[ $(uname -s) == "Darwin" ]]; then
+  if ! command -v fzf > /dev/null 2>&1; then
+      brew install -y fzf
+  fi
+
+  if ! command -v eza > /dev/null 2>&1; then
+      brew install -y eza
+  fi
+
+elif [[ $(uname -s) == "Linux" ]]; then
+
+    # 检测操作系统
+    os_type=$(grep '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
+
+    # 根据操作系统安装......
+    if [[ $os_type == "ubuntu" ]]; then
+
+        # =================================开始安装 fzf=================================
+        if command -v fzf > /dev/null 2>&1; then
+            print_centered_message  "${GREEN}fzf 已安装，跳过安装。${NC}"  "true" "false"
+        else
+            print_centered_message  "${GREEN}开始安装 fzf... ${NC}" "true" "false"
+            [[ -d "$HOME/.fzf" ]] && rm -rf "$HOME/.fzf"
+
+            git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
+            yes | $HOME/.fzf/install --no-update-rc
+            print_centered_message "${GREEN} fzf 安装完成 ✅${NC}" "false" "false"
+        fi
+        # =================================结束安装 fzf=================================
 
 
+        # =================================开始安装 eza=================================
+        if command -v eza > /dev/null 2>&1; then
+            print_centered_message  "${GREEN}eza 已安装，跳过安装。${NC}"  "true" "true"
+        else
+            print_centered_message  "${GREEN}开始安装 eza... ${NC}" "true" "false"
+            # 安装 eza, 在 oracular (24.10)  之后的 Ubuntu 发行版才有
+            ! command -v cargo > /dev/null 2>&1 && sudo apt install -y cargo
+            cargo install eza
+            print_centered_message "${GREEN} eza 安装完成 ✅${NC}" "false" "true"
+        fi
+        # =================================结束安装 eza=================================
+
+    elif [[ $os_type == "fedora" ]]; then
+         if ! command -v fzf > /dev/null 2>&1; then
+              sudo dnf install -y fzf
+         fi
+
+         if ! command -v eza > /dev/null 2>&1; then
+              sudo dnf install -y eza
+         fi
+
+    else
+        print_centered_message "${RED}不支持的发行版，目前只支持 fedora、ubuntu${NC}"
+    fi
+
+    # 修改默认的登录 shell 为 zsh
+    # 获取当前用户的默认 shell
+    current_shell=$(getent passwd "$(whoami)" | cut -d: -f7)
+    # 如果当前 shell 不是 zsh，则更改为 zsh
+    [[ "$(command -v zsh)" != "$current_shell" ]] && sudo chsh -s "$(command -v zsh)" "$(whoami)"
+else
+    echo -e "${MAGENTA}未知的操作系统类型${NC}"
+fi
 
 
 # 定义配置列表
@@ -94,11 +153,12 @@ echo -e "${GREEN}✔️ New configuration files copied.${NC}"
 echo -e "${YELLOW}🧼 Cleaning up temporary files...${NC}"
 sudo rm -rf "$TMP_DIR"
 sudo rm -rf /tmp/Fonts/
-sudo rm -rf "$HOME/.zcompdump"
 
 echo -e "${GREEN}✔️ Temporary files removed.${NC}"
 echo -e "${GREEN}✅ Script completed successfully. Files have been successfully copied to the user's home directory.${NC}"
 
 
 # 安装 zsh 插件
-/bin/zsh -c "rm -rf $HOME/.cache/zsh/.zcompdump;rm -rf $HOME/.cache/zsh/.zsh_history;"
+/bin/zsh
+
+rm -rf $HOME/.zcompdump;rm -rf $HOME/.zsh_history;

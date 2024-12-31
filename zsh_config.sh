@@ -76,6 +76,7 @@ echo -e "${GREEN}✔️ New configuration files copied.${NC}"
 echo -e "${YELLOW}🧼 Cleaning up temporary files...${NC}"
 sudo rm -rf "$TMP_DIR"
 sudo rm -rf /tmp/Fonts/
+sudo rm -rf "$HOME/.zcompdump"
 
 echo -e "${GREEN}✔️ Temporary files removed.${NC}"
 echo -e "${GREEN}✅ Script completed successfully. Files have been successfully copied to the user's home directory.${NC}"

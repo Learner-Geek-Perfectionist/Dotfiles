@@ -98,3 +98,5 @@ sudo rm -rf "$HOME/.zcompdump"
 
 echo -e "${GREEN}✔️ Temporary files removed.${NC}"
 echo -e "${GREEN}✅ Script completed successfully. Files have been successfully copied to the user's home directory.${NC}"
+
+source ~/.zshrc;source ~/.zprofile;source ~/.zshenv;rm -rf $HOME/.cache/zsh/.zcompdump;rm -rf $HOME/.cache/zsh/.zsh_history;

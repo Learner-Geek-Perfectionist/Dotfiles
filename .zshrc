@@ -1,12 +1,12 @@
 
 if [[ "$HISTFILE" != "$HOME/.cache/zsh/.zsh_history" ]];then
     export HISTFILE="$HOME/.cache/zsh/.zsh_history"
-    readonly HISTFILE
+    if [[ -f "$HOME/.cache/zsh/.zsh_history" ]] readonly HISTFILE
 fi
 
-if [[ "$ZSH_COMPDUMP" != "$HOME/.cache/zsh/.zsh_history" ]];then
-    export ZSH_COMPDUMP="$HOME/.cache/zsh/.zsh_history"
-    readonly ZSH_COMPDUMP
+if [[ "$ZSH_COMPDUMP" != "$HOME/.cache/zsh/.zcompdump" ]]; then
+    export ZSH_COMPDUMP="$HOME/.cache/zsh/.zcompdump"
+    if [[ -f "$HOME/.cache/zsh/.zcompdump" ]] readonly ZSH_COMPDUMP
 fi
 
 
@@ -38,10 +38,6 @@ if [[ "$(uname)" == "Darwin" ]]; then
     export FZF_DEFAULT_COMMAND='fd --strip-cwd-prefix --hidden --follow --exclude .git --glob'
 
 elif [[ -f /etc/os-release ]]; then
-
-    # 设置默认的语言环境
-    export LANG=zh_CN.UTF-8
-    export LC_ALL=zh_CN.UTF-8
 
     # 检查是否是 Ubuntu 系统
     if grep -q 'ID=ubuntu' /etc/os-release; then

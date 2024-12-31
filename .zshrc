@@ -1,4 +1,3 @@
-
 if [[ "$HISTFILE" != "$HOME/.cache/zsh/.zsh_history" ]]; then
     export HISTFILE="$HOME/.cache/zsh/.zsh_history"
     if [[ -f "$HOME/.cache/zsh/.zsh_history" ]]; then
@@ -12,8 +11,6 @@ if [[ "$ZSH_COMPDUMP" != "$HOME/.cache/zsh/.zcompdump" ]]; then
         readonly ZSH_COMPDUMP
     fi
 fi
-
-
 
 # 获取操作系统信息并设置 PATH
 if [[ "$(uname)" == "Darwin" ]]; then
@@ -60,43 +57,35 @@ elif [[ -f /etc/os-release ]]; then
 
 fi
 
-
 INSTALL_DIR="/opt/kotlin-native/"
 COMPILER_INSTALL_DIR="/opt/kotlin-compiler/kotlinc/"
 # 最后统一将 Kotlin/Native 安装路径添加到 PATH
 [[ -d "$INSTALL_DIR" ]] && export PATH="$PATH:/opt/kotlin-native/bin/"
 [[ -d "$COMPILER_INSTALL_DIR" ]] && export PATH="$PATH:/opt/kotlin-compiler/kotlinc/bin/"
 
-
 # ip 映射到 ip-script
 [[ "$(uname)" == "Darwin" ]] && alias ip="$HOME/sh-script/get-my-ip.sh"
-
-
 
 # 加载 Plugins
 source "${HOME}/.config/zsh/plugins/homebrew.zsh"
 source "$HOME/.config/zsh/plugins/zinit.zsh"
 
-
 # 加载 fzf 的环境变量
 command -v fzf >/dev/null 2>&1 && source <(fzf --zsh)
-
-
-
 
 # 设置 fzf 的默认预览
 export FZF_DEFAULT_OPTS='--preview "${HOME}/.config/zsh/fzf/fzf-preview.sh {}" --bind "shift-left:preview-page-up,shift-right:preview-page-down"'
 # 禁用忽略以空格开头的命令的历史记录功能。
 setopt no_hist_ignore_space
-setopt interactive_comments      # 注释行不报错
-setopt no_nomatch                # 通配符 * 匹配不到文件也不报错
-setopt autocd                    # 输入目录名自动cd
+setopt interactive_comments # 注释行不报错
+setopt no_nomatch           # 通配符 * 匹配不到文件也不报错
+setopt autocd               # 输入目录名自动cd
 # setopt correct                 # 自动纠正拼写错误
-setopt nocaseglob                # 路径名匹配时忽略大小写
-setopt notify                    # 后台任务完成后通知
-setopt no_beep                   # 关闭终端提示音
-setopt no_bang_hist              # 不对双引号当中的叹号做历史记录拓展 "!"
-setopt GLOB_DOTS                 # 文件名展开（globbing）包括以点(dot)开始的文件
+setopt nocaseglob   # 路径名匹配时忽略大小写
+setopt notify       # 后台任务完成后通知
+setopt no_beep      # 关闭终端提示音
+setopt no_bang_hist # 不对双引号当中的叹号做历史记录拓展 "!"
+setopt GLOB_DOTS    # 文件名展开（globbing）包括以点(dot)开始的文件
 
 # 清除整个屏幕
 alias clear='clear && printf '\''\e[3J'\'''
@@ -117,4 +106,3 @@ alias g1='git clone --depth=1'
 alias rm='sudo rm -rf'
 
 alias show='kitty +kitten icat'
-

@@ -72,7 +72,7 @@ if ! command -v zsh > /dev/null 2>&1 ; then
   exit 1
 fi
 
-# 安装依赖工具 eza、fzf
+# 安装依赖工具 eza、fzf、kitty
 
 if [[ $(uname -s) == "Darwin" ]]; then
   if ! command -v fzf > /dev/null 2>&1; then
@@ -84,7 +84,7 @@ if [[ $(uname -s) == "Darwin" ]]; then
   fi
 
   if ! command -v kitty > /dev/null 2>&1; then
-        brew install -y eza
+      brew install -y kitty
   fi
 
 elif [[ $(uname -s) == "Linux" ]]; then
@@ -95,6 +95,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
     # 根据操作系统安装......
     if [[ $os_type == "ubuntu" ]]; then
 
+    # 解压的依赖工具 xz
     sudo apt install -y xz-utils
     # =================================开始安装 kitty=================================
         if ! command -v kitty > /dev/null 2>&1; then

@@ -100,6 +100,8 @@ zinit ice wait lucid depth=1;zinit light zdharma-continuum/fast-syntax-highlight
 
 
 
+
+
 # 你提供的这些 zstyle 命令是用来配置 Zsh 的样式和行为，特别是与 fzf-tab 插件和其他一些补全相关的设置相结合。fzf-tab 插件是一个用于在 Zsh 中使用 fzf（一种命令行模糊查找器）增强标签补全功能的工具。这些命令定制了如何显示和处理不同命令的补全结果。下面是对每一行设置的解释：
 # 	1.	zstyle ‘:fzf-tab:complete:_zlua:*’ query-string input
 # 	•	这条命令为 _zlua （可能是一个命令或函数）设置补全时的查询字符串为用户的输入。

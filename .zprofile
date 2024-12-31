@@ -2,7 +2,7 @@
 zmodload zsh/zprof
 
 # Ensure XDG base directories exist
-mkdir -p "$HOME/.config" "$HOME/.cache/zsh" "$HOME/.local/share" "$HOME/.local/state"
+mkdir -p "$HOME/.config" "$HOME/.cache/zsh" "${HOME}/.local/share/zinit" "$HOME/.local/state"
 
 # Ensure Zsh directories exist
 mkdir -p "$HOME/.config/zsh/plugins"

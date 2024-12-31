@@ -84,7 +84,7 @@ if ! command -v kitty > /dev/null 2>&1; then
     # 构建完整的 .deb 文件下载 URL（kitty-terminfo）
     TERMINFO_URL="${BASE_URL}kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb"
     
-    # 下载和安装包
+    # 下载和安装包（kitty-terminfo）
     echo -e "Downloading ${RED}kitty-terminfo${NC} version ${GREEN}${TERMINFO_LATEST_VERSION}${NC}"
     if curl -s -O "$TERMINFO_URL"; then
         echo "Installing kitty-terminfo..."

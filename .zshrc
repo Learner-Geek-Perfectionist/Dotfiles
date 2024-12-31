@@ -47,6 +47,7 @@ elif [[ -f /etc/os-release ]]; then
         export PATH="$HOME/.local/kitty.app/bin:$PATH"
         # Setting fd as the default source for fzf
         export FZF_DEFAULT_COMMAND='fdfind --strip-cwd-prefix --hidden --follow --exclude .git --glob'
+        alias fd='fdfind --strip-cwd-prefix --hidden --follow --exclude .git --glob'
     else
         # Setting fd as the default source for fzf
         export FZF_DEFAULT_COMMAND='fd --strip-cwd-prefix --hidden --follow --exclude .git --glob'

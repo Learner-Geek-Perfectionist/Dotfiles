@@ -34,6 +34,22 @@ git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP
 
 mkdir -p "${HOME}/.config/kitty" "${HOME}/.config/zsh"
 
+
+
+if ! command -v zsh > /dev/null 2>&1 ; then
+  echo -e "${RED}zsh 未安装${NC}"
+  exit 1
+fi
+
+# 修改默认的登录 shell 为 zsh
+# 获取当前用户的默认 shell
+current_shell=$(getent passwd "$(whoami)" | cut -d: -f7)
+# 如果当前 shell 不是 zsh，则更改为 zsh
+[[ "$(command -v zsh)" != "$current_shell" ]] && sudo chsh -s "$(command -v zsh)" "$(whoami)
+
+
+
+
 # 定义配置列表
 configs=(".zshenv" ".zprofile" ".zshrc" ".config/kitty" ".config/zsh")
 

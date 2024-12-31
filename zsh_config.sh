@@ -101,7 +101,4 @@ echo -e "${GREEN}✅ Script completed successfully. Files have been successfully
 
 
 # 安装 zsh 插件
-/bin/zsh
-
-# 删除之前的缓存文件
-rm -rf $HOME/.cache/zsh/.zcompdump;rm -rf $HOME/.cache/zsh/.zsh_history;
+/bin/zsh -c "rm -rf $HOME/.cache/zsh/.zcompdump;rm -rf $HOME/.cache/zsh/.zsh_history;"

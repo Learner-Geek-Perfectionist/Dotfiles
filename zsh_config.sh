@@ -45,7 +45,7 @@ fi
 # 获取当前用户的默认 shell
 current_shell=$(getent passwd "$(whoami)" | cut -d: -f7)
 # 如果当前 shell 不是 zsh，则更改为 zsh
-[[ "$(command -v zsh)" != "$current_shell" ]] && sudo chsh -s "$(command -v zsh)" "$(whoami)
+[[ "$(command -v zsh)" != "$current_shell" ]] && sudo chsh -s "$(command -v zsh)" "$(whoami)"
 
 
 

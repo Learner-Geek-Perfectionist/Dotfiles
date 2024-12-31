@@ -99,8 +99,9 @@ sudo rm -rf "$HOME/.zcompdump"
 echo -e "${GREEN}✔️ Temporary files removed.${NC}"
 echo -e "${GREEN}✅ Script completed successfully. Files have been successfully copied to the user's home directory.${NC}"
 
+# 删除之前的缓存文件
+rm -rf $HOME/.cache/zsh/.zcompdump;rm -rf $HOME/.cache/zsh/.zsh_history;
+
 # 安装 zsh 插件
 /bin/zsh
 
-# 删除之前的缓存文件
-rm -rf $HOME/.cache/zsh/.zcompdump;rm -rf $HOME/.cache/zsh/.zsh_history;

@@ -78,13 +78,8 @@ source "${HOME}/.config/zsh/plugins/homebrew.zsh"
 source "$HOME/.config/zsh/plugins/zinit.zsh"
 
 
-# 检查 fzf 是否已安装
-if command -v fzf >/dev/null 2>&1; then
-    # 如果 fzf 存在，则加载 fzf 的 zsh 配置
-    source <(fzf --zsh)
-else
-    echo "fzf is not installed. Please install fzf to enable its features."
-fi
+# 加载 fzf 的环境变量
+command -v fzf >/dev/null 2>&1 && source <(fzf --zsh)
 
 
 

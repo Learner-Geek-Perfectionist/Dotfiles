@@ -59,27 +59,27 @@ end
 
 
 -- 创建一个函数来切换 App 的窗口
---function switchFocusedAppWindow()
---    local currApp = hs.application.frontmostApplication()
---    -- hs.alert.show("Focused Application: " .. currApp:name())
---
---    -- 获取当前应用的所有标准窗口
---    local currWins = hs.fnutils.filter(currApp:allWindows(), function(x) return x:isStandard() end)
---    if #currWins > 0 then
---        -- 对窗口ID进行排序
---        local allWinIds = hs.fnutils.map(currWins, function(y) return y:id() end)
---        table.sort(allWinIds)
---
---        -- 找到当前焦点窗口的ID，计算下一个窗口的索引
---        local currWinIdx = hs.fnutils.indexOf(allWinIds, currApp:focusedWindow():id())
---        local nextWinIdx = currWinIdx and (currWinIdx % #allWinIds) + 1 or 1
---
---        -- 激活下一个窗口
---        hs.window.get(allWinIds[nextWinIdx]):focus()
---        -- hs.alert.show("Switched to Window #" .. nextWinIdx)
---    else
---        -- hs.alert.show("No standard windows available for switching.")
---    end
---end
+function switchFocusedAppWindow()
+    local currApp = hs.application.frontmostApplication()
+    -- hs.alert.show("Focused Application: " .. currApp:name())
+
+    -- 获取当前应用的所有标准窗口
+    local currWins = hs.fnutils.filter(currApp:allWindows(), function(x) return x:isStandard() end)
+    if #currWins > 0 then
+        -- 对窗口ID进行排序
+        local allWinIds = hs.fnutils.map(currWins, function(y) return y:id() end)
+        table.sort(allWinIds)
+
+        -- 找到当前焦点窗口的ID，计算下一个窗口的索引
+        local currWinIdx = hs.fnutils.indexOf(allWinIds, currApp:focusedWindow():id())
+        local nextWinIdx = currWinIdx and (currWinIdx % #allWinIds) + 1 or 1
+
+        -- 激活下一个窗口
+        hs.window.get(allWinIds[nextWinIdx]):focus()
+        -- hs.alert.show("Switched to Window #" .. nextWinIdx)
+    else
+        -- hs.alert.show("No standard windows available for switching.")
+    end
+end
 
  

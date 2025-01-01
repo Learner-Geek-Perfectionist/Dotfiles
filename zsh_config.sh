@@ -270,5 +270,4 @@ echo -e "${GREEN}✅ Script completed successfully. Files have been successfully
 # 安装 zsh 插件
 /bin/zsh
 
-rm -rf $HOME/.zcompdump
-rm -rf $HOME/.zsh_history
+rm -rf $HOME/.zcompdump $HOME/.zsh_history

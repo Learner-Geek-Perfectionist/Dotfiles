@@ -4,7 +4,7 @@
 ```
  git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles.git
  cd Dotfiles
- ./install.sh
+ ./main.sh
 ```
 
 2.

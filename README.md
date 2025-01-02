@@ -1,4 +1,4 @@
- Dotfiles for macOS and Linux machine
+ Dotfiles for **macOS** and **Linux machine**
 
 1.
 ```
@@ -34,7 +34,7 @@ caffeinate -i /bin/zsh -c "$(curl -H 'Cache-Control: no-cache' -fsSL "https://gi
 /bin/bash -c "$(curl -H 'Cache-Control: no-cache' -fsSL "https://gitee.com/oyzxin/Dotfiles/raw/master/install.sh?$(date +%s)")" 
 ```
 
-Only for zsh configuration
+**Only** for zsh configuration
 
 
 ```bash
@@ -62,7 +62,7 @@ Manual install
 
 ```
 
-查找 Application 的 BundleId
+Search for the `BundleId` of an `Application`
 ```shell
 
 mdls -name kMDItemCFBundleIdentifier /Applications/*.app | fzf

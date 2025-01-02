@@ -36,33 +36,33 @@ COMPLETION_WAITING_DOTS='true'
 
 # OMZ 迁移和插件配置
 # clipboard
-zinit ice wait lucid depth=1
+#zinit ice wait lucid depth=1
 zinit snippet OMZL::clipboard.zsh
 # completion
-zinit ice wait lucid depth=1
+#zinit ice wait lucid depth=1
 zinit snippet OMZL::completion.zsh
 # grep
-zinit ice wait lucid depth=1
+#zinit ice wait lucid depth=1
 zinit snippet OMZL::grep.zsh
 # key-bindings
-zinit ice wait lucid depth=1
+#zinit ice wait lucid depth=1
 zinit snippet OMZL::key-bindings.zsh
 # directories
-zinit ice wait lucid depth=1
+#zinit ice wait lucid depth=1
 zinit snippet OMZL::directories.zsh
 # history
-zinit ice wait lucid depth=1
+#zinit ice wait lucid depth=1
 zinit snippet OMZL::history.zsh
 # theme
-zinit ice wait lucid depth=1 atload="alias ls &>/dev/null && unalias ls && alias ls='eza --icons -ha --time-style=iso'"
+#zinit ice wait lucid depth=1 atload="alias ls &>/dev/null && unalias ls && alias ls='eza --icons -ha --time-style=iso'"
 zinit snippet OMZL::theme-and-appearance.zsh
 # git
-zinit ice wait lucid depth=1
+#zinit ice wait lucid depth=1
 zinit snippet OMZL::git.zsh
-zinit ice wait lucid depth=1
+#zinit ice wait lucid depth=1
 zinit snippet OMZP::git/git.plugin.zsh
 # man
-zinit ice wait lucid depth=1
+#zinit ice wait lucid depth=1
 zinit snippet OMZ::plugins/colored-man-pages/colored-man-pages.plugin.zsh
 
 # 1.make sure fzf is installed
@@ -70,7 +70,7 @@ zinit snippet OMZ::plugins/colored-man-pages/colored-man-pages.plugin.zsh
 # 3.Completions should be configured before compinit, as stated in the zsh-completions manual installation guide.
 
 # 设置插件加载的选项，加载 fzf-tab 插件
-zinit ice atinit"autoload -Uz compinit; compinit -C -d \"$ZSH_COMPDUMP\"; zicdreplay" wait lucid depth=1
+#zinit ice atinit"autoload -Uz compinit; compinit -C -d \"$ZSH_COMPDUMP\"; zicdreplay" wait lucid depth=1
 zinit light Aloxaf/fzf-tab
 
 # 配置 fzf-tab
@@ -90,15 +90,19 @@ zstyle ':fzf-tab:*' switch-group '<' '>'
 zinit ice as"completion"
 zinit snippet https://github.com/Learner-Geek-Perfectionist/Dotfiles/blob/master/.config/zsh/fzf/_fzf
 
+# 添加 cargo 补全函数
+zinit ice as="completion"
+zinit snippet OMZ::plugins/cargo/_cargo
+
 # zsh-completions 提供大量的补全定义
-zinit ice wait blockf lucid depth=1
+# zinit ice wait blockf lucid depth=1
 zinit light zsh-users/zsh-completions
 
 # autosuggestions，atload 用于保障启动 autosuggest 功能。
-zinit ice wait lucid depth=1 atload='!_zsh_autosuggest_start'
+#zinit ice wait lucid depth=1 atload='!_zsh_autosuggest_start'
 zinit light zsh-users/zsh-autosuggestions
 # 必须在 zdharma-continuum/fast-syntax-highlighting 之前加载 autosuggestions，否则「粘贴代码」太亮了。
-zinit ice wait lucid depth=1
+#zinit ice wait lucid depth=1
 zinit light zdharma-continuum/fast-syntax-highlighting
 
 # 你提供的这些 zstyle 命令是用来配置 Zsh 的样式和行为，特别是与 fzf-tab 插件和其他一些补全相关的设置相结合。fzf-tab 插件是一个用于在 Zsh 中使用 fzf（一种命令行模糊查找器）增强标签补全功能的工具。这些命令定制了如何显示和处理不同命令的补全结果。下面是对每一行设置的解释：

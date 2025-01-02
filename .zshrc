@@ -97,7 +97,7 @@ alias python=python3
 alias cat=bat
 
 # reload 映射到重启 .zshrc
-alias reload="source ~/.zshrc;source ~/.zprofile;source ~/.zshenv;rm -rf $HOME/.cache/zsh/.zcompdump;"
+alias reload="source ~/.zshrc;source ~/.zprofile;source ~/.zshenv;rm -rf $HOME/.zcompdump $HOME/.zsh_history;"
 
 alias md='mkdir -p'
 

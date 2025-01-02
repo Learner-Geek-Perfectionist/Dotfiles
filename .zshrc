@@ -97,7 +97,7 @@ alias python=python3
 alias cat=bat
 
 # reload 映射到重启 .zshrc
-alias reload="source ~/.zshrc;source ~/.zprofile;source ~/.zshenv;rm -rf $HOME/.zcompdump $HOME/.zsh_history;"
+alias reload="source ~/.zshenv;source ~/.zprofile;source ~/.zshrc;rm -rf $HOME/.zcompdump $HOME/.zsh_history;"
 
 # 更新 zsh 配置
 alias upgrade='/bin/bash -c "$(curl -H '\''Cache-Control: no-cache'\'' -fsSL "https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/zsh_config.sh?$(date +%s)")"'

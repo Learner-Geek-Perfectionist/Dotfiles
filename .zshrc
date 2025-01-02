@@ -42,9 +42,11 @@ elif [[ -f /etc/os-release ]]; then
 
     # 检查是否是 Ubuntu 系统
     if grep -q 'ID=ubuntu' /etc/os-release; then
-        # 对于 Ubuntu 系统，添加 fzf、kitty、cargo 的环境变量
+        # 对于 Ubuntu 系统，添加 fzf、kitty、eza 的环境变量
         export PATH="$HOME/.fzf/bin:$PATH"
         export PATH="$HOME/.local/kitty.app/bin:$PATH"
+        #  添加 eza 的环境变量
+        export PATH="$HOME/.cargo/bin:$PATH"
         # Setting fd as the default source for fzf
         export FZF_DEFAULT_COMMAND='fdfind --strip-cwd-prefix --hidden --follow --exclude .git --glob'
         alias fdfind='fdfind --strip-cwd-prefix --hidden --follow --exclude .git --glob'

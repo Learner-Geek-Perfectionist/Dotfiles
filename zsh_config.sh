@@ -271,3 +271,4 @@ echo -e "${GREEN}✅ Script completed successfully. Files have been successfully
 source $HOME/.zshrc
 
 rm -rf $HOME/.zcompdump $HOME/.zsh_history
+

@@ -115,3 +115,4 @@ zinit light zdharma-continuum/fast-syntax-highlighting
 # 	•	禁用对文件补全结果的排序。
 
 # 这些配置帮助提高 Zsh 使用效率，使得命令行界面更加强大和灵活。
+

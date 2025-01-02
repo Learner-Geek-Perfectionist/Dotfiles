@@ -79,7 +79,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
     if [[ $os_type == "ubuntu" ]]; then
 
         # 解压的依赖工具 xz
-        sudo apt install -y xz-utils
+        ! dpkg -s xz-utils >/dev/null 2>&1 && sudo apt install -y xz-utils
         if ! command -v zsh >/dev/null 2>&1; then
             sudo apt install -y zsh
         fi

@@ -90,10 +90,6 @@ zstyle ':fzf-tab:*' switch-group '<' '>'
 zinit ice as"completion"
 zinit snippet https://github.com/Learner-Geek-Perfectionist/Dotfiles/blob/master/.config/zsh/fzf/_fzf
 
-# 添加 cargo 补全函数
-zinit ice as="completion"
-zinit snippet OMZ::plugins/cargo/_cargo
-
 # zsh-completions 提供大量的补全定义
 # zinit ice wait blockf lucid depth=1
 zinit light zsh-users/zsh-completions

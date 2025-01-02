@@ -71,6 +71,7 @@ COMPILER_INSTALL_DIR="/opt/kotlin-compiler/kotlinc/"
 source "${HOME}/.config/zsh/plugins/homebrew.zsh"
 source "$HOME/.config/zsh/plugins/zinit.zsh"
 
+
 # 加载 fzf 的环境变量
 command -v fzf >/dev/null 2>&1 && source <(fzf --zsh)
 

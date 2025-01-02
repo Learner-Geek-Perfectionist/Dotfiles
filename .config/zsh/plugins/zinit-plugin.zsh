@@ -1,5 +1,20 @@
 #!/bin/zsh
 
+# 专门用于安装 zinit 插件的脚本
+
+# 插件管理器 zinit 安装的路径
+ZINIT_HOME="${HOME}/.local/share/zinit/zinit.git"
+
+# 如果插件管理器 zinit 没有安装......
+if [[ ! -f "${ZINIT_HOME}/zinit.zsh" ]]; then
+    printf "\033[33m\033[220mInstalling ZDHARMA-CONTINUUM Initiative Plugin Manager...\033[0m\n"
+    if git clone --depth=1 https://github.com/zdharma-continuum/zinit "$ZINIT_HOME"; then
+        printf "\033[33m\033[34mInstallation successful.\033[0m\n"
+    else
+        printf "\033[160mThe clone has failed.\033[0m\n"
+        return
+    fi
+fi
 
 # 执行 zinit.zsh，加载 zinit 插件管理器本身，将 zinit 命令引入 zsh 中。
 source "${ZINIT_HOME}/zinit.zsh"
@@ -115,4 +130,3 @@ zinit light zdharma-continuum/fast-syntax-highlighting
 # 	•	禁用对文件补全结果的排序。
 
 # 这些配置帮助提高 Zsh 使用效率，使得命令行界面更加强大和灵活。
-

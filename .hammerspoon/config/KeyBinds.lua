@@ -21,7 +21,7 @@ hs.hotkey.bind(HyperKey, '`', function()
 end)
 
 
--- fn + l，用于锁屏
+--  HyperKey + l，用于锁屏
 hs.hotkey.bind(HyperKey, "L", function()
     hs.caffeinate.lockScreen()
 end)

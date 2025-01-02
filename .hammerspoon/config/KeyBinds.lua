@@ -15,7 +15,7 @@ for _, key in ipairs(windowsConfig) do
     end)
 end
 
--- cmd + ` 切换 App 窗口
+-- HyperKey + ` 切换 App 窗口
 hs.hotkey.bind(HyperKey, '`', function()
     switchFocusedAppWindow()
 end)

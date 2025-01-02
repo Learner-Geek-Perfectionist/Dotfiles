@@ -169,7 +169,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
             # 安装 eza, 在 oracular (24.10)  之后的 Ubuntu 发行版才有
             ! command -v cargo >/dev/null 2>&1 && sudo apt install -y cargo
             cargo install eza
-            print_centered_message "${GREEN} eza 安装完成 ✅${NC}" "false" "false"
+            print_centered_message "${GREEN} eza 安装完成 ✅${NC}" "false" "true"
         fi
     # =================================结束安装 eza=================================
 
@@ -268,7 +268,7 @@ echo -e "${GREEN}✔️ Temporary files removed.${NC}"
 echo -e "${GREEN}✅ Script completed successfully. Files have been successfully copied to the user's home directory.${NC}"
 
 # 安装 zsh 插件
-/bin/zsh -c "$HOME/.config/zsh/plugins/zinit-plugin.zsh"
+/bin/zsh -c "source $HOME/.config/zsh/plugins/zinit-plugin.zsh"
 
 rm -rf $HOME/.zcompdump $HOME/.zsh_history
 

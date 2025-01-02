@@ -30,12 +30,6 @@ elif [[ $(uname -s) == "Linux" ]]; then
         print_centered_message "${RED}不支持的发行版，目前只支持 fedora、ubuntu${NC}"
     fi
 
-    # 修改默认的登录 shell 为 zsh
-    # 获取当前用户的默认 shell
-    current_shell=$(getent passwd "$(whoami)" | cut -d: -f7)
-    # 如果当前 shell 不是 zsh，则更改为 zsh
-    [[ "$(command -v zsh)" != "$current_shell" ]] && sudo chsh -s "$(command -v zsh)" "$(whoami)"
-
     # 设置抓包工具权限
     sudo chmod u+s $(command -v tcpdump)
     sudo chmod u+s $(command -v dumpcap)

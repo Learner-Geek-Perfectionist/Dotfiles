@@ -268,6 +268,6 @@ echo -e "${GREEN}✔️ Temporary files removed.${NC}"
 echo -e "${GREEN}✅ Script completed successfully. Files have been successfully copied to the user's home directory.${NC}"
 
 # 安装 zsh 插件
-/bin/zsh
+source $HOME/.zshrc
 
 rm -rf $HOME/.zcompdump $HOME/.zsh_history

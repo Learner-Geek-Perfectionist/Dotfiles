@@ -31,6 +31,3 @@ print_centered_message "${GREEN}接下来配置 zsh......${NC}" "false" "false"
 # 对 zsh 进行配置
 source ./zsh_config.sh
 
-# 进入 zsh，执行 .zshrc ，安装 zinit 插件
-/bin/zsh
-

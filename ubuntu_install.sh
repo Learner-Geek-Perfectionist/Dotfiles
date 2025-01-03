@@ -169,14 +169,12 @@ sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 echo "Asia/Shanghai" | sudo tee /etc/timezone >/dev/null
 sudo dpkg-reconfigure --frontend noninteractive tzdata
 
-# 设置 UTF-8 字符集
+# 1.生成 UTF-8 字符集的 Locale（locale-gen 适用于 Debian 及其衍生系统，localedef 存在于几乎所有的 Linux 发行版中）
 sudo locale-gen zh_CN.UTF-8
 
-# 设置中文语言输出信息
+# 2.设置中文语言输出信息
 echo "LANG=zh_CN.UTF-8" | sudo tee /etc/default/locale
 echo "LC_ALL=zh_CN.UTF-8" | sudo tee -a /etc/default/locale
-
-sudo localedef -i zh_CN -f UTF-8 zh_CN.UTF-8
 
 # 搜索可用的 OpenJDK 包并尝试获取最新版本
 jdk_version=$(apt search openjdk | grep -oP 'openjdk-\d+-jdk' | sort -V | tail -n1)

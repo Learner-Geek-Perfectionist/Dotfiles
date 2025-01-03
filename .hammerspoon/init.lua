@@ -8,6 +8,7 @@ require('modules.systemInfo')
 require('modules.AppToggler')
 require('modules.windowManagement')
 require('modules.inputMethod')
+require('modules.caffeinate')
 
 --  目前弃用了，使用微信输入法可以完全代替 --
 ----  启动 inputMethod 模块

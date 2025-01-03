@@ -27,8 +27,10 @@ hs.hotkey.bind(HyperKey, "L", function()
 end)
 
 
--- HyperKey + O，用于切换防休眠状态
-hs.hotkey.bind(HyperKey, "O", toggleCaffeinateMode)
+-- HyperKey + 1，用于切换防休眠状态
+hs.hotkey.bind(HyperKey, '1', function()
+    toggleCaffeinateMode()
+end)
 
 -- 初始化提示
 hs.alert.show("Window management keybindings with corners enabled")

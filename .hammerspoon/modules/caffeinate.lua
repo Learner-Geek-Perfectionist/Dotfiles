@@ -1,8 +1,8 @@
 -- 全局变量来保存防休眠的状态
-local caffeinateMode = false
+caffeinateMode = false
 
 -- 封装设置防休眠状态的函数
-local function toggleCaffeinateMode()
+function toggleCaffeinateMode()
     caffeinateMode = not caffeinateMode  -- 切换防休眠状态
 
     if caffeinateMode then

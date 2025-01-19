@@ -35,8 +35,8 @@ if [[ "$(uname)" == "Darwin" ]]; then
     alias py=pycharm
 
     # Setting fd as the default source for fzf
-    export FZF_DEFAULT_COMMAND='fd --strip-cwd-prefix --hidden --follow --exclude .git --glob'
-    alias fd='fd --strip-cwd-prefix --hidden --follow --exclude .git --glob'
+    export FZF_DEFAULT_COMMAND='fd --follow --glob -HI'
+    alias fd='fd --follow --glob -HI'
 
 elif [[ -f /etc/os-release ]]; then
 
@@ -48,12 +48,12 @@ elif [[ -f /etc/os-release ]]; then
         #  添加 eza 的环境变量
         export PATH="$HOME/.cargo/bin:$PATH"
         # Setting fd as the default source for fzf
-        export FZF_DEFAULT_COMMAND='fdfind --strip-cwd-prefix --hidden --follow --exclude .git --glob'
-        alias fdfind='fdfind --strip-cwd-prefix --hidden --follow --exclude .git --glob'
+        export FZF_DEFAULT_COMMAND='fdfind --follow --glob -HI'
+        alias fdfind='fdfind --follow --glob -HI'
     else
         # Setting fd as the default source for fzf
-        export FZF_DEFAULT_COMMAND='fd --strip-cwd-prefix --hidden --follow --exclude .git --glob'
-        alias fd='fd --strip-cwd-prefix --hidden --follow --exclude .git --glob'
+        export FZF_DEFAULT_COMMAND='fd --follow --glob -HI'
+        alias fd='fd --follow --glob -HI'
     fi
 
 fi
@@ -107,6 +107,8 @@ alias upgrade='/bin/bash -c "$(curl -H '\''Cache-Control: no-cache'\'' -fsSL "ht
 alias md='mkdir -p'
 
 alias g1='git clone --depth=1'
+
+alias rg='rg -uuu'
 
 alias rm='sudo rm -rf'
 

@@ -58,7 +58,6 @@ packages_ubuntu_22_04_plus=(
     tcpdump
     kotlin
     golang
-    rustc
     valgrind
     curl
     tar
@@ -105,7 +104,6 @@ packages_ubuntu_20_04=(
     sudo
     tcpdump
     golang
-    rustc
     valgrind
     curl
     tar

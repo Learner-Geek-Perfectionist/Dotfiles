@@ -166,12 +166,15 @@ elif [[ $(uname -s) == "Linux" ]]; then
             print_centered_message "${GREEN}eza 已安装，跳过安装。${NC}" "true" "true"
         else
             print_centered_message "${GREEN}开始安装 eza... ${NC}" "true" "false"
-            # 安装 eza, 在 oracular (24.10)  之后的 Ubuntu 发行版才有
-            ! command -v cargo >/dev/null 2>&1 && sudo apt install -y cargo
+            # 安装 rustup，这使得 rustc 的版本是最新的。
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+            # 引入环境变量
+            export PATH="$HOME/.cargo/bin:$PATH"
+            # 安装 eza, 在 oracular (24.10)  之后的 Ubuntu 发行版才有 eza
             cargo install eza
             print_centered_message "${GREEN} eza 安装完成 ✅${NC}" "false" "true"
         fi
-    # =================================结束安装 eza=================================
+        # =================================结束安装 eza=================================
 
     elif [[ $os_type == "fedora" ]]; then
         if ! command -v fzf >/dev/null 2>&1; then
@@ -271,4 +274,3 @@ echo -e "${GREEN}✅ Script completed successfully. Files have been successfully
 $HOME/.config/zsh/plugins/zinit-plugin.zsh
 
 rm -rf $HOME/.zcompdump $HOME/.zsh_history
-

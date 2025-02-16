@@ -35,8 +35,8 @@ if [[ "$(uname)" == "Darwin" ]]; then
     alias py=pycharm
 
     # Setting fd as the default source for fzf
-    export FZF_DEFAULT_COMMAND='fd --follow --glob -HI'
-    alias fd='fd --follow --glob -HI'
+    export FZF_DEFAULT_COMMAND='fd -L -g -HIia'
+    alias fd='fd -L -g -HIia'
 
 elif [[ -f /etc/os-release ]]; then
 
@@ -48,12 +48,12 @@ elif [[ -f /etc/os-release ]]; then
         #  添加 eza 的环境变量
         export PATH="$HOME/.cargo/bin:$PATH"
         # Setting fd as the default source for fzf
-        export FZF_DEFAULT_COMMAND='fdfind --follow --glob -HI'
-        alias fdfind='fdfind --follow --glob -HI'
+        export FZF_DEFAULT_COMMAND='fdfind -L -g -HIia'
+        alias fdfind='fdfind -L -g -HIia'
     else
         # Setting fd as the default source for fzf
-        export FZF_DEFAULT_COMMAND='fd --follow --glob -HI'
-        alias fd='fd --follow --glob -HI'
+        export FZF_DEFAULT_COMMAND='fd -L -g -HIia'
+        alias fd='fd -L -g -HIia'
     fi
 
 fi

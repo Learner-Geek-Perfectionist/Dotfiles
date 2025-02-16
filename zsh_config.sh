@@ -90,8 +90,8 @@ elif [[ $(uname -s) == "Linux" ]]; then
             sudo apt install -y zsh
         fi
 
-        if ! command -v fdfind >/dev/null 2>&1; then
-            sudo apt install -y fdfind
+        if ! command -v fd-find >/dev/null 2>&1; then
+            sudo apt install -y fd-find
         fi
 
         if ! command -v git >/dev/null 2>&1; then

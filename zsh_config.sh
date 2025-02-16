@@ -66,6 +66,10 @@ if [[ $(uname -s) == "Darwin" ]]; then
         brew install -y eza
     fi
 
+    if ! command -v fd >/dev/null 2>&1; then
+        brew install -y fd
+    fi
+
     if ! command -v kitty >/dev/null 2>&1; then
         brew install -y kitty
     fi
@@ -80,8 +84,14 @@ elif [[ $(uname -s) == "Linux" ]]; then
 
         # 解压的依赖工具 xz
         ! dpkg -s xz-utils >/dev/null 2>&1 && sudo apt install -y xz-utils
+        ! dpkg -s build-essential >/dev/null 2>&1 && sudo apt install -y build-essential
+
         if ! command -v zsh >/dev/null 2>&1; then
             sudo apt install -y zsh
+        fi
+
+        if ! command -v fdfind >/dev/null 2>&1; then
+            sudo apt install -y fdfind
         fi
 
         if ! command -v git >/dev/null 2>&1; then
@@ -170,9 +180,6 @@ elif [[ $(uname -s) == "Linux" ]]; then
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
             # 引入环境变量
             export PATH="$HOME/.cargo/bin:$PATH"
-
-            sudo apt install -y build-essential
-
             # 安装 eza, 在 oracular (24.10)  之后的 Ubuntu 发行版才有 eza
             cargo install eza
             print_centered_message "${GREEN} eza 安装完成 ✅${NC}" "false" "true"
@@ -200,6 +207,10 @@ elif [[ $(uname -s) == "Linux" ]]; then
         fi
         if ! command -v curl >/dev/null 2>&1; then
             sudo dnf install -y curl
+        fi
+
+        if ! command -v fd >/dev/null 2>&1; then
+            sudo dnf install -y fd
         fi
 
     else

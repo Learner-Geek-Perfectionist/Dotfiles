@@ -166,10 +166,13 @@ elif [[ $(uname -s) == "Linux" ]]; then
             print_centered_message "${GREEN}eza 已安装，跳过安装。${NC}" "true" "true"
         else
             print_centered_message "${GREEN}开始安装 eza... ${NC}" "true" "false"
-            # 安装 rustup，这使得 rustc 的版本是最新的。
+            # 安装 rustup，这使得 rustc 的版本是最新的，并且顺便安装 cargo
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
             # 引入环境变量
             export PATH="$HOME/.cargo/bin:$PATH"
+
+            sudo apt install -y build-essential
+
             # 安装 eza, 在 oracular (24.10)  之后的 Ubuntu 发行版才有 eza
             cargo install eza
             print_centered_message "${GREEN} eza 安装完成 ✅${NC}" "false" "true"

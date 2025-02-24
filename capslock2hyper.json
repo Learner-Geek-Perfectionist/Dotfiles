@@ -43,6 +43,23 @@
         }
       ],
       "type": "basic"
+    },
+    {
+      "description": "Change Caps to fn.",
+      "from": {
+        "key_code": "caps_lock",
+        "modifiers": {
+          "optional": [
+            "any"
+          ]
+        }
+      },
+      "to": [
+        {
+          "key_code": "left_shift"
+        }
+      ],
+      "type": "basic"
     }
   ]
 }

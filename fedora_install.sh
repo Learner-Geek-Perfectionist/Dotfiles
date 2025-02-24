@@ -25,7 +25,7 @@ install_packages "packages_fedora"
 sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 echo "Asia/Shanghai" | sudo tee /etc/timezone > /dev/null
 
-# 1.生成Locale数据文件（特定地区或文化环境的规则，比如期和时间的显示格式、数字和货币的格式、文本排序规则、字符编码等)
+# 1.生成Locale数据文件（特定地区或文化环境的规则，比如日期和时间的显示格式、数字和货币的格式、文本排序规则、字符编码等)
 sudo localedef -c -f UTF-8 -i zh_CN zh_CN.UTF-8
 
 # 2.设置中文语言输出信息

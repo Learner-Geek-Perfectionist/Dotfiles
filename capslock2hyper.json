@@ -43,45 +43,6 @@
         }
       ],
       "type": "basic"
-    },
-    {
-      "description": "Change Caps to fn.",
-      "from": {
-        "key_code": "caps_lock",
-        "modifiers": {
-          "optional": [
-            "any"
-          ]
-        }
-      },
-      "to": [
-        {
-          "key_code": "fn"
-        }
-      ],
-      "type": "basic"
-    },
-    {
-      "description": "Change left_shift to fn.",
-      "from": {
-        "key_code": "left_shift",
-        "modifiers": {
-          "optional": [
-            "any"
-          ]
-        }
-      },
-      "to": [
-        {
-          "key_code": "left_shift"
-        }
-      ],
-      "to_if_alone": [
-        {
-          "key_code": "fn"
-        }
-      ],
-      "type": "basic"
     }
   ]
 }

@@ -110,6 +110,7 @@ packages_ubuntu_20_04=(
     autoconf
     systemd
     cargo
+    bat
     language-pack-zh-hans
 )
 

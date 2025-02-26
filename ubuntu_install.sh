@@ -143,7 +143,7 @@ else
 
     # 2. 通过 rustup 脚本安装并指定系统目录
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
-    # 3. 链接 cargo、rustc、rustup 到 PATH 中
+    # 3. 链接 cargo、rustc、rustup 到系统的PATH 中
     sudo ln -s /opt/rust/cargo/bin/* /usr/bin/
     # 4. 更新工具链到最新版本
     sudo -E rustup update # -E：保留环境变量（确保 CARGO_HOME 和 RUSTUP_HOME 生效）。

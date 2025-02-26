@@ -282,9 +282,6 @@ elif [[ $(uname -s) == "Linux" ]]; then
 
         # =================================结束安装 rg=================================
 
-        # 将二进制文件链接到系统 PATH 目录（在最后的 cargo install 执行）
-        sudo ln -s /opt/rust/cargo/bin/* /usr/bin/
-
     elif [[ $os_type == "fedora" ]]; then
         if ! command -v fzf >/dev/null 2>&1; then
             sudo dnf install -y fzf

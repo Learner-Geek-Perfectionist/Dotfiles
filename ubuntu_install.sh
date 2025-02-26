@@ -34,10 +34,10 @@ if command -v wireshark >/dev/null 2>&1; then
     print_centered_message "${GREEN}Wireshark 已安装，跳过安装。${NC}" "true" "true"
 else
     print_centered_message "${GREEN}开始安装 wireshark${NC}" "true" "false"
+    sudo add-apt-repository -y ppa:wireshark-dev/stable
+    sudo apt-get update
     echo "wireshark-common wireshark-common/install-setuid boolean false" | sudo debconf-set-selections
-    sudo DEBIAN_FRONTEND=noninteractive add-apt-repository -y ppa:wireshark-dev/stable
-    sudo DEBIAN_FRONTEND=noninteractive apt install -y wireshark
-
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y wireshark
     print_centered_message "${GREEN} wireshark 安装完成 ✅${NC}" "false" "true"
 
 fi

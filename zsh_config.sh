@@ -215,20 +215,23 @@ elif [[ $(uname -s) == "Linux" ]]; then
             # 安装 rustup，这使得 rustc 的版本是最新的。
 
             # 1. 创建系统级安装目录并设置权限
-            sudo mkdir -p /usr/local/cargo /usr/local/rustup
-            sudo chown root:root /usr/local/cargo /usr/local/rustup
+            sudo mkdir -p /opt/rust/{cargo,rustup}
+            sudo chmod -R a+rw /opt/rust/cargo /opt/rust/rustup  # 开放所有用户读写权限
+            export CARGO_HOME=/opt/rust/cargo
+            export RUSTUP_HOME=/opt/rust/rustup
 
             # 2. 通过 rustup 脚本安装并指定系统目录
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sudo sh -s -- -y CARGO_HOME=/usr/local/cargo RUSTUP_HOME=/usr/local/rustup
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
+
             # 3. 将二进制文件链接到系统 PATH 目录
-            sudo ln -s /usr/local/cargo/bin/rustc /usr/local/bin/rustc
-            sudo ln -s /usr/local/cargo/bin/cargo /usr/local/bin/cargo
-            # 4.设置默认 Rust 工具链
-            rustup default stable
+            sudo ln -s /opt/rust/cargo/bin/* /usr/local/bin/
+            # 4. 更新工具链到最新版本
+            sudo -E rustup update # -E：保留环境变量（确保 CARGO_HOME 和 RUSTUP_HOME 生效）。
+
 
             print_centered_message "${GREEN} rustc 安装完成 ✅${NC}" "false" "false"
         fi
-        # =================================结束安装 rustc=================================
+        # =================================结束安装 rustc==================================
 
         # =================================开始安装 eza=================================
         if command -v eza >/dev/null 2>&1; then

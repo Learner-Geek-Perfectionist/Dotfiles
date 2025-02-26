@@ -38,6 +38,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
 else
     alias rg='rg -uuu -i --threads=$(nproc)'
 
+
 fi
 
 INSTALL_DIR="/opt/kotlin-native/"

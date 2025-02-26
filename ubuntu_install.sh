@@ -6,14 +6,12 @@ set -e
 # 设置国内源
 sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list && sudo apt update && sudo apt upgrade -y
 
-
 # =================================开始安装 Kotlin/Native =================================
 # 设置 Kotlin 的变量
 setup_kotlin_environment
 # 安装 Kotlin/Native
 download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR
 # =================================结束安装 Kotlin/Native =================================
-
 
 # 获取Ubuntu版本号并比较
 if [[ $(echo "$(lsb_release -sr) >= 22.04" | bc) -eq 1 ]]; then
@@ -27,17 +25,24 @@ fi
 # 取消最小化安装
 sudo apt update -y && sudo apt upgrade -y && sudo apt search unminimize 2>/dev/null | grep -q "^unminimize/" && (sudo apt install unminimize -y && yes | sudo unminimize) || echo -e "${RED}unminimize包不可用。${NC}"
 
-
-
 # =================================开始安装 wireshark=================================
 if command -v wireshark >/dev/null 2>&1; then
     print_centered_message "${GREEN}Wireshark 已安装，跳过安装。${NC}" "true" "true"
 else
     print_centered_message "${GREEN}开始安装 wireshark${NC}" "true" "false"
+    # 添加PPA并更新
     sudo add-apt-repository -y ppa:wireshark-dev/stable
     sudo apt-get update
+
+    # 强制预加载所有debconf配置 (关键步骤!)
     echo "wireshark-common wireshark-common/install-setuid boolean false" | sudo debconf-set-selections
-    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y wireshark
+    echo "wireshark-common wireshark-common/install-setuid seen true" | sudo debconf-set-selections
+
+    # 彻底非交互式安装
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+        -o Dpkg::Options::="--force-confdef" \
+        -o Dpkg::Options::="--force-confold" \
+        wireshark
     print_centered_message "${GREEN} wireshark 安装完成 ✅${NC}" "false" "true"
 
 fi
@@ -119,7 +124,7 @@ else
         sudo chmod a+x $HOME/.local/kitty.app/share/applications/kitty-open.desktop $HOME/.local/kitty.app/share/applications/kitty.desktop $HOME/.local/share/applications/kitty-open.desktop $HOME/.local/share/applications/kitty.desktop
     fi
     # 将 kitty 二进制文件复制到标准的系统路径
-    sudo cp "$HOME/.local/kitty.app/bin" /usr/local/bin/
+    sudo cp -r "$HOME/.local/kitty.app/bin" /usr/local/bin/
     print_centered_message "${GREEN} kitty 安装完成 ✅${NC}" "false" "true"
 
 fi
@@ -202,7 +207,6 @@ else
 fi
 
 # =================================结束安装 rg=================================
-
 
 # 设置时区
 sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime

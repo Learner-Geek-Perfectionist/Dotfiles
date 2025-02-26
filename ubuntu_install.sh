@@ -219,4 +219,3 @@ fi
 
 sudo apt clean
 
-echo -e "${RED}当前目录: $(pwd) ${NC}"

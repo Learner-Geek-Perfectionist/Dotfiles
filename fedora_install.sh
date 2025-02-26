@@ -56,4 +56,4 @@ if [ -z "$packages_to_reinstall" ]; then
 else
     sudo dnf -y reinstall $packages_to_reinstall && sudo mandb -c
 fi
-echo -e "${RED}当前目录: $(pwd) ${NC}"
+

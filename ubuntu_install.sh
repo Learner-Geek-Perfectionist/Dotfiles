@@ -26,31 +26,12 @@ install_packages "packages_ubuntu"
 # 取消最小化安装
 sudo apt update -y && sudo apt upgrade -y && sudo apt search unminimize 2>/dev/null | grep -q "^unminimize/" && (sudo apt install unminimize -y && yes | sudo unminimize) || echo -e "${RED}unminimize包不可用。${NC}"
 
-## =================================开始安装 wireshark=================================
-#if command -v wireshark >/dev/null 2>&1; then
-#    print_centered_message "${GREEN}Wireshark 已安装，跳过安装。${NC}" "true" "true"
-#else
-#    print_centered_message "${GREEN}开始安装 wireshark${NC}" "true" "false"
-#
-#    # 强制预加载所有debconf配置 (关键步骤!)
-#    echo "wireshark-common wireshark-common/install-setuid boolean false" | sudo debconf-set-selections
-#    echo "wireshark-common wireshark-common/install-setuid seen true" | sudo debconf-set-selections
-#
-#    # 彻底非交互式安装
-#    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
-#        -o Dpkg::Options::="--force-confdef" \
-#        -o Dpkg::Options::="--force-confold" \
-#        wireshark
-#    print_centered_message "${GREEN} wireshark 安装完成 ✅${NC}" "false" "true"
-#
-#fi
-## =================================结束安装 wireshark=================================
 
 # =================================开始安装 fastfetch=================================
 if command -v fastfetch >/dev/null 2>&1; then
     print_centered_message "${GREEN} fastfetch 已安装，跳过安装。${NC}" "true" "true"
 else
-    print_centered_message "${GREEN}开始安装 wireshark${NC}" "true" "false"
+    print_centered_message "${GREEN}开始安装 fastfetch${NC}" "true" "false"
     git clone https://github.com/fastfetch-cli/fastfetch ~/fastfetch
     cd ~/fastfetch
     mkdir build && cd build
@@ -160,7 +141,7 @@ else
     sudo chown root:root /usr/local/cargo /usr/local/rustup
 
     # 2. 通过 rustup 脚本安装并指定系统目录
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sudo sh -s -- -y CARGO_HOME=/usr/local/cargo RUSTUP_HOME=/usr/local/rustup
+    sudo CARGO_HOME=/usr/local/cargo RUSTUP_HOME=/usr/local/rustup curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
     # 3. 将二进制文件链接到系统 PATH 目录
     sudo ln -s /usr/local/cargo/bin/rustc /usr/local/bin/rustc
     sudo ln -s /usr/local/cargo/bin/cargo /usr/local/bin/cargo

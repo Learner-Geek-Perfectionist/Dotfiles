@@ -109,7 +109,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
         if command -v fastfetch >/dev/null 2>&1; then
             print_centered_message "${GREEN} fastfetch 已安装，跳过安装。${NC}" "true" "true"
         else
-            print_centered_message "${GREEN}开始安装 wireshark${NC}" "true" "false"
+            print_centered_message "${GREEN}开始安装 fastfetch${NC}" "true" "false"
             git clone https://github.com/fastfetch-cli/fastfetch ~/fastfetch
             cd ~/fastfetch
             mkdir build && cd build

@@ -61,7 +61,7 @@ setup_kotlin_environment() {
 download_and_extract_kotlin() {
     URL=$1
     TARGET_DIR=$2
-    FILE_NAME=$(basename ${URL})
+    FILE_NAME=$(basename "${URL}")
     if [ -d "$TARGET_DIR" ]; then
         print_centered_message "${GREEN}${FILE_NAME}${NC} is already installed in ${YELLOW}${TARGET_DIR}${NC}." "true" "false"
         return 0

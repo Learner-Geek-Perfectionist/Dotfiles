@@ -186,6 +186,32 @@ elif [[ $(uname -s) == "Linux" ]]; then
         fi
         # =================================结束安装 eza=================================
 
+        # =================================开始安装 fd=================================
+
+        if command -v fd >/dev/null 2>&1; then
+            print_centered_message "${GREEN}fd 已安装，跳过安装。${NC}" "true" "true"
+        else
+            print_centered_message "${GREEN}开始安装 fd... ${NC}" "true" "false"
+            cargo install fd-find
+            sudo ln -s $(which fd-find) /usr/local/bin/fd
+            print_centered_message "${GREEN} fd 安装完成 ✅${NC}" "false" "true"
+        fi
+
+        # =================================结束安装 fd=================================
+
+
+        # =================================开始安装 rg=================================
+
+        if command -v rg >/dev/null 2>&1; then
+            print_centered_message "${GREEN}rg 已安装，跳过安装。${NC}" "true" "true"
+        else
+            print_centered_message "${GREEN}开始安装 rg... ${NC}" "true" "false"
+            cargo install ripgrep
+            print_centered_message "${GREEN} rg 安装完成 ✅${NC}" "false" "true"
+        fi
+
+        # =================================结束安装 rg=================================
+
     elif [[ $os_type == "fedora" ]]; then
         if ! command -v fzf >/dev/null 2>&1; then
             sudo dnf install -y fzf

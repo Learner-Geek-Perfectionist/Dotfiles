@@ -33,27 +33,19 @@ if [[ "$(uname)" == "Darwin" ]]; then
     alias cl=clion
     # pycharm 映射到 py
     alias py=pycharm
-
-    # Setting fd as the default source for fzf
-    export FZF_DEFAULT_COMMAND='fd -L -g -HIia'
-    alias fd='fd -L -g -HIia'
+    alias rg='rg -uuu -i --threads=$(sysctl -n hw.ncpu)'
 
 elif [[ -f /etc/os-release ]]; then
-
+    alias rg='rg -uuu -i --threads=$(nproc)'
     # 检查是否是 Ubuntu 系统
     if grep -q 'ID=ubuntu' /etc/os-release; then
-        # 对于 Ubuntu 系统，添加 fzf、kitty、eza 的环境变量
+        # 对于 Ubuntu 系统，添加 fzf、kitty、cargo 的环境变量
         export PATH="$HOME/.fzf/bin:$PATH"
         export PATH="$HOME/.local/kitty.app/bin:$PATH"
-        #  添加 eza 的环境变量
+        #  添加 cargo 的环境变量
         export PATH="$HOME/.cargo/bin:$PATH"
-        # Setting fd as the default source for fzf
-        export FZF_DEFAULT_COMMAND='fdfind -L -g -HIia'
-        alias fdfind='fdfind -L -g -HIia'
     else
-        # Setting fd as the default source for fzf
-        export FZF_DEFAULT_COMMAND='fd -L -g -HIia'
-        alias fd='fd -L -g -HIia'
+
     fi
 
 fi
@@ -71,12 +63,6 @@ COMPILER_INSTALL_DIR="/opt/kotlin-compiler/kotlinc/"
 source "${HOME}/.config/zsh/plugins/homebrew.zsh"
 source "$HOME/.config/zsh/plugins/zinit.zsh"
 
-
-# 加载 fzf 的环境变量
-command -v fzf >/dev/null 2>&1 && source <(fzf --zsh)
-
-# 设置 fzf 的默认预览
-export FZF_DEFAULT_OPTS='--preview "${HOME}/.config/zsh/fzf/fzf-preview.sh {}" --bind "shift-left:preview-page-up,shift-right:preview-page-down"'
 # 禁用忽略以空格开头的命令的历史记录功能。
 setopt no_hist_ignore_space
 setopt interactive_comments # 注释行不报错
@@ -88,6 +74,16 @@ setopt notify       # 后台任务完成后通知
 setopt no_beep      # 关闭终端提示音
 setopt no_bang_hist # 不对双引号当中的叹号做历史记录拓展 "!"
 setopt GLOB_DOTS    # 文件名展开（globbing）包括以点(dot)开始的文件
+
+# 加载 fzf 的环境变量
+command -v fzf >/dev/null 2>&1 && source <(fzf --zsh)
+
+# 设置 fzf 的默认预览
+export FZF_DEFAULT_OPTS='--preview "${HOME}/.config/zsh/fzf/fzf-preview.sh {}" --bind "shift-left:preview-page-up,shift-right:preview-page-down"'
+
+export FZF_DEFAULT_COMMAND='fd -L -g -HIia'
+
+alias fd='fd -L -g -HIia'
 
 # 清除整个屏幕
 alias clear='clear && printf '\''\e[3J'\'''
@@ -107,8 +103,6 @@ alias upgrade='/bin/bash -c "$(curl -H '\''Cache-Control: no-cache'\'' -fsSL "ht
 alias md='mkdir -p'
 
 alias g1='git clone --depth=1'
-
-alias rg='rg -uuu'
 
 alias rm='sudo rm -rf'
 

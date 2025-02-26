@@ -22,7 +22,7 @@ brew_formulas=(
     cmake-docs libsodium lz4 pcre2 xz llvm
     fastfetch libuv lzip z3 tree rust autoconf
     fd libvterm make readline zstd eza less
-    fzf libyaml mpdecimal ripgrep go
+    fzf libyaml mpdecimal ripgrep go coreutils
     gcc ninja wget mas pkgconf jq hammerspoon
 )
 
@@ -37,8 +37,6 @@ packages_ubuntu_22_04_plus=(
     ninja-build
     neovim
     ruby-full
-    fd-find
-    ripgrep
     cmake
     nodejs
     iputils-ping
@@ -84,8 +82,6 @@ packages_ubuntu_20_04=(
     ninja-build
     neovim
     ruby-full
-    fd-find
-    ripgrep
     cmake
     nodejs
     iputils-ping

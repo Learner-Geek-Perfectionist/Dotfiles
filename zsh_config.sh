@@ -252,7 +252,6 @@ elif [[ $(uname -s) == "Linux" ]]; then
         else
             print_centered_message "${GREEN}开始安装 fd... ${NC}" "false" "false"
             cargo install fd-find
-            sudo ln -s $(which fd-find) /usr/bin/fd
             print_centered_message "${GREEN} fd 安装完成 ✅${NC}" "false" "false"
         fi
 

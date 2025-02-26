@@ -181,7 +181,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
                 sudo chmod a+x $HOME/.local/kitty.app/share/applications/kitty-open.desktop $HOME/.local/kitty.app/share/applications/kitty.desktop $HOME/.local/share/applications/kitty-open.desktop $HOME/.local/share/applications/kitty.desktop
             fi
             # 将 kitty 二进制文件复制到标准的系统路径
-            sudo cp -r "$HOME/.local/kitty.app/bin" /usr/bin/
+            sudo cp -r "$HOME/.local/kitty.app/bin" /usr/bin/kitty
             print_centered_message "${GREEN} kitty 安装完成 ✅${NC}" "false" "false"
 
         fi
@@ -199,7 +199,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
             yes | $HOME/.fzf/install --no-update-rc
 
             # 将 fzf 二进制文件复制到标准的系统路径
-            sudo cp "$HOME/.fzf/bin/fzf" /usr/local/bin/
+            sudo cp "$HOME/.fzf/bin/fzf" /usr/bin/fzf
 
             # 清理安装目录
             rm -rf "$HOME/.fzf"
@@ -224,7 +224,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
 
             # 3. 将二进制文件链接到系统 PATH 目录
-            sudo ln -s /opt/rust/cargo/bin/* /usr/local/bin/
+            sudo ln -s /opt/rust/cargo/bin/* /usr/bin/
             # 4. 更新工具链到最新版本
             sudo -E rustup update # -E：保留环境变量（确保 CARGO_HOME 和 RUSTUP_HOME 生效）。
 
@@ -252,7 +252,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
         else
             print_centered_message "${GREEN}开始安装 fd... ${NC}" "false" "false"
             cargo install fd-find
-            sudo ln -s $(which fd-find) /usr/local/bin/fd
+            sudo ln -s $(which fd-find) /usr/bin/fd
             print_centered_message "${GREEN} fd 安装完成 ✅${NC}" "false" "false"
         fi
 

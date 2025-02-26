@@ -102,7 +102,7 @@ else
         sudo chmod a+x $HOME/.local/kitty.app/share/applications/kitty-open.desktop $HOME/.local/kitty.app/share/applications/kitty.desktop $HOME/.local/share/applications/kitty-open.desktop $HOME/.local/share/applications/kitty.desktop
     fi
     # 将 kitty 二进制文件复制到标准的系统路径
-    sudo cp -r "$HOME/.local/kitty.app/bin" /usr/local/bin/
+    sudo cp -r "$HOME/.local/kitty.app/bin" /usr/bin/kitty
     print_centered_message "${GREEN} kitty 安装完成 ✅${NC}" "false" "false"
 
 fi
@@ -120,7 +120,7 @@ else
     yes | $HOME/.fzf/install --no-update-rc
 
     # 将 fzf 二进制文件复制到标准的系统路径
-    sudo cp "$HOME/.fzf/bin/fzf" /usr/local/bin/
+    sudo cp "$HOME/.fzf/bin/fzf" /usr/bin/fzf
 
     # 清理安装目录
     rm -rf "$HOME/.fzf"

@@ -27,7 +27,7 @@ brew_formulas=(
 )
 
 #ubuntu
-packages_ubuntu_22_04_plus=(
+packages_ubuntu=(
     openssh-server
     debconf-utils
     ncurses-bin
@@ -70,48 +70,7 @@ packages_ubuntu_22_04_plus=(
     language-pack-zh-hans
     bat
     chafa
-)
-
-packages_ubuntu_20_04=(
-    openssh-server
-    debconf-utils
-    ncurses-bin
-    net-tools
-    git
-    zip
-    ninja-build
-    neovim
-    ruby-full
-    cmake
-    nodejs
-    iputils-ping
-    procps
-    htop
-    traceroute
-    tree
-    coreutils
-    zsh
-    fontconfig
-    python3
-    iproute2
-    wget
-    pkg-config
-    graphviz
-    sudo
-    tcpdump
-    golang
-    valgrind
-    curl
-    tar
-    locales
-    man-db
-    jq
-    tshark
-    autoconf
-    systemd
-    cargo
-    bat
-    language-pack-zh-hans
+    wireshark
 )
 
 #fedora

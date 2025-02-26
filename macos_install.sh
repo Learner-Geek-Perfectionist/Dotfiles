@@ -16,7 +16,7 @@ sudo xcode-select --reset
 
 # 检查 Homebrew 是否已安装
 if command -v brew > /dev/null 2>&1; then
-    print_centered_message "${GREEN}Homebrew 已经安装${NC}" "true" "true"
+    print_centered_message "${GREEN}Homebrew 已经安装${NC}" "true" "false"
 else
     print_centered_message "${GREEN}正在安装 Homebrew...${NC}" "true" "false"
     /bin/zsh -c "$(curl -fsSL https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh)"

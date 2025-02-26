@@ -104,8 +104,31 @@ elif [[ $(uname -s) == "Linux" ]]; then
         if ! command -v bat >/dev/null 2>&1; then
             sudo apt install -y bat
         fi
+
+        # =================================开始安装 fastfetch=================================
+        if command -v fastfetch >/dev/null 2>&1; then
+            print_centered_message "${GREEN} fastfetch 已安装，跳过安装。${NC}" "true" "false"
+        else
+            git clone https://github.com/fastfetch-cli/fastfetch ~/fastfetch
+            cd ~/fastfetch
+            mkdir build && cd build
+            cmake ..
+            # 编译源码（启用多线程加速）
+            make -j$(nproc)
+            sudo make install
+            # 清理整个项目目录，包括源码和编译目录
+            cd ~
+            rm -rf ~/fastfetch
+
+            print_centered_message "${GREEN} ${FILE_NAME} 安装完成 ✅${NC}" "true" "false"
+
+        fi
+        # =================================结束安装 fastfetch=================================
+
         # =================================开始安装 kitty=================================
-        if ! command -v kitty >/dev/null 2>&1; then
+        if command -v kitty >/dev/null 2>&1; then
+            print_centered_message "${GREEN} kitty 已安装，跳过安装。${NC}" "true" "false"
+        else
             print_centered_message "${GREEN}开始安装 kitty... ${NC}" "true" "false"
             curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n
 
@@ -156,8 +179,8 @@ elif [[ $(uname -s) == "Linux" ]]; then
                 sudo sed -i "s|Exec=kitty|Exec=$HOME/.local/kitty.app/bin/kitty|g" ~/.local/share/applications/kitty*.desktop
                 sudo chmod a+x $HOME/.local/kitty.app/share/applications/kitty-open.desktop $HOME/.local/kitty.app/share/applications/kitty.desktop $HOME/.local/share/applications/kitty-open.desktop $HOME/.local/share/applications/kitty.desktop
             fi
-        else
-            print_centered_message "${GREEN} kitty 已安装，跳过安装。${NC}" "true" "false"
+            print_centered_message "${GREEN} kitty 安装完成 ✅${NC}" "true" "false"
+
         fi
 
         # =================================结束安装 kitty=================================
@@ -171,34 +194,58 @@ elif [[ $(uname -s) == "Linux" ]]; then
 
             git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
             yes | $HOME/.fzf/install --no-update-rc
-            print_centered_message "${GREEN} fzf 安装完成 ✅${NC}" "false" "false"
+
+            # 将 fzf 二进制文件复制到标准的系统路径
+            sudo cp "$HOME/fzf/bin/fzf" /usr/local/bin/
+
+            # 清理安装目录
+            rm -rf "$HOME/.fzf"
+            print_centered_message "${GREEN} fzf 安装完成 ✅${NC}" "true" "false"
         fi
         # =================================结束安装 fzf=================================
 
+        # =================================开始安装 rustc=================================
+        if command -v rustc >/dev/null 2>&1; then
+            print_centered_message "${GREEN}rustc 已安装，跳过安装。${NC}" "true" "false"
+        else
+
+            # 安装 rustup，这使得 rustc 的版本是最新的。
+
+            # 1. 创建系统级安装目录并设置权限
+            sudo mkdir -p /usr/local/cargo /usr/local/rustup
+            sudo chown root:root /usr/local/cargo /usr/local/rustup
+
+            # 2. 通过 rustup 脚本安装并指定系统目录
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sudo CARGO_HOME=/usr/local/cargo RUSTUP_HOME=/usr/local/rustup sh -s -- -y
+
+            # 3. 将二进制文件链接到系统 PATH 目录
+            sudo ln -s /usr/local/cargo/bin/* /usr/local/bin/
+
+            print_centered_message "${GREEN} rustc 安装完成 ✅${NC}" "true" "false"
+        fi
+        # =================================结束安装 rustc=================================
+
         # =================================开始安装 eza=================================
         if command -v eza >/dev/null 2>&1; then
-            print_centered_message "${GREEN}eza 已安装，跳过安装。${NC}" "true" "true"
+            print_centered_message "${GREEN}eza 已安装，跳过安装。${NC}" "true" "false"
         else
             print_centered_message "${GREEN}开始安装 eza... ${NC}" "true" "false"
-            # 安装 rustup，这使得 rustc 的版本是最新的，并且顺便安装 cargo
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-            # 引入环境变量
-            export PATH="$HOME/.cargo/bin:$PATH"
-            # 安装 eza, 在 oracular (24.10)  之后的 Ubuntu 发行版才有 eza
+
+            # 安装 eza
             cargo install eza
-            print_centered_message "${GREEN} eza 安装完成 ✅${NC}" "false" "true"
+            print_centered_message "${GREEN} eza 安装完成 ✅${NC}" "true" "false"
         fi
         # =================================结束安装 eza=================================
 
         # =================================开始安装 fd=================================
 
         if command -v fd >/dev/null 2>&1; then
-            print_centered_message "${GREEN}fd 已安装，跳过安装。${NC}" "false" "true"
+            print_centered_message "${GREEN}fd 已安装，跳过安装。${NC}" "true" "false"
         else
             print_centered_message "${GREEN}开始安装 fd... ${NC}" "true" "false"
             cargo install fd-find
             sudo ln -s $(which fd-find) /usr/local/bin/fd
-            print_centered_message "${GREEN} fd 安装完成 ✅${NC}" "false" "true"
+            print_centered_message "${GREEN} fd 安装完成 ✅${NC}" "true" "false"
         fi
 
         # =================================结束安装 fd=================================
@@ -206,11 +253,11 @@ elif [[ $(uname -s) == "Linux" ]]; then
         # =================================开始安装 rg=================================
 
         if command -v rg >/dev/null 2>&1; then
-            print_centered_message "${GREEN}rg 已安装，跳过安装。${NC}" "false" "true"
+            print_centered_message "${GREEN}rg 已安装，跳过安装。${NC}" "true" "false"
         else
             print_centered_message "${GREEN}开始安装 rg... ${NC}" "true" "false"
             cargo install ripgrep
-            print_centered_message "${GREEN} rg 安装完成 ✅${NC}" "false" "true"
+            print_centered_message "${GREEN} rg 安装完成 ✅${NC}" "true" "false"
         fi
 
         # =================================结束安装 rg=================================

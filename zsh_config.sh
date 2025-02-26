@@ -70,12 +70,24 @@ if [[ $(uname -s) == "Darwin" ]]; then
         brew install -y fd
     fi
 
+    if ! command -v rg >/dev/null 2>&1; then
+        brew install -y rg
+    fi
+
     if ! command -v kitty >/dev/null 2>&1; then
         brew install -y kitty
     fi
 
     if ! command -v bat >/dev/null 2>&1; then
         brew install -y bat
+    fi
+
+    if ! command -v rust >/dev/null 2>&1; then
+        brew install -y rust
+    fi
+
+    if ! command -v fastfetch >/dev/null 2>&1; then
+        brew install -y fastfetch
     fi
 
 elif [[ $(uname -s) == "Linux" ]]; then
@@ -216,18 +228,15 @@ elif [[ $(uname -s) == "Linux" ]]; then
 
             # 1. 创建系统级安装目录并设置权限
             sudo mkdir -p /opt/rust/{cargo,rustup}
-            sudo chmod -R a+rw /opt/rust/cargo /opt/rust/rustup  # 开放所有用户读写权限
+            sudo chmod -R a+rw /opt/rust/cargo /opt/rust/rustup # 开放所有用户读写权限
             export CARGO_HOME=/opt/rust/cargo
             export RUSTUP_HOME=/opt/rust/rustup
 
             # 2. 通过 rustup 脚本安装并指定系统目录
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
 
-            # 3. 将二进制文件链接到系统 PATH 目录
-            sudo ln -s /opt/rust/cargo/bin/* /usr/bin/
-            # 4. 更新工具链到最新版本
+            # 3. 更新工具链到最新版本
             sudo -E rustup update # -E：保留环境变量（确保 CARGO_HOME 和 RUSTUP_HOME 生效）。
-
 
             print_centered_message "${GREEN} rustc 安装完成 ✅${NC}" "false" "false"
         fi
@@ -269,6 +278,9 @@ elif [[ $(uname -s) == "Linux" ]]; then
 
         # =================================结束安装 rg=================================
 
+        # 将二进制文件链接到系统 PATH 目录（在最后的 cargo install 执行）
+        sudo ln -s /opt/rust/cargo/bin/* /usr/bin/
+
     elif [[ $os_type == "fedora" ]]; then
         if ! command -v fzf >/dev/null 2>&1; then
             sudo dnf install -y fzf
@@ -296,8 +308,16 @@ elif [[ $(uname -s) == "Linux" ]]; then
             sudo dnf install -y fd
         fi
 
+        if ! command -v rg >/dev/null 2>&1; then
+            sudo dnf install -y rg
+        fi
+
         if ! command -v bat >/dev/null 2>&1; then
             sudo dnf install -y bat
+        fi
+
+        if ! command -v fastfetch >/dev/null 2>&1; then
+            sudo dnf install -y fastfetch
         fi
 
     else

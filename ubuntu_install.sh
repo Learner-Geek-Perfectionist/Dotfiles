@@ -102,7 +102,7 @@ else
         sudo chmod a+x $HOME/.local/kitty.app/share/applications/kitty-open.desktop $HOME/.local/kitty.app/share/applications/kitty.desktop $HOME/.local/share/applications/kitty-open.desktop $HOME/.local/share/applications/kitty.desktop
     fi
     # 将 kitty 二进制文件复制到标准的系统路径
-    sudo cp -r "$HOME/.local/kitty.app/bin/*" /usr/bin/
+    sudo cp -r $HOME/.local/kitty.app/bin/* /usr/bin/
     print_centered_message "${GREEN} kitty 安装完成 ✅${NC}" "false" "false"
 
 fi

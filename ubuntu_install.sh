@@ -160,10 +160,12 @@ else
     sudo chown root:root /usr/local/cargo /usr/local/rustup
 
     # 2. 通过 rustup 脚本安装并指定系统目录
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sudo CARGO_HOME=/usr/local/cargo RUSTUP_HOME=/usr/local/rustup sh -s -- -y
-
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sudo sh -s -- -y CARGO_HOME=/usr/local/cargo RUSTUP_HOME=/usr/local/rustup
     # 3. 将二进制文件链接到系统 PATH 目录
-    sudo ln -s /usr/local/cargo/bin/* /usr/local/bin/
+    sudo ln -s /usr/local/cargo/bin/rustc /usr/local/bin/rustc
+    sudo ln -s /usr/local/cargo/bin/cargo /usr/local/bin/cargo
+    # 4.设置默认 Rust 工具链
+    rustup default stable
 
     print_centered_message "${GREEN} rustc 安装完成 ✅${NC}" "false" "false"
 fi

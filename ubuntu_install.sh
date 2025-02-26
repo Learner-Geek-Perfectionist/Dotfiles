@@ -17,6 +17,7 @@ sudo apt update && sudo apt upgrade -y
 setup_kotlin_environment
 # 安装 Kotlin/Native
 download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR
+download_and_extract_kotlin $KOTLIN_COMPILER_URL $COMPILER_INSTALL_DIR
 # =================================结束安装 Kotlin/Native =================================
 
 # 安装 ubuntu 包

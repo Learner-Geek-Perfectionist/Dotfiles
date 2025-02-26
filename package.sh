@@ -54,7 +54,6 @@ packages_ubuntu=(
     graphviz
     sudo
     tcpdump
-    kotlin
     golang
     valgrind
     curl

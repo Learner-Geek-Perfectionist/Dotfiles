@@ -171,7 +171,7 @@ fi
 # =================================开始安装 fd=================================
 
 if command -v fd >/dev/null 2>&1; then
-    print_centered_message "${GREEN}fd 已安装，跳过安装。${NC}" "true" "true"
+    print_centered_message "${GREEN}fd 已安装，跳过安装。${NC}" "false" "true"
 else
     print_centered_message "${GREEN}开始安装 fd... ${NC}" "true" "false"
     cargo install fd-find
@@ -185,7 +185,7 @@ fi
 # =================================开始安装 rg=================================
 
 if command -v rg >/dev/null 2>&1; then
-    print_centered_message "${GREEN}rg 已安装，跳过安装。${NC}" "true" "true"
+    print_centered_message "${GREEN}rg 已安装，跳过安装。${NC}" "false" "true"
 else
     print_centered_message "${GREEN}开始安装 rg... ${NC}" "true" "false"
     cargo install ripgrep

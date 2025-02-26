@@ -30,7 +30,6 @@ brew_formulas=(
 packages_ubuntu_22_04_plus=(
     openssh-server
     debconf-utils
-    fastfetch
     ncurses-bin
     net-tools
     git

@@ -193,7 +193,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
                 sudo chmod a+x $HOME/.local/kitty.app/share/applications/kitty-open.desktop $HOME/.local/kitty.app/share/applications/kitty.desktop $HOME/.local/share/applications/kitty-open.desktop $HOME/.local/share/applications/kitty.desktop
             fi
             # 将 kitty 二进制文件复制到标准的系统路径
-            sudo cp -r "$HOME/.local/kitty.app/bin" /usr/bin/kitty
+            sudo cp -r $HOME/.local/kitty.app/bin/* /usr/bin/
             print_centered_message "${GREEN} kitty 安装完成 ✅${NC}" "false" "false"
 
         fi
@@ -234,13 +234,14 @@ elif [[ $(uname -s) == "Linux" ]]; then
 
             # 2. 通过 rustup 脚本安装并指定系统目录
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
-
-            # 3. 更新工具链到最新版本
+            # 3. 链接 cargo、rustc、rustup 到 PATH 中
+            sudo ln -s /opt/rust/cargo/bin/* /usr/bin/
+            # 4. 更新工具链到最新版本
             sudo -E rustup update # -E：保留环境变量（确保 CARGO_HOME 和 RUSTUP_HOME 生效）。
 
             print_centered_message "${GREEN} rustc 安装完成 ✅${NC}" "false" "false"
         fi
-        # =================================结束安装 rustc==================================
+        # =================================结束安装 rustc=================================
 
         # =================================开始安装 eza=================================
         if command -v eza >/dev/null 2>&1; then
@@ -250,6 +251,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
 
             # 安装 eza
             cargo install eza
+            sudo ln -s /opt/rust/cargo/bin/eza /usr/bin/
             print_centered_message "${GREEN} eza 安装完成 ✅${NC}" "false" "true"
         fi
         # =================================结束安装 eza=================================
@@ -261,6 +263,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
         else
             print_centered_message "${GREEN}开始安装 fd... ${NC}" "false" "false"
             cargo install fd-find
+            sudo ln -s /opt/rust/cargo/bin/fd /usr/bin/
             print_centered_message "${GREEN} fd 安装完成 ✅${NC}" "false" "false"
         fi
 
@@ -273,6 +276,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
         else
             print_centered_message "${GREEN}开始安装 rg... ${NC}" "true" "false"
             cargo install ripgrep
+            sudo ln -s /opt/rust/cargo/bin/rg /usr/bin/
             print_centered_message "${GREEN} rg 安装完成 ✅${NC}" "false" "true"
         fi
 

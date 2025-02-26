@@ -121,7 +121,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
             cd ~
             rm -rf ~/fastfetch
 
-            print_centered_message "${GREEN} ${FILE_NAME} 安装完成 ✅${NC}" "false" "true"
+            print_centered_message "${GREEN} fastfetch 安装完成 ✅${NC}" "false" "true"
 
         fi
         # =================================结束安装 fastfetch=================================
@@ -153,7 +153,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
             if curl -s -O "$TERMINFO_URL"; then
                 echo "Installing kitty-terminfo..."
                 if sudo dpkg -i "kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb"; then
-                    echo -e "${GREEN}kitty 安装完成 ✅${NC}"
+                    echo -e "${GREEN}kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb 安装完成 ${NC}"
                 else
                     echo -e "${RED}Installation failed.${NC}"
                     exit 1

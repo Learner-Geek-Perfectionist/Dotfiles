@@ -26,7 +26,6 @@ install_packages "packages_ubuntu"
 # 取消最小化安装
 sudo apt update -y && sudo apt upgrade -y && sudo apt search unminimize 2>/dev/null | grep -q "^unminimize/" && (sudo apt install unminimize -y && yes | sudo unminimize) || echo -e "${RED}unminimize包不可用。${NC}"
 
-
 # =================================开始安装 fastfetch=================================
 if command -v fastfetch >/dev/null 2>&1; then
     print_centered_message "${GREEN} fastfetch 已安装，跳过安装。${NC}" "true" "true"
@@ -43,7 +42,7 @@ else
     cd ~
     rm -rf ~/fastfetch
 
-    print_centered_message "${GREEN} ${FILE_NAME} 安装完成 ✅${NC}" "false" "true"
+    print_centered_message "${GREEN} fastfetch 安装完成 ✅${NC}" "false" "true"
 
 fi
 # =================================结束安装 fastfetch=================================
@@ -75,7 +74,7 @@ else
     if curl -s -O "$TERMINFO_URL"; then
         echo "Installing kitty-terminfo..."
         if sudo dpkg -i "kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb"; then
-            echo -e "${GREEN}kitty 安装完成 ✅${NC}"
+            echo -e "${GREEN}kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb 安装完成 ${NC}"
         else
             echo -e "${RED}Installation failed.${NC}"
             exit 1
@@ -138,7 +137,7 @@ else
 
     # 1. 创建系统级安装目录并设置权限
     sudo mkdir -p /opt/rust/{cargo,rustup}
-    sudo chmod -R a+rw /opt/rust/cargo /opt/rust/rustup  # 开放所有用户读写权限
+    sudo chmod -R a+rw /opt/rust/cargo /opt/rust/rustup # 开放所有用户读写权限
     export CARGO_HOME=/opt/rust/cargo
     export RUSTUP_HOME=/opt/rust/rustup
 
@@ -149,7 +148,6 @@ else
     sudo ln -s /opt/rust/cargo/bin/* /usr/local/bin/
     # 4. 更新工具链到最新版本
     sudo -E rustup update # -E：保留环境变量（确保 CARGO_HOME 和 RUSTUP_HOME 生效）。
-
 
     print_centered_message "${GREEN} rustc 安装完成 ✅${NC}" "false" "false"
 fi

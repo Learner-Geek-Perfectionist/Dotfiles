@@ -64,7 +64,6 @@ packages_ubuntu=(
     tshark
     autoconf
     systemd
-    cargo
     language-pack-zh-hans
     bat
     chafa

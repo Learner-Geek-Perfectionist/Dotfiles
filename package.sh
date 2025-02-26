@@ -62,7 +62,6 @@ packages_ubuntu=(
     man-db
     jq
     tshark
-    hyperfine
     autoconf
     systemd
     cargo

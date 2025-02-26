@@ -6,23 +6,36 @@ set -e
 # 设置国内源
 sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list && sudo apt update && sudo apt upgrade -y
 
+# 获取Ubuntu版本号并比较
+if [[ $(echo "$(lsb_release -sr) >= 22.04" | bc) -eq 1 ]]; then
+    install_packages "packages_ubuntu_22_04_plus"
+else
+    download_and_extract_kotlin $KOTLIN_COMPILER_URL $COMPILER_INSTALL_DIR
+    install_packages "packages_ubuntu_20_04"
+
+fi
+
+# 取消最小化安装
+sudo apt update -y && sudo apt upgrade -y && sudo apt search unminimize 2>/dev/null | grep -q "^unminimize/" && (sudo apt install unminimize -y && yes | sudo unminimize) || echo -e "${RED}unminimize包不可用。${NC}"
+
 # =================================开始安装 wireshark=================================
 if command -v wireshark >/dev/null 2>&1; then
-    print_centered_message "${GREEN}Wireshark 已安装，跳过安装。${NC}" "true" "false"
+    print_centered_message "${GREEN}Wireshark 已安装，跳过安装。${NC}" "true" "true"
 else
     print_centered_message "${GREEN}开始安装 wireshark${NC}" "true" "false"
     sudo DEBIAN_FRONTEND=noninteractive add-apt-repository -y ppa:wireshark-dev/stable
     sudo DEBIAN_FRONTEND=noninteractive apt install -y wireshark
 
-    print_centered_message "${GREEN} wireshark 安装完成 ✅${NC}" "true" "false"
+    print_centered_message "${GREEN} wireshark 安装完成 ✅${NC}" "false" "true"
 
 fi
 # =================================结束安装 wireshark=================================
 
 # =================================开始安装 fastfetch=================================
 if command -v fastfetch >/dev/null 2>&1; then
-    print_centered_message "${GREEN} fastfetch 已安装，跳过安装。${NC}" "true" "false"
+    print_centered_message "${GREEN} fastfetch 已安装，跳过安装。${NC}" "false" "false"
 else
+    print_centered_message "${GREEN}开始安装 wireshark${NC}" "false" "false"
     git clone https://github.com/fastfetch-cli/fastfetch ~/fastfetch
     cd ~/fastfetch
     mkdir build && cd build
@@ -34,14 +47,14 @@ else
     cd ~
     rm -rf ~/fastfetch
 
-    print_centered_message "${GREEN} ${FILE_NAME} 安装完成 ✅${NC}" "true" "false"
+    print_centered_message "${GREEN} ${FILE_NAME} 安装完成 ✅${NC}" "false" "false"
 
 fi
 # =================================结束安装 fastfetch=================================
 
 # =================================开始安装 kitty=================================
 if command -v kitty >/dev/null 2>&1; then
-    print_centered_message "${GREEN} kitty 已安装，跳过安装。${NC}" "true" "false"
+    print_centered_message "${GREEN} kitty 已安装，跳过安装。${NC}" "true" "true"
 else
     print_centered_message "${GREEN}开始安装 kitty... ${NC}" "true" "false"
     curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n
@@ -95,7 +108,7 @@ else
     fi
     # 将 kitty 二进制文件复制到标准的系统路径
     sudo cp "$HOME/.local/kitty.app/bin" /usr/local/bin/
-    print_centered_message "${GREEN} kitty 安装完成 ✅${NC}" "true" "false"
+    print_centered_message "${GREEN} kitty 安装完成 ✅${NC}" "false" "true"
 
 fi
 
@@ -103,9 +116,9 @@ fi
 
 # =================================开始安装 fzf=================================
 if command -v fzf >/dev/null 2>&1; then
-    print_centered_message "${GREEN}fzf 已安装，跳过安装。${NC}" "true" "false"
+    print_centered_message "${GREEN}fzf 已安装，跳过安装。${NC}" "false" "false"
 else
-    print_centered_message "${GREEN}开始安装 fzf... ${NC}" "true" "false"
+    print_centered_message "${GREEN}开始安装 fzf... ${NC}" "false" "false"
     [[ -d "$HOME/.fzf" ]] && rm -rf "$HOME/.fzf"
 
     git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
@@ -116,15 +129,15 @@ else
 
     # 清理安装目录
     rm -rf "$HOME/.fzf"
-    print_centered_message "${GREEN} fzf 安装完成 ✅${NC}" "true" "false"
+    print_centered_message "${GREEN} fzf 安装完成 ✅${NC}" "false" "false"
 fi
 # =================================结束安装 fzf=================================
 
 # =================================开始安装 rustc=================================
 if command -v rustc >/dev/null 2>&1; then
-    print_centered_message "${GREEN}rustc 已安装，跳过安装。${NC}" "true" "false"
+    print_centered_message "${GREEN}rustc 已安装，跳过安装。${NC}" "true" "true"
 else
-
+    print_centered_message "${GREEN}开始安装 rustc...${NC}" "true" "false"
     # 安装 rustup，这使得 rustc 的版本是最新的。
 
     # 1. 创建系统级安装目录并设置权限
@@ -137,53 +150,31 @@ else
     # 3. 将二进制文件链接到系统 PATH 目录
     sudo ln -s /usr/local/cargo/bin/* /usr/local/bin/
 
-    print_centered_message "${GREEN} rustc 安装完成 ✅${NC}" "true" "false"
+    print_centered_message "${GREEN} rustc 安装完成 ✅${NC}" "false" "true"
 fi
 # =================================结束安装 rustc=================================
 
-# =================================开始安装 Kotlin/Native =================================
-# 设置 Kotlin 的变量
-setup_kotlin_environment
-# 安装 Kotlin/Native
-download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR
-# =================================结束安装 Kotlin/Native =================================
-
-# 更新索引
-sudo apt update && sudo apt upgrade -y
-
-# 获取Ubuntu版本号并比较
-if [[ $(echo "$(lsb_release -sr) >= 22.04" | bc) -eq 1 ]]; then
-    install_packages "packages_ubuntu_22_04_plus"
-else
-    download_and_extract_kotlin $KOTLIN_COMPILER_URL $COMPILER_INSTALL_DIR
-    install_packages "packages_ubuntu_20_04"
-
-fi
-
-# 取消最小化安装
-sudo apt update -y && sudo apt upgrade -y && sudo apt search unminimize 2>/dev/null | grep -q "^unminimize/" && (sudo apt install unminimize -y && yes | sudo unminimize) || echo -e "${RED}unminimize包不可用。${NC}"
-
 # =================================开始安装 eza=================================
 if command -v eza >/dev/null 2>&1; then
-    print_centered_message "${GREEN}eza 已安装，跳过安装。${NC}" "true" "false"
+    print_centered_message "${GREEN}eza 已安装，跳过安装。${NC}" "false" "false"
 else
-    print_centered_message "${GREEN}开始安装 eza... ${NC}" "true" "false"
+    print_centered_message "${GREEN}开始安装 eza... ${NC}" "false" "false"
 
     # 安装 eza
     cargo install eza
-    print_centered_message "${GREEN} eza 安装完成 ✅${NC}" "true" "false"
+    print_centered_message "${GREEN} eza 安装完成 ✅${NC}" "false" "false"
 fi
 # =================================结束安装 eza=================================
 
 # =================================开始安装 fd=================================
 
 if command -v fd >/dev/null 2>&1; then
-    print_centered_message "${GREEN}fd 已安装，跳过安装。${NC}" "true" "false"
+    print_centered_message "${GREEN}fd 已安装，跳过安装。${NC}" "true" "true"
 else
     print_centered_message "${GREEN}开始安装 fd... ${NC}" "true" "false"
     cargo install fd-find
     sudo ln -s $(which fd-find) /usr/local/bin/fd
-    print_centered_message "${GREEN} fd 安装完成 ✅${NC}" "true" "false"
+    print_centered_message "${GREEN} fd 安装完成 ✅${NC}" "false" "true"
 fi
 
 # =================================结束安装 fd=================================
@@ -191,14 +182,23 @@ fi
 # =================================开始安装 rg=================================
 
 if command -v rg >/dev/null 2>&1; then
-    print_centered_message "${GREEN}rg 已安装，跳过安装。${NC}" "true" "false"
+    print_centered_message "${GREEN}rg 已安装，跳过安装。${NC}" "false" "false"
 else
-    print_centered_message "${GREEN}开始安装 rg... ${NC}" "true" "false"
+    print_centered_message "${GREEN}开始安装 rg... ${NC}" "false" "false"
     cargo install ripgrep
-    print_centered_message "${GREEN} rg 安装完成 ✅${NC}" "true" "false"
+    print_centered_message "${GREEN} rg 安装完成 ✅${NC}" "false" "false"
 fi
 
 # =================================结束安装 rg=================================
+
+
+
+# =================================开始安装 Kotlin/Native =================================
+# 设置 Kotlin 的变量
+setup_kotlin_environment
+# 安装 Kotlin/Native
+download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR
+# =================================结束安装 Kotlin/Native =================================
 
 # 设置时区
 sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime

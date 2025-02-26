@@ -74,6 +74,10 @@ if [[ $(uname -s) == "Darwin" ]]; then
         brew install -y kitty
     fi
 
+    if ! command -v bat >/dev/null 2>&1; then
+        brew install -y bat
+    fi
+
 elif [[ $(uname -s) == "Linux" ]]; then
 
     # 检测操作系统
@@ -90,15 +94,15 @@ elif [[ $(uname -s) == "Linux" ]]; then
             sudo apt install -y zsh
         fi
 
-        if ! command -v fd-find >/dev/null 2>&1; then
-            sudo apt install -y fd-find
-        fi
-
         if ! command -v git >/dev/null 2>&1; then
             sudo apt install -y git
         fi
         if ! command -v curl >/dev/null 2>&1; then
             sudo apt install -y curl
+        fi
+
+        if ! command -v bat >/dev/null 2>&1; then
+            sudo apt install -y bat
         fi
         # =================================开始安装 kitty=================================
         if ! command -v kitty >/dev/null 2>&1; then
@@ -199,7 +203,6 @@ elif [[ $(uname -s) == "Linux" ]]; then
 
         # =================================结束安装 fd=================================
 
-
         # =================================开始安装 rg=================================
 
         if command -v rg >/dev/null 2>&1; then
@@ -237,6 +240,10 @@ elif [[ $(uname -s) == "Linux" ]]; then
 
         if ! command -v fd >/dev/null 2>&1; then
             sudo dnf install -y fd
+        fi
+
+        if ! command -v bat >/dev/null 2>&1; then
+            sudo dnf install -y bat
         fi
 
     else

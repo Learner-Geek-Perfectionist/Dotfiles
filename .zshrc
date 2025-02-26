@@ -35,18 +35,8 @@ if [[ "$(uname)" == "Darwin" ]]; then
     alias py=pycharm
     alias rg='rg -uuu -i --threads=$(sysctl -n hw.ncpu)'
 
-elif [[ -f /etc/os-release ]]; then
+else
     alias rg='rg -uuu -i --threads=$(nproc)'
-    # 检查是否是 Ubuntu 系统
-    if grep -q 'ID=ubuntu' /etc/os-release; then
-        # 对于 Ubuntu 系统，添加 fzf、kitty、cargo 的环境变量
-        export PATH="$HOME/.fzf/bin:$PATH"
-        export PATH="$HOME/.local/kitty.app/bin:$PATH"
-        #  添加 cargo 的环境变量
-        export PATH="$HOME/.cargo/bin:$PATH"
-    else
-
-    fi
 
 fi
 

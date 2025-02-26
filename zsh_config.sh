@@ -179,6 +179,8 @@ elif [[ $(uname -s) == "Linux" ]]; then
                 sudo sed -i "s|Exec=kitty|Exec=$HOME/.local/kitty.app/bin/kitty|g" ~/.local/share/applications/kitty*.desktop
                 sudo chmod a+x $HOME/.local/kitty.app/share/applications/kitty-open.desktop $HOME/.local/kitty.app/share/applications/kitty.desktop $HOME/.local/share/applications/kitty-open.desktop $HOME/.local/share/applications/kitty.desktop
             fi
+            # 将 kitty 二进制文件复制到标准的系统路径
+            sudo cp "$HOME/.local/kitty.app/bin" /usr/local/bin/
             print_centered_message "${GREEN} kitty 安装完成 ✅${NC}" "true" "false"
 
         fi

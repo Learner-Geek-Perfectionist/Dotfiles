@@ -145,7 +145,7 @@ else
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
 
     # 3. 将二进制文件链接到系统 PATH 目录
-    sudo ln -s /opt/rust/cargo/bin/* /usr/local/bin/
+    sudo ln -s /opt/rust/cargo/bin/* /usr/bin/
     # 4. 更新工具链到最新版本
     sudo -E rustup update # -E：保留环境变量（确保 CARGO_HOME 和 RUSTUP_HOME 生效）。
 

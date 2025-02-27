@@ -182,8 +182,8 @@ elif [[ $(uname -s) == "Linux" ]]; then
             if grep -qi microsoft /proc/version || [[ "$AUTO_RUN" == "true" ]]; then
                 print_centered_message "${RED}在 WSL2 中或者 Dockerfile 中不需要安装 kitty 桌面图标${NC}" "false" "false"
             else
-                mkdir -p /usr/local/bin/ ~/.local/share/applications/
-                sudo ln -s ~/.local/kitty.app/bin/kitty /usr/local/bin/
+                mkdir -p  ~/.local/share/applications/
+                sudo ln -s ~/.local/kitty.app/bin/kitty /usr/bin/
                 # For Application Launcher:
                 sudo cp ~/.local/kitty.app/share/applications/kitty.desktop ~/.local/share/applications/
                 sudo cp ~/.local/kitty.app/share/applications/kitty-open.desktop ~/.local/share/applications/
@@ -192,8 +192,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
                 sudo sed -i "s|Exec=kitty|Exec=$HOME/.local/kitty.app/bin/kitty|g" ~/.local/share/applications/kitty*.desktop
                 sudo chmod a+x $HOME/.local/kitty.app/share/applications/kitty-open.desktop $HOME/.local/kitty.app/share/applications/kitty.desktop $HOME/.local/share/applications/kitty-open.desktop $HOME/.local/share/applications/kitty.desktop
             fi
-            # 将 kitty 二进制文件复制到标准的系统路径
-            sudo cp -r $HOME/.local/kitty.app/bin/* /usr/bin/
+
             print_centered_message "${GREEN} kitty 安装完成 ✅${NC}" "false" "false"
 
         fi
@@ -224,7 +223,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
             print_centered_message "${GREEN}rustc 已安装，跳过安装。${NC}" "false" "false"
         else
             print_centered_message "${GREEN}开始安装 rustc...${NC}" "false" "false"
-            # 安装 rustup，这使得 rustc 的版本是最新的。
+            # 安装 rustup
 
             # 1. 创建系统级安装目录并设置权限
             sudo mkdir -p /opt/rust/{cargo,rustup}
@@ -234,11 +233,14 @@ elif [[ $(uname -s) == "Linux" ]]; then
 
             # 2. 通过 rustup 脚本安装并指定系统目录
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
-            # 3. 链接 cargo、rustc、rustup 到 PATH 中
+            # 3. 链接 cargo、rustc、rustup 到系统的PATH 中
             sudo ln -s /opt/rust/cargo/bin/* /usr/bin/
             # 4. 更新工具链到最新版本
             sudo -E rustup update # -E：保留环境变量（确保 CARGO_HOME 和 RUSTUP_HOME 生效）。
 
+            # 5. 初始化 rustup 环境
+            rustup default stable
+            # rustup 安装在 RUSTUP_HOME；cargo 以及 R 语言编写的工具 都安装在 CARGO_HOME（但是符号链接在 /usr/bin），
             print_centered_message "${GREEN} rustc 安装完成 ✅${NC}" "false" "false"
         fi
         # =================================结束安装 rustc=================================

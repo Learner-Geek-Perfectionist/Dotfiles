@@ -19,7 +19,7 @@ brew_formulas=(
     c-ares htop lua neovim tree-sitter bash tcpdump
     ca-certificates icu4c luajit node unibilium
     cmake libnghttp2 luv openssl@3 vim perl
-    cmake-docs libsodium lz4 pcre2 xz llvm
+    cmake-docs libsodium lz4 pcre2 xz llvm rustup
     fastfetch libuv lzip z3 tree rust autoconf
     fd libvterm make readline zstd eza less
     fzf libyaml mpdecimal ripgrep go coreutils
@@ -106,7 +106,8 @@ packages_fedora=(
     tcpdump
     java-latest-openjdk
     golang
-    rust
+    rustup
+    rustup
     glibc-locale-source
     glibc-langpack-zh
     langpacks-zh_CN

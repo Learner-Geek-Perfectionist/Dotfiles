@@ -20,7 +20,6 @@ sudo dnf install -y --setopt=tsflags= coreutils coreutils-common man-pages man-d
 install_packages "packages_fedora"
 
 
-
 # 设置时区
 sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 echo "Asia/Shanghai" | sudo tee /etc/timezone > /dev/null

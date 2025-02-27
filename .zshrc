@@ -37,7 +37,8 @@ if [[ "$(uname)" == "Darwin" ]]; then
 
 else
     alias rg='rg -uuu -i --threads=$(nproc)'
-
+    export RUSTUP_HOME=/opt/rust/rustup
+    export CARGO_HOME=/opt/rust/cargo
 
 fi
 

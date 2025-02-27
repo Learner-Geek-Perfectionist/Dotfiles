@@ -235,12 +235,11 @@ elif [[ $(uname -s) == "Linux" ]]; then
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
             # 3. 链接 cargo、rustc、rustup 到系统的PATH 中
             sudo ln -s /opt/rust/cargo/bin/* /usr/bin/
-            # 4. 更新工具链到最新版本
-            sudo -E rustup update # -E：保留环境变量（确保 CARGO_HOME 和 RUSTUP_HOME 生效）。
-
+            # 4. -E 保持了环境变量
+            sudo -E rustup update
             # 5. 初始化 rustup 环境
             rustup default stable
-            # rustup 安装在 RUSTUP_HOME；cargo 以及 R 语言编写的工具 都安装在 CARGO_HOME（但是符号链接在 /usr/bin），
+            # .rustup目录 安装在 RUSTUP_HOME；cargo、rustc、rustup、eza、rg、fd 都安装在 CARGO_HOME（但是它们符号链接在 /usr/bin/）
             print_centered_message "${GREEN} rustc 安装完成 ✅${NC}" "false" "false"
         fi
         # =================================结束安装 rustc=================================

@@ -106,8 +106,6 @@ packages_fedora=(
     tcpdump
     java-latest-openjdk
     golang
-    rustup
-    rustup
     glibc-locale-source
     glibc-langpack-zh
     langpacks-zh_CN

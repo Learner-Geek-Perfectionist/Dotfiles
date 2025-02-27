@@ -37,11 +37,11 @@ if [[ "$(uname)" == "Darwin" ]]; then
 
 else
     alias rg='rg -uuu -i --threads=$(nproc)'
-    export RUSTUP_HOME=/opt/rust/rustup
-    export CARGO_HOME=/opt/rust/cargo
 
 fi
 # rust 工具的环境变量
+export RUSTUP_HOME=/opt/rust/rustup
+export CARGO_HOME=/opt/rust/cargo
 export PATH="/opt/rust/cargo/bin:$PATH"
 
 INSTALL_DIR="/opt/kotlin-native/"

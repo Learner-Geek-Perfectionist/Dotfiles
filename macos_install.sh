@@ -3,9 +3,9 @@
 # macOS 逻辑
 print_centered_message "${CYAN}检测到操作系统为: macOS${NC}" "true" "false"
 
-if ! xcode-select --version &> /dev/null; then
+if ! xcode-select --version &>/dev/null; then
     print_centered_message "${RED}⚠️ Xcode 命令行工具未安装${NC}" "true" "false"
-    xcode-select --install 2> /dev/null
+    xcode-select --install 2>/dev/null
     print_centered_message "${RED}请手动点击屏幕中的弹窗，选择"安装"，安装完成之后再次运行脚本(提示命令通常在终端的背面)${NC}" "false" "false"
     echo -e "${RED}脚本命令: ${NC}"
     print_centered_message "${RED}/bin/zsh -c \"$(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/install.sh)\"${NC}" "false" "true"
@@ -15,7 +15,7 @@ fi
 sudo xcode-select --reset
 
 # 检查 Homebrew 是否已安装
-if command -v brew > /dev/null 2>&1; then
+if command -v brew >/dev/null 2>&1; then
     print_centered_message "${GREEN}Homebrew 已经安装${NC}" "true" "false"
 else
     print_centered_message "${GREEN}正在安装 Homebrew...${NC}" "true" "false"
@@ -48,29 +48,36 @@ brew install --cask maczip
 ## 安装 squirrel 输入法
 #brew install --cask squirrel
 
-# 1. 创建系统级安装目录并设置权限
-sudo mkdir -p /opt/rust/{cargo,rustup}
-sudo chmod -R a+rw /opt/rust/cargo /opt/rust/rustup # 开放所有用户读写权限
-export CARGO_HOME=/opt/rust/cargo
-export RUSTUP_HOME=/opt/rust/rustup
+# =================================开始安装 rustc=================================
+if command -v rustc >/dev/null 2>&1; then
+    print_centered_message "${GREEN}rustc 已安装，跳过安装。${NC}" "false" "false"
+else
+    print_centered_message "${GREEN}开始安装 rustc...${NC}" "false" "false"
+    # 安装 rustup
 
-# 2. 通过 rustup 脚本安装并指定系统目录
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
-# 3. 链接 cargo、rustc、rustup 到系统的PATH 中
-sudo ln -s /opt/rust/cargo/bin/* /usr/local/bin/
-# 4. -E 保持了环境变量
-sudo -E rustup update
-# 5. 初始化 rustup 环境
-rustup default stable
-# .rustup目录 安装在 RUSTUP_HOME；cargo、rustc、rustup、eza、rg、fd 都安装在 CARGO_HOME（但是它们符号链接在 /usr/bin/）
+    # 1. 创建系统级安装目录并设置权限
+    sudo mkdir -p /opt/rust/{cargo,rustup}
+    sudo chmod -R a+rw /opt/rust/cargo /opt/rust/rustup # 开放所有用户读写权限
+    export CARGO_HOME=/opt/rust/cargo
+    export RUSTUP_HOME=/opt/rust/rustup
 
-
+    # 2. 通过 rustup 脚本安装并指定系统目录
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
+    # 3. 链接 cargo、rustc、rustup 到系统的PATH 中
+    sudo ln -s /opt/rust/cargo/bin/* /usr/bin/
+    # 4. -E 保持了环境变量
+    sudo -E rustup update
+    # 5. 初始化 rustup 环境
+    rustup default stable
+    # .rustup目录 安装在 RUSTUP_HOME；cargo、rustc、rustup、eza、rg、fd 都安装在 CARGO_HOME（但是它们符号链接在 /usr/bin/）
+    print_centered_message "${GREEN} rustc 安装完成 ✅${NC}" "false" "false"
+fi
+# =================================结束安装 rustc=================================
 
 # 添加 Mihomo Party 的 Tap
 brew tap mihomo-party-org/mihomo-party
 # 安装
 brew install --cask mihomo-party
-
 
 print_centered_message "${GREEN}图形界面安装完成✅${NC}" "false" "false"
 

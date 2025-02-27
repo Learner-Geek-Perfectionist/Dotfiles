@@ -18,23 +18,31 @@ sudo dnf install -y --setopt=tsflags= coreutils coreutils-common man-pages man-d
 # 安装必要的工具 🔧
 install_packages "packages_fedora"
 
-# 安装 rustup
+# =================================开始安装 rustc=================================
+if command -v rustc >/dev/null 2>&1; then
+    print_centered_message "${GREEN}rustc 已安装，跳过安装。${NC}" "false" "false"
+else
+    print_centered_message "${GREEN}开始安装 rustc...${NC}" "false" "false"
+    # 安装 rustup
 
-# 1. 创建系统级安装目录并设置权限
-sudo mkdir -p /opt/rust/{cargo,rustup}
-sudo chmod -R a+rw /opt/rust/cargo /opt/rust/rustup # 开放所有用户读写权限
-export CARGO_HOME=/opt/rust/cargo
-export RUSTUP_HOME=/opt/rust/rustup
+    # 1. 创建系统级安装目录并设置权限
+    sudo mkdir -p /opt/rust/{cargo,rustup}
+    sudo chmod -R a+rw /opt/rust/cargo /opt/rust/rustup # 开放所有用户读写权限
+    export CARGO_HOME=/opt/rust/cargo
+    export RUSTUP_HOME=/opt/rust/rustup
 
-# 2. 通过 rustup 脚本安装并指定系统目录
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
-# 3. 链接 cargo、rustc、rustup 到系统的PATH 中
-sudo ln -s /opt/rust/cargo/bin/* /usr/bin/
-# 4. -E 保持了环境变量
-sudo -E rustup update
-# 5. 初始化 rustup 环境
-rustup default stable
-# .rustup目录 安装在 RUSTUP_HOME；cargo、rustc、rustup、eza、rg、fd 都安装在 CARGO_HOME（但是它们符号链接在 /usr/bin/）
+    # 2. 通过 rustup 脚本安装并指定系统目录
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
+    # 3. 链接 cargo、rustc、rustup 到系统的PATH 中
+    sudo ln -s /opt/rust/cargo/bin/* /usr/bin/
+    # 4. -E 保持了环境变量
+    sudo -E rustup update
+    # 5. 初始化 rustup 环境
+    rustup default stable
+    # .rustup目录 安装在 RUSTUP_HOME；cargo、rustc、rustup、eza、rg、fd 都安装在 CARGO_HOME（但是它们符号链接在 /usr/bin/）
+    print_centered_message "${GREEN} rustc 安装完成 ✅${NC}" "false" "false"
+fi
+# =================================结束安装 rustc=================================
 
 # 设置时区
 sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime

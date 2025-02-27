@@ -57,7 +57,7 @@ export RUSTUP_HOME=/opt/rust/rustup
 # 2. 通过 rustup 脚本安装并指定系统目录
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
 # 3. 链接 cargo、rustc、rustup 到系统的PATH 中
-sudo ln -s /opt/rust/cargo/bin/* /usr/bin/
+sudo ln -s /opt/rust/cargo/bin/* /usr/local/bin/
 # 4. -E 保持了环境变量
 sudo -E rustup update
 # 5. 初始化 rustup 环境

@@ -41,6 +41,8 @@ else
     export CARGO_HOME=/opt/rust/cargo
 
 fi
+# rust 工具的环境变量
+export PATH="/opt/rust/cargo/bin:$PATH"
 
 INSTALL_DIR="/opt/kotlin-native/"
 COMPILER_INSTALL_DIR="/opt/kotlin-compiler/kotlinc/"

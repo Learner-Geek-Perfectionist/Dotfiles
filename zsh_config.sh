@@ -210,7 +210,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
             yes | $HOME/.fzf/install --no-update-rc
 
             # 将 fzf 二进制文件复制到标准的系统路径
-            sudo cp "$HOME/.fzf/bin/fzf" /usr/bin/fzf
+            sudo cp "$HOME/.fzf/bin/fzf" /usr/bin/
 
             # 清理安装目录
             rm -rf "$HOME/.fzf"

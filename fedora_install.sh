@@ -13,16 +13,32 @@ sudo sed -e 's|^metalink=|#metalink=|g' \
     /etc/yum.repos.d/fedora.repo \
     /etc/yum.repos.d/fedora-updates.repo
 
-
 sudo dnf install -y --setopt=tsflags= coreutils coreutils-common man-pages man-db && sudo dnf group install -y --setopt=strict=0 "c-development"
 
 # 安装必要的工具 🔧
 install_packages "packages_fedora"
 
+# 安装 rustup
+
+# 1. 创建系统级安装目录并设置权限
+sudo mkdir -p /opt/rust/{cargo,rustup}
+sudo chmod -R a+rw /opt/rust/cargo /opt/rust/rustup # 开放所有用户读写权限
+export CARGO_HOME=/opt/rust/cargo
+export RUSTUP_HOME=/opt/rust/rustup
+
+# 2. 通过 rustup 脚本安装并指定系统目录
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
+# 3. 链接 cargo、rustc、rustup 到系统的PATH 中
+sudo ln -s /opt/rust/cargo/bin/* /usr/bin/
+# 4. -E 保持了环境变量
+sudo -E rustup update
+# 5. 初始化 rustup 环境
+rustup default stable
+# .rustup目录 安装在 RUSTUP_HOME；cargo、rustc、rustup、eza、rg、fd 都安装在 CARGO_HOME（但是它们符号链接在 /usr/bin/）
 
 # 设置时区
 sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-echo "Asia/Shanghai" | sudo tee /etc/timezone > /dev/null
+echo "Asia/Shanghai" | sudo tee /etc/timezone >/dev/null
 
 # 1.生成Locale数据文件（特定地区或文化环境的规则，比如日期和时间的显示格式、数字和货币的格式、文本排序规则、字符编码等)
 sudo localedef -c -f UTF-8 -i zh_CN zh_CN.UTF-8
@@ -55,4 +71,3 @@ if [ -z "$packages_to_reinstall" ]; then
 else
     sudo dnf -y reinstall $packages_to_reinstall && sudo mandb -c
 fi
-

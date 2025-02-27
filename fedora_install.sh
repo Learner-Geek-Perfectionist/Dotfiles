@@ -13,7 +13,7 @@ sudo sed -e 's|^metalink=|#metalink=|g' \
     /etc/yum.repos.d/fedora.repo \
     /etc/yum.repos.d/fedora-updates.repo
 
-sudo dnf install -y --setopt=tsflags= coreutils coreutils-common man-pages man-db && sudo dnf group install -y --setopt=strict=0 "c-development"
+sudo dnf install -y --setopt=tsflags= coreutils rustup coreutils-common man-pages man-db && sudo dnf group install -y --setopt=strict=0 "c-development"
 
 # =================================开始安装 rustc=================================
 if command -v rustc >/dev/null 2>&1; then

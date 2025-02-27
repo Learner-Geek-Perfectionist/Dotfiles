@@ -121,5 +121,4 @@ packages_fedora=(
     bat
     chafa
     lua
-    rustup
 )

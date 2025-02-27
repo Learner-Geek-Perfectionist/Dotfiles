@@ -48,6 +48,23 @@ brew install --cask maczip
 ## 安装 squirrel 输入法
 #brew install --cask squirrel
 
+# 1. 创建系统级安装目录并设置权限
+sudo mkdir -p /opt/rust/{cargo,rustup}
+sudo chmod -R a+rw /opt/rust/cargo /opt/rust/rustup # 开放所有用户读写权限
+export CARGO_HOME=/opt/rust/cargo
+export RUSTUP_HOME=/opt/rust/rustup
+
+# 2. 通过 rustup 脚本安装并指定系统目录
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
+# 3. 链接 cargo、rustc、rustup 到系统的PATH 中
+sudo ln -s /opt/rust/cargo/bin/* /usr/bin/
+# 4. -E 保持了环境变量
+sudo -E rustup update
+# 5. 初始化 rustup 环境
+rustup default stable
+# .rustup目录 安装在 RUSTUP_HOME；cargo、rustc、rustup、eza、rg、fd 都安装在 CARGO_HOME（但是它们符号链接在 /usr/bin/）
+
+
 
 # 添加 Mihomo Party 的 Tap
 brew tap mihomo-party-org/mihomo-party

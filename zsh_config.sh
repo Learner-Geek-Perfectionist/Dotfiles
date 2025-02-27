@@ -59,31 +59,31 @@ cd $HOME
 
 if [[ $(uname -s) == "Darwin" ]]; then
     if ! command -v fzf >/dev/null 2>&1; then
-        brew install -y fzf
+        brew install  fzf
     fi
 
     if ! command -v eza >/dev/null 2>&1; then
-        brew install -y eza
+        brew install  eza
     fi
 
     if ! command -v fd >/dev/null 2>&1; then
-        brew install -y fd
+        brew install fd
     fi
 
     if ! command -v rg >/dev/null 2>&1; then
-        brew install -y rg
+        brew install rg
     fi
 
     if ! command -v kitty >/dev/null 2>&1; then
-        brew install -y kitty
+        brew install  kitty
     fi
 
     if ! command -v bat >/dev/null 2>&1; then
-        brew install -y bat
+        brew install bat
     fi
 
     if ! command -v fastfetch >/dev/null 2>&1; then
-        brew install -y fastfetch
+        brew install fastfetch
     fi
 
 elif [[ $(uname -s) == "Linux" ]]; then

@@ -179,7 +179,6 @@ elif [[ $(uname -s) == "Linux" ]]; then
                 print_centered_message "${RED}在 WSL2 中或者 Dockerfile 中不需要安装 kitty 桌面图标${NC}" "false" "false"
             else
                 mkdir -p  ~/.local/share/applications/
-                sudo ln -s ~/.local/kitty.app/bin/kitty /usr/bin/
                 # For Application Launcher:
                 sudo cp ~/.local/kitty.app/share/applications/kitty.desktop ~/.local/share/applications/
                 sudo cp ~/.local/kitty.app/share/applications/kitty-open.desktop ~/.local/share/applications/
@@ -188,7 +187,8 @@ elif [[ $(uname -s) == "Linux" ]]; then
                 sudo sed -i "s|Exec=kitty|Exec=$HOME/.local/kitty.app/bin/kitty|g" ~/.local/share/applications/kitty*.desktop
                 sudo chmod a+x $HOME/.local/kitty.app/share/applications/kitty-open.desktop $HOME/.local/kitty.app/share/applications/kitty.desktop $HOME/.local/share/applications/kitty-open.desktop $HOME/.local/share/applications/kitty.desktop
             fi
-
+            # 将 kitty 二进制文件复制到标准的系统路径
+            sudo cp -r $HOME/.local/kitty.app/bin/* /usr/bin/
             print_centered_message "${GREEN} kitty 安装完成 ✅${NC}" "false" "false"
 
         fi

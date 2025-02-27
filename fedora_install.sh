@@ -15,14 +15,11 @@ sudo sed -e 's|^metalink=|#metalink=|g' \
 
 sudo dnf install -y --setopt=tsflags= coreutils coreutils-common man-pages man-db && sudo dnf group install -y --setopt=strict=0 "c-development"
 
-# 安装必要的工具 🔧
-install_packages "packages_fedora"
-
 # =================================开始安装 rustc=================================
 if command -v rustc >/dev/null 2>&1; then
-    print_centered_message "${GREEN}rustc 已安装，跳过安装。${NC}" "false" "false"
+    print_centered_message "${GREEN}rustc 已安装，跳过安装。${NC}" "true" "false"
 else
-    print_centered_message "${GREEN}开始安装 rustc...${NC}" "false" "false"
+    print_centered_message "${GREEN}开始安装 rustc...${NC}" "true" "false"
     # 安装 rustup
 
     # 1. 创建系统级安装目录并设置权限
@@ -32,7 +29,7 @@ else
     export RUSTUP_HOME=/opt/rust/rustup
 
     # 2. 通过 rustup 脚本安装并指定系统目录
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
+    rustup-init -y
     # 3. 链接 cargo、rustc、rustup 到系统的PATH 中
     sudo ln -s /opt/rust/cargo/bin/* /usr/bin/
     # 4. -E 保持了环境变量
@@ -43,6 +40,9 @@ else
     print_centered_message "${GREEN} rustc 安装完成 ✅${NC}" "false" "false"
 fi
 # =================================结束安装 rustc=================================
+
+# 安装必要的工具 🔧
+install_packages "packages_fedora"
 
 # 设置时区
 sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime

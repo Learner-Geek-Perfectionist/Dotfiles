@@ -92,7 +92,7 @@ else
         print_centered_message "${RED}在 WSL2 中或者 Dockerfile 中不需要安装 kitty 桌面图标${NC}" "false" "false"
     else
         mkdir -p /usr/local/bin/ ~/.local/share/applications/
-        sudo ln -s ~/.local/kitty.app/bin/kitty /usr/local/bin/
+        sudo ln -s ~/.local/kitty.app/bin/kitty /usr/bin/
         # For Application Launcher:
         sudo cp ~/.local/kitty.app/share/applications/kitty.desktop ~/.local/share/applications/
         sudo cp ~/.local/kitty.app/share/applications/kitty-open.desktop ~/.local/share/applications/

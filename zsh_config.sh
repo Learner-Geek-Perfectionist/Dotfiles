@@ -82,10 +82,6 @@ if [[ $(uname -s) == "Darwin" ]]; then
         brew install -y bat
     fi
 
-    if ! command -v rust >/dev/null 2>&1; then
-        brew install -y rust
-    fi
-
     if ! command -v fastfetch >/dev/null 2>&1; then
         brew install -y fastfetch
     fi

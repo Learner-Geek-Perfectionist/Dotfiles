@@ -110,7 +110,7 @@ install_packages() {
     local package_group_name="$1"
     local packages
     local uninstalled_packages=()
-    eval "packages=(\"\${$package_group_name[@]}\")"
+    eval "packages=(\"\${${package_group_name}[@]}\")"
     case "$package_manager" in
     brew)
         installed_packages=$(brew list)
@@ -158,6 +158,7 @@ install_docker() {
         echo -e "$DARK_RED安装 Docker 失败${NC}"
         exit 1
     }
+    rm -rf get-docker.sh
     echo -e "$BLUE将当前用户添加到 docker 组...${NC}"
     sudo usermod -aG docker $USER || {
         echo -e "$DARK_RED添加用户到 docker 组失败${NC}"

@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # macOS 逻辑
 print_centered_message "${CYAN}检测到操作系统为: macOS${NC}" "true" "false"
 

@@ -66,7 +66,6 @@ packages_ubuntu=(
     bat
     chafa
     wireshark
-    bat
 )
 
 #fedora

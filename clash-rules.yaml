@@ -1,3 +1,15 @@
+# 代理模式
+tun:
+  enable: true
+  stack: mixed
+  dns-hijack:
+    - "any:53"
+    - "tcp://any:53"
+  auto-route: true
+  auto-redirect: true
+  auto-detect-interface: true
+
+
 # DNS模块
 dns:
   enable: true
@@ -11,7 +23,12 @@ dns:
   nameserver:
     - 223.5.5.5
     - 119.29.29.29
+  # 模式切换 redir-host / fake-ip
+  enhanced-mode: fake-ip
   fake-ip-range: 198.18.0.1/16
+  # 模式切换 whitelist/blacklist 
+  # 黑名单模式表示如果匹配成功则不返回 Fake-IP, 白名单模式时只有匹配成功才返回 Fake-IP
+  fake-ip-filter-mode: blacklist
   fake-ip-filter:
     - "*.lan"
     - "*.localdomain"

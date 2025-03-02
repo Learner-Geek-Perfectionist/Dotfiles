@@ -51,7 +51,7 @@ COMPILER_INSTALL_DIR="/opt/kotlin-compiler/kotlinc/"
 [[ -d "$COMPILER_INSTALL_DIR" ]] && export PATH="$PATH:/opt/kotlin-compiler/kotlinc/bin/"
 
 # ip 映射到 ip-script
-[[ "$(uname)" == "Darwin" ]] && alias ip="$HOME/sh-script/get-my-ip.sh"
+[[ "$(uname)" == "Darwin" ]] && alias getip="$HOME/sh-script/get-my-ip.sh"
 
 # 加载 Plugins
 source "${HOME}/.config/zsh/plugins/homebrew.zsh"

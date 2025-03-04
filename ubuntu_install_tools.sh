@@ -229,7 +229,7 @@ else
     tar -xzvf "$LUA_LATEST_VERSION"
     cd "${LUA_LATEST_VERSION%.tar.gz}"
     make && sudo make install
-    cd .. && rm -rf "lua-${LUA_LATEST_VERSION%.tar.gz}" "$LUA_LATEST_VERSION"
+    cd .. && rm -rf "${LUA_LATEST_VERSION%.tar.gz}" "$LUA_LATEST_VERSION"
 
     print_centered_message "${GREEN} lua 安装完成 ✅${NC}" "false" "true"
 fi

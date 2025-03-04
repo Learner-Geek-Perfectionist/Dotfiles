@@ -84,7 +84,8 @@ download_and_extract_kotlin() {
     elif [[ $FILE_NAME == *.zip ]]; then
         sudo unzip -o "/tmp/$FILE_NAME" -d $TARGET_DIR
     fi
-    echo -e "$GREEN$FILE_NAME has been installed successfully to ${TARGET_DIR}${NC}"
+
+    print_centered_message "${GREEN}${FILE_NAME} has been installed successfully to ${TARGET_DIR}${NC}" "false" "true"
 }
 detect_package_manager() {
     case "$(uname -s)" in

@@ -1,6 +1,7 @@
-#!/bin/bash
+
+if command -v cmake >/dev/null 2>&1; then
 # 获取最新的 CMake 版本
-latest_version=$(curl -s https://github.com/Kitware/CMake/releases | grep -oP 'v\d+\.\d+\.\d+(-\S+)?' | head -n 1)
+latest_version=$(curl -s https://github.com/Kitware/CMake/releases | grep -oP 'v\d+\.\d+\.\d+(-\S+)?' | head -n 1 | sed 's/<[^>]*>//g')
 
 # 获取系统架构
 arch=$(uname -m)
@@ -18,7 +19,7 @@ if [[ "$os" == "Linux" ]]; then
         exit 1
     fi
 elif [[ "$os" == "Darwin" ]]; then
-    cmake_file="cmake-$latest_version-darwin-x86_64.tar.gz"
+    cmake_file="cmake-$latest_version-macos-universal.tar.gz"
 else
     echo "不支持的操作系统: $os"
     exit 1
@@ -35,6 +36,9 @@ sudo ln -s /opt/cmake-$latest_version/bin/cmake /usr/bin/cmake
 rm "$cmake_file"
 
 echo "CMake 安装完成!"
+
+fi
+
 # =================================开始安装 fastfetch=================================
 if command -v fastfetch >/dev/null 2>&1; then
     print_centered_message "${GREEN} fastfetch 已安装，跳过安装。${NC}" "true" "true"

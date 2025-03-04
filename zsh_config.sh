@@ -86,8 +86,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
 
         # 解压的依赖工具 xz
         ! dpkg -s xz-utils >/dev/null 2>&1 && sudo apt install -y xz-utils
-        ! dpkg -s build-essential >/dev/null 2>&1 && sudo apt install -y build-essential
-        tools=("zsh" "git" "curl")
+        tools=("zsh" "git" "curl" "make" "g++" "gcc")
         # 遍历工具列表，检查是否已安装
         for tool in "${tools[@]}"; do
             if ! command -v "$tool" >/dev/null 2>&1; then

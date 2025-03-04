@@ -132,7 +132,7 @@ install_packages() {
         fi
     done
     if [[ ${#uninstalled_packages[@]} -eq 0 ]]; then
-        print_centered_message "🎉 ${GREEN}All packages were already installed.${NC}" "false" "true"
+        print_centered_message "🎉 ${GREEN}All packages were already installed.${NC}" "false" "false"
         return 0
     else
         print_centered_message "${RED}The following packages need to be installed:${NC}"

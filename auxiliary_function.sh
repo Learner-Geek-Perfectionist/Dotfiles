@@ -166,7 +166,7 @@ install_docker() {
         exit 1
     }
     echo -e "$BLUE启动并设置 Docker 服务开机自启...${NC}"
-    sudo systemctl start docker && sudo systemctl enable docker || {
+    sudo systemctl start docker && sudo systemctl enable docker && sudo systemctl restart docker || {
         echo -e "$DARK_RED启动或设置开机自启失败${NC}"
         exit 1
     }
@@ -195,17 +195,6 @@ install_and_configure_docker() {
             install_docker
         fi
     fi
-    echo -e "$CYAN配置 Docker 镜像...${NC}"
-    sudo mkdir -p /etc/docker
-    echo '{
-      "registry-mirrors": [
-        "https://docker.m.daocloud.io",
-        "https://mirror.baidubce.com",
-        "http://hub-mirror.c.163.com"
-      ]Docker 镜像配置完成
-    }' | sudo tee /etc/docker/daemon.json >/dev/null
-    sudo systemctl restart docker
-    print_centered_message "${GREEN}Docker 镜像配置完成。✅${NC}" "false" "false"
 }
 install_fonts() {
     if [[ $AUTO_RUN == "true" ]]; then

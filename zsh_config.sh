@@ -3,6 +3,20 @@
 # 设置脚本在遇到错误时退出
 set -e
 
+# 定义颜色
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+ORANGE='\033[0;93m'
+MAGENTA='\033[0;35m'
+PURPLE='\033[0;35m'
+CYAN='\033[0;36m'
+LIGHT_BLUE='\033[1;34m'
+DARK_RED='\033[1;31m'
+NC='\033[0m' # 没有颜色
+
+
 # 定义打印居中消息的函数
 print_centered_message() {
     local message="$1"
@@ -34,18 +48,6 @@ print_centered_message() {
     fi
 }
 
-# 定义颜色
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-ORANGE='\033[0;93m'
-MAGENTA='\033[0;35m'
-PURPLE='\033[0;35m'
-CYAN='\033[0;36m'
-LIGHT_BLUE='\033[1;34m'
-DARK_RED='\033[1;31m'
-NC='\033[0m' # 没有颜色
 
 # 定义临时目录路径
 TMP_DIR="/tmp/Dotfiles"
@@ -53,6 +55,13 @@ TMP_DIR="/tmp/Dotfiles"
 sudo rm -rf "$TMP_DIR"
 sudo rm -rf /tmp/Fonts/
 echo -e "${GREEN}🚀 Starting script...${NC}"
+
+# 浅克隆仓库到临时目录
+echo -e "${YELLOW}📥 Cloning repository into $TMP_DIR...${NC}"
+git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR" || {
+    echo "Failed to clone repository"
+    exit 1
+}
 
 tools=("fzf" "eza" "fd" "rg" "kitty" "bat" "fastfetch")
 
@@ -109,13 +118,6 @@ elif [[ $(uname -s) == "Linux" ]]; then
 else
     echo -e "${MAGENTA}未知的操作系统类型${NC}"
 fi
-
-# 浅克隆仓库到临时目录
-echo -e "${YELLOW}📥 Cloning repository into $TMP_DIR...${NC}"
-git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR" || {
-    echo "Failed to clone repository"
-    exit 1
-}
 
 # Ensure XDG base directories exist
 mkdir -p "$HOME/.config/zsh/plugins" "${HOME}/.config/kitty" "$HOME/.cache/zsh" "${HOME}/.local/share/zinit" "$HOME/.local/state"

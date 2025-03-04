@@ -2,6 +2,7 @@
 if command -v cmake >/dev/null 2>&1; then
 # 获取最新的 CMake 版本
 latest_version=$(curl -s https://github.com/Kitware/CMake/releases | grep -oP 'v\d+\.\d+\.\d+(-\S+)?' | head -n 1 | sed 's/<[^>]*>//g')
+version_without_v=$(echo $latest_version | sed 's/^v//')
 
 # 获取系统架构
 arch=$(uname -m)
@@ -9,17 +10,18 @@ arch=$(uname -m)
 # 获取操作系统类型（适用于 Linux 系统，其他系统可能需要修改）
 os=$(uname -s)
 
+# 根据系统架构和操作系统选择对应的 CMake tar.gz 文件
 if [[ "$os" == "Linux" ]]; then
     if [[ "$arch" == "x86_64" ]]; then
-        cmake_file="cmake-$latest_version-linux-x86_64.tar.gz"
+        cmake_file="cmake-$version_without_v-linux-x86_64.tar.gz"
     elif [[ "$arch" == "aarch64" ]]; then
-        cmake_file="cmake-$latest_version-linux-aarch64.tar.gz"
+        cmake_file="cmake-$version_without_v-linux-aarch64.tar.gz"
     else
         echo "不支持的架构: $arch"
         exit 1
     fi
 elif [[ "$os" == "Darwin" ]]; then
-    cmake_file="cmake-$latest_version-macos-universal.tar.gz"
+    cmake_file="cmake-$version_without_v-macos-universal.tar.gz"
 else
     echo "不支持的操作系统: $os"
     exit 1
@@ -30,7 +32,7 @@ echo "正在下载 $cmake_file ..."
 curl -LO "https://github.com/Kitware/CMake/releases/download/$latest_version/$cmake_file"
 
 tar -zxvf "$cmake_file" -C /opt/
-sudo ln -s /opt/cmake-$latest_version/bin/cmake /usr/bin/cmake
+sudo ln -s /opt/cmake-$version_without_v/bin/cmake /usr/local/bin/cmake
 
 # 清理下载的 tar.gz 文件
 rm "$cmake_file"

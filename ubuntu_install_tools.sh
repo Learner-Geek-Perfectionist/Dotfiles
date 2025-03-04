@@ -221,7 +221,7 @@ fi
 # =================================开始安装 lua=================================
 
 if command -v lua >/dev/null 2>&1; then
-    print_centered_message "${GREEN}lua 已安装，跳过安装。${NC}" "false" "true"
+    print_centered_message "${GREEN}lua 已安装，跳过安装。${NC}" "true" "true"
 else
     print_centered_message "${GREEN}开始安装 lua... ${NC}" "false" "false"
     LUA_LATEST_VERSION=$(curl -s https://www.lua.org/ftp/ | grep -o 'lua-[0-9]*\.[0-9]*\.[0-9]*\.tar\.gz' | sort -V | tail -n 1)

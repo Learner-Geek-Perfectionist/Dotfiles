@@ -1,9 +1,20 @@
 if ! command -v cmake >/dev/null 2>&1; then
+    # 获取最新 CMake 安装脚本链接
     LATEST_CMAKE_SCRIPT=$(curl -s https://cmake.org/download/ | grep -oP 'cmake-[0-9]+\.[0-9]+\.[0-9]+-linux-x86_64.sh' | sort -V | tail -n 1)
+
+    # 构建下载 URL
     URL="https://cmake.org/files/$(echo $LATEST_CMAKE_SCRIPT | cut -d'-' -f2-4)/$LATEST_CMAKE_SCRIPT"
-    chmod +x "$LATEST_CMAKE_SCRIPT"
-    sudo ./$LATEST_CMAKE_SCRIPT --prefix=/usr/local --skip-license
+
+    # 下载并安装
+    echo "Downloading CMake installer..."
+    curl -O "$URL" && chmod +x "$LATEST_CMAKE_SCRIPT" && echo "Installing CMake..." && sudo ./$LATEST_CMAKE_SCRIPT --prefix=/usr/local --skip-license
+
+    # 删除安装脚本
     rm -f "$LATEST_CMAKE_SCRIPT"
+
+    echo "CMake installed successfully!"
+else
+    echo "CMake is already installed."
 fi
 # =================================开始安装 fastfetch=================================
 if command -v fastfetch >/dev/null 2>&1; then

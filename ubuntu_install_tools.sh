@@ -30,8 +30,8 @@ fi
 # 输出正在下载的 CMake 文件
 echo "正在下载 $cmake_file ..."
 curl -LO "https://github.com/Kitware/CMake/releases/download/$latest_version/$cmake_file"
-
-sudo tar -zxvf "$cmake_file" -C /opt/ --transform="s,^.*,cmake,"
+sudo mkdir -p /opt/cmake
+sudo tar -zxvf "$cmake_file" --strip-components=1 -C /opt/cmake
 sudo ln -s /opt/cmake/bin/cmake /usr/bin/cmake
 
 

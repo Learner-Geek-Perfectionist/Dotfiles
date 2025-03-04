@@ -53,7 +53,7 @@ else
     make -j$(nproc)
     sudo make install
     # 清理整个项目目录，包括源码和编译目录
-    cd .. && rm -rf ~/fastfetch
+    cd .. && rm -rf fastfetch
 
     print_centered_message "${GREEN} fastfetch 安装完成 ✅${NC}" "false" "true"
 

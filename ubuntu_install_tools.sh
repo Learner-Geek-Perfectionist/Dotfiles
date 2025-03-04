@@ -32,7 +32,7 @@ echo "正在下载 $cmake_file ..."
 curl -LO "https://github.com/Kitware/CMake/releases/download/$latest_version/$cmake_file"
 
 sudo tar -zxvf "$cmake_file" -C /opt/
-sudo ln -s /opt/cmake-$version_without_v-$arch/bin/cmake /usr/bin/cmake
+sudo ln -s /opt/cmake-$version_without_v-$os/bin/cmake /usr/bin/cmake
 
 
 # 清理下载的 tar.gz 文件

@@ -54,4 +54,4 @@ git clone --depth=1 https://github.com/Learner-Geek-Perfectionist/Dotfiles.git /
 mkdir -p "$HOME/.config/zsh/plugins" "${HOME}/.config/kitty" "$HOME/.cache/zsh" "${HOME}/.local/share/zinit" "$HOME/.local/state"
 
 # 执行安装脚本
-source ./main.sh
+source /tmp/Dotfiles/main.sh

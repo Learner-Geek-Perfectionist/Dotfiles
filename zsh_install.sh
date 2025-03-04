@@ -29,5 +29,5 @@ print_centered_message "${GREEN}接下来配置 zsh......${NC}" "false" "false"
 
 
 # 对 zsh 进行配置
-source ./zsh_config.sh
+source /tmp/Dotfiles/zsh_config.sh
 

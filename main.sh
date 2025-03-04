@@ -4,13 +4,13 @@
 set -e
 
 # 加载 packages
-source ./package.sh
+source /tmp/Dotfiles/package.sh
 
 # 加载辅助函数
-source ./auxiliary_function.sh
+source /tmp/Dotfiles/auxiliary_function.sh
 
 if [[ $(uname -s) == "Darwin" ]]; then
-    source ./macos_install.sh
+    source /tmp/Dotfiles/macos_install.sh
 
 elif [[ $(uname -s) == "Linux" ]]; then
 
@@ -21,10 +21,10 @@ elif [[ $(uname -s) == "Linux" ]]; then
 
     # 根据操作系统安装......
     if [[ $os_type == "ubuntu" ]]; then
-        source ./ubuntu_install.sh
+        source /tmp/Dotfiles/ubuntu_install.sh
 
     elif [[ $os_type == "fedora" ]]; then
-        source ./fedora_install.sh
+        source /tmp/Dotfiles/fedora_install.sh
 
     else
         print_centered_message "${RED}不支持的发行版，目前只支持 fedora、ubuntu${NC}"
@@ -43,7 +43,5 @@ fi
 [[ -d "/opt/kotlin-native/" ]] && sudo chmod -R a+rw /opt/kotlin-native/
 [[ -d "/opt/kotlin-compiler/" ]] && sudo chmod -R a+rw /opt/kotlin-compiler/
 
-
-cd /tmp/Dotfiles && echo -e "${GREEN}Changed directory to ${RED}$(pwd).${NC}"
 # 针对 macos、linux 统一配置 zsh
-source ./zsh_install.sh
+source /tmp/Dotfiles/zsh_install.sh

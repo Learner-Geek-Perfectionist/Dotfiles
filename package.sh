@@ -63,8 +63,6 @@ packages_ubuntu=(
     autoconf
     systemd
     language-pack-zh-hans
-    bat
-    chafa
     wireshark
 )
 

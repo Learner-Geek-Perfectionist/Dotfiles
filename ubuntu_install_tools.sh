@@ -63,7 +63,7 @@ else
     if grep -qi microsoft /proc/version || [[ "$AUTO_RUN" == "true" ]]; then
         print_centered_message "${RED}在 WSL2 中或者 Dockerfile 中不需要安装 kitty 桌面图标${NC}" "false" "false"
     else
-        mkdir -p  ~/.local/share/applications/
+        mkdir -p ~/.local/share/applications/
         # For Application Launcher:
         sudo cp ~/.local/kitty.app/share/applications/kitty.desktop ~/.local/share/applications/
         sudo cp ~/.local/kitty.app/share/applications/kitty-open.desktop ~/.local/share/applications/
@@ -164,16 +164,26 @@ fi
 
 # =================================结束安装 rg=================================
 
-
-
 # =================================开始安装 bat=================================
 
 if command -v bat >/dev/null 2>&1; then
-    print_centered_message "${GREEN}bat 已安装，跳过安装。${NC}" "false" "true"
+    print_centered_message "${GREEN}bat 已安装，跳过安装。${NC}" "false" "false"
 else
     print_centered_message "${GREEN}开始安装 bat... ${NC}" "false" "false"
     cargo install bat
     sudo ln -s /opt/rust/cargo/bin/bat /usr/bin/
-    print_centered_message "${GREEN} bat 安装完成 ✅${NC}" "false" "true"
+    print_centered_message "${GREEN} bat 安装完成 ✅${NC}" "false" "false"
 fi
 # =================================结束安装 bat=================================
+
+# =================================开始安装 lua=================================
+
+if command -v lua >/dev/null 2>&1; then
+    print_centered_message "${GREEN}lua 已安装，跳过安装。${NC}" "false" "true"
+else
+    print_centered_message "${GREEN}开始安装 lua... ${NC}" "false" "false"
+    cargo install lua
+    sudo ln -s /opt/rust/cargo/bin/bat /usr/bin/
+    print_centered_message "${GREEN} lua 安装完成 ✅${NC}" "false" "true"
+fi
+# =================================结束安装 lua=================================

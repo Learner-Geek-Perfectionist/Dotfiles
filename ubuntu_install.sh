@@ -7,7 +7,6 @@ sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 htt
 # 添加PPA并更新
 sudo add-apt-repository -y ppa:wireshark-dev/stable
 sudo add-apt-repository -y ppa:openjdk-r/ppa
-sudo add-apt-repository -y ppa:lua-latest/ppa
 sudo apt update && sudo apt upgrade -y
 
 # 安装 ubuntu 包
@@ -20,9 +19,6 @@ sudo apt update -y && sudo apt upgrade -y && sudo apt search unminimize 2>/dev/n
 
 # 搜索可用的 OpenJDK 包并尝试获取最新版本
 sudo apt install -y "$(apt search openjdk | grep -oP 'openjdk-\d+-jdk' | sort -V | tail -n1)"
-
-# 安装最新的 lua
-sudo apt install -y "$(apt search '^lua[0-9.]*$' --names-only | grep -oP 'lua\d+\.\d+' | sort -V | tail -n 1)"
 
 # 安装 Docker
 if [[ "$AUTO_RUN" == "true" ]]; then

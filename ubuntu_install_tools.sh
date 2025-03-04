@@ -227,7 +227,7 @@ else
     LUA_LATEST_VERSION=$(curl -s https://www.lua.org/ftp/ | grep -o 'lua-[0-9]*\.[0-9]*\.[0-9]*\.tar\.gz' | sort -V | tail -n 1)
     curl -O "https://www.lua.org/ftp/$LUA_LATEST_VERSION"
     tar -xzvf "$LUA_LATEST_VERSION"
-    cd "lua-${LUA_LATEST_VERSION%.tar.gz}"
+    cd "${LUA_LATEST_VERSION%.tar.gz}"
     make && sudo make install
     cd .. && rm -rf "lua-${LUA_LATEST_VERSION%.tar.gz}" "$LUA_LATEST_VERSION"
 

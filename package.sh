@@ -35,7 +35,6 @@ packages_ubuntu=(
     ninja-build
     neovim
     ruby-full
-    cmake
     nodejs
     iputils-ping
     procps

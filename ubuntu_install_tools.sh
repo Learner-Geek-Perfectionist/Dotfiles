@@ -1,3 +1,10 @@
+if ! command -v cmake >/dev/null 2>&1; then
+    LATEST_CMAKE_SCRIPT=$(curl -s https://cmake.org/download/ | grep -oP 'cmake-[0-9]+\.[0-9]+\.[0-9]+-linux-x86_64.sh' | sort -V | tail -n 1)
+    URL="https://cmake.org/files/$(echo $LATEST_CMAKE_SCRIPT | cut -d'-' -f2-4)/$LATEST_CMAKE_SCRIPT"
+    chmod +x "$LATEST_CMAKE_SCRIPT"
+    sudo ./$LATEST_CMAKE_SCRIPT --prefix=/usr/local --skip-license
+    rm -f "$LATEST_CMAKE_SCRIPT"
+fi
 # =================================开始安装 fastfetch=================================
 if command -v fastfetch >/dev/null 2>&1; then
     print_centered_message "${GREEN} fastfetch 已安装，跳过安装。${NC}" "true" "true"

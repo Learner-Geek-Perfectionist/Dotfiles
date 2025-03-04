@@ -45,16 +45,15 @@ if command -v fastfetch >/dev/null 2>&1; then
     print_centered_message "${GREEN} fastfetch 已安装，跳过安装。${NC}" "true" "true"
 else
     print_centered_message "${GREEN}开始安装 fastfetch${NC}" "true" "false"
-    git clone https://github.com/fastfetch-cli/fastfetch ~/fastfetch
-    cd ~/fastfetch
+    git clone https://github.com/fastfetch-cli/fastfetch 
+    cd fastfetch
     mkdir build && cd build
     cmake ..
     # 编译源码（启用多线程加速）
     make -j$(nproc)
     sudo make install
     # 清理整个项目目录，包括源码和编译目录
-    cd ~
-    rm -rf ~/fastfetch
+    cd .. && rm -rf ~/fastfetch
 
     print_centered_message "${GREEN} fastfetch 安装完成 ✅${NC}" "false" "true"
 

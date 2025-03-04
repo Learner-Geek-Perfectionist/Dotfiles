@@ -5,7 +5,9 @@ set -e
 sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list
 
 # 添加PPA并更新
-sudo add-apt-repository -y ppa:wireshark-dev/stable ppa:openjdk-r/ppa ppa:lua-latest/ppa
+sudo add-apt-repository -y ppa:wireshark-dev/stable
+sudo add-apt-repository -y ppa:openjdk-r/ppa
+sudo add-apt-repository -y ppa:lua-latest/ppa
 sudo apt update && sudo apt upgrade -y
 
 # 安装 ubuntu 包

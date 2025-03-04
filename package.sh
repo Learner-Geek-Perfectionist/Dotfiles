@@ -55,6 +55,7 @@ packages_ubuntu=(
     valgrind
     curl
     tar
+    make
     locales
     man-db
     jq

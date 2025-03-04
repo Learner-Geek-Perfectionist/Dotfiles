@@ -167,12 +167,12 @@ fi
 # =================================开始安装 bat=================================
 
 if command -v bat >/dev/null 2>&1; then
-    print_centered_message "${GREEN}bat 已安装，跳过安装。${NC}" "false" "false"
+    print_centered_message "${GREEN}bat 已安装，跳过安装。${NC}" "false" "true"
 else
     print_centered_message "${GREEN}开始安装 bat... ${NC}" "false" "false"
     cargo install bat
     sudo ln -s /opt/rust/cargo/bin/bat /usr/bin/
-    print_centered_message "${GREEN} bat 安装完成 ✅${NC}" "false" "false"
+    print_centered_message "${GREEN} bat 安装完成 ✅${NC}" "false" "true"
 fi
 # =================================结束安装 bat=================================
 

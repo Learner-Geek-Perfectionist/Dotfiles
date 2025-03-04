@@ -201,10 +201,10 @@ install_and_configure_docker() {
         "https://docker.m.daocloud.io",
         "https://mirror.baidubce.com",
         "http://hub-mirror.c.163.com"
-      ]
+      ]Docker 镜像配置完成
     }' | sudo tee /etc/docker/daemon.json >/dev/null
     sudo systemctl restart docker
-    print_centered_message "${GREEN}Docker 镜像配置完成。✅${NC}" "false" "true"
+    print_centered_message "${GREEN}Docker 镜像配置完成。✅${NC}" "false" "false"
 }
 install_fonts() {
     if [[ $AUTO_RUN == "true" ]]; then

@@ -85,6 +85,7 @@ packages_fedora=(
     ruby
     kitty
     cmake
+    make
     nodejs
     iputils
     procps-ng

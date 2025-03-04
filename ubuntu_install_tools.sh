@@ -1,4 +1,4 @@
-if command -v cmake >/dev/null 2>&1; then
+if ! command -v cmake >/dev/null 2>&1; then
     # 获取最新的 CMake 版本
     latest_version=$(curl -s https://github.com/Kitware/CMake/releases | grep -oP 'v\d+\.\d+\.\d+(-\S+)?' | head -n 1 | sed 's/<[^>]*>//g')
     version_without_v=$(echo $latest_version | sed 's/^v//')

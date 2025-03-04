@@ -102,7 +102,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
         # 遍历工具列表，检查是否已安装
         for tool in "${tools[@]}"; do
             if ! command -v "$tool" >/dev/null 2>&1; then
-                sudo apt install "$tool"
+                sudo dnf install "$tool"
             fi
         done
 

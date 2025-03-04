@@ -167,12 +167,28 @@ fi
 # =================================开始安装 bat=================================
 
 if command -v bat >/dev/null 2>&1; then
-    print_centered_message "${GREEN}bat 已安装，跳过安装。${NC}" "false" "true"
+    print_centered_message "${GREEN}bat 已安装，跳过安装。${NC}" "false" "false"
 else
     print_centered_message "${GREEN}开始安装 bat... ${NC}" "false" "false"
     cargo install bat
     sudo ln -s /opt/rust/cargo/bin/bat /usr/bin/
-    print_centered_message "${GREEN} bat 安装完成 ✅${NC}" "false" "true"
+    print_centered_message "${GREEN} bat 安装完成 ✅${NC}" "false" "false"
 fi
 # =================================结束安装 bat=================================
 
+# =================================开始安装 lua=================================
+
+if command -v lua >/dev/null 2>&1; then
+    print_centered_message "${GREEN}lua 已安装，跳过安装。${NC}" "false" "true"
+else
+    print_centered_message "${GREEN}开始安装 lua... ${NC}" "false" "false"
+    LUA_LATEST_VERSION=$(curl -s https://www.lua.org/ftp/ | grep -o 'lua-[0-9]*\.[0-9]*\.[0-9]*\.tar\.gz' | sort -V | tail -n 1)
+    curl -O "https://www.lua.org/ftp/$LUA_LATEST_VERSION"
+    tar -xzvf "$LUA_LATEST_VERSION"
+    cd "lua-${LUA_LATEST_VERSION%.tar.gz}"
+    make && sudo make install
+    cd .. && rm -rf "lua-${LUA_LATEST_VERSION%.tar.gz}" "$LUA_LATEST_VERSION"
+
+    print_centered_message "${GREEN} lua 安装完成 ✅${NC}" "false" "true"
+fi
+# =================================结束安装 lua=================================

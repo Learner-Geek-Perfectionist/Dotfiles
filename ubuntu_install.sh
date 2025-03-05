@@ -4,6 +4,20 @@ set -e
 # 设置国内源
 sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list
 
+
+# 设置时区
+sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+echo "Asia/Shanghai" | sudo tee /etc/timezone >/dev/null
+sudo dpkg-reconfigure --frontend noninteractive tzdata
+
+# 1.生成 UTF-8 字符集的 Locale（locale-gen 适用于 Debian 及其衍生系统，localedef 存在于几乎所有的 Linux 发行版中）
+sudo locale-gen zh_CN.UTF-8
+
+# 2.设置中文语言输出信息
+echo "LANG=zh_CN.UTF-8" | sudo tee /etc/default/locale
+echo "LC_ALL=zh_CN.UTF-8" | sudo tee -a /etc/default/locale
+
+
 # 添加PPA并更新
 sudo add-apt-repository -y ppa:wireshark-dev/stable
 sudo add-apt-repository -y ppa:openjdk-r/ppa
@@ -38,17 +52,6 @@ download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR
 download_and_extract_kotlin $KOTLIN_COMPILER_URL $COMPILER_INSTALL_DIR
 # =================================结束安装 Kotlin/Native =================================
 
-# 设置时区
-sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-echo "Asia/Shanghai" | sudo tee /etc/timezone >/dev/null
-sudo dpkg-reconfigure --frontend noninteractive tzdata
-
-# 1.生成 UTF-8 字符集的 Locale（locale-gen 适用于 Debian 及其衍生系统，localedef 存在于几乎所有的 Linux 发行版中）
-sudo locale-gen zh_CN.UTF-8
-
-# 2.设置中文语言输出信息
-echo "LANG=zh_CN.UTF-8" | sudo tee /etc/default/locale
-echo "LC_ALL=zh_CN.UTF-8" | sudo tee -a /etc/default/locale
 
 
 sudo apt clean

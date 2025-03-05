@@ -85,7 +85,7 @@ download_and_extract_kotlin() {
         sudo unzip -o "/tmp/$FILE_NAME" -d $TARGET_DIR
     fi
 
-    print_centered_message "${GREEN}${FILE_NAME} has been installed successfully to ${TARGET_DIR}${NC}" "false" "true"
+    print_centered_message "${GREEN}${FILE_NAME} has been installed successfully to ${TARGET_DIR}${NC}" "false" "false"
 }
 detect_package_manager() {
     case "$(uname -s)" in

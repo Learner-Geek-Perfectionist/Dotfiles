@@ -45,7 +45,7 @@ if command -v fastfetch >/dev/null 2>&1; then
     print_centered_message "${GREEN} fastfetch 已安装，跳过安装。${NC}" "true" "true"
 else
     print_centered_message "${GREEN}开始安装 fastfetch${NC}" "true" "false"
-    git clone https://github.com/fastfetch-cli/fastfetch 
+    git clone https://github.com/fastfetch-cli/fastfetch
     cd fastfetch
     mkdir build && cd build
     cmake ..
@@ -65,7 +65,8 @@ if command -v kitty >/dev/null 2>&1; then
     print_centered_message "${GREEN} kitty 已安装，跳过安装。${NC}" "false" "false"
 else
     print_centered_message "${GREEN}开始安装 kitty... ${NC}" "false" "false"
-    curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n
+    sudo mkdir -p /opt/kitty && sudo chmod -R a+rw /opt/kitty
+    curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n dest=/opt/kitty
 
     # 定义基础 URL
     BASE_URL="http://kr.archive.ubuntu.com/ubuntu/pool/universe/k/kitty/"
@@ -106,15 +107,17 @@ else
     else
         mkdir -p ~/.local/share/applications/
         # For Application Launcher:
-        sudo cp ~/.local/kitty.app/share/applications/kitty.desktop ~/.local/share/applications/
-        sudo cp ~/.local/kitty.app/share/applications/kitty-open.desktop ~/.local/share/applications/
+        sudo cp /opt/kitty/kitty.app/share/applications/kitty.desktop ~/.local/share/applications/
+        sudo cp /opt/kitty/kitty.app/share/applications/kitty-open.desktop ~/.local/share/applications/
         # Add Icon:
-        sudo sed -i "s|Icon=kitty|Icon=$HOME/.local/kitty.app/share/icons/hicolor/256x256/apps/kitty.png|g" ~/.local/share/applications/kitty*.desktop
-        sudo sed -i "s|Exec=kitty|Exec=$HOME/.local/kitty.app/bin/kitty|g" ~/.local/share/applications/kitty*.desktop
-        sudo chmod a+x $HOME/.local/kitty.app/share/applications/kitty-open.desktop $HOME/.local/kitty.app/share/applications/kitty.desktop $HOME/.local/share/applications/kitty-open.desktop $HOME/.local/share/applications/kitty.desktop
+        sudo sed -i "s|Icon=kitty|Icon=/opt/kitty/kitty.app/share/icons/hicolor/256x256/apps/kitty.png|g" ~/.local/share/applications/kitty*.desktop
+        sudo sed -i "s|Exec=kitty|Exec=/opt/kitty/kitty.app/bin/kitty|g" ~/.local/share/applications/kitty*.desktop
+        touch ~/.config/xdg-terminals.list
+        # Make xdg-terminal-exec (and hence desktop environments that support it use kitty)
+        echo 'kitty.desktop' >~/.config/xdg-terminals.list
     fi
     # 将 kitty 二进制文件复制到标准的系统路径
-    sudo cp -r $HOME/.local/kitty.app/bin/* /usr/bin/
+    sudo ln -s /opt/kitty/kitty.app/bin/* /usr/bin/
     print_centered_message "${GREEN} kitty 安装完成 ✅${NC}" "false" "false"
 
 fi
@@ -126,16 +129,16 @@ if command -v fzf >/dev/null 2>&1; then
     print_centered_message "${GREEN}fzf 已安装，跳过安装。${NC}" "true" "true"
 else
     print_centered_message "${GREEN}开始安装 fzf... ${NC}" "true" "false"
-    [[ -d "$HOME/.fzf" ]] && rm -rf "$HOME/.fzf"
+    [[ -d "/tmp/.fzf" ]] && sudo rm -rf "/tmp/.fzf"
 
-    git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
-    yes | $HOME/.fzf/install --no-update-rc
+    git clone --depth=1 https://github.com/junegunn/fzf.git "/tmp/.fzf"
+    yes | /tmp/.fzf/install --no-update-rc
 
-    # 将 fzf 二进制文件复制到标准的系统路径
-    sudo cp "$HOME/.fzf/bin/fzf" /usr/bin/
+    # 将 fzf 软链接到系统的 PATH 中
+    sudo ln -s "/tmp/.fzf/bin/fzf" /usr/bin/
 
     # 清理安装目录
-    rm -rf "$HOME/.fzf"
+    sudo rm -rf "/tmp/.fzf"
     print_centered_message "${GREEN} fzf 安装完成 ✅${NC}" "false" "true"
 fi
 # =================================结束安装 fzf=================================
@@ -151,7 +154,7 @@ else
 
     # 1. 创建系统级安装目录并设置权限
     sudo mkdir -p /opt/rust/{cargo,rustup}
-    sudo chmod -R a+rw /opt/rust/cargo /opt/rust/rustup # 开放所有用户读写权限
+    sudo chmod -R a+rw /opt/rust/
 
     # 2. 通过 rustup 脚本安装并指定系统目录
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path

@@ -103,13 +103,12 @@ if command -v fzf >/dev/null 2>&1; then
     print_centered_message "${GREEN}fzf 已安装，跳过安装。${NC}" "false" "false"
 else
     print_centered_message "${GREEN}开始安装 fzf... ${NC}" "false" "false"
-    [[ -d "/tmp/.fzf" ]] && sudo rm -rf "/tmp/.fzf" /usr/bin/fzf
+    [[ -d "/tmp/.fzf" ]] && sudo rm -rf "/tmp/.fzf"
+    [[ -f "/usr/bin/fzf" ]] && sudo rm -rf "/usr/bin/fzf"
 
     git clone --depth=1 https://github.com/junegunn/fzf.git "/tmp/.fzf"
     yes | /tmp/.fzf/install --no-update-rc
-
-    # 将 fzf 软链接到系统的 PATH 中
-    sudo ln -s "/tmp/.fzf/bin/fzf" /usr/bin/fzf
+    sudo cp "/tmp/.fzf/bin/fzf" /usr/bin/fzf
 
     # 清理安装目录
     sudo rm -rf "/tmp/.fzf"

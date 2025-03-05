@@ -24,8 +24,7 @@ else
     mkdir build && cd build
     cmake ..
     # 编译源码（启用多线程加速）
-    make -j$(nproc)
-    sudo make install
+    make "-j$(nproc)" && sudo make install
     # 清理整个项目目录，包括源码和编译目录
     cd ../..  && sudo rm -rf fastfetch
 
@@ -203,7 +202,7 @@ else
     curl -O "https://www.lua.org/ftp/$LUA_LATEST_VERSION"
     tar -xzvf "$LUA_LATEST_VERSION"
     cd "${LUA_LATEST_VERSION%.tar.gz}"
-    make && sudo make install
+    make "-j$(nproc)" && sudo make install
     cd .. && sudo rm -rf "${LUA_LATEST_VERSION%.tar.gz}" "$LUA_LATEST_VERSION"
 
     print_centered_message "${GREEN} lua 安装完成 ✅${NC}" "false" "true"

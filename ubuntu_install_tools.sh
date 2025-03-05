@@ -4,7 +4,10 @@ if command -v cmake >/dev/null 2>&1; then
 else
     print_centered_message "${GREEN}开始安装 cmake... ${NC}" "true" "false"
     # 动态添加仓库
-    sudo apt-add-repository "deb https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main"
+    sudo mkdir -p /etc/apt/keyrings
+    sudo wget -qO- https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo gpg --dearmor -o /etc/apt/keyrings/kitware.gpg
+    echo "deb [signed-by=/etc/apt/keyrings/kitware.gpg] https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/kitware.list >/dev/null
+    
     # 安装 CMake
     sudo apt update && sudo apt install -y cmake
     print_centered_message "${GREEN} cmake 安装完成 ✅${NC}" "false" "true"

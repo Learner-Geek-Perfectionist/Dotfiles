@@ -1,50 +1,21 @@
-if ! command -v cmake >/dev/null 2>&1; then
-    # 获取最新的 CMake 版本
-    latest_version=$(curl -s https://github.com/Kitware/CMake/releases | grep -oP 'v\d+\.\d+\.\d+(-\S+)?' | head -n 1 | sed 's/<[^>]*>//g')
-    version_without_v=$(echo $latest_version | sed 's/^v//')
-
-    # 获取系统架构
-    arch=$(uname -m)
-
-    # 获取操作系统类型（适用于 Linux 系统，其他系统可能需要修改）
-    os=$(uname -s)
-
-    # 根据系统架构和操作系统选择对应的 CMake tar.gz 文件
-    if [[ "$os" == "Linux" ]]; then
-        if [[ "$arch" == "x86_64" ]]; then
-            cmake_file="cmake-$version_without_v-linux-x86_64.tar.gz"
-        elif [[ "$arch" == "aarch64" ]]; then
-            cmake_file="cmake-$version_without_v-linux-aarch64.tar.gz"
-        else
-            echo "不支持的架构: $arch"
-            exit 1
-        fi
-    elif [[ "$os" == "Darwin" ]]; then
-        cmake_file="cmake-$version_without_v-macos-universal.tar.gz"
-    else
-        echo "不支持的操作系统: $os"
-        exit 1
-    fi
-
-    # 输出正在下载的 CMake 文件
-    echo "正在下载 $cmake_file ..."
-    curl -LO "https://github.com/Kitware/CMake/releases/download/$latest_version/$cmake_file"
-    sudo mkdir -p /opt/cmake
-    sudo tar -zxvf "$cmake_file" --strip-components=1 -C /opt/cmake
-    sudo ln -s /opt/cmake/bin/cmake /usr/bin/cmake
-
-    # 清理下载的 tar.gz 文件
-    rm "$cmake_file"
-
-    echo "CMake 安装完成!"
-
+# =================================开始安装 cmake=================================
+if command -v cmake >/dev/null 2>&1; then
+    print_centered_message "${GREEN}cmake 已安装，跳过安装。${NC}" "true" "true"
+else
+    print_centered_message "${GREEN}开始安装 cmake... ${NC}" "true" "false"
+    # 动态添加仓库
+    sudo apt-add-repository "deb https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main"
+    # 安装 CMake
+    sudo apt update && sudo apt install -y cmake
+    print_centered_message "${GREEN} cmake 安装完成 ✅${NC}" "false" "true"
 fi
+# =================================结束安装 cmake=================================
 
 # =================================开始安装 fastfetch=================================
 if command -v fastfetch >/dev/null 2>&1; then
-    print_centered_message "${GREEN} fastfetch 已安装，跳过安装。${NC}" "true" "true"
+    print_centered_message "${GREEN} fastfetch 已安装，跳过安装。${NC}" "false" "false"
 else
-    print_centered_message "${GREEN}开始安装 fastfetch${NC}" "true" "false"
+    print_centered_message "${GREEN}开始安装 fastfetch${NC}" "false" "false"
     git clone https://github.com/fastfetch-cli/fastfetch
     cd fastfetch
     mkdir build && cd build
@@ -55,16 +26,16 @@ else
     # 清理整个项目目录，包括源码和编译目录
     cd .. && rm -rf fastfetch
 
-    print_centered_message "${GREEN} fastfetch 安装完成 ✅${NC}" "false" "true"
+    print_centered_message "${GREEN} fastfetch 安装完成 ✅${NC}" "false" "false"
 
 fi
 # =================================结束安装 fastfetch=================================
 
 # =================================开始安装 kitty=================================
 if command -v kitty >/dev/null 2>&1; then
-    print_centered_message "${GREEN} kitty 已安装，跳过安装。${NC}" "false" "false"
+    print_centered_message "${GREEN} kitty 已安装，跳过安装。${NC}" "true" "true"
 else
-    print_centered_message "${GREEN}开始安装 kitty... ${NC}" "false" "false"
+    print_centered_message "${GREEN}开始安装 kitty... ${NC}" "true" "false"
     sudo mkdir -p /opt/kitty && sudo chmod -R a+rw /opt/kitty
     curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n dest=/opt/kitty
 
@@ -118,7 +89,7 @@ else
     fi
     # 将 kitty 二进制文件复制到标准的系统路径
     sudo ln -s /opt/kitty/kitty.app/bin/* /usr/bin/
-    print_centered_message "${GREEN} kitty 安装完成 ✅${NC}" "false" "false"
+    print_centered_message "${GREEN} kitty 安装完成 ✅${NC}" "false" "true"
 
 fi
 
@@ -126,9 +97,9 @@ fi
 
 # =================================开始安装 fzf=================================
 if command -v fzf >/dev/null 2>&1; then
-    print_centered_message "${GREEN}fzf 已安装，跳过安装。${NC}" "true" "true"
+    print_centered_message "${GREEN}fzf 已安装，跳过安装。${NC}" "false" "false"
 else
-    print_centered_message "${GREEN}开始安装 fzf... ${NC}" "true" "false"
+    print_centered_message "${GREEN}开始安装 fzf... ${NC}" "false" "false"
     [[ -d "/tmp/.fzf" ]] && sudo rm -rf "/tmp/.fzf"
 
     git clone --depth=1 https://github.com/junegunn/fzf.git "/tmp/.fzf"
@@ -139,7 +110,7 @@ else
 
     # 清理安装目录
     sudo rm -rf "/tmp/.fzf"
-    print_centered_message "${GREEN} fzf 安装完成 ✅${NC}" "false" "true"
+    print_centered_message "${GREEN} fzf 安装完成 ✅${NC}" "false" "false"
 fi
 # =================================结束安装 fzf=================================
 
@@ -225,7 +196,7 @@ fi
 if command -v lua >/dev/null 2>&1; then
     print_centered_message "${GREEN}lua 已安装，跳过安装。${NC}" "true" "true"
 else
-    print_centered_message "${GREEN}开始安装 lua... ${NC}" "false" "false"
+    print_centered_message "${GREEN}开始安装 lua... ${NC}" "true" "false"
     LUA_LATEST_VERSION=$(curl -s https://www.lua.org/ftp/ | grep -o 'lua-[0-9]*\.[0-9]*\.[0-9]*\.tar\.gz' | sort -V | tail -n 1)
     curl -O "https://www.lua.org/ftp/$LUA_LATEST_VERSION"
     tar -xzvf "$LUA_LATEST_VERSION"

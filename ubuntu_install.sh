@@ -52,6 +52,4 @@ download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR
 download_and_extract_kotlin $KOTLIN_COMPILER_URL $COMPILER_INSTALL_DIR
 # =================================结束安装 Kotlin/Native =================================
 
-
-
 sudo apt clean

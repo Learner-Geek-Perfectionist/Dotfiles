@@ -16,7 +16,6 @@ LIGHT_BLUE='\033[1;34m'
 DARK_RED='\033[1;31m'
 NC='\033[0m' # 没有颜色
 
-
 # 定义打印居中消息的函数
 print_centered_message() {
     local message="$1"
@@ -48,7 +47,6 @@ print_centered_message() {
     fi
 }
 
-
 # 定义临时目录路径
 TMP_DIR="/tmp/Dotfiles"
 
@@ -62,8 +60,6 @@ git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP
     echo "Failed to clone repository"
     exit 1
 }
-
-tools=("fzf" "eza" "fd" "rg" "kitty" "bat" "fastfetch")
 
 if [[ $(uname -s) == "Darwin" ]]; then
     # 定义需要安装的工具

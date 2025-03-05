@@ -30,7 +30,7 @@ install_packages "packages_ubuntu"
 source /tmp/Dotfiles/ubuntu_install_tools.sh
 
 # 取消最小化安装
-sudo apt update -y && sudo apt upgrade -y && sudo apt search unminimize 2>/dev/null | grep -q "^unminimize/" && (sudo apt install unminimize -y && yes | sudo unminimize) || echo -e "${RED}unminimize包不可用。${NC}"
+sudo apt search unminimize 2>/dev/null | grep -q "^unminimize/" && (sudo apt install unminimize -y && yes | sudo unminimize) || echo -e "${RED}unminimize包不可用。${NC}"
 
 # 搜索可用的 OpenJDK 包并尝试获取最新版本
 sudo apt install -y "$(apt search openjdk | grep -oP 'openjdk-\d+-jdk' | sort -V | tail -n1)"

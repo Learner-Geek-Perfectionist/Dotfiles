@@ -30,6 +30,7 @@ packages_ubuntu=(
     debconf-utils
     ncurses-bin
     net-tools
+    lsb-release
     git
     zip
     ninja-build

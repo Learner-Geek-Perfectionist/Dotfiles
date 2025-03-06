@@ -117,7 +117,7 @@ install_packages() {
         installed_packages=$(brew list)
         ;;
     apt)
-        installed_packages=$(dpkg -l | awk '{print $2}')
+        installed_packages=$(apt list --installed | awk -F/ '{print $1}')
         ;;
     dnf)
         installed_packages=$(dnf list installed | awk '{print $1}')

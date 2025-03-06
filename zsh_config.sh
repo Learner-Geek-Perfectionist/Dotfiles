@@ -81,7 +81,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
     if [[ $os_type == "ubuntu" ]]; then
 
         # 解压的依赖工具 xz
-        ! dpkg -s xz-utils >/dev/null 2>&1 && sudo apt install -y xz-utils
+        sudo apt install -y xz-utils
         tools=("zsh" "git" "curl" "make" "g++" "gcc")
         # 遍历工具列表，检查是否已安装
         for tool in "${tools[@]}"; do

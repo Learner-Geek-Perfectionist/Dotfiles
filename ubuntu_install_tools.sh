@@ -7,7 +7,7 @@ else
     sudo mkdir -p /etc/apt/keyrings
     sudo wget -qO- https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo gpg --dearmor -o /etc/apt/keyrings/kitware.gpg
     echo "deb [signed-by=/etc/apt/keyrings/kitware.gpg] https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/kitware.list >/dev/null
-    
+
     # 安装 CMake
     sudo apt update && sudo apt install -y cmake
     print_centered_message "${GREEN} cmake 安装完成 ✅${NC}" "false" "true"
@@ -26,7 +26,7 @@ else
     # 编译源码（启用多线程加速）
     make "-j$(nproc)" && sudo make install
     # 清理整个项目目录，包括源码和编译目录
-    cd ../..  && sudo rm -rf fastfetch
+    cd ../.. && sudo rm -rf fastfetch
 
     print_centered_message "${GREEN} fastfetch 安装完成 ✅${NC}" "false" "false"
 
@@ -55,12 +55,13 @@ else
 
     # 构建完整的 .deb 文件下载 URL（kitty-terminfo）
     TERMINFO_URL="${BASE_URL}kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb"
+    DOCS_URL="${BASE_URL}kitty-docs_${DOCS_LATEST_VERSION}.deb"
 
     # 下载和安装包（kitty-terminfo）
     echo -e "Downloading ${RED}kitty-terminfo${NC} version ${GREEN}${TERMINFO_LATEST_VERSION}${NC}"
     if curl -s -O "$TERMINFO_URL"; then
         echo "Installing kitty-terminfo..."
-        if sudo dpkg -i "kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb"; then
+        if sudo apt install "./kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb"; then
             echo -e "${GREEN}kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb 安装完成 ${NC}"
         else
             echo -e "${RED}Installation failed.${NC}"
@@ -71,8 +72,22 @@ else
         exit 1
     fi
 
+    # 下载和安装包（kitty-docs）
+    echo -e "Downloading ${RED}kitty-docs${NC} version ${GREEN}${DOCS_LATEST_VERSION}${NC}"
+    if curl -s -O "$DOCS_URL"; then
+        echo "Installing kitty-docs..."
+        if sudo apt install "./kitty-docs_${DOCS_LATEST_VERSION}.deb"; then
+            echo -e "${GREEN}kitty-docs_${DOCS_LATEST_VERSION}.deb 安装完成 ${NC}"
+        else
+            echo -e "${RED}Installation failed.${NC}"
+            exit 1
+        fi
+    else
+        echo -e "${RED}Download failed.${NC}"
+        exit 1
+    fi
     # 清理下载的文件
-    sudo rm -rf "kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb"
+    sudo rm -rf "kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb" "kitty-docs_${DOCS_LATEST_VERSION}.deb"
 
     # 检查是否在 WSL2 中运行或在自动化脚本环境中
     if grep -qi microsoft /proc/version || [[ "$AUTO_RUN" == "true" ]]; then

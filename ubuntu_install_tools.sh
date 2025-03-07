@@ -72,12 +72,12 @@ else
         exit 1
     fi
     
-    # 下载和安装包（kitty-docs）
-    echo -e "Downloading ${RED}kitty-docs${NC} version ${GREEN}${DOCS_LATEST_VERSION}${NC}"
+    # 下载和安装包（kitty-doc）
+    echo -e "Downloading ${RED}kitty-doc${NC} version ${GREEN}${DOCS_LATEST_VERSION}${NC}"
     if curl -s -O "$DOC_URL"; then
-        echo "Installing kitty-docs..."
-        if sudo apt install "./kitty-docs_${DOCS_LATEST_VERSION}.deb"; then
-            echo -e "${GREEN}kitty-docs_${DOCS_LATEST_VERSION}.deb 安装完成 ${NC}"
+        echo "Installing kitty-doc..."
+        if sudo apt install "./kitty-doc_${DOCS_LATEST_VERSION}.deb"; then
+            echo -e "${GREEN}kitty-doc_${DOCS_LATEST_VERSION}.deb 安装完成 ${NC}"
         else
             echo -e "${RED}Installation failed.${NC}"
             exit 1

@@ -61,7 +61,7 @@ else
     echo -e "Downloading ${RED}kitty-terminfo${NC} version ${GREEN}${TERMINFO_LATEST_VERSION}${NC}"
     if curl -s -O "$TERMINFO_URL"; then
         echo "Installing kitty-terminfo..."
-        if sudo apt install "$(pwd)/kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb"; then
+        if sudo dpkg -i "./kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb"; then
             echo -e "${GREEN}kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb 安装完成 ${NC}"
         else
             echo -e "${RED}Installation failed.${NC}"
@@ -76,7 +76,7 @@ else
     echo -e "Downloading ${RED}kitty-doc${NC} version ${GREEN}${DOCS_LATEST_VERSION}${NC}"
     if curl -s -O "$DOC_URL"; then
         echo "Installing kitty-doc..."
-        if sudo apt install "$(pwd)/kitty-doc_${DOCS_LATEST_VERSION}.deb"; then
+        if sudo dpkg -i "./kitty-doc_${DOCS_LATEST_VERSION}.deb"; then
             echo -e "${GREEN}kitty-doc_${DOCS_LATEST_VERSION}.deb 安装完成 ${NC}"
         else
             echo -e "${RED}Installation failed.${NC}"

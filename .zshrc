@@ -76,7 +76,7 @@ command -v fzf >/dev/null 2>&1 && source <(fzf --zsh)
 export FZF_DEFAULT_OPTS='--preview "${HOME}/.config/zsh/fzf/fzf-preview.sh {}" --bind "shift-left:preview-page-up,shift-right:preview-page-down"'
 
 export FZF_DEFAULT_COMMAND='fd -L -g -HIia'
-最新🩷6
+
 alias fd='fd -L -g -HIia'
 
 # 清除整个屏幕

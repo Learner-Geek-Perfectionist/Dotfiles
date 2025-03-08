@@ -59,28 +59,20 @@ else
     
     # 下载和安装包（kitty-terminfo）
     echo -e "Downloading ${RED}kitty-terminfo${NC} version ${GREEN}${TERMINFO_LATEST_VERSION}${NC}"
-    if curl -s -O "$TERMINFO_URL"; then
-        echo "Installing kitty-terminfo..."
-        if sudo dpkg -i "./kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb"; then
-            echo -e "${GREEN}kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb 安装完成 ${NC}"
-        else
-            echo -e "${RED}Installation failed.${NC}"
-            exit 1
-        fi
-    else
-        echo -e "${RED}Download failed.${NC}"
-        exit 1
-    fi
+    
+    curl -s -O "$TERMINFO_URL" || echo -e "${RED}Download failed.${NC}"
+    echo "Installing kitty-terminfo..."
+    sudo dpkg -i "./kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb" || (echo -e "${RED}Installation failed.${NC}" && exit 1)
+    echo -e "${GREEN}kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb 安装完成 ${NC}"
     
     # 下载和安装包（kitty-doc）
     echo -e "Downloading ${RED}kitty-doc${NC} version ${GREEN}${DOCS_LATEST_VERSION}${NC}"
     
-curl -s -O "$DOC_URL" || echo -e "${RED}Download failed.${NC}"
-echo "Installing kitty-doc..."
-sudo dpkg -i "./kitty-doc_${DOCS_LATEST_VERSION}.deb" || echo -e "${RED}Installation failed.${NC}"
-echo -e "${GREEN}kitty-doc_${DOCS_LATEST_VERSION}.deb 安装完成 ${NC}"
+    curl -s -O "$DOC_URL" || echo -e "${RED}Download failed.${NC}"
+    echo "Installing kitty-doc..."
+    sudo dpkg -i "./kitty-doc_${DOCS_LATEST_VERSION}.deb" || echo -e "${RED}Installation failed.${NC}"
+    echo -e "${GREEN}kitty-doc_${DOCS_LATEST_VERSION}.deb 安装完成 ${NC}"
 
-    fi
     # 清理下载的文件
     sudo rm -rf "kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb" "kitty-docs_${DOCS_LATEST_VERSION}.deb"
     

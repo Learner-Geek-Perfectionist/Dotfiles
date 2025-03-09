@@ -98,7 +98,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
 
     elif [[ $os_type == "fedora" ]]; then
 
-        tools=("zsh" "git" "curl" "fzf" "eza" "kitty" "zsh" "fd" "rg" "fastfetch")
+        tools=("zsh" "git" "curl" "fzf" "eza" "kitty" "zsh" "fd" "rg" "fastfetch" "bat")
         # 遍历工具列表，检查是否已安装
         for tool in "${tools[@]}"; do
             if ! command -v "$tool" >/dev/null 2>&1; then

@@ -74,7 +74,7 @@ else
 
     curl -s -O "$TERMINFO_URL" || echo -e "${RED}Download failed.${NC}"
     echo "Installing kitty-terminfo..."
-    sudo dpkg -i "./kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb" || (echo -e "${RED}Installation failed.${NC}" && exit 1)
+    sudo apt install -y "./kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb" || (echo -e "${RED}Installation failed.${NC}" && exit 1)
     echo -e "${GREEN}kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb 安装完成 ${NC}"
 
     # 下载和安装包（kitty-doc）
@@ -82,7 +82,7 @@ else
 
     curl -s -O "$DOC_URL" || echo -e "${RED}Download failed.${NC}"
     echo "Installing kitty-doc..."
-    sudo dpkg -i "./kitty-doc_${DOCS_LATEST_VERSION}.deb" || echo -e "${RED}Installation failed.${NC}"
+    sudo apt install -y "./kitty-doc_${DOCS_LATEST_VERSION}.deb" || echo -e "${RED}Installation failed.${NC}"
     echo -e "${GREEN}kitty-doc_${DOCS_LATEST_VERSION}.deb 安装完成 ${NC}"
 
     # 清理下载的文件

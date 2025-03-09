@@ -36,8 +36,8 @@ sudo apt search unminimize 2>/dev/null | grep -q "^unminimize/" && (sudo apt ins
 sudo apt install -y "$(apt search openjdk | grep -oP 'openjdk-\d+-jdk' | sort -V | tail -n1)"
 
 # 安装 Docker
-if [[ "$AUTO_RUN" == "true" ]]; then
-    echo -e "${GREEN}在 Docker 中无需安装 Docker${NC}"
+if grep -qi microsoft /proc/version || [[ "$AUTO_RUN" == "true" ]]; then
+    echo -e "${GREEN}在 WSL2 中或者 Docker 中不需要安装 Docker${NC}"
 else
     # 调用函数以安装和配置 Docker
     install_and_configure_docker

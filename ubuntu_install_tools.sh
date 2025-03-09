@@ -78,7 +78,7 @@ else
     
     # 检查是否在 WSL2 中运行或在自动化脚本环境中
     if grep -qi microsoft /proc/version || [[ "$AUTO_RUN" == "true" ]]; then
-        print_centered_message "${RED}在 WSL2 中或者 Dockerfile 中不需要安装 kitty 桌面图标${NC}" "false" "false"
+        print_centered_message "${RED}在 WSL2 中或者 Docker 中不需要安装 kitty 桌面图标${NC}" "false" "false"
     else
         mkdir -p ~/.local/share/applications/
         # For Application Launcher:

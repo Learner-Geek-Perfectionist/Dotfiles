@@ -43,13 +43,6 @@ fi
 export RUSTUP_HOME=/opt/rust/rustup
 export CARGO_HOME=/opt/rust/cargo
 
-
-INSTALL_DIR="/opt/kotlin-native/"
-COMPILER_INSTALL_DIR="/opt/kotlin-compiler/kotlinc/"
-# 最后统一将 Kotlin/Native 安装路径添加到 PATH
-[[ -d "$INSTALL_DIR" ]] && export PATH="$PATH:/opt/kotlin-native/bin/"
-[[ -d "$COMPILER_INSTALL_DIR" ]] && export PATH="$PATH:/opt/kotlin-compiler/kotlinc/bin/"
-
 # ip 映射到 ip-script
 [[ "$(uname)" == "Darwin" ]] && alias getip="$HOME/sh-script/get-my-ip.sh"
 

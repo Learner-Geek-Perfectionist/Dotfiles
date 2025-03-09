@@ -2,10 +2,6 @@
 set -e
 
 
-# 安装必要的工具 🔧
-install_packages "packages_fedora"
-
-
 # 注释 tsflags=nodocs，从而安装 manual 手册
 sudo sed -i '/tsflags=nodocs/s/^/#/' /etc/dnf/dnf.conf
 
@@ -15,20 +11,6 @@ sudo sed -e 's|^metalink=|#metalink=|g' \
     -i.bak \
     /etc/yum.repos.d/fedora.repo \
     /etc/yum.repos.d/fedora-updates.repo
-
-
-# 设置时区
-sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-echo "Asia/Shanghai" | sudo tee /etc/timezone >/dev/null
-
-# 1.生成Locale数据文件（特定地区或文化环境的规则，比如日期和时间的显示格式、数字和货币的格式、文本排序规则、字符编码等)
-sudo localedef -c -f UTF-8 -i zh_CN zh_CN.UTF-8
-
-# 2.设置中文语言输出信息
-echo "LANG=zh_CN.UTF-8" | sudo tee /etc/locale.conf
-echo "LC_ALL=zh_CN.UTF-8" | sudo tee -a /etc/locale.conf
-
-sudo dnf install -y --setopt=tsflags= coreutils rustup coreutils-common man-pages man-db && sudo dnf group install -y --setopt=strict=0 "c-development"
 
 # =================================开始安装 rustc=================================
 if command -v rustc >/dev/null 2>&1; then
@@ -55,6 +37,22 @@ else
     print_centered_message "${GREEN} rustc 安装完成 ✅${NC}" "false" "false"
 fi
 # =================================结束安装 rustc=================================
+
+# 安装必要的工具 🔧
+install_packages "packages_fedora"
+
+# 设置时区
+sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+echo "Asia/Shanghai" | sudo tee /etc/timezone >/dev/null
+
+# 1.生成Locale数据文件（特定地区或文化环境的规则，比如日期和时间的显示格式、数字和货币的格式、文本排序规则、字符编码等)
+sudo localedef -c -f UTF-8 -i zh_CN zh_CN.UTF-8
+
+# 2.设置中文语言输出信息
+echo "LANG=zh_CN.UTF-8" | sudo tee /etc/locale.conf
+echo "LC_ALL=zh_CN.UTF-8" | sudo tee -a /etc/locale.conf
+
+sudo dnf install -y --setopt=tsflags= coreutils rustup coreutils-common man-pages man-db && sudo dnf group install -y --setopt=strict=0 "c-development"
 
 # =================================开始安装 Kotlin/Native =================================
 # 设置 Kotlin 的变量

@@ -1,7 +1,6 @@
 # 一旦错误，就退出
 set -e
 
-
 # 注释 tsflags=nodocs，从而安装 manual 手册
 sudo sed -i '/tsflags=nodocs/s/^/#/' /etc/dnf/dnf.conf
 
@@ -11,6 +10,8 @@ sudo sed -e 's|^metalink=|#metalink=|g' \
     -i.bak \
     /etc/yum.repos.d/fedora.repo \
     /etc/yum.repos.d/fedora-updates.repo
+
+sudo dnf install -y --setopt=tsflags= coreutils rustup coreutils-common man-pages man-db && sudo dnf group install -y --setopt=strict=0 "c-development"
 
 # =================================开始安装 rustc=================================
 if command -v rustc >/dev/null 2>&1; then
@@ -52,8 +53,6 @@ sudo localedef -c -f UTF-8 -i zh_CN zh_CN.UTF-8
 echo "LANG=zh_CN.UTF-8" | sudo tee /etc/locale.conf
 echo "LC_ALL=zh_CN.UTF-8" | sudo tee -a /etc/locale.conf
 
-sudo dnf install -y --setopt=tsflags= coreutils rustup coreutils-common man-pages man-db && sudo dnf group install -y --setopt=strict=0 "c-development"
-
 # =================================开始安装 Kotlin/Native =================================
 # 设置 Kotlin 的变量
 setup_kotlin_environment
@@ -69,15 +68,14 @@ sudo ln -s /opt/kotlin-native/bin/* /usr/bin/
 sudo ln -s /opt/kotlin-compiler/kotlinc/bin/* /usr/bin/
 # =================================结束安装 Kotlin/Native =================================
 
-# =================================开始安装 Docker=================================
+
+# 安装 Docker
 if grep -qi microsoft /proc/version || [[ "$AUTO_RUN" == "true" ]]; then
     echo -e "${GREEN}在 WSL2 中或者 Docker 中不需要安装 Docker${NC}"
 else
     # 调用函数以安装和配置 Docker
     install_and_configure_docker
 fi
-# =================================开始安装 Docker=================================
-
 
 # 安装缺失的手册，并且更新手册页的数据库
 packages_to_reinstall=$(rpm -qads --qf "PACKAGE: %{NAME}\n" | sed -n -E '/PACKAGE: /{s/PACKAGE: // ; h ; b }; /^not installed/ { g; p }' | uniq)
@@ -86,6 +84,5 @@ if [ -z "$packages_to_reinstall" ]; then
 else
     sudo dnf -y reinstall $packages_to_reinstall && sudo mandb -c
 fi
-
 
 sudo dnf clean all && sudo dnf makecache

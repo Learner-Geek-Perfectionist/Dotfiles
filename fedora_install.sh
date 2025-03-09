@@ -11,6 +11,18 @@ sudo sed -e 's|^metalink=|#metalink=|g' \
     /etc/yum.repos.d/fedora.repo \
     /etc/yum.repos.d/fedora-updates.repo
 
+
+# 设置时区
+sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+echo "Asia/Shanghai" | sudo tee /etc/timezone >/dev/null
+
+# 1.生成Locale数据文件（特定地区或文化环境的规则，比如日期和时间的显示格式、数字和货币的格式、文本排序规则、字符编码等)
+sudo localedef -c -f UTF-8 -i zh_CN zh_CN.UTF-8
+
+# 2.设置中文语言输出信息
+echo "LANG=zh_CN.UTF-8" | sudo tee /etc/locale.conf
+echo "LC_ALL=zh_CN.UTF-8" | sudo tee -a /etc/locale.conf
+
 sudo dnf install -y --setopt=tsflags= coreutils rustup coreutils-common man-pages man-db && sudo dnf group install -y --setopt=strict=0 "c-development"
 
 # =================================开始安装 rustc=================================
@@ -39,36 +51,32 @@ else
 fi
 # =================================结束安装 rustc=================================
 
-# 安装必要的工具 🔧
-install_packages "packages_fedora"
-
-# 设置时区
-sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-echo "Asia/Shanghai" | sudo tee /etc/timezone >/dev/null
-
-# 1.生成Locale数据文件（特定地区或文化环境的规则，比如日期和时间的显示格式、数字和货币的格式、文本排序规则、字符编码等)
-sudo localedef -c -f UTF-8 -i zh_CN zh_CN.UTF-8
-
-# 2.设置中文语言输出信息
-echo "LANG=zh_CN.UTF-8" | sudo tee /etc/locale.conf
-echo "LC_ALL=zh_CN.UTF-8" | sudo tee -a /etc/locale.conf
-
+# =================================开始安装 Kotlin/Native =================================
 # 设置 Kotlin 的变量
 setup_kotlin_environment
-# 安装 Kotlin/Native 和 Kotlin-Complier
-download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR
 
+# 安装 Kotlin/Native
+download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR
 download_and_extract_kotlin $KOTLIN_COMPILER_URL $COMPILER_INSTALL_DIR
 
-# 为了避免 Dockerfile 交互式
-if [[ "$AUTO_RUN" == "true" ]]; then
-    echo -e "${GREEN}在 Docker 中无需安装 Docker${NC}"
+# 创建Kotlin/Native的主要可执行文件符号链接
+sudo ln -s /opt/kotlin-native/bin/* /usr/bin/
+
+# 创建Kotlin Compiler的主要可执行文件符号链接
+sudo ln -s /opt/kotlin-compiler/kotlinc/bin/* /usr/bin/
+# =================================结束安装 Kotlin/Native =================================
+
+# 安装 Docker
+if grep -qi microsoft /proc/version || [[ "$AUTO_RUN" == "true" ]]; then
+    echo -e "${GREEN}在 WSL2 中或者 Docker 中不需要安装 Docker${NC}"
 else
     # 调用函数以安装和配置 Docker
     install_and_configure_docker
 fi
 
-sudo dnf clean all && sudo dnf makecache
+# 安装必要的工具 🔧
+install_packages "packages_fedora"
+
 
 # 安装缺失的手册，并且更新手册页的数据库
 packages_to_reinstall=$(rpm -qads --qf "PACKAGE: %{NAME}\n" | sed -n -E '/PACKAGE: /{s/PACKAGE: // ; h ; b }; /^not installed/ { g; p }' | uniq)
@@ -77,3 +85,6 @@ if [ -z "$packages_to_reinstall" ]; then
 else
     sudo dnf -y reinstall $packages_to_reinstall && sudo mandb -c
 fi
+
+
+sudo dnf clean all && sudo dnf makecache

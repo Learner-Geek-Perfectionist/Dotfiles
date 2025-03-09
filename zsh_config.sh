@@ -97,7 +97,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
         source /tmp/Dotfiles/ubuntu_install_tools.sh
 
     elif [[ $os_type == "fedora" ]]; then
-        sudo dnf update
+        sudo dnf -y update
         tools=("zsh" "git" "curl" "fzf" "eza" "kitty" "zsh" "fd" "rg" "fastfetch" "bat")
         # 遍历工具列表，检查是否已安装
         for tool in "${tools[@]}"; do

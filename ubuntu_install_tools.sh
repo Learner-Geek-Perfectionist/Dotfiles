@@ -73,21 +73,20 @@ else
     # 下载和安装包（kitty-terminfo）
     echo -e "Downloading ${RED}kitty-terminfo${NC} version ${GREEN}${TERMINFO_LATEST_VERSION}${NC}"
 
-    curl -s -O "$TERMINFO_URL" || echo -e "${RED}Download failed.${NC}"
+    curl -s -o "/tmp/kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb" "$TERMINFO_URL" || echo -e "${RED}Download failed.${NC}"
     echo "Installing kitty-terminfo..."
-    sudo apt install -y "./kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb" || (echo -e "${RED}Installation failed.${NC}" && exit 1)
+    sudo apt install -y "/tmp/kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb" || (echo -e "${RED}Installation failed.${NC}" && exit 1)
     echo -e "${GREEN}kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb 安装完成 ${NC}"
 
-    # 下载和安装包（kitty-doc）
-    echo -e "Downloading ${RED}kitty-doc${NC} version ${GREEN}${DOCS_LATEST_VERSION}${NC}"
-
-    curl -s -O "$DOC_URL" || echo -e "${RED}Download failed.${NC}"
-    echo "Installing kitty-doc..."
-    sudo apt install -y "./kitty-doc_${DOCS_LATEST_VERSION}.deb" || echo -e "${RED}Installation failed.${NC}"
-    echo -e "${GREEN}kitty-doc_${DOCS_LATEST_VERSION}.deb 安装完成 ${NC}"
+#    # 下载和安装包（kitty-doc）
+#    echo -e "Downloading ${RED}kitty-doc${NC} version ${GREEN}${DOCS_LATEST_VERSION}${NC}"
+#    curl -s -o "/tmp/kitty-doc_${DOCS_LATEST_VERSION}.deb" "$DOC_URL" || echo -e "${RED}Download failed.${NC}"
+#    echo "Installing kitty-doc..."
+#    sudo apt install -y "/tmp/kitty-doc_${DOCS_LATEST_VERSION}.deb" || echo -e "${RED}Installation failed.${NC}"
+#    echo -e "${GREEN}kitty-doc_${DOCS_LATEST_VERSION}.deb 安装完成 ${NC}"
 
     # 清理下载的文件
-    sudo rm -rf "kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb" "kitty-docs_${DOCS_LATEST_VERSION}.deb"
+    sudo rm -rf "/tmp/kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb" "/tmp/kitty-doc_${DOCS_LATEST_VERSION}.deb"
 
     # 检查是否在 WSL2 中运行或在自动化脚本环境中
     if grep -qi microsoft /proc/version || [[ "$AUTO_RUN" == "true" ]]; then

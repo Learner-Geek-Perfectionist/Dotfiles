@@ -42,7 +42,7 @@ fi
 # rust 工具的环境变量
 export RUSTUP_HOME=/opt/rust/rustup
 export CARGO_HOME=/opt/rust/cargo
-export PATH="/opt/rust/cargo/bin:$PATH"
+
 
 INSTALL_DIR="/opt/kotlin-native/"
 COMPILER_INSTALL_DIR="/opt/kotlin-compiler/kotlinc/"

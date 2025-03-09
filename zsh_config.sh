@@ -54,13 +54,6 @@ sudo rm -rf "$TMP_DIR"
 sudo rm -rf /tmp/Fonts/
 echo -e "${GREEN}🚀 Starting script...${NC}"
 
-# 浅克隆仓库到临时目录
-echo -e "${YELLOW}📥 Cloning repository into $TMP_DIR...${NC}"
-git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR" || {
-    echo "Failed to clone repository"
-    exit 1
-}
-
 if [[ $(uname -s) == "Darwin" ]]; then
     # 定义需要安装的工具
     tools=("fzf" "eza" "fd" "rg" "kitty" "bat" "fastfetch")
@@ -71,6 +64,12 @@ if [[ $(uname -s) == "Darwin" ]]; then
             brew install "$tool"
         fi
     done
+    # 浅克隆仓库到临时目录
+    echo -e "${YELLOW}📥 Cloning repository into $TMP_DIR...${NC}"
+    git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR" || {
+        echo "Failed to clone repository"
+        exit 1
+    }
 
 elif [[ $(uname -s) == "Linux" ]]; then
 
@@ -89,6 +88,12 @@ elif [[ $(uname -s) == "Linux" ]]; then
                 sudo apt install -y "$tool"
             fi
         done
+        # 浅克隆仓库到临时目录
+        echo -e "${YELLOW}📥 Cloning repository into $TMP_DIR...${NC}"
+        git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR" || {
+            echo "Failed to clone repository"
+            exit 1
+        }
         source /tmp/Dotfiles/ubuntu_install_tools.sh
 
     elif [[ $os_type == "fedora" ]]; then
@@ -100,6 +105,12 @@ elif [[ $(uname -s) == "Linux" ]]; then
                 sudo dnf install -y "$tool"
             fi
         done
+        # 浅克隆仓库到临时目录
+        echo -e "${YELLOW}📥 Cloning repository into $TMP_DIR...${NC}"
+        git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR" || {
+            echo "Failed to clone repository"
+            exit 1
+        }
 
     else
         print_centered_message "${RED}不支持的发行版，目前只支持 fedora、ubuntu${NC}"

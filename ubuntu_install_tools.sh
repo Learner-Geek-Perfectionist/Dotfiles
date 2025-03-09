@@ -15,6 +15,7 @@ else
         curl -s https://apt.kitware.com/kitware-archive.sh | sudo bash
     elif [[ "$CURRENT_VERSION" == "bionic" ]]; then
         # 对于 Bionic 手动添加 Kitware 的仓库
+        [[ -f /etc/apt/keyrings/kitware.gpg ]] && sudo rm -rf /etc/apt/keyrings/kitware.gpg
         sudo mkdir -p /etc/apt/keyrings
         sudo wget -qO- https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo gpg --dearmor -o /etc/apt/keyrings/kitware.gpg
         echo "deb [signed-by=/etc/apt/keyrings/kitware.gpg] https://apt.kitware.com/ubuntu/ bionic main" | sudo tee /etc/apt/sources.list.d/kitware.list >/dev/null

@@ -55,9 +55,9 @@ sudo rm -rf /tmp/Fonts/
 echo -e "${GREEN}🚀 Starting script...${NC}"
 
 if [[ $(uname -s) == "Darwin" ]]; then
+    brew update
     # 定义需要安装的工具
     tools=("fzf" "eza" "fd" "rg" "kitty" "bat" "fastfetch")
-
     # 遍历工具列表，检查是否已安装
     for tool in "${tools[@]}"; do
         if ! command -v "$tool" >/dev/null 2>&1; then
@@ -78,7 +78,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
 
     # 根据操作系统安装......
     if [[ $os_type == "ubuntu" ]]; then
-
+        sudo apt update
         # 解压的依赖工具 xz
         sudo apt install -y xz-utils
         tools=("zsh" "git" "curl" "make" "g++" "gcc" "wget" "gnupg")
@@ -97,7 +97,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
         source /tmp/Dotfiles/ubuntu_install_tools.sh
 
     elif [[ $os_type == "fedora" ]]; then
-
+        sudo dnf update
         tools=("zsh" "git" "curl" "fzf" "eza" "kitty" "zsh" "fd" "rg" "fastfetch" "bat")
         # 遍历工具列表，检查是否已安装
         for tool in "${tools[@]}"; do

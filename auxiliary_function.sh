@@ -93,53 +93,71 @@ download_and_extract_kotlin() {
 
 detect_package_manager() {
     if command -v brew &>/dev/null; then
-        echo "brew install"
+        echo "brew"
     elif command -v apt &>/dev/null; then
-        echo "sudo apt install -y"
+        echo "apt"
     elif command -v dnf &>/dev/null; then
-        echo "sudo dnf install -y --setopt=tsflags="
+        echo "dnf"
     else
         echo "unsupported"
     fi
 }
 
 install_packages() {
-    local package_manager=$(detect_package_manager)
+    local pkg_manager
+    pkg_manager=$(detect_package_manager)
+    if [[ "$pkg_manager" == "unsupported" ]]; then
+         echo -e "${RED}Unsupported package manager${NC}"
+         return 1
+    fi
+
     local package_group_name="$1"
     local packages
-    local uninstalled_packages=()
+    # 注意：确保传入的 package_group_name 是受信任的变量名
     eval "packages=(\"\${${package_group_name}[@]}\")"
-    case "$package_manager" in
-    "brew install" | "sudo apt install -y" | "sudo dnf install -y --setopt=tsflags=")
-        installed_packages=$($package_manager | awk -F/ '{print $1}')
-        ;;
-    *)
-        echo -e "${RED}Unsupported package manager${NC}"
-        return 1
-        ;;
+
+    local installed_packages
+    case "$pkg_manager" in
+         "brew")
+              installed_packages=$(brew list)
+              ;;
+         "apt")
+              installed_packages=$(dpkg -l | awk '/^ii/ {print $2}')
+              ;;
+         "dnf")
+              installed_packages=$(dnf list installed | awk 'NR>1 {print $1}')
+              ;;
     esac
 
+    local uninstalled_packages=()
     for package in "${packages[@]}"; do
-        if ! echo "$installed_packages" | grep -qi -E "^$package.*$"; then
-            uninstalled_packages+=("$package")
-        fi
+         if ! echo "$installed_packages" | grep -qi -E "^$package.*$"; then
+              uninstalled_packages+=("$package")
+         fi
     done
+
     if [[ ${#uninstalled_packages[@]} -eq 0 ]]; then
-        print_centered_message "🎉 ${GREEN}All packages were already installed.${NC}" "false" "false"
-        return 0
+         print_centered_message "🎉 ${GREEN}All packages were already installed.${NC}" "false" "false"
+         return 0
     else
-        print_centered_message "${RED}The following packages need to be installed:${NC}"
-        for package in "${uninstalled_packages[@]}"; do
-            echo "- $package"
-        done
+         print_centered_message "${RED}The following packages need to be installed:${NC}"
+         for package in "${uninstalled_packages[@]}"; do
+              echo "- $package"
+         done
     fi
+
     print_centered_message "${LIGHT_BLUE}Installing ${#uninstalled_packages[@]} packages...${NC}"
-    # Check for uninstalled packages
-    for package in "${packages[@]}"; do
-        if ! echo "$installed_packages" | grep -qi "^$package$"; then
-            uninstalled_packages+=("$package")
-        fi
-    done
+    case "$pkg_manager" in
+         "brew")
+              brew install "${uninstalled_packages[@]}"
+              ;;
+         "apt")
+              sudo apt install -y "${uninstalled_packages[@]}"
+              ;;
+         "dnf")
+              sudo dnf install -y --setopt=tsflags=nodocs "${uninstalled_packages[@]}"
+              ;;
+    esac
 }
 
 install_and_configure_docker() {

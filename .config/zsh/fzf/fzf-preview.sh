@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
-# The purpose of this script is to demonstrate how to preview a file or an
-# image in the preview window of fzf.
+# The purpose of this script is to demonstrate how to preview a file or text
+# content in the preview window of fzf.
 #
 # Dependencies:
 # - https://github.com/sharkdp/bat
@@ -9,22 +9,32 @@
 # - https://iterm2.com/utilities/imgcat
 
 if [[ $# -ne 1 ]]; then
-  >&2 echo "usage: $0 FILENAME"
+  >&2 echo "usage: $0 FILENAME_OR_TEXT"
   exit 1
 fi
 
 file=${1/#\~\//$HOME/}
+
+# Check if the argument is an existing file
+if [[ ! -e "$file" ]]; then
+  # Treat the argument as text content
+  if command -v batcat > /dev/null; then
+    batname="batcat"
+  elif command -v bat > /dev/null; then
+    batname="bat"
+  else
+    echo "$1"
+    exit
+  fi
+  echo "$1" | ${batname} --style="${BAT_STYLE:-numbers}" --color=always --pager=never -
+  exit
+fi
+
 type=$(file --dereference --mime -- "$file")
 
 if [[ ! $type =~ image/ ]]; then
   if [[ $type =~ =binary ]]; then
     file "$1"
-    exit
-  fi
-
-
-  if [[ $type =~ text/ || $type =~ charset ]]; then
-    echo "$1"
     exit
   fi
 
@@ -53,25 +63,15 @@ fi
 
 # 1. Use kitty icat on kitty terminal
 if [[ $KITTY_WINDOW_ID ]]; then
-  # 1. 'memory' is the fastest option but if you want the image to be scrollable,
-  #    you have to use 'stream'.
-  #
-  # 2. The last line of the output is the ANSI reset code without newline.
-  #    This confuses fzf and makes it render scroll offset indicator.
-  #    So we remove the last line and append the reset code to its previous line.
   kitty icat --clear --transfer-mode=memory --unicode-placeholder --stdin=no --place="$dim@0x0" "$file" | sed '$d' | sed $'$s/$/\e[m/'
 
 # 2. Use chafa with Sixel output
 elif command -v chafa > /dev/null; then
   chafa -s "$dim" "$file"
-  # Add a new line character so that fzf can display multiple images in the preview window
   echo
 
 # 3. If chafa is not found but imgcat is available, use it on iTerm2
 elif command -v imgcat > /dev/null; then
-  # NOTE: We should use https://iterm2.com/utilities/it2check to check if the
-  # user is running iTerm2. But for the sake of simplicity, we just assume
-  # that's the case here.
   imgcat -W "${dim%%x*}" -H "${dim##*x}" "$file"
 
 # 4. Cannot find any suitable method to preview the image

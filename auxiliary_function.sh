@@ -198,6 +198,7 @@ install_docker() {
     }
     echo -e "${GREEN}Docker 安装完成。请考虑重新登录或重启以使组设置生效。${NC}"
 }
+
 install_fonts() {
     if [[ $AUTO_RUN == "true" ]]; then
         return 0
@@ -231,6 +232,7 @@ install_fonts() {
     fi
     print_centered_message "字体安装完成。✅" "false" "true"
 }
+
 countdown() {
     local timeout=${1:-60}
     local message=${2:-"Waiting for input"}

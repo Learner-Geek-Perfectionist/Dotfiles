@@ -12,6 +12,11 @@ sudo sed -e 's|^metalink=|#metalink=|g' \
     /etc/yum.repos.d/fedora-updates.repo
 
 sudo dnf group install -y --setopt=strict=0 "c-development"
+# 安装必要的工具 🔧
+install_packages "packages_fedora"
+
+# 安装 Docker
+install_and_configure_docker
 
 # =================================开始安装 rustc=================================
 if command -v rustc >/dev/null 2>&1; then
@@ -39,9 +44,6 @@ else
 fi
 # =================================结束安装 rustc=================================
 
-# 安装必要的工具 🔧
-install_packages "packages_fedora"
-
 # 设置时区
 sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 echo "Asia/Shanghai" | sudo tee /etc/timezone >/dev/null
@@ -68,8 +70,6 @@ sudo ln -s /opt/kotlin-native/bin/* /usr/bin/
 sudo ln -s /opt/kotlin-compiler/kotlinc/bin/* /usr/bin/
 # =================================结束安装 Kotlin/Native =================================
 
-# 安装 Docker
-install_and_configure_docker
 
 # 安装缺失的手册，并且更新手册页的数据库
 packages_to_reinstall=$(rpm -qads --qf "PACKAGE: %{NAME}\n" | sed -n -E '/PACKAGE: /{s/PACKAGE: // ; h ; b }; /^not installed/ { g; p }' | uniq)

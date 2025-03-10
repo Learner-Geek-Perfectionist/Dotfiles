@@ -28,6 +28,7 @@ brew_formulas=(
 packages_ubuntu=(
     openssh-server
     debconf-utils
+    apt-utils
     ncurses-bin
     net-tools
     lsb-release
@@ -73,6 +74,7 @@ packages_fedora=(
     glibc-common
     coreutils
     coreutils-common
+    dnf-utils
     man-pages
     man-db
     openssh-server

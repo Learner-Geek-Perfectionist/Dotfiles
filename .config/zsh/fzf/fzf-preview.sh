@@ -22,6 +22,12 @@ if [[ ! $type =~ image/ ]]; then
     exit
   fi
 
+
+  if [[ $type =~ text/ || $type =~ charset ]]; then
+    echo "$1"
+    exit
+  fi
+
   # Sometimes bat is installed as batcat.
   if command -v batcat > /dev/null; then
     batname="batcat"
@@ -70,5 +76,6 @@ elif command -v imgcat > /dev/null; then
 
 # 4. Cannot find any suitable method to preview the image
 else
-  file "$file"
+  echo "No suitable method to preview the image."
+  exit 1
 fi

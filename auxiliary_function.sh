@@ -88,23 +88,15 @@ download_and_extract_kotlin() {
     print_centered_message "${GREEN}${FILE_NAME} has been installed successfully to ${TARGET_DIR}${NC}" "false" "false"
 }
 detect_package_manager() {
-    case "$(uname -s)" in
-    Linux)
-        if
-            type apt >/dev/null 2>&1
-        then
-            echo "apt"
-        elif type dnf >/dev/null 2>&1; then
-            echo "dnf"
-        else
-            echo -e "${RED}Unsupported package manager${NC}"
-        fi
-        ;;
-    Darwin)
+    if command -v brew &>/dev/null; then
         echo "brew"
-        ;;
-    *) echo -e "${RED}Unsupported operating system${NC}" ;;
-    esac
+    elif command -v apt &>/dev/null; then
+        echo "sudo apt -y "
+    elif command -v dnf &>/dev/null; then
+        echo "sudo dnf -y --setopt=tsflags="
+    else
+        echo "unsupported"
+    fi
 }
 install_packages() {
     local package_manager=$(detect_package_manager)
@@ -142,12 +134,24 @@ install_packages() {
         done
     fi
     print_centered_message "${LIGHT_BLUE}Installing ${#uninstalled_packages[@]} packages...${NC}"
-    if [[ $package_manager == "brew" ]]; then
-        $package_manager install "${uninstalled_packages[@]}"
+    $package_manager install "${uninstalled_packages[@]}"
+}
+
+
+install_and_configure_docker() {
+    print_centered_message "$LIGHT_BLUE开始检查 Docker 环境..." "true" "false"
+    if grep -qi microsoft /proc/version || [[ "$AUTO_RUN" == "true" ]]; then
+        echo -e "${GREEN}在 WSL2 中或者 Docker 中不需要安装 Docker${NC}"
     else
-        sudo $package_manager install -y "${uninstalled_packages[@]}"
+        if command -v docker >/dev/null; then
+            echo -e "${GREEN}Docker 已安装✅，跳过安装步骤。${NC}"
+        else
+            echo -e "${YELLOW}Docker 未安装，开始安装过程...${NC}"
+            install_docker
+        fi
     fi
 }
+
 install_docker() {
     echo -e "$BLUE获取 Docker 安装脚本...${NC}"
     curl -fsSL https://get.docker.com -o get-docker.sh || {

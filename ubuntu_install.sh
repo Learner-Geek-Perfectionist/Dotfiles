@@ -35,11 +35,7 @@ sudo apt search unminimize 2>/dev/null | grep -q "^unminimize/" && (sudo apt ins
 sudo apt install -y "$(apt search openjdk | grep -oP 'openjdk-\d+-jdk' | sort -V | tail -n1)"
 
 # 安装 Docker
-if grep -qi microsoft /proc/version || [[ "$AUTO_RUN" == "true" ]]; then
-    echo -e "${GREEN}在 WSL2 中或者 Docker 中不需要安装 Docker${NC}"
-else
-    install_docker
-fi
+install_and_configure_docker
 
 # =================================开始安装 Kotlin/Native =================================
 # 设置 Kotlin 的变量

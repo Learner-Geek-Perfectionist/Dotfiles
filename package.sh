@@ -18,7 +18,7 @@ brew_formulas=(
     ca-certificates icu4c luajit node unibilium
     cmake libnghttp2 luv openssl@3 vim perl
     cmake-docs libsodium lz4 pcre2 xz llvm
-    fastfetch libuv lzip z3 tree  autoconf
+    fastfetch libuv lzip z3 tree autoconf chafa
     fd libvterm make readline zstd eza less
     fzf libyaml mpdecimal ripgrep go coreutils
     gcc ninja wget mas pkgconf jq hammerspoon
@@ -71,6 +71,9 @@ packages_ubuntu=(
 packages_fedora=(
     glibc
     glibc-common
+    coreutils
+    coreutils-common
+    man-pages man-db
     openssh-server
     iproute
     net-tools
@@ -86,7 +89,6 @@ packages_fedora=(
     ruby
     kitty
     cmake
-    make
     nodejs
     iputils
     procps-ng

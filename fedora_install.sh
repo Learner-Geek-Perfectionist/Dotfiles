@@ -11,7 +11,7 @@ sudo sed -e 's|^metalink=|#metalink=|g' \
     /etc/yum.repos.d/fedora.repo \
     /etc/yum.repos.d/fedora-updates.repo
 
-sudo dnf install -y --setopt=tsflags= coreutils rustup coreutils-common man-pages man-db && sudo dnf group install -y --setopt=strict=0 "c-development"
+sudo dnf group install -y --setopt=strict=0 "c-development"
 
 # =================================开始安装 rustc=================================
 if command -v rustc >/dev/null 2>&1; then
@@ -27,7 +27,7 @@ else
     export RUSTUP_HOME=/opt/rust/rustup
 
     # 2. 通过 rustup 脚本安装并指定系统目录
-    rustup-init -y
+    sudo dnf install -y rustup && rustup-init -y
     # 3. 链接 cargo、rustc、rustup 到系统的PATH 中
     sudo ln -s /opt/rust/cargo/bin/* /usr/bin/
     # 4. -E 保持了环境变量
@@ -69,11 +69,7 @@ sudo ln -s /opt/kotlin-compiler/kotlinc/bin/* /usr/bin/
 # =================================结束安装 Kotlin/Native =================================
 
 # 安装 Docker
-if grep -qi microsoft /proc/version || [[ "$AUTO_RUN" == "true" ]]; then
-    echo -e "${GREEN}在 WSL2 中或者 Docker 中不需要安装 Docker${NC}"
-else
-    install_docker
-fi
+install_and_configure_docker
 
 # 安装缺失的手册，并且更新手册页的数据库
 packages_to_reinstall=$(rpm -qads --qf "PACKAGE: %{NAME}\n" | sed -n -E '/PACKAGE: /{s/PACKAGE: // ; h ; b }; /^not installed/ { g; p }' | uniq)

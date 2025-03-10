@@ -116,7 +116,6 @@ packages_fedora=(
     sudo
     autoconf
     systemd
-    cargo
     bc
     bat
     chafa

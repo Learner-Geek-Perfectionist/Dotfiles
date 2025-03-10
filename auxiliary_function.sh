@@ -155,7 +155,7 @@ install_packages() {
               sudo apt install -y "${uninstalled_packages[@]}"
               ;;
          "dnf")
-              sudo dnf install -y --setopt=tsflags=nodocs "${uninstalled_packages[@]}"
+              sudo dnf install -y "${uninstalled_packages[@]}"
               ;;
     esac
 }

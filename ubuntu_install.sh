@@ -38,7 +38,6 @@ sudo apt install -y "$(apt search openjdk | grep -oP 'openjdk-\d+-jdk' | sort -V
 install_and_configure_docker
 # =================================开始安装 Docker=================================
 
-
 # =================================开始安装 Kotlin/Native =================================
 # 设置 Kotlin 的变量
 setup_kotlin_environment

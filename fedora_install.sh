@@ -12,6 +12,7 @@ sudo sed -e 's|^metalink=|#metalink=|g' \
     /etc/yum.repos.d/fedora-updates.repo
 
 sudo dnf group install -y --setopt=strict=0 "c-development"
+
 # 安装必要的工具 🔧
 install_packages "packages_fedora"
 

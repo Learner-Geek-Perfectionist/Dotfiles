@@ -5,7 +5,7 @@ set -e
 brew_casks=(
     videofusion wpsoffice-cn tencent-meeting google-chrome
     orbstack dingtalk baidunetdisk anaconda iina
-    pycharm android-studio qq chatgpt fleet
+    pycharm android-studio qq chatgpt fleet hammerspoon
     intellij-idea qqmusic jetbrains-gateway telegram
     clion jordanbaird-ice visual-studio-code discord keycastr wechat
     douyin kitty feishu microsoft-edge Eudic karabiner-elements
@@ -21,7 +21,7 @@ brew_formulas=(
     fastfetch libuv lzip z3 tree autoconf chafa
     fd libvterm make readline zstd eza less
     fzf libyaml mpdecimal ripgrep go coreutils
-    gcc ninja wget mas pkgconf jq hammerspoon
+    gcc ninja wget mas pkgconf jq
 )
 
 #ubuntu
@@ -73,7 +73,8 @@ packages_fedora=(
     glibc-common
     coreutils
     coreutils-common
-    man-pages man-db
+    man-pages
+    man-db
     openssh-server
     iproute
     net-tools

@@ -23,9 +23,11 @@ print_centered_message() {
         echo "$line"
     fi
 }
+
 get_latest_version() {
     LATEST_VERSION=$(curl -s -L -I https://github.com/JetBrains/kotlin/releases/latest | grep -i location | sed -E 's/.*tag\/(v[0-9\.]+).*/\1/')
 }
+
 setup_kotlin_environment() {
     ARCH=$(uname -m)
     INSTALL_DIR="/opt/kotlin-native/"
@@ -58,6 +60,7 @@ setup_kotlin_environment() {
     KOTLIN_NATIVE_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-native-prebuilt-$SYSTEM_TYPE-$ARCH-${LATEST_VERSION#v}.tar.gz"
     KOTLIN_COMPILER_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-compiler-${LATEST_VERSION#v}.zip"
 }
+
 download_and_extract_kotlin() {
     URL=$1
     TARGET_DIR=$2
@@ -87,17 +90,19 @@ download_and_extract_kotlin() {
 
     print_centered_message "${GREEN}${FILE_NAME} has been installed successfully to ${TARGET_DIR}${NC}" "false" "false"
 }
+
 detect_package_manager() {
     if command -v brew &>/dev/null; then
-        echo "brew"
+        echo "brew install"
     elif command -v apt &>/dev/null; then
-        echo "sudo apt -y "
+        echo "sudo apt install -y"
     elif command -v dnf &>/dev/null; then
-        echo "sudo dnf -y --setopt=tsflags="
+        echo "sudo dnf install -y --setopt=tsflags="
     else
         echo "unsupported"
     fi
 }
+
 install_packages() {
     local package_manager=$(detect_package_manager)
     local package_group_name="$1"
@@ -105,20 +110,15 @@ install_packages() {
     local uninstalled_packages=()
     eval "packages=(\"\${${package_group_name}[@]}\")"
     case "$package_manager" in
-    brew)
-        installed_packages=$(brew list)
-        ;;
-    apt)
-        installed_packages=$(apt list --installed | awk -F/ '{print $1}')
-        ;;
-    dnf)
-        installed_packages=$(dnf list installed | awk '{print $1}')
+    "brew install" | "sudo apt install -y" | "sudo dnf install -y --setopt=tsflags=")
+        installed_packages=$($package_manager | awk -F/ '{print $1}')
         ;;
     *)
         echo -e "${RED}Unsupported package manager${NC}"
         return 1
         ;;
     esac
+
     for package in "${packages[@]}"; do
         if ! echo "$installed_packages" | grep -qi -E "^$package.*$"; then
             uninstalled_packages+=("$package")
@@ -134,9 +134,13 @@ install_packages() {
         done
     fi
     print_centered_message "${LIGHT_BLUE}Installing ${#uninstalled_packages[@]} packages...${NC}"
-    $package_manager install "${uninstalled_packages[@]}"
+    # Check for uninstalled packages
+    for package in "${packages[@]}"; do
+        if ! echo "$installed_packages" | grep -qi "^$package$"; then
+            uninstalled_packages+=("$package")
+        fi
+    done
 }
-
 
 install_and_configure_docker() {
     print_centered_message "$LIGHT_BLUE开始检查 Docker 环境..." "true" "false"

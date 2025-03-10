@@ -15,8 +15,9 @@ sudo dnf group install -y --setopt=strict=0 "c-development"
 # 安装必要的工具 🔧
 install_packages "packages_fedora"
 
-# 安装 Docker
+# =================================开始安装 Docker=================================
 install_and_configure_docker
+# =================================开始安装 Docker=================================
 
 # =================================开始安装 rustc=================================
 if command -v rustc >/dev/null 2>&1; then
@@ -44,17 +45,6 @@ else
 fi
 # =================================结束安装 rustc=================================
 
-# 设置时区
-sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-echo "Asia/Shanghai" | sudo tee /etc/timezone >/dev/null
-
-# 1.生成Locale数据文件（特定地区或文化环境的规则，比如日期和时间的显示格式、数字和货币的格式、文本排序规则、字符编码等)
-sudo localedef -c -f UTF-8 -i zh_CN zh_CN.UTF-8
-
-# 2.设置中文语言输出信息
-echo "LANG=zh_CN.UTF-8" | sudo tee /etc/locale.conf
-echo "LC_ALL=zh_CN.UTF-8" | sudo tee -a /etc/locale.conf
-
 # =================================开始安装 Kotlin/Native =================================
 # 设置 Kotlin 的变量
 setup_kotlin_environment
@@ -70,6 +60,18 @@ sudo ln -s /opt/kotlin-native/bin/* /usr/bin/
 sudo ln -s /opt/kotlin-compiler/kotlinc/bin/* /usr/bin/
 # =================================结束安装 Kotlin/Native =================================
 
+
+
+# 设置时区
+sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+echo "Asia/Shanghai" | sudo tee /etc/timezone >/dev/null
+
+# 1.生成Locale数据文件（特定地区或文化环境的规则，比如日期和时间的显示格式、数字和货币的格式、文本排序规则、字符编码等)
+sudo localedef -c -f UTF-8 -i zh_CN zh_CN.UTF-8
+
+# 2.设置中文语言输出信息
+echo "LANG=zh_CN.UTF-8" | sudo tee /etc/locale.conf
+echo "LC_ALL=zh_CN.UTF-8" | sudo tee -a /etc/locale.conf
 
 # 安装缺失的手册，并且更新手册页的数据库
 packages_to_reinstall=$(rpm -qads --qf "PACKAGE: %{NAME}\n" | sed -n -E '/PACKAGE: /{s/PACKAGE: // ; h ; b }; /^not installed/ { g; p }' | uniq)

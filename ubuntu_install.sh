@@ -34,8 +34,10 @@ sudo apt search unminimize 2>/dev/null | grep -q "^unminimize/" && (sudo apt ins
 # 搜索可用的 OpenJDK 包并尝试获取最新版本
 sudo apt install -y "$(apt search openjdk | grep -oP 'openjdk-\d+-jdk' | sort -V | tail -n1)"
 
-# 安装 Docker
+# =================================开始安装 Docker=================================
 install_and_configure_docker
+# =================================开始安装 Docker=================================
+
 
 # =================================开始安装 Kotlin/Native =================================
 # 设置 Kotlin 的变量

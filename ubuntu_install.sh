@@ -16,7 +16,6 @@ sudo locale-gen zh_CN.UTF-8
 echo "LANG=zh_CN.UTF-8" | sudo tee /etc/default/locale
 echo "LC_ALL=zh_CN.UTF-8" | sudo tee -a /etc/default/locale
 
-
 # 添加PPA并更新
 sudo add-apt-repository -y ppa:wireshark-dev/stable
 sudo add-apt-repository -y ppa:openjdk-r/ppa
@@ -39,8 +38,7 @@ sudo apt install -y "$(apt search openjdk | grep -oP 'openjdk-\d+-jdk' | sort -V
 if grep -qi microsoft /proc/version || [[ "$AUTO_RUN" == "true" ]]; then
     echo -e "${GREEN}在 WSL2 中或者 Docker 中不需要安装 Docker${NC}"
 else
-    # 调用函数以安装和配置 Docker
-    install_and_configure_docker
+    install_docker
 fi
 
 # =================================开始安装 Kotlin/Native =================================

@@ -161,40 +161,16 @@ install_docker() {
     }
     rm -rf get-docker.sh
     echo -e "$BLUE将当前用户添加到 docker 组...${NC}"
-    sudo usermod -aG docker $USER || {
+    sudo usermod -aG docker "$USER" || {
         echo -e "$DARK_RED添加用户到 docker 组失败${NC}"
         exit 1
     }
     echo -e "$BLUE启动并设置 Docker 服务开机自启...${NC}"
-    sudo systemctl start docker && sudo systemctl enable docker && sudo systemctl restart docker || {
+    (sudo systemctl start docker && sudo systemctl enable docker && sudo systemctl restart docker) || {
         echo -e "$DARK_RED启动或设置开机自启失败${NC}"
         exit 1
     }
     echo -e "${GREEN}Docker 安装完成。请考虑重新登录或重启以使组设置生效。${NC}"
-}
-install_and_configure_docker() {
-    print_centered_message "$LIGHT_BLUE开始检查 Docker 环境..." "true" "false"
-    if grep -qi microsoft /proc/version; then
-        echo -e "$YELLOW在 WSL2 环境中运行${NC}"
-        docker_path=$(command -v docker)
-        if [ -n "$docker_path" ] && [[ $docker_path == "/mnt/c/"* ]]; then
-            echo -e "$YELLOW检测到 Docker 运行在 Windows Docker Desktop 上。${NC}"
-            echo -e "$YELLOW准备在 WSL2 中安装独立的 Docker 版本...${NC}"
-            install_docker
-        elif [ -n "$docker_path" ]; then
-            echo -e "${GREEN}Docker 已安装在 WSL2 中，跳过安装步骤。${NC}"
-        else
-            echo -e "${YELLOW}Docker 未安装，开始安装过程...${NC}"
-            install_docker
-        fi
-    else
-        if command -v docker >/dev/null; then
-            echo -e "${GREEN}Docker 已安装✅，跳过安装步骤。${NC}"
-        else
-            echo -e "${YELLOW}Docker 未安装，开始安装过程...${NC}"
-            install_docker
-        fi
-    fi
 }
 install_fonts() {
     if [[ $AUTO_RUN == "true" ]]; then

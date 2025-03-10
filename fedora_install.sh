@@ -68,13 +68,11 @@ sudo ln -s /opt/kotlin-native/bin/* /usr/bin/
 sudo ln -s /opt/kotlin-compiler/kotlinc/bin/* /usr/bin/
 # =================================结束安装 Kotlin/Native =================================
 
-
 # 安装 Docker
 if grep -qi microsoft /proc/version || [[ "$AUTO_RUN" == "true" ]]; then
     echo -e "${GREEN}在 WSL2 中或者 Docker 中不需要安装 Docker${NC}"
 else
-    # 调用函数以安装和配置 Docker
-    install_and_configure_docker
+    install_docker
 fi
 
 # 安装缺失的手册，并且更新手册页的数据库

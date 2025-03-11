@@ -90,8 +90,8 @@ download_and_extract_kotlin() {
         sudo unzip -o "/tmp/$FILE_NAME" -d $TARGET_DIR
     fi
     # 更改 kotlin 目录权限，添加符号链接到系统的 PATH 中
-    [[ -d "/opt/kotlin-native/" ]] && sudo chmod -R a+rw /opt/kotlin-native/ && sudo ln -snf /opt/kotlin-native/bin/* /usr/bin/
-    [[ -d "/opt/kotlin-compiler/" ]] && sudo chmod -R a+rw /opt/kotlin-compiler/ && sudo ln -snf /opt/kotlin-compiler/kotlinc/bin/* /usr/bin/
+    [[ -d "/opt/kotlin-native/" ]] && sudo chmod -R a+rw /opt/kotlin-native/ && sudo ln -snf /opt/kotlin-native/bin/* /usr/local/bin/
+    [[ -d "/opt/kotlin-compiler/" ]] && sudo chmod -R a+rw /opt/kotlin-compiler/ && sudo ln -snf /opt/kotlin-compiler/kotlinc/bin/* /usr/local/bin/
     print_centered_message "${GREEN}${FILE_NAME} has been installed successfully to ${TARGET_DIR}${NC}" "false" "false"
 }
 

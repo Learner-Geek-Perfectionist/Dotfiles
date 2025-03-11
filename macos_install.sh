@@ -25,7 +25,6 @@ fi
 
 # 提示开启代理
 echo -e "${YELLOW}为了能顺利安装 Homebrew 的 cask 包，请打开代理软件，否则下载速度很慢（推荐选择香港 🇭🇰 或者 新加坡 🇸🇬 节点，如果速度还是太慢，可以通过客户端查看代理情况）${NC}"
-echo -e "${YELLOW}如果下载进度条卡住，在代理客户端中，多次切换「全局模式」或者「规则模式」，并且打开 TUN 选项。${NC}"
 
 print_centered_message "${RED}正在安装 macOS 常用的开发工具......${NC}" "true" "false"
 

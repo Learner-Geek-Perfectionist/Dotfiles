@@ -51,7 +51,6 @@ source "${HOME}/.config/zsh/plugins/homebrew.zsh"
 source "$HOME/.config/zsh/plugins/zinit.zsh"
 
 # 禁用忽略以空格开头的命令的历史记录功能。
-setopt no_hist_ignore_space
 setopt interactive_comments # 注释行不报错
 setopt no_nomatch           # 通配符 * 匹配不到文件也不报错
 setopt autocd               # 输入目录名自动cd

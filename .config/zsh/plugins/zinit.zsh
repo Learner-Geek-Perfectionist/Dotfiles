@@ -4,6 +4,10 @@
 # ======== 安装并且加载 Zinit 插件管理器
 # =============================================
 
+# General options for all plugins
+HYPHEN_INSENSITIVE='true'
+COMPLETION_WAITING_DOTS='true'
+
 # 插件管理器 zinit 安装的路径
 ZINIT_HOME="${HOME}/.local/share/zinit/zinit.git"
 
@@ -32,9 +36,6 @@ zinit light romkatv/powerlevel10k
 # 3.加载 p10k 主题的配置文件
 [[ ! -f ~/.config/zsh/.p10k.zsh ]] || source ~/.config/zsh/.p10k.zsh
 
-# General options for all plugins
-HYPHEN_INSENSITIVE='true'
-COMPLETION_WAITING_DOTS='true'
 
 # OMZ 迁移和插件配置
 # clipboard
@@ -53,7 +54,7 @@ zinit snippet OMZL::key-bindings.zsh
 zinit ice wait lucid depth=1
 zinit snippet OMZL::directories.zsh
 # history
-zinit ice wait lucid depth=1
+zinit ice wait lucid depth=1 atload="unsetopt hist_ignore_all_dups hist_ignore_space"
 zinit snippet OMZL::history.zsh
 # theme
 zinit ice wait lucid depth=1 atload="alias ls &>/dev/null && unalias ls && alias ls='eza --icons -ha --time-style=iso'"

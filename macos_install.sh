@@ -45,8 +45,8 @@ brew install --cask maczip
 ## 安装 squirrel 输入法
 #brew install --cask squirrel
 
-# 设置 tcpdump 等权限。将 /dev/bpf* 的设备修改为当前用户所拥有，并且属于 admin 组（macos 的内置组，通过 dscacheutil -q group -a name admin 查看组的成员）。
-sudo chown "$(whoami)":admin /dev/bpf*
+# 将用户加入 wheel 组
+sudo dseditgroup -o edit -a $(whoami) -t user wheel
 
 # =================================开始安装 rustc=================================
 if command -v rustc >/dev/null 2>&1; then
@@ -90,9 +90,6 @@ setup_kotlin_environment
 download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR
 # =================================结束安装 Kotlin/Native =================================
 
-## 安装 白霜拼音 词库
-#git clone --depth 1 https://github.com/gaboolic/rime-frost /tmp/rime-frost
-#mv /tmp/rime-frost/* ${HOME}/Library/Rime
 
 print_centered_message "${GREEN}所有应用安装完成。🎉${NC}" "false" "true"
 echo -e "${RED}当前目录: $(pwd) ${NC}"

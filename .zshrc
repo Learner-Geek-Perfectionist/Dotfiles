@@ -43,14 +43,11 @@ fi
 export RUSTUP_HOME=/opt/rust/rustup
 export CARGO_HOME=/opt/rust/cargo
 
-# ip 映射到 ip-script
-[[ "$(uname)" == "Darwin" ]] && alias getip="$HOME/sh-script/get-my-ip.sh"
 
 # 加载 Plugins
 source "${HOME}/.config/zsh/plugins/homebrew.zsh"
 source "$HOME/.config/zsh/plugins/zinit.zsh"
 
-# 禁用忽略以空格开头的命令的历史记录功能。
 setopt interactive_comments # 注释行不报错
 setopt no_nomatch           # 通配符 * 匹配不到文件也不报错
 setopt autocd               # 输入目录名自动cd
@@ -70,6 +67,8 @@ export FZF_DEFAULT_OPTS='--preview "${HOME}/.config/zsh/fzf/fzf-preview.sh {}" -
 export FZF_DEFAULT_COMMAND='fd -L -g -HIia'
 
 alias fd='fd -L -g -HIia'
+
+alias getip="$HOME/sh-script/get-my-ip.sh"
 
 # 清除整个屏幕
 alias clear='clear && printf '\''\e[3J'\'''

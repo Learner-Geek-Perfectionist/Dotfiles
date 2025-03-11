@@ -42,11 +42,9 @@ install_packages "brew_casks"
 brew install --cask wireshark
 # 安装 wireshark
 brew install --cask maczip
-## 安装 squirrel 输入法
-#brew install --cask squirrel
 
 # 将用户加入 wheel 组
-sudo dseditgroup -o edit -a $(whoami) -t user wheel
+sudo dseditgroup -o edit -a "$(whoami)" -t user wheel
 
 # =================================开始安装 rustc=================================
 if command -v rustc >/dev/null 2>&1; then

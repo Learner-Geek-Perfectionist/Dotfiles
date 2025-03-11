@@ -39,10 +39,6 @@ else
     alias rg='rg -uuu -i --threads=$(nproc)'
 
 fi
-# rust 工具的环境变量
-export RUSTUP_HOME=/opt/rust/rustup
-export CARGO_HOME=/opt/rust/cargo
-
 
 # 加载 Plugins
 source "${HOME}/.config/zsh/plugins/homebrew.zsh"

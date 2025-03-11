@@ -36,12 +36,12 @@ else
     # 2. 通过 rustup 脚本安装并指定系统目录
     sudo dnf install -y rustup && rustup-init -y
     # 3. 链接 cargo、rustc、rustup 到系统的PATH 中
-    sudo ln -s /opt/rust/cargo/bin/* /usr/bin/
+    sudo ln -snf  /opt/rust/cargo/bin/* /usr/bin/
     # 4. -E 保持了环境变量
     sudo -E rustup update
     # 5. 初始化 rustup 环境
     rustup default stable
-    # .rustup目录 安装在 RUSTUP_HOME；cargo、rustc、rustup、eza、rg、fd 都安装在 CARGO_HOME（但是它们符号链接在 /usr/bin/）
+    # .rustup目录安装在 RUSTUP_HOME；cargo、rustc、rustup、eza、rg、fd 都安装在 CARGO_HOME（但是它们符号链接在 /usr/bin/）
     print_centered_message "${GREEN} rustc 安装完成 ✅${NC}" "false" "false"
 fi
 # =================================结束安装 rustc=================================
@@ -53,12 +53,6 @@ setup_kotlin_environment
 # 安装 Kotlin/Native
 download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR
 download_and_extract_kotlin $KOTLIN_COMPILER_URL $COMPILER_INSTALL_DIR
-
-# 创建Kotlin/Native的主要可执行文件符号链接
-sudo ln -s /opt/kotlin-native/bin/* /usr/bin/
-
-# 创建Kotlin Compiler的主要可执行文件符号链接
-sudo ln -s /opt/kotlin-compiler/kotlinc/bin/* /usr/bin/
 # =================================结束安装 Kotlin/Native =================================
 
 

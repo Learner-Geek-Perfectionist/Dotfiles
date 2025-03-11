@@ -105,7 +105,7 @@ else
         echo 'kitty.desktop' >~/.config/xdg-terminals.list
     fi
     # 将 kitty 二进制文件复制到标准的系统路径
-    sudo ln -s /opt/kitty/kitty.app/bin/* /usr/bin/
+    sudo ln -snf /opt/kitty/kitty.app/bin/* /usr/bin/
     print_centered_message "${GREEN} kitty 安装完成 ✅${NC}" "false" "true"
 
 fi
@@ -146,7 +146,7 @@ else
     # 2. 通过 rustup 脚本安装并指定系统目录
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
     # 3. 链接 cargo、rustc、rustup 到系统的PATH 中
-    sudo ln -s /opt/rust/cargo/bin/* /usr/bin/
+    sudo ln -snf  /opt/rust/cargo/bin/* /usr/bin/
     # 4. -E 保持了环境变量
     sudo -E rustup update
     # 5. 初始化 rustup 环境
@@ -164,7 +164,7 @@ else
 
     # 安装 eza
     cargo install eza
-    sudo ln -s /opt/rust/cargo/bin/eza /usr/bin/
+    sudo ln -snf  /opt/rust/cargo/bin/eza /usr/bin/
     print_centered_message "${GREEN} eza 安装完成 ✅${NC}" "false" "false"
 fi
 # =================================结束安装 eza=================================
@@ -176,7 +176,7 @@ if command -v fd >/dev/null 2>&1; then
 else
     print_centered_message "${GREEN}开始安装 fd... ${NC}" "true" "false"
     cargo install fd-find
-    sudo ln -s /opt/rust/cargo/bin/fd /usr/bin/
+    sudo ln -snf  /opt/rust/cargo/bin/fd /usr/bin/
     print_centered_message "${GREEN} fd 安装完成 ✅${NC}" "false" "true"
 fi
 
@@ -189,7 +189,7 @@ if command -v rg >/dev/null 2>&1; then
 else
     print_centered_message "${GREEN}开始安装 rg... ${NC}" "false" "false"
     cargo install ripgrep
-    sudo ln -s /opt/rust/cargo/bin/rg /usr/bin/
+    sudo ln -snf  /opt/rust/cargo/bin/rg /usr/bin/
     print_centered_message "${GREEN} rg 安装完成 ✅${NC}" "false" "false"
 fi
 
@@ -202,7 +202,7 @@ if command -v bat >/dev/null 2>&1; then
 else
     print_centered_message "${GREEN}开始安装 bat... ${NC}" "true" "false"
     cargo install bat
-    sudo ln -s /opt/rust/cargo/bin/bat /usr/bin/
+    sudo ln -snf  /opt/rust/cargo/bin/bat /usr/bin/
     print_centered_message "${GREEN} bat 安装完成 ✅${NC}" "false" "true"
 fi
 # =================================结束安装 bat=================================

@@ -30,7 +30,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
         print_centered_message "${RED}不支持的发行版，目前只支持 fedora、ubuntu${NC}"
     fi
 
-    # 设置抓包工具权限
+    # 设置抓包工具权限。设置 setuid 位，无论当前用户是谁，执行 tcpdump 的时候，把用户修改为该程序文件所有者的 ID（通常是 root）。即假装是 root 用户执行 tcpdump 命令。
     sudo chmod u+s $(command -v tcpdump)
     sudo chmod u+s $(command -v dumpcap)
     sudo chmod u+s $(command -v tshark)
@@ -38,10 +38,6 @@ elif [[ $(uname -s) == "Linux" ]]; then
 else
     echo -e "${MAGENTA}未知的操作系统类型${NC}"
 fi
-
-# 更改 kotlin 目录权限
-[[ -d "/opt/kotlin-native/" ]] && sudo chmod -R a+rw /opt/kotlin-native/
-[[ -d "/opt/kotlin-compiler/" ]] && sudo chmod -R a+rw /opt/kotlin-compiler/
 
 # 针对 macos、linux 统一配置 zsh
 source /tmp/Dotfiles/zsh_install.sh

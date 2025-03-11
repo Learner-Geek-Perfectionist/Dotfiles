@@ -45,6 +45,9 @@ brew install --cask maczip
 ## 安装 squirrel 输入法
 #brew install --cask squirrel
 
+# 设置 tcpdump 等权限。将 /dev/bpf* 的设备修改为当前用户所拥有，并且属于 admin 组（macos 的内置组，通过 dscacheutil -q group -a name admin 查看组的成员）。
+sudo chown "$(whoami)":admin /dev/bpf*
+
 # =================================开始安装 rustc=================================
 if command -v rustc >/dev/null 2>&1; then
     print_centered_message "${GREEN}rustc 已安装，跳过安装。${NC}" "false" "false"
@@ -61,12 +64,12 @@ else
     # 2. 通过 rustup 脚本安装并指定系统目录
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
     # 3. 链接 cargo、rustc、rustup 到系统的PATH 中
-    sudo ln -s /opt/rust/cargo/bin/* /usr/bin/
+    sudo ln -snf /opt/rust/cargo/bin/* /usr/local/bin/
     # 4. -E 保持了环境变量
     sudo -E rustup update
     # 5. 初始化 rustup 环境
     rustup default stable
-    # .rustup目录 安装在 RUSTUP_HOME；cargo、rustc、rustup、eza、rg、fd 都安装在 CARGO_HOME（但是它们符号链接在 /usr/bin/）
+    # .rustup目录 安装在 RUSTUP_HOME；cargo、rustc、rustup、eza、rg、fd 都安装在 CARGO_HOME（但是它们符号链接在 /usr/bin/ 或者 /usr/local/bin/）
     print_centered_message "${GREEN} rustc 安装完成 ✅${NC}" "false" "false"
 fi
 # =================================结束安装 rustc=================================
@@ -80,11 +83,12 @@ print_centered_message "${GREEN}图形界面安装完成✅${NC}" "false" "false
 
 brew cleanup --prune=all
 
+# =================================开始安装 Kotlin/Native =================================
 # 设置 Kotlin 的变量
 setup_kotlin_environment
-
 # 安装 Kotlin/Native
-download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR "Kotlin/Native"
+download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR
+# =================================结束安装 Kotlin/Native =================================
 
 ## 安装 白霜拼音 词库
 #git clone --depth 1 https://github.com/gaboolic/rime-frost /tmp/rime-frost
@@ -92,5 +96,4 @@ download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR "Kotlin/Native"
 
 print_centered_message "${GREEN}所有应用安装完成。🎉${NC}" "false" "true"
 echo -e "${RED}当前目录: $(pwd) ${NC}"
-# 设置 tcpdump 等权限
-sudo chown $(whoami):admin /dev/bpf*
+

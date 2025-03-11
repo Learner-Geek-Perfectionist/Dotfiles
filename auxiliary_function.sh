@@ -1,9 +1,11 @@
 set -e
+
 KOTLIN_NATIVE_URL=""
 KOTLIN_COMPILER_URL=""
 INSTALL_DIR=""
 COMPILER_INSTALL_DIR=""
 LATEST_VERSION=""
+
 print_centered_message() {
     local message="$1"
     local single_flag="${2:-true}"
@@ -87,7 +89,9 @@ download_and_extract_kotlin() {
     elif [[ $FILE_NAME == *.zip ]]; then
         sudo unzip -o "/tmp/$FILE_NAME" -d $TARGET_DIR
     fi
-
+    # 更改 kotlin 目录权限，添加符号链接到系统的 PATH 中
+    [[ -d "/opt/kotlin-native/" ]] && sudo chmod -R a+rw /opt/kotlin-native/ && sudo ln -snf /opt/kotlin-native/bin/* /usr/bin/
+    [[ -d "/opt/kotlin-compiler/" ]] && sudo chmod -R a+rw /opt/kotlin-compiler/ && sudo ln -snf /opt/kotlin-compiler/kotlinc/bin/* /usr/bin/
     print_centered_message "${GREEN}${FILE_NAME} has been installed successfully to ${TARGET_DIR}${NC}" "false" "false"
 }
 
@@ -107,8 +111,8 @@ install_packages() {
     local pkg_manager
     pkg_manager=$(detect_package_manager)
     if [[ "$pkg_manager" == "unsupported" ]]; then
-         echo -e "${RED}Unsupported package manager${NC}"
-         return 1
+        echo -e "${RED}Unsupported package manager${NC}"
+        return 1
     fi
 
     local package_group_name="$1"
@@ -118,45 +122,45 @@ install_packages() {
 
     local installed_packages
     case "$pkg_manager" in
-         "brew")
-              installed_packages=$(brew list)
-              ;;
-         "apt")
-              installed_packages=$(dpkg -l | awk '/^ii/ {print $2}')
-              ;;
-         "dnf")
-              installed_packages=$(dnf list installed | awk 'NR>1 {print $1}')
-              ;;
+    "brew")
+        installed_packages=$(brew list)
+        ;;
+    "apt")
+        installed_packages=$(dpkg -l | awk '/^ii/ {print $2}')
+        ;;
+    "dnf")
+        installed_packages=$(dnf list installed | awk 'NR>1 {print $1}')
+        ;;
     esac
 
     local uninstalled_packages=()
     for package in "${packages[@]}"; do
-         if ! echo "$installed_packages" | grep -qi -E "^$package.*$"; then
-              uninstalled_packages+=("$package")
-         fi
+        if ! echo "$installed_packages" | grep -qi -E "^$package.*$"; then
+            uninstalled_packages+=("$package")
+        fi
     done
 
     if [[ ${#uninstalled_packages[@]} -eq 0 ]]; then
-         print_centered_message "🎉 ${GREEN}All packages were already installed.${NC}" "false" "false"
-         return 0
+        print_centered_message "🎉 ${GREEN}All packages were already installed.${NC}" "false" "false"
+        return 0
     else
-         print_centered_message "${RED}The following packages need to be installed:${NC}"
-         for package in "${uninstalled_packages[@]}"; do
-              echo "- $package"
-         done
+        print_centered_message "${RED}The following packages need to be installed:${NC}"
+        for package in "${uninstalled_packages[@]}"; do
+            echo "- $package"
+        done
     fi
 
     print_centered_message "${LIGHT_BLUE}Installing ${#uninstalled_packages[@]} packages...${NC}"
     case "$pkg_manager" in
-         "brew")
-              brew install "${uninstalled_packages[@]}"
-              ;;
-         "apt")
-              sudo apt install -y "${uninstalled_packages[@]}"
-              ;;
-         "dnf")
-              sudo dnf install -y "${uninstalled_packages[@]}"
-              ;;
+    "brew")
+        brew install "${uninstalled_packages[@]}"
+        ;;
+    "apt")
+        sudo apt install -y "${uninstalled_packages[@]}"
+        ;;
+    "dnf")
+        sudo dnf install -y "${uninstalled_packages[@]}"
+        ;;
     esac
 }
 

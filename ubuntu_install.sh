@@ -45,12 +45,6 @@ setup_kotlin_environment
 # 安装 Kotlin/Native
 download_and_extract_kotlin $KOTLIN_NATIVE_URL $INSTALL_DIR
 download_and_extract_kotlin $KOTLIN_COMPILER_URL $COMPILER_INSTALL_DIR
-
-# 创建Kotlin/Native的主要可执行文件符号链接
-sudo ln -s /opt/kotlin-native/bin/* /usr/bin/
-
-# 创建Kotlin Compiler的主要可执行文件符号链接
-sudo ln -s /opt/kotlin-compiler/kotlinc/bin/* /usr/bin/
 # =================================结束安装 Kotlin/Native =================================
 
 sudo apt clean

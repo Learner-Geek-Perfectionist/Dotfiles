@@ -41,7 +41,7 @@ declare -a FILES_TO_REMOVE=(
 )
 
 for file in "${FILES_TO_REMOVE[@]}"; do
-    if [ -e "$file" ]; then
+    if [[ -e "$file" ]]; then
         rm -rf "$file" && echo -e "${RED}🗑️ Removing old $file...${NC}"
     
     fi

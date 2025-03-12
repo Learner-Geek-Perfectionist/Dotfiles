@@ -70,7 +70,7 @@ echo "LC_ALL=zh_CN.UTF-8" | sudo tee -a /etc/locale.conf
 
 # 安装缺失的手册，并且更新手册页的数据库
 packages_to_reinstall=$(rpm -qads --qf "PACKAGE: %{NAME}\n" | sed -n -E '/PACKAGE: /{s/PACKAGE: // ; h ; b }; /^not installed/ { g; p }' | uniq)
-if [ -z "$packages_to_reinstall" ]; then
+if [[ -z "$packages_to_reinstall" ]]; then
     echo -e "${GREEN}没有找到需要重新安装的手册包。${NC}"
 else
     sudo dnf -y reinstall $packages_to_reinstall && sudo mandb -c

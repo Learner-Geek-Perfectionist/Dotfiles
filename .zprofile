@@ -5,25 +5,19 @@ zmodload zsh/zprof
 [[ -e "$HOME/.zsh_sessions" ]] && rm -rf "$HOME/.zsh_sessions" && echo "已成功删除 $HOME/.zsh_sessions。"
 
 # 删除 $HOME 目录下的 .zcompdump 缓存文件
-[[ -f $HOME/.zcompdump ]] && rm -rf  "$HOME/.zcompdump" && echo "已成功删除 $HOME/.zcompdump。"
+[[ -f $HOME/.zcompdump ]] && rm -rf "$HOME/.zcompdump" && echo "已成功删除 $HOME/.zcompdump。"
 
 # 添加 homebrew 的环境变量
-if [ -x "/opt/homebrew/bin/brew" ]; then
+if [[ -x "/opt/homebrew/bin/brew" ]]; then
     eval $(/opt/homebrew/bin/brew shellenv)
 fi
 
 # 添加 anaconda 的环境变量
-if [ -x "/opt/homebrew/anaconda3/etc/profile.d/conda.sh" ]; then
+if [[ -x "/opt/homebrew/anaconda3/etc/profile.d/conda.sh" ]]; then
     source /opt/homebrew/anaconda3/etc/profile.d/conda.sh
 fi
 
-
-# 检查 .zprofile 文件是否存在并且包含特定的初始化命令
-if [ -f "$HOME/.zprofile" ]; then
-    if ! grep -qF "source $HOME/.orbstack/shell/init.zsh 2>/dev/null || :" "$HOME/.zprofile"; then
-        # 如果命令不在 .zprofile 中，执行它
-        source $HOME/.orbstack/shell/init.zsh 2>/dev/null || :
-    fi
+# 添加 orbstack 的环境变量
+if [[ -f "$HOME/.orbstack/shell/init.zsh" ]]; then
+    source $HOME/.orbstack/shell/init.zsh 2>/dev/null || :
 fi
-
-

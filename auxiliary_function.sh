@@ -67,7 +67,7 @@ download_and_extract_kotlin() {
     URL=$1
     TARGET_DIR=$2
     FILE_NAME=$(basename "${URL}")
-    if [ -d "$TARGET_DIR" ]; then
+    if [[ -d "$TARGET_DIR" ]]; then
         print_centered_message "${GREEN}${FILE_NAME}${NC} is already installed in ${YELLOW}${TARGET_DIR}${NC}." "true" "false"
         return 0
     fi
@@ -221,7 +221,7 @@ install_fonts() {
         font_dest="$HOME/.local/share/fonts/"
     fi
     print_centered_message "正在安装字体......" "true" "false"
-    if [ ! -d "$font_source" ]; then
+    if [[ ! -d "$font_source" ]]; then
         echo "字体目录 '$font_source' 不存在，请确认当前目录下有 $dest_Fonts 文件夹。"
         exit 1
     fi

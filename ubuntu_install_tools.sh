@@ -61,7 +61,7 @@ else
     TERMINFO_LATEST_VERSION=$(curl -s "$BASE_URL" | grep -oP 'href="kitty-terminfo_[^"]*\.deb"' | sed -E 's|.*kitty-terminfo_([^"]*)\.deb.*|\1|' | sort -V | tail -1)
     DOCS_LATEST_VERSION=$TERMINFO_LATEST_VERSION
     # 如果找不到文件，则退出
-    if [ -z "$TERMINFO_LATEST_VERSION" ]; then
+    if [[ -z "$TERMINFO_LATEST_VERSION" ]]; then
         echo -e "${RED}Failed to find the kitty-terminfo .deb file.${NC}"
         exit 1
     fi

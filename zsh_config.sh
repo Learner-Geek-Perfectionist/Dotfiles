@@ -81,7 +81,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
         sudo apt update
         # 解压的依赖工具 xz
         sudo apt install -y xz-utils
-        tools=("zsh" "git" "curl" "make" "g++" "gcc" "wget" "gnupg")
+        tools=( "build-essential" "zsh" "git" "curl" "make" "g++" "gcc" "wget" "gnupg" "pkg-config")
         # 遍历工具列表，检查是否已安装
         for tool in "${tools[@]}"; do
             if ! command -v "$tool" >/dev/null 2>&1; then

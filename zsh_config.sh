@@ -79,7 +79,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
     # 根据操作系统安装......
     if [[ $os_type == "ubuntu" ]]; then
         sudo apt update
-        tools=( "zsh" "git" "curl" "make" "g++" "gcc" "wget" "gnupg" "pkg-config" "xz-utils" "libjemalloc-dev")
+        tools=( "zsh" "git" "curl" "make" "g++" "gcc" "wget" "gnupg" "pkg-config" "xz-utils")
         # 遍历工具列表，检查是否已安装
         for tool in "${tools[@]}"; do
             if ! command -v "$tool" >/dev/null 2>&1; then

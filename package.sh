@@ -29,6 +29,8 @@ packages_ubuntu=(
     openssh-server
     debconf-utils
     apt-utils
+    libjemalloc-dev
+    pkg-config
     ncurses-bin
     net-tools
     lsb-release

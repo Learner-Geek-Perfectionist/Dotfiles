@@ -73,10 +73,10 @@ packages_ubuntu=(
 #fedora
 packages_fedora=(
     glibc
-    lsof
     glibc-common
     coreutils
     coreutils-common
+    lsof
     dnf-utils
     man-pages
     man-db

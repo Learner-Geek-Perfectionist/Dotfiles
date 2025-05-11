@@ -27,6 +27,7 @@ brew_formulas=(
 #ubuntu
 packages_ubuntu=(
     openssh-server
+    lsof
     debconf-utils
     apt-utils
     pkg-config
@@ -72,6 +73,7 @@ packages_ubuntu=(
 #fedora
 packages_fedora=(
     glibc
+    lsof
     glibc-common
     coreutils
     coreutils-common

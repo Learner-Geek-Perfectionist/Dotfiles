@@ -96,7 +96,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
 
     elif [[ $os_type == "fedora" ]]; then
         sudo dnf -y update
-        tools=("zsh" "git" "curl" "kitty" "cmake" "make" "g++" "gcc")
+        tools=("rustup" "zsh" "git" "curl" "kitty" "cmake" "make" "g++" "gcc")
         # 遍历工具列表，检查是否已安装
         for tool in "${tools[@]}"; do
             if ! command -v "$tool" >/dev/null 2>&1; then

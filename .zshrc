@@ -40,6 +40,10 @@ else
 
 fi
 
+# 加载 rust 的环境变量
+export CARGO_HOME=/opt/rust/cargo
+export RUSTUP_HOME=/opt/rust/rustup
+
 # 加载 Plugins
 source "${HOME}/.config/zsh/plugins/homebrew.zsh"
 source "$HOME/.config/zsh/plugins/zinit.zsh"

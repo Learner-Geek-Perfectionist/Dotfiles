@@ -105,7 +105,7 @@ else
         echo 'kitty.desktop' >~/.config/xdg-terminals.list
     fi
     # 将 kitty 二进制文件复制到标准的系统路径
-    sudo ln -snf /opt/kitty/kitty.app/bin/* /usr/bin/
+    sudo ln -snf /opt/kitty/kitty.app/bin/* /usr/local/bin/
     print_centered_message "${GREEN} kitty 安装完成 ✅${NC}" "false" "true"
 
 fi
@@ -118,11 +118,11 @@ if command -v fzf >/dev/null 2>&1; then
 else
     print_centered_message "${GREEN}开始安装 fzf... ${NC}" "false" "false"
     [[ -d "/tmp/.fzf" ]] && sudo rm -rf "/tmp/.fzf"
-    [[ -f "/usr/bin/fzf" ]] && sudo rm -rf "/usr/bin/fzf"
+    [[ -f "/usr/local/bin/fzf" ]] && sudo rm -rf "/usr/local/bin/fzf"
 
     git clone --depth=1 https://github.com/junegunn/fzf.git "/tmp/.fzf"
     yes | /tmp/.fzf/install --no-update-rc
-    sudo cp "/tmp/.fzf/bin/fzf" /usr/bin/fzf
+    sudo cp "/tmp/.fzf/bin/fzf" /usr/local/bin/fzf
 
     # 清理安装目录
     sudo rm -rf "/tmp/.fzf"
@@ -146,12 +146,12 @@ else
     # 2. 通过 rustup 脚本安装并指定系统目录
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
     # 3. 链接 cargo、rustc、rustup 到系统的PATH 中
-    sudo ln -snf  /opt/rust/cargo/bin/* /usr/bin/
+    sudo ln -snf  /opt/rust/cargo/bin/* /usr/local/bin/
     # 4. -E 保持了环境变量
     sudo -E rustup update
     # 5. 初始化 rustup 环境
     rustup default stable
-    # .rustup目录 安装在 RUSTUP_HOME；cargo、rustc、rustup、eza、rg、fd 都安装在 CARGO_HOME（但是它们符号链接在 /usr/bin/）
+    # .rustup目录 安装在 RUSTUP_HOME；cargo、rustc、rustup、eza、rg、fd 都安装在 CARGO_HOME（但是它们符号链接在 /usr/local/bin/）
     print_centered_message "${GREEN} rustc 安装完成 ✅${NC}" "false" "true"
 fi
 # =================================结束安装 rustc=================================
@@ -164,7 +164,7 @@ else
 
     # 安装 eza
     cargo install eza
-    sudo ln -snf  /opt/rust/cargo/bin/eza /usr/bin/
+    sudo ln -snf  /opt/rust/cargo/bin/eza /usr/local/bin/
     print_centered_message "${GREEN} eza 安装完成 ✅${NC}" "false" "false"
 fi
 # =================================结束安装 eza=================================
@@ -176,7 +176,7 @@ if command -v fd >/dev/null 2>&1; then
 else
     print_centered_message "${GREEN}开始安装 fd... ${NC}" "true" "false"
     cargo install fd-find
-    sudo ln -snf  /opt/rust/cargo/bin/fd /usr/bin/
+    sudo ln -snf  /opt/rust/cargo/bin/fd /usr/local/bin/
     print_centered_message "${GREEN} fd 安装完成 ✅${NC}" "false" "true"
 fi
 
@@ -189,7 +189,7 @@ if command -v rg >/dev/null 2>&1; then
 else
     print_centered_message "${GREEN}开始安装 rg... ${NC}" "false" "false"
     cargo install ripgrep
-    sudo ln -snf  /opt/rust/cargo/bin/rg /usr/bin/
+    sudo ln -snf  /opt/rust/cargo/bin/rg /usr/local/bin/
     print_centered_message "${GREEN} rg 安装完成 ✅${NC}" "false" "false"
 fi
 
@@ -202,7 +202,7 @@ if command -v bat >/dev/null 2>&1; then
 else
     print_centered_message "${GREEN}开始安装 bat... ${NC}" "true" "false"
     cargo install bat
-    sudo ln -snf  /opt/rust/cargo/bin/bat /usr/bin/
+    sudo ln -snf  /opt/rust/cargo/bin/bat /usr/local/bin/
     print_centered_message "${GREEN} bat 安装完成 ✅${NC}" "false" "true"
 fi
 # =================================结束安装 bat=================================

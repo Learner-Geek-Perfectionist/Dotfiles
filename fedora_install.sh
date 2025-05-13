@@ -36,12 +36,12 @@ else
     # 2. 通过 rustup 脚本安装并指定系统目录
     sudo dnf install -y rustup && rustup-init -y
     # 3. 链接 cargo、rustc、rustup 到系统的PATH 中
-    sudo ln -snf  /opt/rust/cargo/bin/* /usr/bin/
+    sudo ln -snf  /opt/rust/cargo/bin/* /usr/local/bin/
     # 4. -E 保持了环境变量
     sudo -E rustup update
     # 5. 初始化 rustup 环境
     rustup default stable
-    # .rustup目录安装在 RUSTUP_HOME；cargo、rustc、rustup、eza、rg、fd 都安装在 CARGO_HOME（但是它们符号链接在 /usr/bin/）
+    # .rustup目录安装在 RUSTUP_HOME；cargo、rustc、rustup、eza、rg、fd 都安装在 CARGO_HOME（但是它们符号链接在 /usr/local/bin/）
     print_centered_message "${GREEN} rustc 安装完成 ✅${NC}" "false" "false"
 fi
 # =================================结束安装 rustc=================================

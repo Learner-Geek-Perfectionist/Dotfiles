@@ -81,7 +81,6 @@ packages_fedora=(
     iproute
     net-tools
     zip
-    ripgrep
     ninja-build
     neovim
     ruby

@@ -65,9 +65,9 @@ fi
 
 # =================================开始安装 eza=================================
 if command -v eza >/dev/null 2>&1; then
-    print_centered_message "${GREEN}eza 已安装，跳过安装。${NC}" "false" "false"
+    print_centered_message "${GREEN}eza 已安装，跳过安装。${NC}" "true" "true"
 else
-    print_centered_message "${GREEN}开始安装 eza... ${NC}" "false" "false"
+    print_centered_message "${GREEN}开始安装 eza... ${NC}" "true" "false"
 
     # 安装 eza
     cargo install eza

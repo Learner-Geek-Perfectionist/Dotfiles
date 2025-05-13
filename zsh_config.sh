@@ -96,7 +96,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
 
     elif [[ $os_type == "fedora" ]]; then
         sudo dnf -y update
-        tools=("zsh" "git" "curl" "fzf" "eza" "kitty" "zsh" "fd" "rg" "fastfetch" "bat")
+        tools=("zsh" "git" "curl" "kitty")
         # 遍历工具列表，检查是否已安装
         for tool in "${tools[@]}"; do
             if ! command -v "$tool" >/dev/null 2>&1; then
@@ -109,6 +109,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
             echo "Failed to clone repository"
             exit 1
         }
+        source /tmp/Dotfiles/fedora_install_tools.sh
 
     else
         print_centered_message "${RED}不支持的发行版，目前只支持 fedora、ubuntu${NC}"

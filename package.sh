@@ -80,16 +80,14 @@ packages_fedora=(
     dnf-utils
     man-pages
     man-db
+    rustup
     openssh-server
     iproute
     net-tools
-    fd-find
     git
     unzip
     zip
     ripgrep
-    fastfetch
-    fzf
     ninja-build
     neovim
     ruby
@@ -116,14 +114,12 @@ packages_fedora=(
     glibc-langpack-zh
     langpacks-zh_CN
     jq
-    eza
     openssl
     hyperfine
     sudo
     autoconf
     systemd
     bc
-    bat
     chafa
     lua
 )

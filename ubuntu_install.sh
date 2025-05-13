@@ -19,7 +19,7 @@ echo "LC_ALL=zh_CN.UTF-8" | sudo tee -a /etc/default/locale
 # 添加PPA并更新
 sudo add-apt-repository -y ppa:wireshark-dev/stable
 sudo add-apt-repository -y ppa:openjdk-r/ppa
-echo "wireshark-common wireshark-common/install-setuid boolean false" | sudo debconf-set-selections
+echo "wireshark-common wireshark-common/install-setuid boolean true" | sudo debconf-set-selections
 echo "wireshark-common wireshark-common/install-setuid seen true" | sudo debconf-set-selections
 sudo apt update && sudo apt upgrade -y
 

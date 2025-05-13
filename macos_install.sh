@@ -40,7 +40,7 @@ install_packages "brew_casks"
 
 # 安装 wireshark --cask 工具，因为 wireshark 既有命令行版本又有 cask 版本，因此手动加上 --cask 参数
 brew install --cask wireshark
-# 安装 wireshark
+# 安装 maczip
 brew install --cask maczip
 
 # 将用户加入 wheel 组。将「当前登录用户」添加到 wheel 组中。在很多 UNIX 和 Linux 系统中，wheel 组的成员通常具有执行 sudo 命令的权限

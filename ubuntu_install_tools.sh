@@ -32,7 +32,7 @@ if command -v fastfetch >/dev/null 2>&1; then
     print_centered_message "${GREEN} fastfetch 已安装，跳过安装。${NC}" "false" "false"
 else
     print_centered_message "${GREEN}开始安装 fastfetch${NC}" "false" "false"
-    git clone https://github.com/fastfetch-cli/fastfetch
+    rm -rf fastfetch && git clone https://github.com/fastfetch-cli/fastfetch
     cd fastfetch
     mkdir build && cd build
     cmake ..

@@ -34,7 +34,6 @@ packages_ubuntu=(
     ncurses-bin
     net-tools
     lsb-release
-    git
     zip
     ninja-build
     neovim
@@ -60,7 +59,6 @@ packages_ubuntu=(
     curl
     tar
     make
-    locales
     man-db
     jq
     tshark
@@ -72,8 +70,6 @@ packages_ubuntu=(
 
 #fedora
 packages_fedora=(
-    glibc
-    glibc-common
     coreutils
     coreutils-common
     lsof
@@ -84,8 +80,6 @@ packages_fedora=(
     openssh-server
     iproute
     net-tools
-    git
-    unzip
     zip
     ripgrep
     ninja-build
@@ -110,16 +104,12 @@ packages_fedora=(
     tcpdump
     java-latest-openjdk
     golang
-    glibc-locale-source
-    glibc-langpack-zh
-    langpacks-zh_CN
     jq
     openssl
     hyperfine
     sudo
     autoconf
     systemd
-    bc
     chafa
     lua
 )

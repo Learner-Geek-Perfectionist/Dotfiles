@@ -130,8 +130,7 @@ else
 fi
 # =================================结束安装 fzf=================================
 
-export CARGO_HOME=/opt/rust/cargo
-export RUSTUP_HOME=/opt/rust/rustup
+
 # =================================开始安装 rustc=================================
 if command -v rustc >/dev/null 2>&1; then
     print_centered_message "${GREEN}rustc 已安装，跳过安装。${NC}" "true" "true"
@@ -214,7 +213,7 @@ if command -v lua >/dev/null 2>&1; then
 else
     print_centered_message "${GREEN}开始安装 lua... ${NC}" "false" "false"
     LUA_LATEST_VERSION=$(curl -s https://www.lua.org/ftp/ | grep -o 'lua-[0-9]*\.[0-9]*\.[0-9]*\.tar\.gz' | sort -V | tail -n 1)
-    curl -O "https://www.lua.org/ftp/$LUA_LATEST_VERSION"
+    rm -rf "$LUA_LATEST_VERSION" "${LUA_LATEST_VERSION%.tar.gz}" && curl -O "https://www.lua.org/ftp/$LUA_LATEST_VERSION"
     tar -xzvf "$LUA_LATEST_VERSION"
     cd "${LUA_LATEST_VERSION%.tar.gz}"
     make "-j$(nproc)" && sudo make install

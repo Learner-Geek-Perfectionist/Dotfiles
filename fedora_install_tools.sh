@@ -3,7 +3,8 @@ if command -v fastfetch >/dev/null 2>&1; then
     print_centered_message "${GREEN} fastfetch 已安装，跳过安装。${NC}" "true" "true"
 else
     print_centered_message "${GREEN}开始安装 fastfetch${NC}" "true" "false"
-    rm -rf fastfetch && git clone https://github.com/fastfetch-cli/fastfetch
+    [[ -d "~/fastfetch" ]] && sudo rm -rf "~/fastfetch"
+    git clone https://github.com/fastfetch-cli/fastfetch
     cd fastfetch
     mkdir build && cd build
     cmake ..
@@ -119,7 +120,9 @@ if command -v lua >/dev/null 2>&1; then
 else
     print_centered_message "${GREEN}开始安装 lua... ${NC}" "false" "false"
     LUA_LATEST_VERSION=$(curl -s https://www.lua.org/ftp/ | grep -o 'lua-[0-9]*\.[0-9]*\.[0-9]*\.tar\.gz' | sort -V | tail -n 1)
-    rm -rf "$LUA_LATEST_VERSION" "${LUA_LATEST_VERSION%.tar.gz}" && curl -O "https://www.lua.org/ftp/$LUA_LATEST_VERSION"
+    [[ -e "$LUA_LATEST_VERSION" ]]      && sudo rm -rf "$LUA_LATEST_VERSION"
+    [[ -e "${LUA_LATEST_VERSION%.tar.gz}" ]] && sudo rm -rf "${LUA_LATEST_VERSION%.tar.gz}"
+    curl -O "https://www.lua.org/ftp/$LUA_LATEST_VERSION"
     tar -xzvf "$LUA_LATEST_VERSION"
     cd "${LUA_LATEST_VERSION%.tar.gz}"
     make "-j$(nproc)" && sudo make install

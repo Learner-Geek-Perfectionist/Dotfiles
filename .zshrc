@@ -58,6 +58,9 @@ setopt no_beep      # 关闭终端提示音
 setopt no_bang_hist # 不对双引号当中的叹号做历史记录拓展 "!"
 setopt GLOB_DOTS    # 文件名展开（globbing）包括以点(dot)开始的文件
 
+# 让 history 命令的最大容量为无限
+HISTSIZE=-1
+
 # 加载 fzf 的环境变量
 command -v fzf >/dev/null 2>&1 && source <(fzf --zsh)
 

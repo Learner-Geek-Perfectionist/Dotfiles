@@ -59,8 +59,8 @@ setopt no_bang_hist # 不对双引号当中的叹号做历史记录拓展 "!"
 setopt GLOB_DOTS    # 文件名展开（globbing）包括以点(dot)开始的文件
 
 # 让 history 命令的最大容量为无限
-export HISTSIZE=-1
-export HISTFILESIZE=-1
+export HISTSIZE=10000000
+export HISTFILESIZE=10000000
 
 # 加载 fzf 的环境变量
 command -v fzf >/dev/null 2>&1 && source <(fzf --zsh)

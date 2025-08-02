@@ -4,8 +4,10 @@ import sys
 # Kitty 的 kittens 是内置的、不直接显现在文件系统中的工具。
 from kittens.tui.handler import result_handler
 
+
 def main(args):
     pass  # We do not need to process any arguments
+
 
 @result_handler(no_ui=True)
 def handle_result(args, result, target_window_id, boss):

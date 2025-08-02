@@ -45,7 +45,7 @@
       "type": "basic"
     },
     {
-      "description": "Change Caps to fn.",
+      "description": "Change Caps to left_shift.",
       "from": {
         "key_code": "caps_lock",
         "modifiers": {

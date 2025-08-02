@@ -15,6 +15,12 @@ for _, key in ipairs(windowsConfig) do
     end)
 end
 
+-- 不带任何修饰键，监听 F19
+hs.hotkey.bind({}, "f19", function()
+    AppToggler('com.apple.ActivityMonitor')
+end)
+
+
 -- HyperKey + ` 切换 App 窗口
 hs.hotkey.bind(HyperKey, '`', function()
     switchFocusedAppWindow()

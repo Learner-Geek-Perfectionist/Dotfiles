@@ -129,13 +129,13 @@ fi
 mkdir -p "$HOME/.config/zsh/plugins" "${HOME}/.config/kitty" "$HOME/.cache/zsh" "${HOME}/.local/share/zinit" "$HOME/.local/state"
 
 # 定义配置列表
-configs=(".zshenv" ".zprofile" ".zshrc" ".config/kitty" ".config/zsh")
+configs=(".zshenv" ".zprofile" ".zshrc" ".config/kitty" ".config/zsh" ".config/karabiner/karabiner.json")
 
 # 删除旧配置和复制新配置
 echo -e "${YELLOW}🔍 Checking and removing old configuration files if they exist...${NC}"
 for config in "${configs[@]}"; do
     if [[ -f "${HOME}/${config}" ]] || [[ -d "${HOME}/${config}" ]]; then
-        echo -e "${RED}🗑️ Removing old ${config}...${NC}"
+        echo -e "${RED}🗑️ Removing old ${HOME}/${config}...${NC}"
         sudo rm -rf "${HOME}/$config"
     fi
     echo -e "${PURPLE}📋 Moving new ${config} to ${HOME}...${NC}"
@@ -153,16 +153,6 @@ if [[ "$(uname)" == "Darwin" ]]; then
     fi
     echo -e "${PURPLE}📋 Copying new .hammerspoon to "${HOME}/.hammerspoon"...${NC}"
     cp -r "${TMP_DIR}/.hammerspoon" "${HOME}/.hammerspoon"
-fi
-
-# 添加 Karabiner 配置文件：capslock2hyper.json
-if [[ "$(uname)" == "Darwin" ]]; then
-    if [[ -f "${HOME}/.config/karabiner/assets/complex_modifications/capslock2hyper.json" ]]; then
-        echo -e "${RED}🗑️ Removing old capslock2hyper.json...${NC}"
-        sudo rm -rf "${HOME}/.config/karabiner/assets/complex_modifications/capslock2hyper.json"
-    fi
-    echo -e "${PURPLE}📋 Copying new capslock2hyper.json to ${HOME}/.config/karabiner/assets/complex_modifications/capslock2hyper.json...${NC}"
-    mkdir -p "${HOME}/.config/karabiner/assets/complex_modifications" && cp -r "${TMP_DIR}/capslock2hyper.json" "${HOME}/.config/karabiner/assets/complex_modifications/capslock2hyper.json"
 fi
 
 echo -e "${GREEN}🧹 Old configuration files removed and new ones copied.${NC}"

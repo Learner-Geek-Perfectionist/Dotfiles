@@ -44,9 +44,20 @@ brew install --cask wireshark
 brew install --cask maczip
 # 安装 RD280U 显示器的软件
 brew install --cask display-pilot
+# 安装 github 桌面版
+brew install --cask github@beta
+# 添加 Mihomo Party 的 Tap
+brew tap mihomo-party-org/mihomo-party
+# 安装 mihomo Party
+brew install --cask mihomo-party
 
-# 将用户加入 wheel 组。将「当前登录用户」添加到 wheel 组中。在很多 UNIX 和 Linux 系统中，wheel 组的成员通常具有执行 sudo 命令的权限
+# 将「当前登录用户」添加到 wheel 组中。在很多 Unix 和 Linux 系统中，wheel 组的成员通常具有执行 sudo 命令的权限
 sudo dseditgroup -o edit -a "$(whoami)" -t user wheel
+
+
+print_centered_message "${GREEN}图形界面安装完成✅${NC}" "false" "false"
+
+brew cleanup --prune=all
 
 # =================================开始安装 rustc=================================
 if command -v rustc >/dev/null 2>&1; then
@@ -73,15 +84,6 @@ else
     print_centered_message "${GREEN} rustc 安装完成 ✅${NC}" "false" "false"
 fi
 # =================================结束安装 rustc=================================
-
-# 添加 Mihomo Party 的 Tap
-brew tap mihomo-party-org/mihomo-party
-# 安装
-brew install --cask mihomo-party
-
-print_centered_message "${GREEN}图形界面安装完成✅${NC}" "false" "false"
-
-brew cleanup --prune=all
 
 # =================================开始安装 Kotlin/Native =================================
 # 设置 Kotlin 的变量

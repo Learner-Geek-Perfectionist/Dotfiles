@@ -135,10 +135,10 @@ configs=(".zshenv" ".zprofile" ".zshrc" ".config/kitty" ".config/zsh" ".config/k
 echo -e "${YELLOW}🔍 Checking and removing old configuration files if they exist...${NC}"
 for config in "${configs[@]}"; do
     if [[ -f "${HOME}/${config}" ]] || [[ -d "${HOME}/${config}" ]]; then
-        echo -e "${RED}🗑️ Removing old ${HOME}/${config}...${NC}"
+        echo -e "${RED}🗑️ Removing old ${HOME}/${config} ${NC}"
         sudo rm -rf "${HOME}/$config"
     fi
-    echo -e "${PURPLE}📋 Moving new ${config} to ${HOME}...${NC}"
+    echo -e "${PURPLE}📋 Moving new ${config} to ${HOME}/${config} ${NC}"
     cp -r "${TMP_DIR}/${config}" "${HOME}/${config}"
 done
 

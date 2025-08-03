@@ -1,13 +1,20 @@
 ---@diagnostic disable: lowercase-global
 
 function charsize(ch)
-    if not ch then return 0
-    elseif ch >= 252 then return 6 -- 如果 ch 的值大于或等于252，根据UTF-8规范
-    elseif ch >= 248 and ch < 252 then return 5 -- 这表示它是一个5字节长的字符的起始字节。
-    elseif ch >= 240 and ch < 248 then return 4
-    elseif ch >= 224 and ch < 240 then return 3
-    elseif ch >= 192 and ch < 224 then return 2
-    elseif ch < 192 then return 1
+    if not ch then
+        return 0
+    elseif ch >= 252 then
+        return 6 -- 如果 ch 的值大于或等于252，根据UTF-8规范
+    elseif ch >= 248 and ch < 252 then
+        return 5 -- 这表示它是一个5字节长的字符的起始字节。
+    elseif ch >= 240 and ch < 248 then
+        return 4
+    elseif ch >= 224 and ch < 240 then
+        return 3
+    elseif ch >= 192 and ch < 224 then
+        return 2
+    elseif ch < 192 then
+        return 1
     end
 end
 
@@ -100,10 +107,14 @@ end
 function split(input, delimiter)
     input = tostring(input)
     delimiter = tostring(delimiter)
-    if (delimiter == '') then return false end
+    if (delimiter == '') then
+        return false
+    end
     local pos, arr = 0, {}
     -- for each divider found
-    for st, sp in function() return string.find(input, delimiter, pos, true) end do
+    for st, sp in function()
+        return string.find(input, delimiter, pos, true)
+    end do
         table.insert(arr, string.sub(input, pos, st - 1))
         pos = sp + 1
     end
@@ -112,7 +123,9 @@ function split(input, delimiter)
 end
 
 function trim(s)
-    if not s then return '' end
+    if not s then
+        return ''
+    end
     local res = string.gsub(s, "\r\n", "")
     return (res:gsub("^%s+", ""):gsub("%s+$", ""))
 end
@@ -131,7 +144,9 @@ end
 
 function popleft(list)
     local first = list.first
-    if first > list.last then error("list is empty") end
+    if first > list.last then
+        error("list is empty")
+    end
     local value = list[first]
     list[first] = nil -- to allow garbage collection
     list.first = first + 1
@@ -140,7 +155,9 @@ end
 
 function popright(list)
     local last = list.last
-    if list.first > last then error("list is empty") end
+    if list.first > last then
+        error("list is empty")
+    end
     local value = list[last]
     list[last] = nil -- to allow garbage collection
     list.last = last - 1

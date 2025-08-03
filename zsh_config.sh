@@ -156,7 +156,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
     cp -r "${TMP_DIR}/.hammerspoon" "${HOME}/.hammerspoon"
 fi
 
-# 添加 karabiner 的全局 json 文件
+# 添加 karabiner 的配置文件：karabiner.json
 if [[ "$(uname)" == "Darwin" ]]; then
     if [[ -f "${HOME}/.config/karabiner/karabiner.json" ]]; then
         echo -e "${RED}🗑️ Removing old karabiner.json....${NC}"

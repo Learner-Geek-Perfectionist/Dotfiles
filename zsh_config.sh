@@ -124,6 +124,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
 else
     echo -e "${MAGENTA}未知的操作系统类型${NC}"
 fi
+# ================================= 开始安装 dotfiles =================================
 
 # Ensure XDG base directories exist
 mkdir -p "$HOME/.config/zsh/plugins" "${HOME}/.config/kitty" "$HOME/.cache/zsh" "${HOME}/.local/share/zinit" "$HOME/.local/state"
@@ -170,3 +171,5 @@ echo -e "${GREEN}✅ Script completed successfully. Files have been successfully
 "$HOME"/.config/zsh/plugins/zinit-plugin.zsh
 
 rm -rf $HOME/.zcompdump $HOME/.zsh_history
+
+# ================================= 开始安装 dotfiles =================================

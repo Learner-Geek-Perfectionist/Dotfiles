@@ -142,6 +142,8 @@ else
     # 1. 创建系统级安装目录并设置权限
     sudo mkdir -p /opt/rust/{cargo,rustup}
     sudo chmod -R a+rw /opt/rust/
+    export CARGO_HOME=/opt/rust/cargo
+    export RUSTUP_HOME=/opt/rust/rustup
 
     # 2. 安装 rustup（工具链管理器）、rustc（Rust 编译器）、cargo（包管理与构建工具）在 CARGO_HOME 和 RUSTUP_HOME 中。
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path

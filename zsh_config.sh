@@ -130,7 +130,7 @@ fi
 mkdir -p "$HOME/.config/zsh/plugins" "${HOME}/.config/kitty" "$HOME/.cache/zsh" "${HOME}/.local/share/zinit" "$HOME/.local/state"
 
 # 定义配置列表
-configs=(".zshenv" ".zprofile" ".zshrc" ".config/kitty" ".config/zsh" ".config/karabiner/karabiner.json")
+configs=(".zshenv" ".zprofile" ".zshrc" ".config/kitty" ".config/zsh")
 
 # 删除旧配置和复制新配置
 echo -e "${YELLOW}🔍 Checking and removing old configuration files if they exist...${NC}"
@@ -155,6 +155,17 @@ if [[ "$(uname)" == "Darwin" ]]; then
     echo -e "${PURPLE}📋 Copying new .hammerspoon to "${HOME}/.hammerspoon"...${NC}"
     cp -r "${TMP_DIR}/.hammerspoon" "${HOME}/.hammerspoon"
 fi
+
+# 添加 karabiner 的全局 json 文件
+if [[ "$(uname)" == "Darwin" ]]; then
+    if [[ -f "${HOME}/.config/karabiner/karabiner.json" ]]; then
+        echo -e "${RED}🗑️ Removing old karabiner.json....${NC}"
+        sudo rm -rf "${HOME}/.config/karabiner/karabiner.json"
+    fi
+    echo -e "${PURPLE}📋 Copying new karabiner.json to "${HOME}/.config/karabiner/karabiner.json"...${NC}"
+    cp -r "${TMP_DIR}/.config/karabiner/karabiner.json" "${HOME}/.config/karabiner/karabiner.json"
+fi
+
 
 echo -e "${GREEN}🧹 Old configuration files removed and new ones copied.${NC}"
 echo -e "${GREEN}✔️ New configuration files copied.${NC}"

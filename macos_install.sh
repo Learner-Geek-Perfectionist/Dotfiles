@@ -72,15 +72,15 @@ else
     export CARGO_HOME=/opt/rust/cargo
     export RUSTUP_HOME=/opt/rust/rustup
 
-    # 2. 通过 rustup 脚本安装并指定系统目录
+    # 2. 安装 rustup（工具链管理器）、rustc（Rust 编译器）、cargo（包管理与构建工具）在 CARGO_HOME 和 RUSTUP_HOME 中。
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
-    # 3. 链接 cargo、rustc、rustup 到系统的PATH 中
+    # 3. 链接 cargo、rustc、rustup 到系统的 PATH 中
     sudo ln -snf /opt/rust/cargo/bin/* /usr/local/bin/
     # 4. -E 保持了环境变量
     sudo -E rustup update
     # 5. 初始化 rustup 环境
     rustup default stable
-    # .rustup目录 安装在 RUSTUP_HOME；cargo、rustc、rustup、eza、rg、fd 都安装在 CARGO_HOME（但是它们符号链接在 /usr/local/bin/）
+    # .rustup 目录安装在 RUSTUP_HOME；cargo、rustc、rustup、eza、rg、fd 都安装在 CARGO_HOME（但是它们符号链接在 /usr/local/bin/）
     print_centered_message "${GREEN} rustc 安装完成 ✅${NC}" "false" "false"
 fi
 # =================================结束安装 rustc=================================

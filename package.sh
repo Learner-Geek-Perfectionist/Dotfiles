@@ -21,7 +21,7 @@ brew_formulas=(
     fastfetch libuv lzip z3 tree autoconf chafa
     fd libvterm make readline zstd eza less
     fzf libyaml mpdecimal ripgrep go coreutils
-    gcc ninja wget mas pkgconf jq
+    gcc ninja wget mas pkgconf jq doxygen
 )
 
 #ubuntu
@@ -66,6 +66,7 @@ packages_ubuntu=(
     systemd
     language-pack-zh-hans
     wireshark
+    doxygen
 )
 
 #fedora
@@ -110,5 +111,6 @@ packages_fedora=(
     autoconf
     systemd
     chafa
+    doxygen
     lua
 )

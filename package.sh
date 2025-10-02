@@ -67,7 +67,7 @@ packages_ubuntu=(
     language-pack-zh-hans
     wireshark
     doxygen
-    googletest
+    libgtest-dev
     clangd
 )
 
@@ -115,6 +115,6 @@ packages_fedora=(
     chafa
     doxygen
     lua
-    googletest
+    gtest-devel
     clang-devel 
 )

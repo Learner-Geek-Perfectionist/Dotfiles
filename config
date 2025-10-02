@@ -3,12 +3,13 @@ Host *
   User ouyangzhaoxin
   ServerAliveInterval 60
   IdentitiesOnly yes
+  Port 22
   StrictHostKeyChecking no
+
 
 # 登录 Mac 跳板
 Host mac
   HostName MacBook-Pro.local
-  Port 22
   IdentityFile ~/.ssh/id_ed25519
 
 

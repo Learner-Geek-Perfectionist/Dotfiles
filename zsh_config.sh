@@ -79,7 +79,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
     # 根据操作系统安装......
     if [[ $os_type == "ubuntu" ]]; then
         sudo apt update
-        tools=( "zsh" "git" "curl" "make" "g++" "gcc" "wget" "gnupg" "pkg-config" "xz-utils" "openssh")
+        tools=( "zsh" "git" "curl" "make" "g++" "gcc" "wget" "gnupg" "pkg-config" "xz-utils" "openssh" "clangd")
         # 遍历工具列表，检查是否已安装
         for tool in "${tools[@]}"; do
             if ! command -v "$tool" >/dev/null 2>&1; then
@@ -96,7 +96,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
 
     elif [[ $os_type == "fedora" ]]; then
         sudo dnf -y update
-        tools=("rustup" "zsh" "git" "curl" "cmake" "make" "g++" "gcc" "openssh")
+        tools=("rustup" "zsh" "git" "curl" "cmake" "make" "g++" "gcc" "openssh" "clang-devel")
         # 遍历工具列表，检查是否已安装
         for tool in "${tools[@]}"; do
             if ! command -v "$tool" >/dev/null 2>&1; then

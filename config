@@ -1,0 +1,25 @@
+# 通用模板（所有主机共享的配置）
+Host *
+  User ouyangzhaoxin
+  IdentityFile ~/.ssh/id_ed25519
+  ServerAliveInterval 60
+  IdentitiesOnly yes
+  StrictHostKeyChecking no
+
+# 登录 Mac 跳板
+Host mac
+  HostName MacBook-Pro.local
+  Port 22
+  StrictHostKeyChecking no   
+
+
+# 直达 Ubuntu 虚拟机
+Host ubuntu
+  HostName ubuntu.orb.local
+  ProxyCommand ssh -W %h:%p mac
+   
+
+# 直达 Fedora 虚拟机
+Host fedora
+  HostName fedora.orb.local
+  ProxyCommand ssh -W %h:%p mac   

@@ -68,6 +68,7 @@ packages_ubuntu=(
     wireshark
     doxygen
     googletest
+    clangd
 )
 
 #fedora
@@ -115,4 +116,5 @@ packages_fedora=(
     doxygen
     lua
     googletest
+    clang-devel 
 )

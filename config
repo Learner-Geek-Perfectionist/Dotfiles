@@ -1,7 +1,6 @@
 # 通用模板（所有主机共享的配置）
 Host *
   User ouyangzhaoxin
-  IdentityFile ~/.ssh/id_ed25519
   ServerAliveInterval 60
   IdentitiesOnly yes
   StrictHostKeyChecking no
@@ -10,6 +9,7 @@ Host *
 Host mac
   HostName MacBook-Pro.local
   Port 22
+  IdentityFile ~/.ssh/id_ed25519
   StrictHostKeyChecking no   
 
 

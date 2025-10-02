@@ -23,22 +23,7 @@ echo "$(whoami) ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers
 echo -e  "${LIGHT_BLUE}已配置用户 $(whoami) 无需 sudo 密码。${NC}"
 
 if [[ $(uname -s) == "Linux" ]]; then
-
-    # 如果是在 Dockerfile 中......
-    if [[ "$AUTO_RUN" == "true" ]]; then
-        echo -e "${GREEN}在 Docker 中无需设置密码${NC}"
-    else
-        default_password=1
-        if ! sudo passwd -S "$(whoami)" | grep -q ' P '; then
-            echo -en "用户 $(whoami) 的密码未设置，现在将密码设置为「${RED}${default_password}${NC}」。"
-            echo "$(whoami):${default_password}" | sudo chpasswd
-            echo -e "${GREEN}密码已设置。${NC}"
-        else
-            echo -e "${GREEN}用户 $(whoami) 的密码已经存在。${NC}"
-        fi
-    fi
-    
-    
+      
     # 安装 git、sudo
     if grep -q 'ID=ubuntu' /etc/os-release; then
         sudo apt update -y && sudo apt install -y git software-properties-common bc unzip locales

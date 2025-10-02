@@ -10,7 +10,6 @@ Host mac
   HostName MacBook-Pro.local
   Port 22
   IdentityFile ~/.ssh/id_ed25519
-  StrictHostKeyChecking no   
 
 
 # 直达 Ubuntu 虚拟机

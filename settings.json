@@ -1,6 +1,6 @@
 {
     "C_Cpp.intelliSenseEngine": "disabled",
-    "clangd.path": "/usr/bin/clangd-15",
+    "clangd.path": "/usr/bin/clangd",
     "clangd.arguments": [
         "--background-index",
         "--all-scopes-completion",
@@ -19,4 +19,10 @@
     "workbench.editor.enablePreview": false,
     "clangd.checkUpdates": true,
     "editor.formatOnSave": true,
+    "terminal.integrated.cursorStyle": "line",
+    // 光标宽度：1（数值越小越细，1 是最细值）
+    "terminal.integrated.cursorWidth": 1,
+    "workbench.colorCustomizations": {
+        "terminalCursor.foreground": "#4DEEEA" // 白色光标（可替换为 #00FFFF 亮蓝等）
+    }
 }

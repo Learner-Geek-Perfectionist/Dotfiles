@@ -1,25 +1,29 @@
-# 通用模板（所有主机共享的配置）
+# 全局配置（对所有Host生效）
 Host *
-  User ouyangzhaoxin
-  ServerAliveInterval 60
-  IdentitiesOnly yes
-  Port 22
+  # 禁用严格主机密钥检查，无需手动输入yes
   StrictHostKeyChecking no
+  # 不存储已知主机密钥（空路径）
+  UserKnownHostsFile /dev/null  # Windows下也可识别此路径，等价于不存储
+  ServerAliveInterval 60
+  ForwardAgent yes
 
-
-# 登录 Mac 跳板
+# 连接到Mac的配置
 Host mac
   HostName MacBook-Pro.local
-  IdentityFile ~/.ssh/id_ed25519
+  Port 22
+  User ouyangzhaoxin
 
-
-# 直达 Ubuntu 虚拟机
+# 连接OrbStack的Ubuntu
 Host ubuntu
-  HostName ubuntu.orb.local
-  ProxyCommand ssh -W %h:%p mac
-   
+  HostName 127.0.0.1
+  Port 32222
+  User ubuntu
+  ProxyJump mac
 
-# 直达 Fedora 虚拟机
+# 连接OrbStack的Fedora
 Host fedora
-  HostName fedora.orb.local
-  ProxyCommand ssh -W %h:%p mac   
+  HostName 127.0.0.1
+  Port 32222  
+  User fedora
+  ProxyJump mac
+    

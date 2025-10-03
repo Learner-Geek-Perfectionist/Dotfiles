@@ -1,0 +1,22 @@
+{
+    "C_Cpp.intelliSenseEngine": "disabled",
+    "clangd.path": "/usr/bin/clangd-15",
+    "clangd.arguments": [
+        "--background-index",
+        "--all-scopes-completion",
+        "--completion-style=detailed",
+        "--j=32",
+        "--clang-tidy",
+        "--clang-tidy-checks=performance-*,bugprone-*",
+        "--compile-commands-dir=/home/ouyangzhaoxin/vsomeip/build",
+        "--function-arg-placeholders",
+        "--query-driver=/usr/bin/g++",
+        "--header-insertion=iwyu",
+        "--header-insertion-decorators",
+        "--pch-storage=memory",
+    ],
+    "editor.inlayHints.enabled": "on",
+    "workbench.editor.enablePreview": false,
+    "clangd.checkUpdates": true,
+    "editor.formatOnSave": true,
+}

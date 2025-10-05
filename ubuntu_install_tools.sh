@@ -35,12 +35,20 @@ fi
 
 # =================================开始安装 clangd=================================
 
-# 添加 LLVM 官方仓库
-wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+# 1. 清理可能存在的旧密钥（避免冲突）
+[[ -f /etc/apt/keyrings/llvm.gpg ]] && sudo rm -f /etc/apt/keyrings/llvm.gpg
 
-sudo add-apt-repository "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic main"
+# 2. 创建密钥存储目录（老版本 Ubuntu 可能没有，手动创建）
+sudo mkdir -p /etc/apt/keyrings
 
-sudo add-apt-repository "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-16 main"
+# 3. 下载 LLVM 密钥并存储为独立文件（而非全局密钥环）
+sudo wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/llvm.gpg
+
+# 4. 添加 LLVM 仓库，并显式指定使用上面的密钥文件验证（关键：避免全局信任）
+echo "deb [signed-by=/etc/apt/keyrings/llvm.gpg] http://apt.llvm.org/bionic/ llvm-toolchain-bionic main" | sudo tee /etc/apt/sources.list.d/llvm.list >/dev/null
+
+# 5. 更新并安装 clangd
+sudo apt update && sudo apt install -y clangd
 
 # =================================结束安装 clangd=================================
 
@@ -72,58 +80,20 @@ else
 	sudo mkdir -p /opt/kitty && sudo chmod -R a+rw /opt/kitty
 	curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n dest=/opt/kitty
 
-	# 定义基础 URL
-	BASE_URL="http://kr.archive.ubuntu.com/ubuntu/pool/universe/k/kitty/"
-
-	# 使用 curl 获取页面内容，并解析出最新的 kitty-terminfo .deb 文件的版本号
-	TERMINFO_LATEST_VERSION=$(curl -s "$BASE_URL" | grep -oP 'href="kitty-terminfo_[^"]*\.deb"' | sed -E 's|.*kitty-terminfo_([^"]*)\.deb.*|\1|' | sort -V | tail -1)
-	DOCS_LATEST_VERSION=$TERMINFO_LATEST_VERSION
-	# 如果找不到文件，则退出
-	if [[ -z "$TERMINFO_LATEST_VERSION" ]]; then
-		echo -e "${RED}Failed to find the kitty-terminfo .deb file.${NC}"
-		exit 1
-	fi
-
-	# 构建完整的 .deb 文件下载 URL（kitty-terminfo）
-	TERMINFO_URL="${BASE_URL}kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb"
-	DOC_URL="${BASE_URL}kitty-doc_${DOCS_LATEST_VERSION}.deb"
-
-	# 下载和安装包（kitty-terminfo）
-	echo -e "Downloading ${RED}kitty-terminfo${NC} version ${GREEN}${TERMINFO_LATEST_VERSION}${NC}"
-
-	curl -s -o "/tmp/kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb" "$TERMINFO_URL" || echo -e "${RED}Download failed.${NC}"
-	echo "Installing kitty-terminfo..."
-	sudo apt install -y "/tmp/kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb" || (echo -e "${RED}Installation failed.${NC}" && exit 1)
-	echo -e "${GREEN}kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb 安装完成 ${NC}"
-
-	#    # 下载和安装包（kitty-doc）
-	#    echo -e "Downloading ${RED}kitty-doc${NC} version ${GREEN}${DOCS_LATEST_VERSION}${NC}"
-	#    curl -s -o "/tmp/kitty-doc_${DOCS_LATEST_VERSION}.deb" "$DOC_URL" || echo -e "${RED}Download failed.${NC}"
-	#    echo "Installing kitty-doc..."
-	#    sudo apt install -y "/tmp/kitty-doc_${DOCS_LATEST_VERSION}.deb" || echo -e "${RED}Installation failed.${NC}"
-	#    echo -e "${GREEN}kitty-doc_${DOCS_LATEST_VERSION}.deb 安装完成 ${NC}"
-
-	# 清理下载的文件
-	sudo rm -rf "/tmp/kitty-terminfo_${TERMINFO_LATEST_VERSION}.deb" "/tmp/kitty-doc_${DOCS_LATEST_VERSION}.deb"
-
-	# 检查是否在 WSL2 中运行或在自动化脚本环境中
-	if grep -qi microsoft /proc/version || [[ "$AUTO_RUN" == "true" ]]; then
-		print_centered_message "${RED}在 WSL2 中或者 Docker 中不需要安装 kitty 桌面图标${NC}" "false" "false"
-	else
-		mkdir -p ~/.local/share/applications/
-		# For Application Launcher:
-		sudo cp /opt/kitty/kitty.app/share/applications/kitty.desktop ~/.local/share/applications/
-		sudo cp /opt/kitty/kitty.app/share/applications/kitty-open.desktop ~/.local/share/applications/
-		# Add Icon:
-		sudo sed -i "s|Icon=kitty|Icon=/opt/kitty/kitty.app/share/icons/hicolor/256x256/apps/kitty.png|g" ~/.local/share/applications/kitty*.desktop
-		sudo sed -i "s|Exec=kitty|Exec=/opt/kitty/kitty.app/bin/kitty|g" ~/.local/share/applications/kitty*.desktop
-		mkdir -p ~/.config
-		touch ~/.config/xdg-terminals.list
-		# Make xdg-terminal-exec (and hence desktop environments that support it use kitty)
-		echo 'kitty.desktop' >~/.config/xdg-terminals.list
-	fi
 	# 将 kitty 二进制文件复制到标准的系统路径
 	sudo ln -snf /opt/kitty/kitty.app/bin/* /usr/local/bin/
+
+	# 安装 terminfo
+	sudo mv ~/.local/kitty.app/share/terminfo/x/xterm-kitty /lib/terminfo/x/
+
+	# 安装 man 手册
+	sudo cp -r ~/.local/kitty.app/share/man/* /usr/share/man/
+	sudo mandb
+
+	# 安装 icons 图标
+	sudo cp -r ~/.local/kitty.app/share/icons/* /usr/share/icons/
+	sudo update-icon-caches /usr/share/icons/*
+
 	print_centered_message "${GREEN} kitty 安装完成 ✅${NC}" "false" "true"
 
 fi

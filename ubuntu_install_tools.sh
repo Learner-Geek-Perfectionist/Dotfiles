@@ -191,7 +191,7 @@ if command -v cargo-binstall >/dev/null 2>&1; then
 	print_centered_message "${GREEN}cargo-binstall 已安装，跳过安装。${NC}" "true" "true"
 else
 	print_centered_message "${GREEN}开始安装 cargo-binstall... ${NC}" "true" "false"
-
+	export CARGO_BUILD_JOBS=$(nproc)
 	# 安装 cargo-binstall
 	cargo install --git https://github.com/cargo-bins/cargo-binstall cargo-binstall
 	sudo ln -snf /opt/rust/cargo/bin/cargo-binstall /usr/local/bin/

@@ -67,7 +67,7 @@ packages_ubuntu=(
 	language-pack-zh-hans
 	wireshark
 	doxygen
-	desktop-file-utils
+	gtk-update-icon-cache
 	libgtest-dev
 	libboost-all-dev
 	libzstd-dev

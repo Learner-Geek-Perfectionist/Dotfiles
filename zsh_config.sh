@@ -82,7 +82,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
 	# 根据操作系统安装......
 	if [[ $os_type == "ubuntu" ]]; then
 		sudo apt update
-		tools=("zsh" "libzstd-dev" "git" "curl" "make" "g++" "gcc" "openssh-server" "mandb" "wget" "gnupg" "pkg-config" "xz-utils" "openssh-server" "desktop-file-utils")
+		tools=("zsh" "libzstd-dev" "git" "curl" "make" "g++" "gcc" "openssh-server" "mandb" "wget" "gnupg" "pkg-config" "xz-utils" "openssh-server" "gtk-update-icon-cache")
 		# 遍历工具列表，检查是否已安装
 		for tool in "${tools[@]}"; do
 			if ! command -v "$tool" >/dev/null 2>&1; then

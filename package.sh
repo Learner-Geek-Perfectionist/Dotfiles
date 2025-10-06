@@ -69,6 +69,7 @@ packages_ubuntu=(
 	doxygen
 	libgtest-dev
 	libboost-all-dev
+	libzstd-dev
 )
 
 #fedora
@@ -124,4 +125,5 @@ packages_fedora=(
 	gtest-devel
 	clang-devel
 	boost-devel
+	zstd-devel
 )

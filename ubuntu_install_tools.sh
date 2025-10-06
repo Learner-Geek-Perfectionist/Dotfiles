@@ -193,7 +193,7 @@ else
 	print_centered_message "${GREEN}开始安装 cargo-binstall... ${NC}" "true" "false"
 
 	# 安装 cargo-binstall
-	ccargo install --git https://github.com/cargo-bins/cargo-binstall cargo-binstall
+	cargo install --git https://github.com/cargo-bins/cargo-binstall cargo-binstall
 	sudo ln -snf /opt/rust/cargo/bin/cargo-binstall /usr/local/bin/
 	print_centered_message "${GREEN} cargo-binstall 安装完成 ✅${NC}" "false" "false"
 fi

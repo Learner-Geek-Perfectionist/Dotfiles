@@ -283,6 +283,7 @@ else
 	# 把 /usr/bin/lua 指向 /usr/bin/lua5.3
 	sudo update-alternatives --install /usr/bin/lua lua "/usr/bin/$latest" 100
 	sudo update-alternatives --install /usr/bin/luac luac "/usr/bin/luac$ver" 100
-fi
+	print_centered_message "${GREEN} lua 安装完成 ✅${NC}" "false" "true"
 
+fi
 # =================================结束安装 lua=================================

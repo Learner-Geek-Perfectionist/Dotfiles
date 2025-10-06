@@ -181,8 +181,8 @@ echo -e "${GREEN}✔️ Temporary files removed.${NC}"
 echo -e "${GREEN}✅ Script completed successfully. Files have been successfully copied to the user's home directory.${NC}"
 
 # 安装 zsh 插件
-"$HOME"/.config/zsh/plugins/zinit-plugin.zsh
+~/.config/zsh/plugins/zinit-plugin.zsh
 
 rm -rf $HOME/.zcompdump $HOME/.zsh_history
 
-# ================================= 开始安装 dotfiles =================================
+# ================================= 结束安装 dotfiles =================================

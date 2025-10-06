@@ -128,7 +128,7 @@ else
 	sudo mandb
 
 	# 安装 icons 图标
-	sudo cp -r ~/.local/kitty.app/share/icons/* /usr/share/icons/
+	sudo cp -r /opt/kitty/kitty.app/share/icons/* /usr/share/icons/
 	sudo update-icon-caches /usr/share/icons/*
 
 	# desktop 文件（系统级）

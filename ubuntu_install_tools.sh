@@ -80,7 +80,7 @@ else
 
 	# 验证安装结果
 	if command -v clangd >/dev/null 2>&1; then
-		print_centered_message "${GREEN}clangd 安装完成 ✅ 版本: $(clangd --version | head -n1 | awk '{print $3}')${NC}" "false" "true"
+		print_centered_message "${GREEN}clangd 安装完成 ✅ 版本: $(clangd --version | grep -oP '\d+\.\d+\.\d+')${NC}" "false" "true"
 	else
 		print_centered_message "${RED}clangd 安装失败 ❌${NC}" "false" "true"
 		exit 1

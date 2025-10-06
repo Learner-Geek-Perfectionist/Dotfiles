@@ -126,5 +126,4 @@ packages_fedora=(
 	gtest-devel
 	clang-devel
 	boost-devel
-	zstd-devel
 )

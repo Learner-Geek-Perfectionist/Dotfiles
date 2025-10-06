@@ -160,6 +160,8 @@ else
 fi
 # =================================结束安装 fzf=================================
 
+export CARGO_HOME=/opt/rust/cargo
+export RUSTUP_HOME=/opt/rust/rustup
 # =================================开始安装 Rust 工具=================================
 if command -v rustc >/dev/null 2>&1; then
 	print_centered_message "${GREEN}rustc 已安装，跳过安装。${NC}" "true" "true"

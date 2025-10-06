@@ -124,7 +124,7 @@ else
 	sudo install -Dm644 /opt/kitty/kitty.app/share/terminfo/x/xterm-kitty /usr/share/terminfo/x/xterm-kitty
 
 	# 安装 man 手册
-	sudo cp -r ~/.local/kitty.app/share/man/* /usr/share/man/
+	sudo cp -r /opt/kitty/kitty.app/share/man/* /usr/share/man/
 	sudo mandb
 
 	# 安装 icons 图标

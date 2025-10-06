@@ -1,42 +1,42 @@
 if [[ "$HISTFILE" != "$HOME/.cache/zsh/.zsh_history" ]]; then
-    export HISTFILE="$HOME/.cache/zsh/.zsh_history"
-    if [[ -f "$HOME/.cache/zsh/.zsh_history" ]]; then
-        readonly HISTFILE
-    fi
+	export HISTFILE="$HOME/.cache/zsh/.zsh_history"
+	if [[ -f "$HOME/.cache/zsh/.zsh_history" ]]; then
+		readonly HISTFILE
+	fi
 fi
 
 if [[ "$ZSH_COMPDUMP" != "$HOME/.cache/zsh/.zcompdump" ]]; then
-    export ZSH_COMPDUMP="$HOME/.cache/zsh/.zcompdump"
-    if [[ -f "$HOME/.cache/zsh/.zcompdump" ]]; then
-        readonly ZSH_COMPDUMP
-    fi
+	export ZSH_COMPDUMP="$HOME/.cache/zsh/.zcompdump"
+	if [[ -f "$HOME/.cache/zsh/.zcompdump" ]]; then
+		readonly ZSH_COMPDUMP
+	fi
 fi
 
 # 获取操作系统信息并设置 PATH
 if [[ "$(uname)" == "Darwin" ]]; then
-    # macOS specific settings，设置 git 、clang++、ruby、make bash、VSCode、gre、less 等工具的环境变量
-    export PATH="/opt/homebrew/opt/llvm/bin:$PATH"
-    export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
-    export PATH="/opt/homebrew/opt/git/bin:$PATH"
-    export PATH="/opt/homebrew/opt/less/bin:$PATH"
-    export PATH="/opt/homebrew/opt/make/libexec/gnubin:$PATH"
-    export PATH="/opt/homebrew/opt/bash/bin:$PATH"
-    export PATH="/opt/homebrew/opt/grep/libexec/gnubin:$PATH"
-    export PATH="/Applications/Visual Studio Code.app/Contents/Resources/app/bin:$PATH"
-    export PATH="/Applications/CLion.app/Contents/MacOS:$PATH"
-    export PATH="/Applications/PyCharm.app/Contents/MacOS:$PATH"
-    export PATH="/Applications/IntelliJ IDEA.app/Contents/MacOS:$PATH"
-    export PATH="/opt/homebrew/anaconda3/bin:$PATH"
-    export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
-    export HOMEBREW_NO_ENV_HINTS=1
-    # clion 映射到 cl
-    alias cl=clion
-    # pycharm 映射到 py
-    alias py=pycharm
-    alias rg='rg -uuu -i --threads=$(sysctl -n hw.ncpu)'
+	# macOS specific settings，设置 git 、clang++、ruby、make bash、VSCode、gre、less 等工具的环境变量
+	export PATH="/opt/homebrew/opt/llvm/bin:$PATH"
+	export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
+	export PATH="/opt/homebrew/opt/git/bin:$PATH"
+	export PATH="/opt/homebrew/opt/less/bin:$PATH"
+	export PATH="/opt/homebrew/opt/make/libexec/gnubin:$PATH"
+	export PATH="/opt/homebrew/opt/bash/bin:$PATH"
+	export PATH="/opt/homebrew/opt/grep/libexec/gnubin:$PATH"
+	export PATH="/Applications/Visual Studio Code.app/Contents/Resources/app/bin:$PATH"
+	export PATH="/Applications/CLion.app/Contents/MacOS:$PATH"
+	export PATH="/Applications/PyCharm.app/Contents/MacOS:$PATH"
+	export PATH="/Applications/IntelliJ IDEA.app/Contents/MacOS:$PATH"
+	export PATH="/opt/homebrew/anaconda3/bin:$PATH"
+	export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
+	export HOMEBREW_NO_ENV_HINTS=1
+	# clion 映射到 cl
+	alias cl=clion
+	# pycharm 映射到 py
+	alias py=pycharm
+	alias rg='rg -uuu -i --threads=$(sysctl -n hw.ncpu)'
 
 else
-    alias rg='rg -uuu -i --threads=$(nproc)'
+	alias rg='rg -uuu -i --threads=$(nproc)'
 
 fi
 
@@ -50,20 +50,20 @@ source "$HOME/.config/zsh/plugins/zinit.zsh"
 
 # 加载 ssh-agent，自动启动 ssh-agent 并持久化环境变量
 if [ -z "$SSH_AUTH_SOCK" ]; then
-  # 检查是否有已保存的 agent 环境变量
-  if [ -f ~/.ssh/agent.env ]; then
-    . ~/.ssh/agent.env > /dev/null
-    # 验证 agent 进程是否存活，不存活则删除旧文件
-    if ! ps -p $SSH_AGENT_PID > /dev/null; then
-      rm ~/.ssh/agent.env
-    fi
-  fi
+	# 检查是否有已保存的 agent 环境变量
+	if [ -f ~/.ssh/agent.env ]; then
+		. ~/.ssh/agent.env >/dev/null
+		# 验证 agent 进程是否存活，不存活则删除旧文件
+		if ! ps -p $SSH_AGENT_PID >/dev/null; then
+			rm ~/.ssh/agent.env
+		fi
+	fi
 
-  # 启动新的 ssh-agent 并保存环境变量到文件
-  if [ ! -f ~/.ssh/agent.env ]; then
-    ssh-agent > ~/.ssh/agent.env
-    . ~/.ssh/agent.env > /dev/null
-  fi
+	# 启动新的 ssh-agent 并保存环境变量到文件
+	if [ ! -f ~/.ssh/agent.env ]; then
+		ssh-agent >~/.ssh/agent.env
+		. ~/.ssh/agent.env >/dev/null
+	fi
 fi
 
 setopt interactive_comments # 注释行不报错
@@ -112,5 +112,7 @@ alias md='mkdir -p'
 alias g1='git clone --depth=1'
 
 alias rm='sudo rm -rf'
+
+alias mkdir='sudo mkdir -rf'
 
 alias show='kitty +kitten icat'

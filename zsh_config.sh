@@ -16,8 +16,23 @@ LIGHT_BLUE='\033[1;34m'
 DARK_RED='\033[1;31m'
 NC='\033[0m' # 没有颜色
 
-# 设置国内源
-sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list
+#!/bin/bash
+
+# 判断操作系统类型
+if [[ -f /etc/lsb-release ]]; then
+	# Ubuntu 系统
+	sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list
+
+elif [[ -f /etc/fedora-release ]]; then
+	# Fedora 系统
+	sudo sed -e 's|^metalink=|#metalink=|g' \
+		-e 's|^#baseurl=http://download.example/pub/fedora/linux|baseurl=https://mirrors.ustc.edu.cn/fedora|g' \
+		-i.bak \
+		/etc/yum.repos.d/fedora.repo \
+		/etc/yum.repos.d/fedora-updates.repo
+else
+	echo "不支持的操作系统。"
+fi
 
 # 定义打印居中消息的函数
 print_centered_message() {

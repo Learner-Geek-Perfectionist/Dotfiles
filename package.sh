@@ -71,6 +71,7 @@ packages_ubuntu=(
 	libgtest-dev
 	libboost-all-dev
 	libzstd-dev
+	libssl-dev
 )
 
 #fedora

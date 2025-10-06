@@ -191,10 +191,11 @@ if command -v cargo-binstall >/dev/null 2>&1; then
 	print_centered_message "${GREEN}cargo-binstall 已安装，跳过安装。${NC}" "true" "true"
 else
 	print_centered_message "${GREEN}开始安装 cargo-binstall... ${NC}" "true" "false"
-	export CARGO_BUILD_JOBS=$(nproc)
 	# 安装 cargo-binstall
-	cargo install --git https://github.com/cargo-bins/cargo-binstall cargo-binstall
+	curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
 	sudo ln -snf /opt/rust/cargo/bin/cargo-binstall /usr/local/bin/
+	# 利用 cargo-binstall 自举，自己安装自己，这样 cargo 包管理工具就可以管理 cargo-binstall
+	cargo-binstall --force cargo-binstall --no-confirm
 	print_centered_message "${GREEN} cargo-binstall 安装完成 ✅${NC}" "false" "false"
 fi
 # =================================结束安装 cargo-binstall=================================
@@ -206,7 +207,7 @@ else
 	print_centered_message "${GREEN}开始安装 cargo-update... ${NC}" "true" "false"
 
 	# 安装 cargo-update
-	cargo-binstall -y cargo-update
+	cargo-binstall cargo-update --no-confirm
 	sudo ln -snf /opt/rust/cargo/bin/cargo-install-update /usr/local/bin/
 	print_centered_message "${GREEN} cargo-update 安装完成 ✅${NC}" "false" "false"
 fi
@@ -218,7 +219,7 @@ fi
 # # 更新所有已安装的工具链（rustc, cargo, rustfmt, clippy）
 # rustup update
 
-# #更新 第三方 Cargo 工具（fd-find, eza, bat, starship）
+# #更新 第三方 Cargo 工具（fd-find, eza, bat, starship cargo-binstall）
 # cargo install-update -a
 
 # =================================开始安装 eza=================================

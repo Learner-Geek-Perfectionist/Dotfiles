@@ -279,6 +279,8 @@ if command -v lua >/dev/null 2>&1; then
 else
 	print_centered_message "${GREEN}开始安装 lua... ${NC}" "false" "false"
 	latest=$(apt-cache search '^lua5\.[0-9]$' | awk '{print $1}' | sort -V | tail -n 1)
+	ver=${latest//lua/}
+
 	sudo apt install -y $latest ${latest}-dev
 	# 把 /usr/bin/lua 指向 /usr/bin/lua5.3
 	sudo update-alternatives --install /usr/bin/lua lua "/usr/bin/$latest" 100

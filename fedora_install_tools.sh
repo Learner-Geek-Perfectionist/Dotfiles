@@ -9,7 +9,7 @@ else
 	sudo chmod -R a+rw /opt/rust/
 	export CARGO_HOME=/opt/rust/cargo
 	export RUSTUP_HOME=/opt/rust/rustup
-
+	# 在 fedora 中，安装 rustup 包会得到 rustup-init 工具。
 	# 2. 安装 rustup（工具链管理器）、rustc（Rust 编译器）、cargo（包管理与构建工具）在 CARGO_HOME 和 RUSTUP_HOME 中。
 	rustup-init -y
 

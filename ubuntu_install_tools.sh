@@ -212,7 +212,7 @@ else
 fi
 # =================================结束安装 cargo-update=================================
 
-# # 更新 rustup 自身
+# 更新 rustup 自身
 # rustup self update
 
 # # 更新所有已安装的工具链（rustc, cargo, rustfmt, clippy）

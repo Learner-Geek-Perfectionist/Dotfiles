@@ -5,8 +5,9 @@ if command -v cmake >/dev/null 2>&1; then
 else
 	print_centered_message "${GREEN}开始安装 cmake... ${NC}" "true" "false"
 
-	# 获取当前Ubuntu版本代号
-	CURRENT_VERSION=$(lsb_release -cs)
+	# 利用 Kitware 的官方 APT 仓库
+	# 获取当前 Ubuntu 版本代号
+	CURRENT_VERSION_NUM=$(lsb_release -r | awk '{print $2}')
 
 	# 在临时目录中创建 gpg 专用子目录
 	TEMP_DIR=$(mktemp -d)
@@ -20,12 +21,25 @@ else
 	# 创建密钥存储目录（适用于所有Ubuntu版本）
 	sudo mkdir -p /etc/apt/keyrings
 
-	#  下载密钥到临时目录
+	# 使用 curl 获取 Kitware 支持的版本列表(Noble，Jammy，Focal)
+	SUPPORTED_VERSIONS=$(curl -Ls https://apt.kitware.com/ubuntu/ | grep -oP 'For Ubuntu [^<]+' | sed -E 's/For Ubuntu (.*):/\1/' | sort -r | uniq)
+
+	# 提取最新的版本代号（比如 Noble）
+	SUPPORTED_VERSION_CODE=$(echo "$SUPPORTED_VERSIONS" | sed -E 's/ .*//g' | tr '[:upper:]' '[:lower:]' | head -n 1) # 只保留版本代号（如 noble, jammy, focal）
+	SUPPORTED_VERSION_NUM_MAX=$(echo "$SUPPORTED_VERSIONS" | grep -oP '\d+\.\d+' | sort -V | tail -n 1)
+
+	# 检查当前版本是否支持
+	if [[ $(echo "$CURRENT_VERSION_NUM > $SUPPORTED_VERSION_NUM_MAX" | bc -l) -eq 1 ]]; then
+		# 如果不支持当前版本（当前版本太高），使用最新的版本
+		echo "deb [signed-by=/etc/apt/keyrings/kitware.gpg] https://apt.kitware.com/ubuntu/ $SUPPORTED_VERSION_CODE main" | sudo tee /etc/apt/sources.list.d/kitware.list >/dev/null
+	else
+		#  如果支持当前版本
+		curl -s https://apt.kitware.com/kitware-archive.sh | sudo bash
+	fi
+
+	# 下载密钥到临时目录
 	curl -fsSL https://apt.kitware.com/keys/kitware-archive-latest.asc -o "$TEMP_DIR/kitware-archive-latest.asc"
 	sudo GNUPGHOME="$GNUPG_TEMP_DIR" gpg --dearmor -o /etc/apt/keyrings/kitware.gpg "$TEMP_DIR/kitware-archive-latest.asc"
-
-	# 添加仓库源（根据当前系统版本动态生成）
-	echo "deb [signed-by=/etc/apt/keyrings/kitware.gpg] https://apt.kitware.com/ubuntu/ $CURRENT_VERSION main" | sudo tee /etc/apt/sources.list.d/kitware.list >/dev/null
 
 	# 更新仓库并安装CMake
 	sudo apt update && sudo apt install -y cmake
@@ -69,8 +83,7 @@ else
 	sudo wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo GNUPGHOME="$GNUPG_TEMP_DIR" gpg --dearmor -o /etc/apt/keyrings/llvm.gpg
 
 	# 4. 添加 LLVM 仓库，使用动态检测的版本代号
-	echo "deb [signed-by=/etc/apt/keyrings/llvm.gpg] http://apt.llvm.org/${CURRENT_VERSION}/ llvm-toolchain-${CURRENT_VERSION} main" |
-		sudo tee /etc/apt/sources.list.d/llvm.list >/dev/null
+	echo "deb [signed-by=/etc/apt/keyrings/llvm.gpg] http://apt.llvm.org/${CURRENT_VERSION}/ llvm-toolchain-${CURRENT_VERSION} main" | sudo tee /etc/apt/sources.list.d/llvm.list >/dev/null
 
 	# 5. 更新并安装 clangd
 	sudo apt update && sudo apt install -y clangd

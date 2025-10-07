@@ -70,6 +70,7 @@ packages_ubuntu=(
 	gtk-update-icon-cache
 	libgtest-dev
 	libboost-all-dev
+	bc
 )
 
 #fedora

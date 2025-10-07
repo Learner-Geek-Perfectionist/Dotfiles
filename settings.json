@@ -1,28 +1,32 @@
 {
-    "C_Cpp.intelliSenseEngine": "disabled",
+    // C/C++ 配置
+    "C_Cpp.intelliSenseEngine": "disabled", // 禁用内置IntelliSense，使用clangd
+    // clangd 配置
     "clangd.path": "/usr/bin/clangd",
     "clangd.arguments": [
-        "--background-index",
-        "--all-scopes-completion",
-        "--completion-style=detailed",
-        "--j=32",
-        "--clang-tidy",
-        "--clang-tidy-checks=performance-*,bugprone-*",
-        "--compile-commands-dir=/home/ouyangzhaoxin/vsomeip/build",
-        "--function-arg-placeholders",
-        "--query-driver=/usr/bin/g++",
-        "--header-insertion=iwyu",
-        "--header-insertion-decorators",
-        "--pch-storage=memory",
+        "--background-index", // 后台建立索引
+        "--all-scopes-completion", // 所有作用域的补全
+        "--completion-style=detailed", // 详细的补全样式
+        "--j=32", // 并行任务数量
+        "--clang-tidy", // 启用clang-tidy检查
+        "--clang-tidy-checks=performance-*,bugprone-*", // 启用的检查项
+        "--compile-commands-dir=/home/ouyangzhaoxin/vsomeip/build", // 编译命令目录
+        "--function-arg-placeholders", // 函数参数占位符
+        "--query-driver=/usr/bin/g++", // 查询的编译器路径
+        "--header-insertion=iwyu", // 按iwyu规则插入头文件
+        "--header-insertion-decorators", // 头文件插入装饰
+        "--pch-storage=memory" // PCH存储方式
     ],
-    "editor.inlayHints.enabled": "on",
-    "workbench.editor.enablePreview": false,
-    "clangd.checkUpdates": true,
-    "editor.formatOnSave": true,
-    "terminal.integrated.cursorStyle": "line",
-    // 光标宽度：1（数值越小越细，1 是最细值）
-    "terminal.integrated.cursorWidth": 1,
+    "clangd.checkUpdates": true, // 检查clangd更新
+    // 编辑器设置
+    "editor.inlayHints.enabled": "on", // 启用内嵌提示
+    "workbench.editor.enablePreview": false, // 禁用预览模式
+    "editor.formatOnSave": true, // 保存时自动格式化
+    // 终端设置
+    "terminal.integrated.cursorStyle": "line", // 终端光标样式
+    "terminal.integrated.cursorWidth": 1, // 光标宽度（1为最细）
+    // 颜色自定义
     "workbench.colorCustomizations": {
-        "terminalCursor.foreground": "#4DEEEA" // 白色光标（可替换为 #00FFFF 亮蓝等）
+        "terminalCursor.foreground": "#4DEEEA" // 终端光标颜色
     }
 }

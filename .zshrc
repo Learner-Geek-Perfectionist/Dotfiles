@@ -97,8 +97,6 @@ alias reload="source ~/.zshenv;source ~/.zprofile;source ~/.zshrc"
 # 更新 zsh 配置
 alias upgrade='/bin/bash -c "$(curl -H '\''Cache-Control: no-cache'\'' -fsSL "https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/zsh_config.sh?$(date +%s)")" && reload'
 
-alias md='mkdir -p'
-
 alias g1='git clone --depth=1'
 
 alias rm='sudo rm -rf'

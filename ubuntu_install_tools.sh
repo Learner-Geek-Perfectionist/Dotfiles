@@ -32,9 +32,10 @@ else
 
 	# 检查当前版本是否支持
 	if [[ $(echo "$CURRENT_VERSION_NUM > $SUPPORTED_VERSION_NUM_MAX" | bc -l) -eq 1 ]]; then
-		# 如果不支持当前版本（当前版本太高），使用最新的版本
+		# 如果不支持当前版本（当前版本太高），使用 Kitware 仓库最新的版本
 		echo "deb [signed-by=/etc/apt/keyrings/kitware.gpg] https://apt.kitware.com/ubuntu/ $SUPPORTED_VERSION_CODE main" | sudo tee /etc/apt/sources.list.d/kitware.list >/dev/null
 	elif [[ $(echo "$CURRENT_VERSION_NUM < $SUPPORTED_VERSION_NUM_MIN" | bc -l) -eq 1 ]]; then
+		# 如果不支持当前版本（当前版本太低），使用当前版本
 		echo "deb [signed-by=/etc/apt/keyrings/kitware.gpg] https://apt.kitware.com/ubuntu/ $CURRENT_VERSION_CODE main" | sudo tee /etc/apt/sources.list.d/kitware.list >/dev/null
 	else
 		#  如果支持当前版本

@@ -48,22 +48,12 @@ export RUSTUP_HOME=/opt/rust/rustup
 source "${HOME}/.config/zsh/plugins/homebrew.zsh"
 source "$HOME/.config/zsh/plugins/zinit.zsh"
 
-# 加载 ssh-agent，自动启动 ssh-agent 并持久化环境变量
+# 自动启动 ssh-agent 并加载密钥
 if [ -z "$SSH_AUTH_SOCK" ]; then
-	# 检查是否有已保存的 agent 环境变量
-	if [ -f ~/.ssh/agent.env ]; then
-		. ~/.ssh/agent.env >/dev/null
-		# 验证 agent 进程是否存活，不存活则删除旧文件
-		if ! ps -p $SSH_AGENT_PID >/dev/null; then
-			rm ~/.ssh/agent.env
-		fi
-	fi
-
-	# 启动新的 ssh-agent 并保存环境变量到文件
-	if [ ! -f ~/.ssh/agent.env ]; then
-		ssh-agent >~/.ssh/agent.env
-		. ~/.ssh/agent.env >/dev/null
-	fi
+	# 检查是否已有 ssh-agent 进程
+	eval $(ssh-agent -s >/dev/null 2>&1)
+	# 加载默认私钥（替换为你的密钥路径，如 ~/.ssh/id_rsa）
+	ssh-add ~/.ssh/id_rsa 2>/dev/null
 fi
 
 setopt interactive_comments # 注释行不报错

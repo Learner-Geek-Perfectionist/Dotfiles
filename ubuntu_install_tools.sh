@@ -7,6 +7,7 @@ else
 
 	# 利用 Kitware 的官方 APT 仓库
 	# 获取当前 Ubuntu 版本代号
+	CURRENT_VERSION_CODE=$(lsb_release -cs)
 	CURRENT_VERSION_NUM=$(lsb_release -r | awk '{print $2}')
 
 	# 在临时目录中创建 gpg 专用子目录
@@ -27,11 +28,14 @@ else
 	# 提取最新的版本代号（比如 Noble）
 	SUPPORTED_VERSION_CODE=$(echo "$SUPPORTED_VERSIONS" | sed -E 's/ .*//g' | tr '[:upper:]' '[:lower:]' | head -n 1) # 只保留版本代号（如 noble, jammy, focal）
 	SUPPORTED_VERSION_NUM_MAX=$(echo "$SUPPORTED_VERSIONS" | grep -oP '\d+\.\d+' | sort -V | tail -n 1)
+	SUPPORTED_VERSION_NUM_MIN=$(echo "$SUPPORTED_VERSIONS" | grep -oP '\d+\.\d+' | sort -V | head -n 1)
 
 	# 检查当前版本是否支持
 	if [[ $(echo "$CURRENT_VERSION_NUM > $SUPPORTED_VERSION_NUM_MAX" | bc -l) -eq 1 ]]; then
 		# 如果不支持当前版本（当前版本太高），使用最新的版本
 		echo "deb [signed-by=/etc/apt/keyrings/kitware.gpg] https://apt.kitware.com/ubuntu/ $SUPPORTED_VERSION_CODE main" | sudo tee /etc/apt/sources.list.d/kitware.list >/dev/null
+	elif [[ $(echo "$CURRENT_VERSION_NUM < $SUPPORTED_VERSION_NUM_MIN" | bc -l) -eq 1 ]]; then
+		echo "deb [signed-by=/etc/apt/keyrings/kitware.gpg] https://apt.kitware.com/ubuntu/ $CURRENT_VERSION_CODE main" | sudo tee /etc/apt/sources.list.d/kitware.list >/dev/null
 	else
 		#  如果支持当前版本
 		curl -s https://apt.kitware.com/kitware-archive.sh | sudo bash

@@ -300,11 +300,7 @@ else
 	print_centered_message "${GREEN}开始安装 lua... ${NC}" "false" "false"
 	latest=$(apt list lua5.* 2>/dev/null | grep -oP '^lua5\.\d+' | sort -V | tail -n 1)
 	ver=${latest//lua/}
-
-	sudo apt install -y $latest lib${latest}-dev
-	sudo update-alternatives --install /usr/bin/lua lua "/usr/bin/$latest" 100
-	sudo update-alternatives --install /usr/bin/luac luac "/usr/bin/luac$ver" 100
-
+	sudo apt install -y ${latest} lib${latest}-dev
 	print_centered_message "${GREEN} lua 安装完成 ✅${NC}" "false" "true"
 
 fi

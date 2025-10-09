@@ -1,8 +1,15 @@
 {
     // C/C++ 配置
-    "C_Cpp.intelliSenseEngine": "disabled", // 禁用内置IntelliSense，使用clangd
-    // clangd 配置
-    "clangd.path": "/usr/bin/clangd",
+    // 让 clang-format 负责 C/C++ 的格式化
+    "[c]": {
+        "editor.defaultFormatter": "xaver.clang-format"
+    },
+    "[cpp]": {
+        "editor.defaultFormatter": "xaver.clang-format"
+    },
+    "clangd.path": "/usr/local/bin/clangd", // 换成自己的路径
+    "clang-format.executable": "/usr/local/bin/clang-format",
+    "clang-format.style": "file",
     "clangd.arguments": [
         "--background-index", // 后台建立索引
         "--all-scopes-completion", // 所有作用域的补全
@@ -12,10 +19,11 @@
         "--clang-tidy-checks=performance-*,bugprone-*", // 启用的检查项
         "--compile-commands-dir=/home/ouyangzhaoxin/vsomeip/build", // 编译命令目录
         "--function-arg-placeholders", // 函数参数占位符
-        "--query-driver=/usr/bin/g++", // 查询的编译器路径
+        "--query-driver=/usr/bin/clang-*,/usr/bin/g++*,/usr/bin/gcc*", // 查询的编译器路径
         "--header-insertion=iwyu", // 按iwyu规则插入头文件
         "--header-insertion-decorators", // 头文件插入装饰
-        "--pch-storage=memory" // PCH存储方式
+        "--pch-storage=memory", // PCH存储方式
+        "--resource-dir=/usr/lib/clang/18.1.8", //指定资源文件（如标准库头文件、编译器配置文件、内置头文件等）的目录
     ],
     "clangd.checkUpdates": true, // 检查clangd更新
     // 编辑器设置

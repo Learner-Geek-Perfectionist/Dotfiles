@@ -1,63 +1,63 @@
 # =================================开始安装 cmake=================================
 # 检查 cmake 是否已安装
 if command -v cmake >/dev/null 2>&1; then
-	print_centered_message "${GREEN}cmake 已安装，跳过安装。${NC}" "true" "true"
+    print_centered_message "${GREEN}cmake 已安装，跳过安装。${NC}" "true" "true"
 else
-	print_centered_message "${GREEN}开始安装 cmake... ${NC}" "true" "false"
+    print_centered_message "${GREEN}开始安装 cmake... ${NC}" "true" "false"
 
-	# 利用 Kitware 的官方 APT 仓库
-	# 获取当前 Ubuntu 版本代号
-	CURRENT_VERSION_CODE=$(lsb_release -cs)
-	CURRENT_VERSION_NUM=$(lsb_release -r | awk '{print $2}')
+    # 利用 Kitware 的官方 APT 仓库
+    # 获取当前 Ubuntu 版本代号
+    CURRENT_VERSION_CODE=$(lsb_release -cs)
+    CURRENT_VERSION_NUM=$(lsb_release -r | awk '{print $2}')
 
-	# 在临时目录中创建 gpg 专用子目录
-	TEMP_DIR=$(mktemp -d)
-	GNUPG_TEMP_DIR="$TEMP_DIR/gnupg"
-	mkdir -p "$GNUPG_TEMP_DIR"
-	chmod 700 "$GNUPG_TEMP_DIR"
+    # 在临时目录中创建 gpg 专用子目录
+    TEMP_DIR=$(mktemp -d)
+    GNUPG_TEMP_DIR="$TEMP_DIR/gnupg"
+    mkdir -p "$GNUPG_TEMP_DIR"
+    chmod 700 "$GNUPG_TEMP_DIR"
 
-	# 清理旧密钥（如果存在）
-	[[ -f /etc/apt/keyrings/kitware.gpg ]] && sudo rm -rf /etc/apt/keyrings/kitware.gpg
+    # 清理旧密钥（如果存在）
+    [[ -f /etc/apt/keyrings/kitware.gpg ]] && sudo rm -rf /etc/apt/keyrings/kitware.gpg
 
-	# 创建密钥存储目录（适用于所有Ubuntu版本）
-	sudo mkdir -p /etc/apt/keyrings
+    # 创建密钥存储目录（适用于所有Ubuntu版本）
+    sudo mkdir -p /etc/apt/keyrings
 
-	# 使用 curl 获取 Kitware 支持的版本列表(Noble，Jammy，Focal)
-	SUPPORTED_VERSIONS=$(curl -Ls https://apt.kitware.com/ubuntu/ | grep -oP 'For Ubuntu [^<]+' | sed -E 's/For Ubuntu (.*):/\1/' | sort -r | uniq)
+    # 使用 curl 获取 Kitware 支持的版本列表(Noble，Jammy，Focal)
+    SUPPORTED_VERSIONS=$(curl -Ls https://apt.kitware.com/ubuntu/ | grep -oP 'For Ubuntu [^<]+' | sed -E 's/For Ubuntu (.*):/\1/' | sort -r | uniq)
 
-	# 提取最新的版本代号（比如 Noble）
-	SUPPORTED_VERSION_CODE=$(echo "$SUPPORTED_VERSIONS" | sed -E 's/ .*//g' | tr '[:upper:]' '[:lower:]' | head -n 1) # 只保留版本代号（如 noble, jammy, focal）
-	SUPPORTED_VERSION_NUM_MAX=$(echo "$SUPPORTED_VERSIONS" | grep -oP '\d+\.\d+' | sort -V | tail -n 1)
-	SUPPORTED_VERSION_NUM_MIN=$(echo "$SUPPORTED_VERSIONS" | grep -oP '\d+\.\d+' | sort -V | head -n 1)
+    # 提取最新的版本代号（比如 Noble）
+    SUPPORTED_VERSION_CODE=$(echo "$SUPPORTED_VERSIONS" | sed -E 's/ .*//g' | tr '[:upper:]' '[:lower:]' | head -n 1) # 只保留版本代号（如 noble, jammy, focal）
+    SUPPORTED_VERSION_NUM_MAX=$(echo "$SUPPORTED_VERSIONS" | grep -oP '\d+\.\d+' | sort -V | tail -n 1)
+    SUPPORTED_VERSION_NUM_MIN=$(echo "$SUPPORTED_VERSIONS" | grep -oP '\d+\.\d+' | sort -V | head -n 1)
 
-	# 检查当前版本是否支持
-	if [[ $(echo "$CURRENT_VERSION_NUM > $SUPPORTED_VERSION_NUM_MAX" | bc -l) -eq 1 ]]; then
-		# 如果不支持当前版本（当前版本太高），使用 Kitware 仓库最新的版本
-		echo "deb [signed-by=/etc/apt/keyrings/kitware.gpg] https://apt.kitware.com/ubuntu/ $SUPPORTED_VERSION_CODE main" | sudo tee /etc/apt/sources.list.d/kitware.list >/dev/null
-	elif [[ $(echo "$CURRENT_VERSION_NUM < $SUPPORTED_VERSION_NUM_MIN" | bc -l) -eq 1 ]]; then
-		# 如果不支持当前版本（当前版本太低），使用当前版本
-		echo "deb [signed-by=/etc/apt/keyrings/kitware.gpg] https://apt.kitware.com/ubuntu/ $CURRENT_VERSION_CODE main" | sudo tee /etc/apt/sources.list.d/kitware.list >/dev/null
-	else
-		#  如果支持当前版本
-		curl -s https://apt.kitware.com/kitware-archive.sh | sudo bash
-	fi
+    # 检查当前版本是否支持
+    if [[ $(echo "$CURRENT_VERSION_NUM > $SUPPORTED_VERSION_NUM_MAX" | bc -l) -eq 1 ]]; then
+        # 如果不支持当前版本（当前版本太高），使用 Kitware 仓库最新的版本
+        echo "deb [signed-by=/etc/apt/keyrings/kitware.gpg] https://apt.kitware.com/ubuntu/ $SUPPORTED_VERSION_CODE main" | sudo tee /etc/apt/sources.list.d/kitware.list >/dev/null
+    elif [[ $(echo "$CURRENT_VERSION_NUM < $SUPPORTED_VERSION_NUM_MIN" | bc -l) -eq 1 ]]; then
+        # 如果不支持当前版本（当前版本太低），使用当前版本
+        echo "deb [signed-by=/etc/apt/keyrings/kitware.gpg] https://apt.kitware.com/ubuntu/ $CURRENT_VERSION_CODE main" | sudo tee /etc/apt/sources.list.d/kitware.list >/dev/null
+    else
+        #  如果支持当前版本
+        curl -s https://apt.kitware.com/kitware-archive.sh | sudo bash
+    fi
 
-	# 下载密钥到临时目录
-	curl -fsSL https://apt.kitware.com/keys/kitware-archive-latest.asc -o "$TEMP_DIR/kitware-archive-latest.asc"
-	sudo GNUPGHOME="$GNUPG_TEMP_DIR" gpg --dearmor -o /etc/apt/keyrings/kitware.gpg "$TEMP_DIR/kitware-archive-latest.asc"
+    # 下载密钥到临时目录
+    curl -fsSL https://apt.kitware.com/keys/kitware-archive-latest.asc -o "$TEMP_DIR/kitware-archive-latest.asc"
+    sudo GNUPGHOME="$GNUPG_TEMP_DIR" gpg --dearmor -o /etc/apt/keyrings/kitware.gpg "$TEMP_DIR/kitware-archive-latest.asc"
 
-	# 更新仓库并安装CMake
-	sudo apt update && sudo apt install -y cmake
+    # 更新仓库并安装CMake
+    sudo apt update && sudo apt install -y cmake
 
-	rm -rf "$TEMP_DIR"
+    rm -rf "$TEMP_DIR"
 
-	# 最终验证
-	if command -v cmake >/dev/null 2>&1; then
-		print_centered_message "${GREEN}cmake 安装完成 ✅ 版本: $(cmake --version | head -n1 | awk '{print $3}')${NC}" "false" "true"
-	else
-		print_centered_message "${RED}cmake 安装失败 ❌${NC}" "false" "true"
-		exit 1
-	fi
+    # 最终验证
+    if command -v cmake >/dev/null 2>&1; then
+        print_centered_message "${GREEN}cmake 安装完成 ✅ 版本: $(cmake --version | head -n1 | awk '{print $3}')${NC}" "false" "true"
+    else
+        print_centered_message "${RED}cmake 安装失败 ❌${NC}" "false" "true"
+        exit 1
+    fi
 fi
 # =================================结束安装 cmake=================================
 
@@ -65,71 +65,71 @@ fi
 
 # 检查 clangd 是否已安装
 if command -v llvm-config --version 2>/dev/null 2>&1; then
-	print_centered_message "${GREEN}llvm 套装 已安装，跳过安装。${NC}" "true" "true"
+    print_centered_message "${GREEN}llvm 套装 已安装，跳过安装。${NC}" "true" "true"
 else
-	print_centered_message "${GREEN}开始安装 llvm 套装... ${NC}" "true" "false"
+    print_centered_message "${GREEN}开始安装 llvm 套装... ${NC}" "true" "false"
 
-	wget -qO- https://apt.llvm.org/llvm.sh | sudo bash -s -- all
+    wget -qO- https://apt.llvm.org/llvm.sh | sudo bash -s -- all
 
-	# 验证安装结果
-	if command -v clangd >/dev/null 2>&1; then
-		print_centered_message "${GREEN}llvm 套装安装完成 ✅ 版本: $(clangd --version | grep -oP '\d+\.\d+\.\d+')${NC}" "false" "true"
-	else
-		print_centered_message "${RED}llvm 套装安装失败 ❌${NC}" "false" "true"
-		exit 1
-	fi
+    # 验证安装结果
+    if command -v clangd >/dev/null 2>&1; then
+        print_centered_message "${GREEN}llvm 套装安装完成 ✅ 版本: $(clangd --version | grep -oP '\d+\.\d+\.\d+')${NC}" "false" "true"
+    else
+        print_centered_message "${RED}llvm 套装安装失败 ❌${NC}" "false" "true"
+        exit 1
+    fi
 fi
 
 # =================================结束安装 llvm 套装=================================
 
 # =================================开始安装 fastfetch=================================
 if command -v fastfetch >/dev/null 2>&1; then
-	print_centered_message "${GREEN} fastfetch 已安装，跳过安装。${NC}" "true" "true"
+    print_centered_message "${GREEN} fastfetch 已安装，跳过安装。${NC}" "true" "true"
 else
-	print_centered_message "${GREEN}开始安装 fastfetch${NC}" "true" "false"
-	[[ -d "~/fastfetch" ]] && sudo rm -rf "~/fastfetch"
-	git clone https://github.com/fastfetch-cli/fastfetch
-	cd fastfetch
-	mkdir build && cd build
-	cmake ..
-	# 编译源码（启用多线程加速）
-	make "-j$(nproc)" && sudo make install
-	# 清理整个项目目录，包括源码和编译目录
-	cd ../.. && sudo rm -rf fastfetch
+    print_centered_message "${GREEN}开始安装 fastfetch${NC}" "true" "false"
+    [[ -d "~/fastfetch" ]] && sudo rm -rf "~/fastfetch"
+    git clone https://github.com/fastfetch-cli/fastfetch
+    cd fastfetch
+    mkdir build && cd build
+    cmake ..
+    # 编译源码（启用多线程加速）
+    make "-j$(nproc)" && sudo make install
+    # 清理整个项目目录，包括源码和编译目录
+    cd ../.. && sudo rm -rf fastfetch
 
-	print_centered_message "${GREEN} fastfetch 安装完成 ✅${NC}" "false" "true"
+    print_centered_message "${GREEN} fastfetch 安装完成 ✅${NC}" "false" "true"
 
 fi
 # =================================结束安装 fastfetch=================================
 
 # =================================开始安装 kitty=================================
 if command -v kitty >/dev/null 2>&1; then
-	print_centered_message "${GREEN} kitty 已安装，跳过安装。${NC}" "true" "true"
+    print_centered_message "${GREEN} kitty 已安装，跳过安装。${NC}" "true" "true"
 else
-	print_centered_message "${GREEN}开始安装 kitty... ${NC}" "true" "false"
-	sudo mkdir -p /opt/kitty && sudo chmod -R a+rw /opt/kitty
-	curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n dest=/opt/kitty
+    print_centered_message "${GREEN}开始安装 kitty... ${NC}" "true" "false"
+    sudo mkdir -p /opt/kitty && sudo chmod -R a+rw /opt/kitty
+    curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n dest=/opt/kitty
 
-	# 安装 kitty
-	sudo ln -snf /opt/kitty/kitty.app/bin/* /usr/local/bin/
+    # 安装 kitty
+    sudo ln -snf /opt/kitty/kitty.app/bin/* /usr/local/bin/
 
-	# 安装 terminfo
-	sudo install -Dm644 /opt/kitty/kitty.app/share/terminfo/x/xterm-kitty /usr/share/terminfo/x/xterm-kitty
+    # 安装 terminfo
+    sudo install -Dm644 /opt/kitty/kitty.app/share/terminfo/x/xterm-kitty /usr/share/terminfo/x/xterm-kitty
 
-	# 安装 man 手册
-	sudo cp -r /opt/kitty/kitty.app/share/man/* /usr/share/man/
-	sudo mandb
+    # 安装 man 手册
+    sudo cp -r /opt/kitty/kitty.app/share/man/* /usr/share/man/
+    sudo mandb
 
-	# 安装 icons 图标
-	sudo cp -r /opt/kitty/kitty.app/share/icons/* /usr/share/icons/
-	sudo update-icon-caches /usr/share/icons/*
+    # 安装 icons 图标
+    sudo cp -r /opt/kitty/kitty.app/share/icons/* /usr/share/icons/
+    sudo update-icon-caches /usr/share/icons/*
 
-	# desktop 文件（系统级）
-	sudo cp /opt/kitty/kitty.app/share/applications/kitty*.desktop /usr/share/applications/
-	sudo sed -i 's|Exec=kitty|Exec=/opt/kitty/kitty.app/bin/kitty|g' /usr/share/applications/kitty*.desktop
-	sudo sed -i 's|Icon=kitty|Icon=/opt/kitty/kitty.app/share/icons/hicolor/256x256/apps/kitty.png|g' /usr/share/applications/kitty*.desktop
+    # desktop 文件（系统级）
+    sudo cp /opt/kitty/kitty.app/share/applications/kitty*.desktop /usr/share/applications/
+    sudo sed -i 's|Exec=kitty|Exec=/opt/kitty/kitty.app/bin/kitty|g' /usr/share/applications/kitty*.desktop
+    sudo sed -i 's|Icon=kitty|Icon=/opt/kitty/kitty.app/share/icons/hicolor/256x256/apps/kitty.png|g' /usr/share/applications/kitty*.desktop
 
-	print_centered_message "${GREEN} kitty 安装完成 ✅${NC}" "false" "true"
+    print_centered_message "${GREEN} kitty 安装完成 ✅${NC}" "false" "true"
 
 fi
 
@@ -137,19 +137,19 @@ fi
 
 # =================================开始安装 fzf=================================
 if command -v fzf >/dev/null 2>&1; then
-	print_centered_message "${GREEN}fzf 已安装，跳过安装。${NC}" "false" "false"
+    print_centered_message "${GREEN}fzf 已安装，跳过安装。${NC}" "false" "false"
 else
-	print_centered_message "${GREEN}开始安装 fzf... ${NC}" "false" "false"
-	[[ -d "/tmp/.fzf" ]] && sudo rm -rf "/tmp/.fzf"
-	[[ -f "/usr/local/bin/fzf" ]] && sudo rm -rf "/usr/local/bin/fzf"
+    print_centered_message "${GREEN}开始安装 fzf... ${NC}" "false" "false"
+    [[ -d "/tmp/.fzf" ]] && sudo rm -rf "/tmp/.fzf"
+    [[ -f "/usr/local/bin/fzf" ]] && sudo rm -rf "/usr/local/bin/fzf"
 
-	git clone --depth=1 https://github.com/junegunn/fzf.git "/tmp/.fzf"
-	yes | /tmp/.fzf/install --no-update-rc
-	sudo cp "/tmp/.fzf/bin/fzf" /usr/local/bin/fzf
+    git clone --depth=1 https://github.com/junegunn/fzf.git "/tmp/.fzf"
+    yes | /tmp/.fzf/install --no-update-rc
+    sudo cp "/tmp/.fzf/bin/fzf" /usr/local/bin/fzf
 
-	# 清理安装目录
-	sudo rm -rf "/tmp/.fzf"
-	print_centered_message "${GREEN} fzf 安装完成 ✅${NC}" "false" "false"
+    # 清理安装目录
+    sudo rm -rf "/tmp/.fzf"
+    print_centered_message "${GREEN} fzf 安装完成 ✅${NC}" "false" "false"
 fi
 # =================================结束安装 fzf=================================
 
@@ -157,54 +157,54 @@ export CARGO_HOME=/opt/rust/cargo
 export RUSTUP_HOME=/opt/rust/rustup
 # =================================开始安装 Rust 工具=================================
 if command -v rustc >/dev/null 2>&1; then
-	print_centered_message "${GREEN}rustc 已安装，跳过安装。${NC}" "true" "true"
+    print_centered_message "${GREEN}rustc 已安装，跳过安装。${NC}" "true" "true"
 else
-	print_centered_message "${GREEN}开始安装 rustc...${NC}" "true" "false"
+    print_centered_message "${GREEN}开始安装 rustc...${NC}" "true" "false"
 
-	# 1. 创建系统级安装目录并设置权限
-	sudo mkdir -p /opt/rust/{cargo,rustup}
-	sudo chmod -R a+rw /opt/rust/
-	export CARGO_HOME=/opt/rust/cargo
-	export RUSTUP_HOME=/opt/rust/rustup
+    # 1. 创建系统级安装目录并设置权限
+    sudo mkdir -p /opt/rust/{cargo,rustup}
+    sudo chmod -R a+rw /opt/rust/
+    export CARGO_HOME=/opt/rust/cargo
+    export RUSTUP_HOME=/opt/rust/rustup
 
-	# 2. 安装 rustup（工具链管理器）、rustc（Rust 编译器）、cargo（包管理与构建工具）在 CARGO_HOME 和 RUSTUP_HOME 中。
-	curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
+    # 2. 安装 rustup（工具链管理器）、rustc（Rust 编译器）、cargo（包管理与构建工具）在 CARGO_HOME 和 RUSTUP_HOME 中。
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
 
-	# 3. 链接 cargo、rustc、rustup cargo-binstall 到系统的 PATH 中
-	sudo ln -snf /opt/rust/cargo/bin/* /usr/local/bin/
-	# 4. -E 保持了环境变量
-	sudo -E rustup update
-	# 5. 初始化 rustup 环境
-	rustup default stable
-	# .rustup 目录安装在 RUSTUP_HOME；cargo、rustc、rustup、eza、rg、fd 都安装在 CARGO_HOME（但是它们符号链接在 /usr/local/bin/）
-	print_centered_message "${GREEN} rustc 安装完成 ✅${NC}" "false" "true"
+    # 3. 链接 cargo、rustc、rustup cargo-binstall 到系统的 PATH 中
+    sudo ln -snf /opt/rust/cargo/bin/* /usr/local/bin/
+    # 4. -E 保持了环境变量
+    sudo -E rustup update
+    # 5. 初始化 rustup 环境
+    rustup default stable
+    # .rustup 目录安装在 RUSTUP_HOME；cargo、rustc、rustup、eza、rg、fd 都安装在 CARGO_HOME（但是它们符号链接在 /usr/local/bin/）
+    print_centered_message "${GREEN} rustc 安装完成 ✅${NC}" "false" "true"
 fi
 # =================================结束安装 Rust 工具=================================
 
 # =================================开始安装 cargo-binstall=================================
 if command -v cargo-binstall >/dev/null 2>&1; then
-	print_centered_message "${GREEN}cargo-binstall 已安装，跳过安装。${NC}" "true" "true"
+    print_centered_message "${GREEN}cargo-binstall 已安装，跳过安装。${NC}" "true" "true"
 else
-	print_centered_message "${GREEN}开始安装 cargo-binstall... ${NC}" "true" "false"
-	# 安装 cargo-binstall
-	curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
-	sudo ln -snf /opt/rust/cargo/bin/cargo-binstall /usr/local/bin/
-	# 利用 cargo-binstall 自举，自己安装自己，这样 cargo 包管理工具就可以管理 cargo-binstall
-	cargo-binstall --force cargo-binstall --no-confirm
-	print_centered_message "${GREEN} cargo-binstall 安装完成 ✅${NC}" "false" "false"
+    print_centered_message "${GREEN}开始安装 cargo-binstall... ${NC}" "true" "false"
+    # 安装 cargo-binstall
+    curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+    sudo ln -snf /opt/rust/cargo/bin/cargo-binstall /usr/local/bin/
+    # 利用 cargo-binstall 自举，自己安装自己，这样 cargo 包管理工具就可以管理 cargo-binstall
+    cargo-binstall --force cargo-binstall --no-confirm
+    print_centered_message "${GREEN} cargo-binstall 安装完成 ✅${NC}" "false" "false"
 fi
 # =================================结束安装 cargo-binstall=================================
 
 # =================================开始安装 cargo-update=================================
 if command -v cargo-install-update >/dev/null 2>&1; then
-	print_centered_message "${GREEN}cargo-update 已安装，跳过安装。${NC}" "true" "true"
+    print_centered_message "${GREEN}cargo-update 已安装，跳过安装。${NC}" "true" "true"
 else
-	print_centered_message "${GREEN}开始安装 cargo-update... ${NC}" "true" "false"
+    print_centered_message "${GREEN}开始安装 cargo-update... ${NC}" "true" "false"
 
-	# 安装 cargo-update
-	cargo-binstall cargo-update --no-confirm
-	sudo ln -snf /opt/rust/cargo/bin/cargo-install-update /usr/local/bin/
-	print_centered_message "${GREEN} cargo-update 安装完成 ✅${NC}" "false" "false"
+    # 安装 cargo-update
+    cargo-binstall cargo-update --no-confirm
+    sudo ln -snf /opt/rust/cargo/bin/cargo-install-update /usr/local/bin/
+    print_centered_message "${GREEN} cargo-update 安装完成 ✅${NC}" "false" "false"
 fi
 # =================================结束安装 cargo-update=================================
 
@@ -219,26 +219,26 @@ fi
 
 # =================================开始安装 eza=================================
 if command -v eza >/dev/null 2>&1; then
-	print_centered_message "${GREEN}eza 已安装，跳过安装。${NC}" "true" "true"
+    print_centered_message "${GREEN}eza 已安装，跳过安装。${NC}" "true" "true"
 else
-	print_centered_message "${GREEN}开始安装 eza... ${NC}" "true" "false"
+    print_centered_message "${GREEN}开始安装 eza... ${NC}" "true" "false"
 
-	# 安装 eza
-	cargo-binstall -y eza
-	sudo ln -snf /opt/rust/cargo/bin/eza /usr/local/bin/
-	print_centered_message "${GREEN} eza 安装完成 ✅${NC}" "false" "false"
+    # 安装 eza
+    cargo-binstall -y eza
+    sudo ln -snf /opt/rust/cargo/bin/eza /usr/local/bin/
+    print_centered_message "${GREEN} eza 安装完成 ✅${NC}" "false" "false"
 fi
 # =================================结束安装 eza=================================
 
 # =================================开始安装 fd=================================
 
 if command -v fd >/dev/null 2>&1; then
-	print_centered_message "${GREEN}fd 已安装，跳过安装。${NC}" "true" "true"
+    print_centered_message "${GREEN}fd 已安装，跳过安装。${NC}" "true" "true"
 else
-	print_centered_message "${GREEN}开始安装 fd... ${NC}" "true" "false"
-	cargo-binstall -y fd-find
-	sudo ln -snf /opt/rust/cargo/bin/fd /usr/local/bin/
-	print_centered_message "${GREEN} fd 安装完成 ✅${NC}" "false" "true"
+    print_centered_message "${GREEN}开始安装 fd... ${NC}" "true" "false"
+    cargo-binstall -y fd-find
+    sudo ln -snf /opt/rust/cargo/bin/fd /usr/local/bin/
+    print_centered_message "${GREEN} fd 安装完成 ✅${NC}" "false" "true"
 fi
 
 # =================================结束安装 fd=================================
@@ -246,12 +246,12 @@ fi
 # =================================开始安装 rg=================================
 
 if command -v rg >/dev/null 2>&1; then
-	print_centered_message "${GREEN}rg 已安装，跳过安装。${NC}" "false" "false"
+    print_centered_message "${GREEN}rg 已安装，跳过安装。${NC}" "false" "false"
 else
-	print_centered_message "${GREEN}开始安装 rg... ${NC}" "false" "false"
-	cargo-binstall -y ripgrep
-	sudo ln -snf /opt/rust/cargo/bin/rg /usr/local/bin/
-	print_centered_message "${GREEN} rg 安装完成 ✅${NC}" "false" "false"
+    print_centered_message "${GREEN}开始安装 rg... ${NC}" "false" "false"
+    cargo-binstall -y ripgrep
+    sudo ln -snf /opt/rust/cargo/bin/rg /usr/local/bin/
+    print_centered_message "${GREEN} rg 安装完成 ✅${NC}" "false" "false"
 fi
 
 # =================================结束安装 rg=================================
@@ -259,24 +259,76 @@ fi
 # =================================开始安装 bat=================================
 
 if command -v bat >/dev/null 2>&1; then
-	print_centered_message "${GREEN}bat 已安装，跳过安装。${NC}" "true" "true"
+    print_centered_message "${GREEN}bat 已安装，跳过安装。${NC}" "true" "true"
 else
-	print_centered_message "${GREEN}开始安装 bat... ${NC}" "true" "false"
-	cargo-binstall -y bat
-	sudo ln -snf /opt/rust/cargo/bin/bat /usr/local/bin/
-	print_centered_message "${GREEN} bat 安装完成 ✅${NC}" "false" "true"
+    print_centered_message "${GREEN}开始安装 bat... ${NC}" "true" "false"
+    cargo-binstall -y bat
+    sudo ln -snf /opt/rust/cargo/bin/bat /usr/local/bin/
+    print_centered_message "${GREEN} bat 安装完成 ✅${NC}" "false" "true"
 fi
 # =================================结束安装 bat=================================
 
 # =================================开始安装 lua=================================
 
 if command -v lua >/dev/null 2>&1; then
-	print_centered_message "${GREEN}lua 已安装，跳过安装。${NC}" "false" "true"
+    print_centered_message "${GREEN}lua 已安装，跳过安装。${NC}" "false" "true"
 else
-	print_centered_message "${GREEN}开始安装 lua... ${NC}" "false" "false"
-	latest=$(apt list lua* 2>/dev/null | grep -oP 'lua\d+\.\d+' | sort -V | tail -n 1)
-	sudo apt install -y ${latest} lib${latest}-dev
-	print_centered_message "${GREEN} lua 安装完成 ✅${NC}" "false" "true"
+    print_centered_message "${GREEN}开始安装 lua... ${NC}" "false" "false"
+    latest=$(apt list lua* 2>/dev/null | grep -oP 'lua\d+\.\d+' | sort -V | tail -n 1)
+    sudo apt install -y ${latest} lib${latest}-dev
+    print_centered_message "${GREEN} lua 安装完成 ✅${NC}" "false" "true"
 
 fi
 # =================================结束安装 lua=================================
+
+# =================================开始安装 shfmt=================================
+
+if command -v shfmt >/dev/null 2>&1; then
+    print_centered_message "${GREEN}shfmt 已安装，跳过安装。${NC}" "false" "true"
+else
+    print_centered_message "${GREEN}开始安装 shfmt... ${NC}" "false" "false"
+
+    VERSION=$(curl -sIL -o /dev/null -w '%{url_effective}\n' https://github.com/mvdan/sh/releases/latest | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+')
+
+    # 检测操作系统
+    OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+    case $OS in
+    linux)
+        OS="linux"
+        ;;
+    darwin)
+        OS="darwin"
+        ;;
+    *)
+        echo "不支持的操作系统: $OS"
+        exit 1
+        ;;
+    esac
+
+    # 检测架构
+    ARCH=$(uname -m)
+    case $ARCH in
+    x86_64 | amd64)
+        ARCH="amd64"
+        ;;
+    arm64 | aarch64)
+        ARCH="arm64"
+        ;;
+    *)
+        echo "不支持的架构: $ARCH"
+        exit 1
+        ;;
+    esac
+
+    # 构建下载URL
+    FILENAME="shfmt_${VERSION}_${OS}_${ARCH}"
+    DOWNLOAD_URL="https://github.com/mvdan/sh/releases/download/${VERSION}/${FILENAME}"
+
+    curl -L -o "$FILENAME" "$DOWNLOAD_URL"
+    chmod +x "$FILENAME"
+    sudo mv "$FILENAME" /usr/local/bin/
+
+    print_centered_message "${GREEN} shfmt 安装完成 ✅${NC}" "false" "true"
+
+fi
+# =================================结束安装 shfmt=================================

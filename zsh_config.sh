@@ -140,6 +140,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
 else
 	echo -e "${MAGENTA}未知的操作系统类型${NC}"
 fi
+
 # ================================= 开始安装 dotfiles =================================
 
 # Ensure XDG base directories exist
@@ -158,18 +159,6 @@ for config in "${configs[@]}"; do
 	echo -e "${PURPLE}📋 Moving new ${config} to ${HOME}/${config} ${NC}"
 	cp -r "${TMP_DIR}/${config}" "${HOME}/${config}"
 done
-
-
-echo -e "${GREEN}🧹 Old configuration files removed and new ones copied.${NC}"
-echo -e "${GREEN}✔️ New configuration files copied.${NC}"
-
-# 清理临时目录
-echo -e "${YELLOW}🧼 Cleaning up temporary files...${NC}"
-sudo rm -rf "$TMP_DIR"
-sudo rm -rf /tmp/Fonts/
-
-echo -e "${GREEN}✔️ Temporary files removed.${NC}"
-echo -e "${GREEN}✅ Script completed successfully. Files have been successfully copied to the user's home directory.${NC}"
 
 # 针对 macOS 的配置,
 # 在文件中添加以下代码
@@ -194,6 +183,19 @@ if [[ "$(uname)" == "Darwin" ]]; then
 	echo -e "${PURPLE}📋 Copying new karabiner.json to "${HOME}/.config/karabiner/karabiner.json"...${NC}"
 	cp -r "${TMP_DIR}/.config/karabiner/karabiner.json" "${HOME}/.config/karabiner/karabiner.json"
 fi
+
+
+echo -e "${GREEN}🧹 Old configuration files removed and new ones copied.${NC}"
+echo -e "${GREEN}✔️ New configuration files copied.${NC}"
+
+# 清理临时目录
+echo -e "${YELLOW}🧼 Cleaning up temporary files...${NC}"
+sudo rm -rf "$TMP_DIR"
+sudo rm -rf /tmp/Fonts/
+
+echo -e "${GREEN}✔️ Temporary files removed.${NC}"
+echo -e "${GREEN}✅ Script completed successfully. Files have been successfully copied to the user's home directory.${NC}"
+
 
 
 # 安装 zsh 插件

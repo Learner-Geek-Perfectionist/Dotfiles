@@ -63,13 +63,37 @@ fi
 
 # =================================开始安装 llvm 套装=================================
 
-# 检查 clangd 是否已安装
-if command -v llvm-config --version 2>/dev/null 2>&1; then
+# 检查 llvm 套装 是否已安装
+if command -v llvm-config >/dev/null 2>&1; then
     print_centered_message "${GREEN}llvm 套装 已安装，跳过安装。${NC}" "true" "true"
 else
     print_centered_message "${GREEN}开始安装 llvm 套装... ${NC}" "true" "false"
 
-    wget -qO- https://apt.llvm.org/llvm.sh | sudo bash -s -- all
+    # 获取当前Ubuntu版本代号
+    CURRENT_VERSION=$(lsb_release -cs)
+
+    # 创建临时目录及gpg子目录
+    TEMP_DIR=$(mktemp -d)
+    GNUPG_TEMP_DIR="$TEMP_DIR/gnupg"
+    mkdir -p "$GNUPG_TEMP_DIR"
+    chmod 700 "$GNUPG_TEMP_DIR" # gpg要求严格的权限设置
+
+    # 1. 清理可能存在的旧密钥（避免冲突）
+    [[ -f /etc/apt/keyrings/llvm.gpg ]] && sudo rm -f /etc/apt/keyrings/llvm.gpg
+
+    # 2. 创建密钥存储目录（老版本 Ubuntu 可能没有，手动创建）
+    sudo mkdir -p /etc/apt/keyrings
+
+    # 3. 下载 LLVM 密钥并存储为独立文件，使用临时gpg目录
+    wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo GNUPGHOME="$GNUPG_TEMP_DIR" gpg --dearmor -o /etc/apt/keyrings/llvm.gpg
+    # 4. 添加 LLVM 仓库，使用动态检测的版本代号
+    echo "deb [signed-by=/etc/apt/keyrings/llvm.gpg] http://apt.llvm.org/${CURRENT_VERSION}/ llvm-toolchain-${CURRENT_VERSION} main" | sudo tee /etc/apt/sources.list.d/llvm.list >/dev/null
+
+    # 5. 更新并安装 llvm 套装工具
+    sudo apt update && sudo apt install -y clang lldb lld clangd clang-tidy clang-format clang-tools llvm-dev llvm-tools libomp-dev libc++-dev libc++abi-dev libclang-common-dev libclang-dev libclang-cpp-dev liblldb-dev libunwind-dev libclang-rt-dev libpolly-dev
+
+    # 清理临时目录
+    rm -rf "$TEMP_DIR"
 
     # 验证安装结果
     if command -v clangd >/dev/null 2>&1; then
@@ -79,8 +103,6 @@ else
         exit 1
     fi
 fi
-
-# =================================结束安装 llvm 套装=================================
 
 # =================================开始安装 fastfetch=================================
 if command -v fastfetch >/dev/null 2>&1; then

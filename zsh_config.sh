@@ -30,8 +30,6 @@ elif [[ -f /etc/fedora-release ]]; then
 		-i.bak \
 		/etc/yum.repos.d/fedora.repo \
 		/etc/yum.repos.d/fedora-updates.repo
-else
-	echo "不支持的操作系统。"
 fi
 
 # 定义打印居中消息的函数

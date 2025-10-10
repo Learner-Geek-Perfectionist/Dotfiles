@@ -171,7 +171,7 @@ sudo rm -rf /tmp/Fonts/
 echo -e "${GREEN}✔️ Temporary files removed.${NC}"
 echo -e "${GREEN}✅ Script completed successfully. Files have been successfully copied to the user's home directory.${NC}"
 
-# 针对 macOS 的配置
+# 针对 macOS 的配置,
 # 在文件中添加以下代码
 [[ "$(uname)" == "Darwin" ]] && cp -r "$TMP_DIR/sh-script/" "$HOME/sh-script/"
 

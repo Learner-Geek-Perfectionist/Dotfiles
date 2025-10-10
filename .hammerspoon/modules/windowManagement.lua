@@ -35,32 +35,6 @@ function moveWindowToPosition(position)
     end
 end
 
--- 创建一个函数来移动到 左上、右上、左下、右下。
--- 目前未使用
-function moveWindowToCorner(corner)
-    -- 获取当前活动窗口
-    local win = window.focusedWindow()
-    -- 确保窗口存在
-    if not win then
-        return
-    end
-
-    -- 获取屏幕及其frame
-    local screen = win:screen()
-    local max = screen:frame()
-
-    -- 根据corner参数移动窗口
-    if corner == "topLeft" then
-        win:setFrame({ x = max.x, y = max.y, w = max.w / 2, h = max.h / 2 })
-    elseif corner == "topRight" then
-        win:setFrame({ x = max.x + max.w / 2, y = max.y, w = max.w / 2, h = max.h / 2 })
-    elseif corner == "bottomLeft" then
-        win:setFrame({ x = max.x, y = max.y + max.h / 2, w = max.w / 2, h = max.h / 2 })
-    elseif corner == "bottomRight" then
-        win:setFrame({ x = max.x + max.w / 2, y = max.y + max.h / 2, w = max.w / 2, h = max.h / 2 })
-    end
-end
-
 
 -- 创建一个函数来切换 App 的窗口
 function switchFocusedAppWindow()

@@ -101,6 +101,6 @@ alias g1='git clone --depth=1'
 
 alias rm='sudo rm -rf'
 
-alias mkdir='sudo mkdir -p'
+alias mkdir='mkdir -p'
 
 alias show='kitty +kitten icat'

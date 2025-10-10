@@ -17,7 +17,7 @@ brew_formulas=(
 	c-ares htop lua neovim tree-sitter bash tcpdump
 	ca-certificates icu4c luajit node unibilium
 	cmake libnghttp2 luv openssl@3 vim perl
-	cmake-docs libsodium lz4 pcre2 xz llvm
+	cmake-docs libsodium lz4 pcre2 xz llvm shfmt
 	fastfetch libuv lzip z3 tree autoconf chafa
 	fd libvterm make readline zstd eza less boost
 	fzf libyaml mpdecimal ripgrep go coreutils rustup rust cargo-update cargo-binstall
@@ -70,7 +70,7 @@ packages_ubuntu=(
 	gtk-update-icon-cache
 	libgtest-dev
 	libboost-all-dev
-	bc
+	shfmt
 )
 
 #fedora
@@ -126,4 +126,5 @@ packages_fedora=(
 	gtest-devel
 	clang-devel
 	boost-devel
+	shfmt
 )

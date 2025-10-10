@@ -7,6 +7,19 @@
 *.o
 *.so
 .vscode/
+/.vs/
+/.settings
+/.project
+/.cproject
+/doc
+/daemon/CMakeFiles
+/examples/CMakeFiles
+/implementation/configuration/include/internal.hpp
+/test/unit_tests/security_policy_manager_impl_tests/policy_manager_impl_unit_test_macro.hpp
+/tools/CMakeFiles
+/Testing
+/logs
+!build_qnx/*
 
 # Packages #
 ############
@@ -76,7 +89,9 @@ obj/
 ###########################
 temp/
 tmp/
-build/
+/build*/*
+/CMakeFiles
+/examples/hello_world/build
 dist/
 credentials.json
 config.json

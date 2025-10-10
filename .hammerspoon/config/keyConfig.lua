@@ -15,6 +15,8 @@ keyConfig = {
     { 'a', 'com.google.android.studio' }, -- "A" for "Android Studio"
     { 'p', 'com.jetbrains.pycharm' }, -- "P" for "Pycharm"
     { 'u', 'com.mac.utility.clipboard.paste' }, -- "U" for "upaste"
+    { 'o', 'dev.kdrag0n.MacVirt' }, -- "O" for "orbstack"
+
 }
 -- 区分大小写
 HyperKey = { "ctrl", "alt", "cmd", "shift" }

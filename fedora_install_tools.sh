@@ -1,3 +1,6 @@
+export CARGO_HOME=/opt/rust/cargo
+export RUSTUP_HOME=/opt/rust/rustup
+
 # =================================开始安装 Rust 工具=================================
 if command -v rustc >/dev/null 2>&1; then
 	print_centered_message "${GREEN}rustc 已安装，跳过安装。${NC}" "true" "true"
@@ -51,6 +54,19 @@ else
 fi
 # =================================结束安装 cargo-update=================================
 
+
+# =================================开始安装 eza=================================
+if command -v eza >/dev/null 2>&1; then
+	print_centered_message "${GREEN}eza 已安装，跳过安装。${NC}" "true" "true"
+else
+	print_centered_message "${GREEN}开始安装 eza... ${NC}" "true" "false"
+
+	# 安装 eza
+	cargo-binstall -y eza
+	sudo ln -snf /opt/rust/cargo/bin/eza /usr/local/bin/
+	print_centered_message "${GREEN} eza 安装完成 ✅${NC}" "false" "false"
+fi
+# =================================结束安装 eza=================================
 # 更新 rustup 自身
 # rustup self update
 

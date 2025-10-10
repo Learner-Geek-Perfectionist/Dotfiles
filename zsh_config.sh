@@ -16,7 +16,6 @@ LIGHT_BLUE='\033[1;34m'
 DARK_RED='\033[1;31m'
 NC='\033[0m' # 没有颜色
 
-#!/bin/bash
 
 # 判断操作系统类型
 if [[ -f /etc/lsb-release ]]; then

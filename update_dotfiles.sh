@@ -23,6 +23,13 @@ sudo rm -rf "$TMP_DIR"
 sudo rm -rf /tmp/Fonts/
 echo -e "${GREEN}🚀 Starting script...${NC}"
 
+# 先安装 git，再 clone
+echo -e "${YELLOW}📥 Cloning repository into $TMP_DIR...${NC}"
+git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR" || {
+	echo "Failed to clone repository"
+	exit 1
+}
+
 # ================================= 开始安装 dotfiles =================================
 
 # Ensure XDG base directories exist
@@ -34,12 +41,12 @@ configs=(".zshenv" ".zprofile" ".zshrc" ".config/kitty" ".config/zsh")
 # 删除旧配置和复制新配置
 echo -e "${YELLOW}🔍 Checking and removing old configuration files if they exist...${NC}"
 for config in "${configs[@]}"; do
-    if [[ -f "${HOME}/${config}" ]] || [[ -d "${HOME}/${config}" ]]; then
-        echo -e "${RED}🗑️ Removing old ${HOME}/${config} ${NC}"
-        sudo rm -rf "${HOME}/$config"
-    fi
-    echo -e "${PURPLE}📋 Moving new ${config} to ${HOME}/${config} ${NC}"
-    cp -r "${TMP_DIR}/${config}" "${HOME}/${config}"
+	if [[ -f "${HOME}/${config}" ]] || [[ -d "${HOME}/${config}" ]]; then
+		echo -e "${RED}🗑️ Removing old ${HOME}/${config} ${NC}"
+		sudo rm -rf "${HOME}/$config"
+	fi
+	echo -e "${PURPLE}📋 Moving new ${config} to ${HOME}/${config} ${NC}"
+	cp -r "${TMP_DIR}/${config}" "${HOME}/${config}"
 done
 
 # 针对 macOS 的配置,
@@ -48,22 +55,22 @@ done
 
 # 添加 .hammerspoon 文件夹
 if [[ "$(uname)" == "Darwin" ]]; then
-    if [[ -d "${HOME}/.hammerspoon" ]]; then
-        echo -e "${RED}🗑️ Removing old .hammerspoon...${NC}"
-        sudo rm -rf "${HOME}/.hammerspoon"
-    fi
-    echo -e "${PURPLE}📋 Copying new .hammerspoon to "${HOME}/.hammerspoon"...${NC}"
-    cp -r "${TMP_DIR}/.hammerspoon" "${HOME}/.hammerspoon"
+	if [[ -d "${HOME}/.hammerspoon" ]]; then
+		echo -e "${RED}🗑️ Removing old .hammerspoon...${NC}"
+		sudo rm -rf "${HOME}/.hammerspoon"
+	fi
+	echo -e "${PURPLE}📋 Copying new .hammerspoon to "${HOME}/.hammerspoon"...${NC}"
+	cp -r "${TMP_DIR}/.hammerspoon" "${HOME}/.hammerspoon"
 fi
 
 # 添加 karabiner 的配置文件：karabiner.json
 if [[ "$(uname)" == "Darwin" ]]; then
-    if [[ -f "${HOME}/.config/karabiner/karabiner.json" ]]; then
-        echo -e "${RED}🗑️ Removing old karabiner.json....${NC}"
-        sudo rm -rf "${HOME}/.config/karabiner/karabiner.json"
-    fi
-    echo -e "${PURPLE}📋 Copying new karabiner.json to "${HOME}/.config/karabiner/karabiner.json"...${NC}"
-    cp -r "${TMP_DIR}/.config/karabiner/karabiner.json" "${HOME}/.config/karabiner/karabiner.json"
+	if [[ -f "${HOME}/.config/karabiner/karabiner.json" ]]; then
+		echo -e "${RED}🗑️ Removing old karabiner.json....${NC}"
+		sudo rm -rf "${HOME}/.config/karabiner/karabiner.json"
+	fi
+	echo -e "${PURPLE}📋 Copying new karabiner.json to "${HOME}/.config/karabiner/karabiner.json"...${NC}"
+	cp -r "${TMP_DIR}/.config/karabiner/karabiner.json" "${HOME}/.config/karabiner/karabiner.json"
 fi
 
 echo -e "${GREEN}🧹 Old configuration files removed and new ones copied.${NC}"

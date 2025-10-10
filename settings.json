@@ -1,5 +1,5 @@
 {
-    // C/C++ 配置
+    // ======================= C/C++ 配置 =======================
     // 让 clang-format 负责 C/C++ 的格式化
     "[c]": {
         "editor.defaultFormatter": "xaver.clang-format"
@@ -7,9 +7,12 @@
     "[cpp]": {
         "editor.defaultFormatter": "xaver.clang-format"
     },
-    "clangd.path": "/usr/local/bin/clangd", // 换成自己的路径
-    "clang-format.executable": "/usr/local/bin/clang-format",
+    // clangd/clang-format 路径
+    "clangd.path": "clangd",
+    "clang-format.executable": "clang-format",
+    "shfmt.executablePath": "shfmt",
     "clang-format.style": "file",
+    // clangd 参数
     "clangd.arguments": [
         "--background-index", // 后台建立索引
         "--all-scopes-completion", // 所有作用域的补全
@@ -17,24 +20,54 @@
         "--j=32", // 并行任务数量
         "--clang-tidy", // 启用clang-tidy检查
         "--clang-tidy-checks=performance-*,bugprone-*", // 启用的检查项
-        "--compile-commands-dir=/home/ouyangzhaoxin/vsomeip/build", // 编译命令目录
+        "--compile-commands-dir=build", // 编译命令目录
         "--function-arg-placeholders", // 函数参数占位符
         "--query-driver=/usr/bin/clang-*,/usr/bin/g++*,/usr/bin/gcc*", // 查询的编译器路径
         "--header-insertion=iwyu", // 按iwyu规则插入头文件
         "--header-insertion-decorators", // 头文件插入装饰
         "--pch-storage=memory", // PCH存储方式
-        "--resource-dir=/usr/lib/clang/18.1.8", //指定资源文件（如标准库头文件、编译器配置文件、内置头文件等）的目录
+        "--resource-dir=/usr/lib/clang/18.1.8" // 指定资源文件（如标准库头文件、编译器配置文件、内置头文件等）的目录
     ],
     "clangd.checkUpdates": true, // 检查clangd更新
-    // 编辑器设置
-    "editor.inlayHints.enabled": "on", // 启用内嵌提示
-    "workbench.editor.enablePreview": false, // 禁用预览模式
+    // ======================= 编辑器设置 =======================
+    "editor.insertSpaces": true, // 强制用空格缩进
+    "editor.tabSize": 4, // 宽度为 4
+    "editor.detectIndentation": false, // 不随文件内容改变
+    "editor.useTabStops": false, // 光标在缩进区逐字符移动
     "editor.formatOnSave": true, // 保存时自动格式化
-    // 终端设置
+    "editor.inlayHints.enabled": "on", // 启用内嵌提示
+    "editor.renderControlCharacters": true, // 显示控制字符
+    "editor.guides.indentation": true, // 显示缩进引导线
+    "editor.unicodeHighlight.nonBasicASCII": false,
+    "editor.unicodeHighlight.allowedLocales": {
+        "zh-hans": true
+    },
+    "workbench.editor.enablePreview": false, // 禁用预览模式
+    // ======================= 终端设置 =======================
     "terminal.integrated.cursorStyle": "line", // 终端光标样式
     "terminal.integrated.cursorWidth": 1, // 光标宽度（1为最细）
     // 颜色自定义
     "workbench.colorCustomizations": {
         "terminalCursor.foreground": "#4DEEEA" // 终端光标颜色
+    },
+    // 本机（macOS）默认用 zsh
+    "terminal.integrated.defaultProfile.osx": "zsh",
+    // 远端（Linux）默认用“智能回退”，优先 zsh，缺失则 bash
+    "terminal.integrated.defaultProfile.linux": "smart-shell",
+    "terminal.integrated.profiles.linux": {
+        "smart-shell": {
+            "path": "/bin/bash",
+            "args": [
+                "-l",
+                "-c",
+                "if command -v zsh >/dev/null 2>&1; then exec zsh -l; else exec bash -l; fi"
+            ]
+        },
+        "zsh": {
+            "path": "/usr/bin/zsh", // 不行就试试 "/bin/zsh"
+            "args": [
+                "-l"
+            ]
+        }
     }
 }

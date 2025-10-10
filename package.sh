@@ -50,7 +50,6 @@ packages_ubuntu=(
 	python3
 	iproute2
 	wget
-	pkg-config
 	graphviz
 	sudo
 	tcpdump
@@ -124,7 +123,7 @@ packages_fedora=(
 	fzf
 	fastfetch
 	gtest-devel
-	clang-devel
 	boost-devel
 	shfmt
+	llvm
 )

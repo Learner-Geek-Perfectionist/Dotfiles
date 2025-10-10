@@ -95,7 +95,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
 	# 根据操作系统安装......
 	if [[ $os_type == "ubuntu" ]]; then
 		sudo apt update
-		tools=("zsh" "git" "curl" "make" "g++" "gcc" "openssh-server" "man-db" "wget" "gnupg" "pkg-config" "xz-utils" "gtk-update-icon-cache" "bc" "graphviz")
+		tools=("zsh" "git" "curl" "make" "g++" "gcc" "openssh-server" "man-db" "wget" "llvm" "gnupg" "pkg-config" "xz-utils" "gtk-update-icon-cache" "bc" "graphviz")
 		# 遍历工具列表，检查是否已安装
 		for tool in "${tools[@]}"; do
 			if ! command -v "$tool" >/dev/null 2>&1; then
@@ -112,7 +112,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
 
 	elif [[ $os_type == "fedora" ]]; then
 		sudo dnf -y update
-		tools=("zsh" "git" "curl" "make" "g++" "gcc" "openssh-server" "man-db" "wget" "cmake" "clang-devel" "fastfetch" "lua" "bat" "ripgrep" "fd-find" "eza" "fzf" "rustup" "graphviz")
+		tools=("zsh" "git" "curl" "make" "g++" "gcc" "openssh-server" "man-db" "wget" "llvm" "cmake" "clang-devel" "fastfetch" "lua" "bat" "ripgrep" "fd-find" "eza" "fzf" "rustup" "graphviz")
 		# 遍历工具列表，检查是否已安装
 		for tool in "${tools[@]}"; do
 			if ! command -v "$tool" >/dev/null 2>&1; then

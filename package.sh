@@ -19,7 +19,7 @@ brew_formulas=(
 	cmake libnghttp2 luv openssl@3 vim perl
 	cmake-docs libsodium lz4 pcre2 xz llvm
 	fastfetch libuv lzip z3 tree autoconf chafa
-	fd libvterm make readline zstd eza less
+	fd libvterm make readline zstd eza less boost
 	fzf libyaml mpdecimal ripgrep go coreutils rustup rust cargo-update cargo-binstall
 	gcc ninja wget mas pkgconf jq doxygen googletest
 )

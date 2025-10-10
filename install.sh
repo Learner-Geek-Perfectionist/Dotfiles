@@ -26,7 +26,7 @@ if [[ $(uname -s) == "Linux" ]]; then
       
     # 安装 git、sudo
     if grep -q 'ID=ubuntu' /etc/os-release; then
-        sudo apt update -y && sudo apt install -y git software-properties-common bc unzip locales lsb-release
+        sudo apt update -y && sudo apt install -y git software-properties-common bc unzip locales lsb-release wget software-properties-common gnupg
     elif grep -q 'ID=fedora' /etc/os-release; then
         sudo dnf update -y && sudo dnf install -y git bc unzip glibc glibc-common glibc-langpack-zh langpacks-zh_CN glibc-locale-source
     fi

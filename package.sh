@@ -69,7 +69,6 @@ packages_ubuntu=(
     gtk-update-icon-cache
     libgtest-dev
     libboost-all-dev
-    shfmt
 )
 
 #fedora
@@ -134,5 +133,4 @@ packages_fedora=(
     libomp
     llvm-polly
     flang
-
 )

@@ -119,7 +119,6 @@ packages_fedora=(
     bat
     ripgrep
     fd-find
-    eza
     fzf
     fastfetch
     gtest-devel

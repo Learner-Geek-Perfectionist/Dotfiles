@@ -159,6 +159,19 @@ for config in "${configs[@]}"; do
 	cp -r "${TMP_DIR}/${config}" "${HOME}/${config}"
 done
 
+
+echo -e "${GREEN}🧹 Old configuration files removed and new ones copied.${NC}"
+echo -e "${GREEN}✔️ New configuration files copied.${NC}"
+
+# 清理临时目录
+echo -e "${YELLOW}🧼 Cleaning up temporary files...${NC}"
+sudo rm -rf "$TMP_DIR"
+sudo rm -rf /tmp/Fonts/
+
+echo -e "${GREEN}✔️ Temporary files removed.${NC}"
+echo -e "${GREEN}✅ Script completed successfully. Files have been successfully copied to the user's home directory.${NC}"
+
+# 针对 macOS 的配置
 # 在文件中添加以下代码
 [[ "$(uname)" == "Darwin" ]] && cp -r "$TMP_DIR/sh-script/" "$HOME/sh-script/"
 
@@ -182,16 +195,6 @@ if [[ "$(uname)" == "Darwin" ]]; then
 	cp -r "${TMP_DIR}/.config/karabiner/karabiner.json" "${HOME}/.config/karabiner/karabiner.json"
 fi
 
-echo -e "${GREEN}🧹 Old configuration files removed and new ones copied.${NC}"
-echo -e "${GREEN}✔️ New configuration files copied.${NC}"
-
-# 清理临时目录
-echo -e "${YELLOW}🧼 Cleaning up temporary files...${NC}"
-sudo rm -rf "$TMP_DIR"
-sudo rm -rf /tmp/Fonts/
-
-echo -e "${GREEN}✔️ Temporary files removed.${NC}"
-echo -e "${GREEN}✅ Script completed successfully. Files have been successfully copied to the user's home directory.${NC}"
 
 # 安装 zsh 插件
 ~/.config/zsh/plugins/zinit-plugin.zsh

@@ -1,5 +1,7 @@
 ---@diagnostic disable: lowercase-global
 
+-- 禁用窗口动画（让窗口立即到位）
+hs.window.animationDuration = 0
 
 require('config.keyConfig')
 require('config.KeyBinds')

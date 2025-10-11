@@ -76,9 +76,9 @@ command -v fzf >/dev/null 2>&1 && source <(fzf --zsh)
 # 设置 fzf 的默认预览
 export FZF_DEFAULT_OPTS='--preview "${HOME}/.config/zsh/fzf/fzf-preview.sh {}" --bind "shift-left:preview-page-up,shift-right:preview-page-down"'
 
-export FZF_DEFAULT_COMMAND='fd -L -g -HIia'
+export FZF_DEFAULT_COMMAND='fd -g -HIia -E /System/Volumes/Data'
 
-alias fd='fd -L -g -HIia'
+alias fd='fd -g -HIia -E /System/Volumes/Data'
 
 alias getip="$HOME/sh-script/get-my-ip.sh"
 

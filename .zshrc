@@ -104,3 +104,5 @@ alias rm='sudo rm -rf'
 alias mkdir='mkdir -p'
 
 alias show='kitty +kitten icat'
+
+alias reboot='sudo reboot'

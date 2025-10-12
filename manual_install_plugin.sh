@@ -11,7 +11,7 @@ NC='\033[0m' # No Color
 echo -e "${GREEN}🚀 Starting script...${NC}"
 
 # Define temporary directory path and ensure it is cleaned up
-TMP_DIR="/tmp/dotfiles"
+local TMP_DIR="/tmp/dotfiles"
 rm -rf "$TMP_DIR"
 
 # Clone repository into temporary directory

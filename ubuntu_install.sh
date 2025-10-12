@@ -8,7 +8,7 @@ sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 htt
 export DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai
 sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 echo "$TZ" | sudo tee /etc/timezone >/dev/null
-sudo dpkg-reconfigure --frontend noninteractive tzdata
+sudo -E apt install -y --no-install-recommends tzdata
 sudo -E dpkg-reconfigure -f noninteractive tzdata
 
 # 1.生成 UTF-8 字符集的 Locale（locale-gen 适用于 Debian 及其衍生系统，localedef 存在于几乎所有的 Linux 发行版中）

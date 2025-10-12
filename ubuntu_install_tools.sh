@@ -69,42 +69,67 @@ if command -v llvm-config >/dev/null 2>&1; then
 else
     print_centered_message "${GREEN}开始安装 llvm 套装... ${NC}" "true" "false"
 
-    #    # 获取当前Ubuntu版本代号
-    #    CURRENT_VERSION=$(lsb_release -cs)
-    #
-    #    # 创建临时目录及gpg子目录
-    #    TEMP_DIR=$(mktemp -d)
-    #    GNUPG_TEMP_DIR="$TEMP_DIR/gnupg"
-    #    mkdir -p "$GNUPG_TEMP_DIR"
-    #    chmod 700 "$GNUPG_TEMP_DIR" # gpg要求严格的权限设置
-    #
-    #    # 1. 清理可能存在的旧密钥（避免冲突）
-    #    [[ -f /etc/apt/keyrings/llvm.gpg ]] && sudo rm -f /etc/apt/keyrings/llvm.gpg
-    #
-    #    # 2. 创建密钥存储目录（老版本 Ubuntu 可能没有，手动创建）
-    #    sudo mkdir -p /etc/apt/keyrings
-    #
-    #    # 3. 下载 LLVM 密钥并存储为独立文件，使用临时gpg目录
-    #    wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo GNUPGHOME="$GNUPG_TEMP_DIR" gpg --dearmor -o /etc/apt/keyrings/llvm.gpg
-    #    # 4. 添加 LLVM 仓库，使用动态检测的版本代号
-    #    echo "deb [signed-by=/etc/apt/keyrings/llvm.gpg] http://apt.llvm.org/${CURRENT_VERSION}/ llvm-toolchain-${CURRENT_VERSION} main" | sudo tee /etc/apt/sources.list.d/llvm.list >/dev/null
-    #
-    #    # 5. 更新并安装 llvm 套装工具
-    #    sudo apt update && sudo apt install -y clang lldb lld clangd clang-tidy clang-format clang-tools llvm-dev llvm-tools libomp-dev libc++-dev libc++abi-dev libclang-common-dev libclang-dev libclang-cpp-dev liblldb-dev libunwind-dev libclang-rt-dev libpolly-dev
-    #
-    #    # 清理临时目录
-    #    rm -rf "$TEMP_DIR"
+    # 获取当前Ubuntu版本代号
+    CODENAME=$(lsb_release -cs)
+    ARCH="$(dpkg --print-architecture)"
+    URL="https://apt.llvm.org/${CODENAME}/dists/llvm-toolchain-${CODENAME}/main/binary-${ARCH}/Packages"
+    LLVM_VERSION=$(curl -fsSL "$URL" | grep -oP '^Package: clangd-\K[0-9]+' | sort -Vu | tail -1)
+    # 创建临时目录及gpg子目录
+    TEMP_DIR=$(mktemp -d)
+    GNUPG_TEMP_DIR="$TEMP_DIR/gnupg"
+    mkdir -p "$GNUPG_TEMP_DIR"
+    chmod 700 "$GNUPG_TEMP_DIR" # gpg要求严格的权限设置
 
-    # 定义基础URL
-    CODENAME=$(lsb_release -cs);
-    BASE="https://apt.llvm.org/$CODENAME/dists/"
+    # 1. 清理可能存在的旧密钥（避免冲突）
+    [[ -f /etc/apt/keyrings/llvm.gpg ]] && sudo rm -f /etc/apt/keyrings/llvm.gpg
 
-    # 获取最新版本号，修复变量引用和解析问题
-    MAX_VERSION=$(curl -sL "$BASE" | grep -o "llvm-toolchain-$CODENAME-[0-9.]*" | sed "s/llvm-toolchain-$CODENAME-//" | grep -v '^$' | sort -V | tail -n 1)
+    # 2. 创建密钥存储目录（老版本 Ubuntu 可能没有，手动创建）
+    sudo mkdir -p /etc/apt/keyrings
 
-    MAJOR="${MAX_VERSION%%.*}"
+    # 3. 下载 LLVM 密钥并存储为独立文件，使用临时gpg目录
+    wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo GNUPGHOME="$GNUPG_TEMP_DIR" gpg --dearmor -o /etc/apt/keyrings/llvm.gpg
+    # 4. 添加 LLVM 仓库，使用动态检测的版本代号
+    echo "deb [signed-by=/etc/apt/keyrings/llvm.gpg] http://apt.llvm.org/${CODENAME}/ llvm-toolchain-${CODENAME} main" | sudo tee /etc/apt/sources.list.d/llvm.list >/dev/null
+    PKG="clang-$LLVM_VERSION lldb-$LLVM_VERSION lld-$LLVM_VERSION clangd-$LLVM_VERSION"
+    PKG="$PKG clang-tidy-$LLVM_VERSION clang-format-$LLVM_VERSION clang-tools-$LLVM_VERSION llvm-$LLVM_VERSION-dev lld-$LLVM_VERSION lldb-$LLVM_VERSION llvm-$LLVM_VERSION-tools libomp-$LLVM_VERSION-dev libc++-$LLVM_VERSION-dev libc++abi-$LLVM_VERSION-dev libclang-common-$LLVM_VERSION-dev libclang-$LLVM_VERSION-dev libclang-cpp$LLVM_VERSION-dev liblldb-$LLVM_VERSION-dev libunwind-$LLVM_VERSION-dev"
+    if [[ "${LLVM_VERSION:-0}" -gt 14 ]]; then
+        PKG="$PKG libclang-rt-$LLVM_VERSION-dev libpolly-$LLVM_VERSION-dev"
+    fi
+    # 5. 更新并安装 llvm 套装工具
+    sudo apt update && sudo apt install -y $PKG
 
-    curl -fsSL https://apt.llvm.org/llvm.sh | sudo bash -s -- "$MAJOR" all || echo -e "${RED} 目前不支持 ubuntu 18，请把 $MAJOR 改为 17 ${NC}"
+    # 用 alternatives 让无后缀命令指向 $LLVM_VERSION
+    tools=(clang clang++ clangd clang-format clang-tidy clang-cpp lld lldb)
+    llvm_tools=(llvm-ar llvm-ranlib llvm-objdump llvm-objcopy llvm-nm llvm-readelf llvm-readobj llvm-strip
+        llvm-size llvm-as llvm-dis llvm-config llvm-addr2line llvm-cov llvm-profdata llvm-mca llvm-lto)
+
+    for t in "${tools[@]}"; do
+        if command -v "/usr/bin/${t}-${LLVM_VERSION}" >/dev/null 2>&1; then
+            sudo update-alternatives --install "/usr/bin/${t}" "${t}" "/usr/bin/${t}-${LLVM_VERSION}" "${LLVM_VERSION}"
+            sudo update-alternatives --set "${t}" "/usr/bin/${t}-${LLVM_VERSION}" || true
+        fi
+    done
+
+    for t in "${llvm_tools[@]}"; do
+        if command -v "/usr/bin/${t}-${LLVM_VERSION}" >/dev/null 2>&1; then
+            sudo update-alternatives --install "/usr/bin/${t}" "${t}" "/usr/bin/${t}-${LLVM_VERSION}" "${LLVM_VERSION}"
+            sudo update-alternatives --set "${t}" "/usr/bin/${t}-${LLVM_VERSION}" || true
+        fi
+    done
+
+    # 清理临时目录
+    rm -rf "$TEMP_DIR"
+
+    #    # 定义基础URL
+    #    CODENAME=$(lsb_release -cs);
+    #    BASE="https://apt.llvm.org/$CODENAME/dists/"
+    #
+    #    # 获取最新版本号，修复变量引用和解析问题
+    #    MAX_VERSION=$(curl -sL "$BASE" | grep -o "llvm-toolchain-$CODENAME-[0-9.]*" | sed "s/llvm-toolchain-$CODENAME-//" | grep -v '^$' | sort -V | tail -n 1)
+    #
+    #    MAJOR="${MAX_VERSION%%.*}"
+    #
+    #    curl -fsSL https://apt.llvm.org/llvm.sh | sudo bash -s -- "$MAJOR" all || echo -e "${RED} 目前不支持 ubuntu 18，请把 $MAJOR 改为 17 ${NC}"
 
     if command -v clangd >/dev/null 2>&1; then
         print_centered_message "${GREEN}llvm 套装安装完成 ✅${NC}" "false" "true"

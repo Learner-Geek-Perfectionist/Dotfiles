@@ -161,14 +161,24 @@ else
         exit 1
         ;;
     esac
+
+    # 定义解压后的目录名称
+    UNPACK_DIR="fastfetch-linux-${BIN_ARCH}"
     URL="https://github.com/fastfetch-cli/fastfetch/releases/download/${VERSION}/fastfetch-linux-${BIN_ARCH}.tar.gz"
 
     TMP_DIR=$(mktemp -d)
+
+    # 下载文件到临时目录
     wget -q -O "${TMP_DIR}/fastfetch.tar.gz" "$URL"
-    rm -rf "$TMP_DIR"
-    tar -zxf "${TMP_DIR}/fastfetch.tar.gz" -C "$TMP_DIR"
-    sudo mv "${TMP_DIR}/fastfetch" /usr/local/bin/
+
+    # 解压文件
+    tar -zxvf "${TMP_DIR}/fastfetch.tar.gz" -C "$TMP_DIR"
+
+    # 移动可执行文件（根据实际目录结构调整路径）
+    sudo mv "${TMP_DIR}/${UNPACK_DIR}/usr/bin/fastfetch" /usr/local/bin/
+    # 设置执行权限
     sudo chmod +x /usr/local/bin/fastfetch
+
     # 清理临时文件
     rm -rf "$TMP_DIR"
 

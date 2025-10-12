@@ -5,6 +5,7 @@ set -e
 sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list
 
 # 设置时区
+export DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai
 sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 echo "Asia/Shanghai" | sudo tee /etc/timezone >/dev/null
 sudo dpkg-reconfigure --frontend noninteractive tzdata

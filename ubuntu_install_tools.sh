@@ -144,15 +144,33 @@ if command -v fastfetch >/dev/null 2>&1; then
     print_centered_message "${GREEN} fastfetch 已安装，跳过安装。${NC}" "true" "true"
 else
     print_centered_message "${GREEN}开始安装 fastfetch${NC}" "true" "false"
-    [[ -d "~/fastfetch" ]] && sudo rm -rf "~/fastfetch"
-    git clone https://github.com/fastfetch-cli/fastfetch
-    cd fastfetch
-    mkdir build && cd build
-    cmake ..
-    # 编译源码（启用多线程加速）
-    make "-j$(nproc)" && sudo make install
-    # 清理整个项目目录，包括源码和编译目录
-    cd ../.. && sudo rm -rf fastfetch
+    RELEASES_PAGE=$(curl -s "https://github.com/fastfetch-cli/fastfetch/releases")
+    VERSION=$(echo "$RELEASES_PAGE" | grep -oP 'href="/fastfetch-cli/fastfetch/releases/tag/\K(.*?)(?=")' | head -n1)
+    # 移除可能存在的前缀"v"
+    VERSION=$(echo "$VERSION" | sed 's/^v//')
+    ARCH=$(uname -m)
+    case $ARCH in
+    x86_64)
+        BIN_ARCH="amd64"
+        ;;
+    aarch64)
+        BIN_ARCH="aarch64"
+        ;;
+    *)
+        echo "不支持的架构: $ARCH"
+        exit 1
+        ;;
+    esac
+    URL="https://github.com/fastfetch-cli/fastfetch/releases/download/${VERSION}/fastfetch-linux-${BIN_ARCH}.tar.gz"
+
+    TMP_DIR=$(mktemp -d)
+    wget -q -O "${TMP_DIR}/fastfetch.tar.gz" "$URL"
+    rm -rf "$TMP_DIR"
+    tar -zxf "${TMP_DIR}/fastfetch.tar.gz" -C "$TMP_DIR"
+    sudo mv "${TMP_DIR}/fastfetch" /usr/local/bin/
+    sudo chmod +x /usr/local/bin/fastfetch
+    # 清理临时文件
+    rm -rf "$TMP_DIR"
 
     print_centered_message "${GREEN} fastfetch 安装完成 ✅${NC}" "false" "true"
 

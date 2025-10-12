@@ -29,6 +29,7 @@
         "--resource-dir=/usr/lib/clang/18.1.8" // 指定资源文件（如标准库头文件、编译器配置文件、内置头文件等）的目录
     ],
     "clangd.checkUpdates": true, // 检查clangd更新
+    // ======================= Lua 设置 =======================
     "Lua.workspace.useGitIgnore": true, // Lua 应用.gitignore
     "Lua.workspace.ignoreSubmodules": false, // Lua 解析子模块
     "Lua.workspace.checkThirdParty": false, // 忽略 HOME 目录

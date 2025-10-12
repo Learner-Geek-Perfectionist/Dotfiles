@@ -26,7 +26,7 @@ if [[ $(uname -s) == "Linux" ]]; then
     export DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai
     # 安装 git、sudo
     if grep -q 'ID=ubuntu' /etc/os-release; then
-        sudo apt update -y && sudo apt install -y --no-install-recommends git software-properties-common bc unzip locales lsb-release wget tzdata gnupg
+        sudo apt update -y && sudo apt install -E -y --no-install-recommends git software-properties-common bc unzip locales lsb-release wget tzdata gnupg
         sudo -E dpkg-reconfigure -f noninteractive tzdata
     elif grep -q 'ID=fedora' /etc/os-release; then
         sudo dnf update -y && sudo dnf install -y git bc unzip glibc glibc-common glibc-langpack-zh langpacks-zh_CN glibc-locale-source

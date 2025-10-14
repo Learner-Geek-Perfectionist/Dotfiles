@@ -21,7 +21,7 @@ brew_formulas=(
     fastfetch libuv lzip z3 tree autoconf chafa
     fd libvterm make readline zstd eza less boost
     fzf libyaml mpdecimal ripgrep go coreutils rustup rust cargo-update cargo-binstall
-    gcc ninja wget mas pkgconf jq doxygen googletest
+    gcc ninja wget mas pkgconf jq doxygen googletest google-benchmark
 )
 
 #ubuntu
@@ -121,6 +121,7 @@ packages_fedora=(
     fzf
     fastfetch
     gtest-devel
+    google-benchmark
     boost-devel
     shfmt
     llvm

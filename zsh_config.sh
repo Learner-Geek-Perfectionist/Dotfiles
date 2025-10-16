@@ -19,8 +19,12 @@ NC='\033[0m' # 没有颜色
 # 判断操作系统类型
 if [[ -f /etc/lsb-release ]]; then
     # Ubuntu 系统
-    sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list
-
+    ARCH=$(dpkg --print-architecture)
+    if [ -f /etc/apt/sources.list.d/ubuntu.sources ]; then
+        sudo sed -i.bak "s|http://ports.ubuntu.com/ubuntu-ports/|https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/|g; s|http://archive.ubuntu.com/ubuntu/|https://mirrors.tuna.tsinghua.edu.cn/ubuntu/|g" /etc/apt/sources.list.d/ubuntu.sources
+    else
+        sudo sed -i.bak "s|http://ports.ubuntu.com/ubuntu-ports/|https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/|g; s|http://archive.ubuntu.com/ubuntu/|https://mirrors.tuna.tsinghua.edu.cn/ubuntu/|g" /etc/apt/sources.list
+    fi && sudo apt update
 elif [[ -f /etc/fedora-release ]]; then
     # Fedora 系统
     sudo sed -e 's|^metalink=|#metalink=|g' \
@@ -28,6 +32,7 @@ elif [[ -f /etc/fedora-release ]]; then
         -i.bak \
         /etc/yum.repos.d/fedora.repo \
         /etc/yum.repos.d/fedora-updates.repo
+    sudo dnf -y upgrade --refresh
 fi
 
 # 定义打印居中消息的函数

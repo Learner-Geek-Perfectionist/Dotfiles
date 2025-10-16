@@ -8,6 +8,8 @@ sudo sed -e 's|^metalink=|#metalink=|g' \
     /etc/yum.repos.d/fedora.repo \
     /etc/yum.repos.d/fedora-updates.repo
 
+# 更新系统软件包
+sudo dnf -y upgrade --refresh
 
 # 设置时区
 sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime

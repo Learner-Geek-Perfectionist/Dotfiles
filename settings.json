@@ -20,12 +20,11 @@
         "--j=32", // 并行任务数量
         "--clang-tidy", // 启用clang-tidy检查
         "--compile-commands-dir=build", // 编译命令目录
-        "---function-arg-placeholders=true", // 函数参数占位符
+        "--function-arg-placeholders=true", // 函数参数占位符
         "--query-driver=/usr/bin/clang-*,/usr/bin/g++*,/usr/bin/gcc*", // 查询的编译器路径
         "--header-insertion=iwyu", // 按iwyu规则插入头文件
         "--header-insertion-decorators", // 头文件插入装饰
         "--pch-storage=memory", // PCH存储方式
-        "--resource-dir=/usr/lib/clang/18.1.8" // 指定资源文件（如标准库头文件、编译器配置文件、内置头文件等）的目录
     ],
     "clangd.checkUpdates": true, // 检查clangd更新
     "Lua.workspace.useGitIgnore": true, // Lua 应用.gitignore
@@ -75,5 +74,4 @@
             ]
         }
     },
-    "parallels-desktop.extension.path": "/home/ouyangzhaoxin/.parallels-desktop-vscode"
 }

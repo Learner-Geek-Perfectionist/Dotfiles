@@ -58,7 +58,6 @@ fi
 
 setopt interactive_comments # 注释行不报错
 setopt no_nomatch           # 通配符 * 匹配不到文件也不报错
-setopt autocd               # 输入目录名自动cd
 # setopt correct                 # 自动纠正拼写错误
 setopt nocaseglob   # 路径名匹配时忽略大小写
 setopt notify       # 后台任务完成后通知

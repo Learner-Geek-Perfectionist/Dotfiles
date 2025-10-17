@@ -2,7 +2,25 @@
 set -e
 
 # 设置国内源
-sudo sed -i.bak -r 's|^#?(deb\|deb-src) http://archive.ubuntu.com/ubuntu/|\1 https://mirrors.ustc.edu.cn/ubuntu/|' /etc/apt/sources.list
+# 获取Ubuntu版本代号（如focal、jammy、plucky等）
+CODENAME=$(grep VERSION_CODENAME /etc/os-release | cut -d= -f2)
+
+# 获取系统架构（判断是否为ports架构）
+ARCH=$(dpkg --print-architecture)
+if [[ $ARCH =~ ^(arm|aarch64|powerpc|s390x)$ ]]; then
+	REPO_PATH="ubuntu-ports" # 非x86架构使用ports源
+else
+	REPO_PATH="ubuntu" # x86架构使用标准源
+fi
+
+# 选择国内镜像（这里使用清华镜像，可替换为其他）
+MIRROR_DOMAIN="mirrors.tuna.tsinghua.edu.cn"
+
+# 替换源地址
+sudo sed -i "s|http://.*ubuntu.*|https://${MIRROR_DOMAIN}/${REPO_PATH}|g" /etc/apt/sources.list
+# 更新源缓存
+
+sudo apt update -y
 
 # 设置时区
 export DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai

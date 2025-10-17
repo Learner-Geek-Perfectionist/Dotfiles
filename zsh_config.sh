@@ -18,13 +18,25 @@ NC='\033[0m' # 没有颜色
 
 # 判断操作系统类型
 if [[ -f /etc/lsb-release ]]; then
-    # Ubuntu 系统
+    # 获取Ubuntu版本代号（如focal、jammy、plucky等）
+    CODENAME=$(grep VERSION_CODENAME /etc/os-release | cut -d= -f2)
+
+    # 获取系统架构（判断是否为ports架构）
     ARCH=$(dpkg --print-architecture)
-    if [ -f /etc/apt/sources.list.d/ubuntu.sources ]; then
-        sudo sed -i.bak "s|http://ports.ubuntu.com/ubuntu-ports/|https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/|g; s|http://archive.ubuntu.com/ubuntu/|https://mirrors.tuna.tsinghua.edu.cn/ubuntu/|g" /etc/apt/sources.list.d/ubuntu.sources
+    if [[ $ARCH =~ ^(arm|aarch64|powerpc|s390x)$ ]]; then
+        REPO_PATH="ubuntu-ports" # 非x86架构使用ports源
     else
-        sudo sed -i.bak "s|http://ports.ubuntu.com/ubuntu-ports/|https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/|g; s|http://archive.ubuntu.com/ubuntu/|https://mirrors.tuna.tsinghua.edu.cn/ubuntu/|g" /etc/apt/sources.list
-    fi && sudo apt update
+        REPO_PATH="ubuntu" # x86架构使用标准源
+    fi
+
+    # 选择国内镜像（这里使用清华镜像，可替换为其他）
+    MIRROR_DOMAIN="mirrors.tuna.tsinghua.edu.cn"
+
+    # 替换源地址
+    sudo sed -i "s|http://.*ubuntu.*|https://${MIRROR_DOMAIN}/${REPO_PATH}|g" /etc/apt/sources.list
+    # 更新源缓存
+
+    sudo apt update -y
 elif [[ -f /etc/fedora-release ]]; then
     # Fedora 系统
     sudo sed -e 's|^metalink=|#metalink=|g' \

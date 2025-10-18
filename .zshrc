@@ -105,3 +105,5 @@ alias mkdir='mkdir -p'
 alias show='kitty +kitten icat'
 
 alias reboot='sudo reboot'
+
+alias open='open -R'

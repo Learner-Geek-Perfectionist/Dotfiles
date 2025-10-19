@@ -16,7 +16,7 @@ brew_formulas=(
     brotli git lpeg ncurses sqlite openjdk grep
     c-ares htop lua neovim tree-sitter bash tcpdump
     ca-certificates icu4c luajit node unibilium
-    cmake libnghttp2 luv openssl@3 vim perl
+    cmake libnghttp2 luv openssl@3 vim perl dust
     cmake-docs libsodium lz4 pcre2 xz llvm shfmt
     fastfetch libuv lzip z3 tree autoconf chafa
     fd libvterm make readline zstd eza less boost
@@ -135,4 +135,5 @@ packages_fedora=(
     libomp
     llvm-polly
     flang
+    du-dust
 )

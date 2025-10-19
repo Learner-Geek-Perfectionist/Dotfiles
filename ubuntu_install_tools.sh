@@ -120,17 +120,6 @@ else
     # 清理临时目录
     rm -rf "$TEMP_DIR"
 
-    #    # 定义基础URL
-    #    CODENAME=$(lsb_release -cs);
-    #    BASE="https://apt.llvm.org/$CODENAME/dists/"
-    #
-    #    # 获取最新版本号，修复变量引用和解析问题
-    #    MAX_VERSION=$(curl -sL "$BASE" | grep -o "llvm-toolchain-$CODENAME-[0-9.]*" | sed "s/llvm-toolchain-$CODENAME-//" | grep -v '^$' | sort -V | tail -n 1)
-    #
-    #    MAJOR="${MAX_VERSION%%.*}"
-    #
-    #    curl -fsSL https://apt.llvm.org/llvm.sh | sudo bash -s -- "$MAJOR" all || echo -e "${RED} 目前不支持 ubuntu 18，请把 $MAJOR 改为 17 ${NC}"
-
     if command -v clangd >/dev/null 2>&1; then
         print_centered_message "${GREEN}llvm 套装安装完成 ✅${NC}" "false" "true"
     else
@@ -411,9 +400,22 @@ else
 
     curl -L -o "$FILENAME" "$DOWNLOAD_URL"
     chmod +x "$FILENAME"
-    sudo mv "$FILENAME" /usr/local/bin/
+    sudo mv "$FILENAME" /usr/local/bin/shfmt # 这里添加了重命名
 
     print_centered_message "${GREEN} shfmt 安装完成 ✅${NC}" "false" "true"
 
 fi
 # =================================结束安装 shfmt=================================
+
+# =================================开始安装 dust=================================
+if command -v dust >/dev/null 2>&1; then
+    print_centered_message "${GREEN}dust 已安装，跳过安装。${NC}" "true" "true"
+else
+    print_centered_message "${GREEN}开始安装 dust... ${NC}" "true" "false"
+
+    # 安装 dust
+    cargo-binstall -y du-dust
+    sudo ln -snf /opt/rust/cargo/bin/dust /usr/local/bin/
+    print_centered_message "${GREEN} dust 安装完成 ✅${NC}" "false" "false"
+fi
+# =================================结束安装 dust=================================

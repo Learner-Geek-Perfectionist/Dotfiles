@@ -264,7 +264,7 @@ else
     curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
     sudo ln -snf /opt/rust/cargo/bin/cargo-binstall /usr/local/bin/
     # 利用 cargo-binstall 自举，自己安装自己，这样 cargo 包管理工具就可以管理 cargo-binstall
-    cargo-binstall --force cargo-binstall --no-confirm
+    cargo-binstall --force -y cargo-binstall
     print_centered_message "${GREEN} cargo-binstall 安装完成 ✅${NC}" "false" "false"
 fi
 # =================================结束安装 cargo-binstall=================================
@@ -276,7 +276,7 @@ else
     print_centered_message "${GREEN}开始安装 cargo-update... ${NC}" "true" "false"
 
     # 安装 cargo-update
-    cargo-binstall cargo-update --no-confirm
+    cargo-binstall -y cargo-update
     sudo ln -snf /opt/rust/cargo/bin/cargo-install-update /usr/local/bin/
     print_centered_message "${GREEN} cargo-update 安装完成 ✅${NC}" "false" "false"
 fi

@@ -19,7 +19,7 @@ brew_formulas=(
     cmake libnghttp2 luv openssl@3 vim perl dust
     cmake-docs libsodium lz4 pcre2 xz llvm shfmt
     fastfetch libuv lzip z3 tree autoconf chafa
-    fd libvterm make readline zstd eza less boost
+    fd libvterm make readline zstd eza less boost rsync
     fzf libyaml mpdecimal ripgrep go coreutils rustup rust cargo-update cargo-binstall
     gcc ninja wget mas pkgconf jq doxygen googletest google-benchmark
 )
@@ -70,6 +70,7 @@ packages_ubuntu=(
     gtk-update-icon-cache
     libgtest-dev
     libboost-all-dev
+    rsync
 )
 
 #fedora
@@ -136,4 +137,5 @@ packages_fedora=(
     llvm-polly
     flang
     du-dust
+    rsync
 )

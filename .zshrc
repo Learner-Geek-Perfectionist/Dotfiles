@@ -100,34 +100,6 @@ alias upgrade='/bin/bash -c "$(curl -H '\''Cache-Control: no-cache'\'' -fsSL "ht
 
 alias g1='git clone --depth=1'
 
-rm() {
-  # 定义禁止删除的目录列表（可以自行扩展）
-  local protected_paths=(
-    "/" "/*"
-    "$HOME" "$HOME/"
-    "$HOME/Desktop" "$HOME/Downloads" "$HOME/Documents"
-    "$HOME/Pictures" "$HOME/Movies" "$HOME/Music"
-    "$HOME/Public" "$HOME/Library"
-  )
-
-  for arg in "$@"; do
-    # 先转成绝对路径（防止相对路径误判）
-    local abs_path
-    abs_path=$(realpath "$arg" 2>/dev/null || echo "$arg")
-
-    for protected in "${protected_paths[@]}"; do
-      # 如果目标路径就是受保护目录或其父目录，则拒绝删除
-      if [[ "$abs_path" == "$protected" || "$abs_path" == "$protected/"* ]]; then
-        echo "🚫 Refused to remove protected directory: $abs_path"
-        return 1
-      fi
-    done
-  done
-
-  # 如果通过检查，执行真正删除
-  sudo /bin/rm -rf -- "$@"
-}
-
 alias mkdir='mkdir -p'
 
 alias show='kitty +kitten icat'

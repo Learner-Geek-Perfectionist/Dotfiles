@@ -6,53 +6,7 @@
           {
             "manipulators": [
               {
-                "description": "Hyper + . → F19",
-                "from": {
-                  "key_code": "period",
-                  "modifiers": {
-                    "mandatory": [
-                      "left_control",
-                      "left_option",
-                      "left_command",
-                      "left_shift"
-                    ],
-                    "optional": [
-                      "any"
-                    ]
-                  }
-                },
-                "to": [
-                  {
-                    "key_code": "f19"
-                  }
-                ],
-                "type": "basic"
-              },
-              {
-                "description": "Hyper + , → F18",
-                "from": {
-                  "key_code": "comma",
-                  "modifiers": {
-                    "mandatory": [
-                      "left_control",
-                      "left_option",
-                      "left_command",
-                      "left_shift"
-                    ],
-                    "optional": [
-                      "any"
-                    ]
-                  }
-                },
-                "to": [
-                  {
-                    "key_code": "f18"
-                  }
-                ],
-                "type": "basic"
-              },
-              {
-                "description": "Change right_command to command+control+option+shift.",
+                "description": "Change right_command to command+control+option",
                 "from": {
                   "key_code": "right_command",
                   "modifiers": {
@@ -63,9 +17,8 @@
                 },
                 "to": [
                   {
-                    "key_code": "left_shift",
+                    "key_code": "left_command",
                     "modifiers": [
-                      "left_command",
                       "left_control",
                       "left_option"
                     ]
@@ -74,7 +27,7 @@
                 "type": "basic"
               },
               {
-                "description": "Change right_option to command+control+option+shift.",
+                "description": "Change right_option to command+control+option",
                 "from": {
                   "key_code": "right_option",
                   "modifiers": {
@@ -85,9 +38,8 @@
                 },
                 "to": [
                   {
-                    "key_code": "left_shift",
+                    "key_code": "left_command",
                     "modifiers": [
-                      "left_command",
                       "left_control",
                       "left_option"
                     ]

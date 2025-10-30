@@ -1,25 +1,26 @@
 ---@diagnostic disable: lowercase-global
 -- 定义快捷键配置表
 keyConfig = {
-    { 'w', 'com.tencent.xinWeChat' }, -- "W" for "WeChat"
-    { 'f', 'com.apple.finder' }, -- "F" for "Finder"
-    { 'g', 'com.openai.chat' }, -- "G" for "ChatGPT"
-    { 's', 'com.apple.Safari' }, -- "S" for "Safari"
-    { 't', 'net.kovidgoyal.kitty' }, -- "T" for "kitty"
-    { 'v', 'com.microsoft.VSCode' }, -- "V" for "VSCode"
-    { 'q', 'com.tencent.qq' }, -- "Q" for "QQ"
-    { 'd', 'com.hnc.Discord' }, -- "D" for "Discord"
-    { 'm', 'party.mihomo.app' }, -- "M" for "Mihomo Party"
-    { 'c', 'com.jetbrains.CLion' }, -- "C" for "Clion"
-    { 'i', 'com.jetbrains.intellij' }, -- "I" for "IntelliJ IDEA"
-    { 'a', 'com.google.android.studio' }, -- "A" for "Android Studio"
-    { 'p', 'com.jetbrains.pycharm' }, -- "P" for "Pycharm"
+    { 'w', 'com.tencent.xinWeChat' },           -- "W" for "WeChat"
+    { 'f', 'com.apple.finder' },                -- "F" for "Finder"
+    { 'g', 'com.openai.chat' },                 -- "G" for "ChatGPT"
+    { 's', 'com.apple.Safari' },                -- "S" for "Safari"
+    { 't', 'net.kovidgoyal.kitty' },            -- "T" for "kitty"
+    { 'v', 'com.microsoft.VSCode' },            -- "V" for "VSCode"
+    { 'q', 'com.tencent.qq' },                  -- "Q" for "QQ"
+    { 'd', 'com.hnc.Discord' },                 -- "D" for "Discord"
+    { 'm', 'party.mihomo.app' },                -- "M" for "Mihomo Party"
+    { 'c', 'com.jetbrains.CLion' },             -- "C" for "Clion"
+    { 'i', 'com.jetbrains.intellij' },          -- "I" for "IntelliJ IDEA"
+    { 'a', 'com.google.android.studio' },       -- "A" for "Android Studio"
+    { 'p', 'com.jetbrains.pycharm' },           -- "P" for "Pycharm"
     { 'u', 'com.mac.utility.clipboard.paste' }, -- "U" for "upaste"
-    { 'o', 'dev.kdrag0n.MacVirt' }, -- "O" for "orbstack"
+    { 'o', 'dev.kdrag0n.MacVirt' },             -- "O" for "orbstack"
+    { '.', 'com.apple.ActivityMonitor' },       -- "." for "ActivityMonitor"
 
 }
 -- 区分大小写
-HyperKey = { "ctrl", "alt", "cmd", "shift" }
+HyperKey = { "ctrl", "alt", "cmd" }
 
 windowsConfig = {
     'left',

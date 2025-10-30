@@ -102,6 +102,8 @@ alias g1='git clone --depth=1'
 
 alias mkdir='mkdir -p'
 
+alias cp='cp -r'
+
 alias show='kitty +kitten icat'
 
 alias reboot='sudo reboot'

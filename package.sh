@@ -6,7 +6,7 @@ brew_casks=(
     videofusion wpsoffice-cn tencent-meeting google-chrome
     orbstack dingtalk baidunetdisk anaconda iina
     pycharm android-studio qq chatgpt fleet hammerspoon
-    intellij-idea qqmusic jetbrains-gateway telegram
+    intellij-idea qqmusic jetbrains-gateway telegram cmake-app
     clion jordanbaird-ice visual-studio-code discord keycastr wechat
     douyin kitty feishu microsoft-edge Eudic karabiner-elements
 )

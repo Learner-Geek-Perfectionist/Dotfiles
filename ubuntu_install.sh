@@ -5,22 +5,23 @@ set -e
 # 获取Ubuntu版本代号（如focal、jammy、plucky等）
 CODENAME=$(grep VERSION_CODENAME /etc/os-release | cut -d= -f2)
 
-# 获取系统架构（判断是否为ports架构）
+# 获取系统架构
 ARCH=$(dpkg --print-architecture)
-if [[ $ARCH =~ ^(arm|aarch64|powerpc|s390x)$ ]]; then
-	REPO_PATH="ubuntu-ports" # 非x86架构使用ports源
+
+if [[ $ARCH =~ ^(arm|arm64|aarch64|powerpc|s390x)$ ]]; then
+    REPO_PATH="ubuntu-ports" # 非x86架构（含arm64）使用ports源
 else
-	REPO_PATH="ubuntu" # x86架构使用标准源
+    REPO_PATH="ubuntu" # x86架构使用标准源
 fi
 
-# 选择国内镜像（这里使用清华镜像，可替换为其他）
+# 选择国内镜像（清华镜像支持plucky的ubuntu-ports源）
 MIRROR_DOMAIN="mirrors.tuna.tsinghua.edu.cn"
 
-# 替换源地址
-sudo sed -i "s|http://.*ubuntu.*|https://${MIRROR_DOMAIN}/${REPO_PATH}|g" /etc/apt/sources.list
-# 更新源缓存
+# 替换源地址（确保路径为ubuntu-ports，保留发行版和组件）
+sudo sed -i -E "s|http://[^/]*/ubuntu(-ports)?|https://${MIRROR_DOMAIN}/${REPO_PATH}|g" /etc/apt/sources.list
 
-sudo apt update -y
+# 更新源缓存
+sudo apt update
 
 # 设置时区
 export DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai

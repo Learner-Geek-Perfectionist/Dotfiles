@@ -37,7 +37,7 @@ if [[ -f /etc/lsb-release ]]; then
     sudo sed -i -E "s|http://[^/]*/ubuntu(-ports)?|https://${MIRROR_DOMAIN}/${REPO_PATH}|g" /etc/apt/sources.list
 
     # 更新源缓存
-    sudo apt update && sudo apt -y modernize-sources
+    sudo apt update
 elif [[ -f /etc/fedora-release ]]; then
     # Fedora 系统
     sudo sed -e 's|^metalink=|#metalink=|g' \

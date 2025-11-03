@@ -37,12 +37,12 @@ if [[ "$(uname)" == "Darwin" ]]; then
 
 else
 	alias rg='rg -uuu -i --threads=$(nproc)'
+	# 加载 rust 的环境变量
+    export CARGO_HOME=/opt/rust/cargo
+    export RUSTUP_HOME=/opt/rust/rustup
 
 fi
 
-# 加载 rust 的环境变量
-export CARGO_HOME=/opt/rust/cargo
-export RUSTUP_HOME=/opt/rust/rustup
 
 # 加载 Plugins
 source "${HOME}/.config/zsh/plugins/homebrew.zsh"
@@ -58,7 +58,6 @@ fi
 
 setopt interactive_comments # 注释行不报错
 setopt no_nomatch           # 通配符 * 匹配不到文件也不报错
-# setopt correct                 # 自动纠正拼写错误
 setopt nocaseglob   # 路径名匹配时忽略大小写
 setopt notify       # 后台任务完成后通知
 setopt no_beep      # 关闭终端提示音

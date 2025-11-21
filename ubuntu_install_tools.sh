@@ -217,8 +217,7 @@ else
     [[ -d "/tmp/.fzf" ]] && sudo rm -rf "/tmp/.fzf"
     [[ -f "/usr/local/bin/fzf" ]] && sudo rm -rf "/usr/local/bin/fzf"
 
-    git clone --depth=1 https://github.com/junegunn/fzf.git "/tmp/.fzf"
-    yes | /tmp/.fzf/install --no-update-rc
+    yes | bash -c 'mkdir -p /tmp/.fzf && cd /tmp/.fzf && curl -fsSL https://raw.githubusercontent.com/junegunn/fzf/master/install | bash -s -- --no-update-rc'
     sudo cp "/tmp/.fzf/bin/fzf" /usr/local/bin/fzf
 
     # 清理安装目录

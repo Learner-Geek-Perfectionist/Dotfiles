@@ -1,37 +1,61 @@
 {
     // ======================= C/C++ 配置 =======================
     // 让 clang-format 负责 C/C++ 的格式化
-    "[c]": {
-        "editor.defaultFormatter": "xaver.clang-format"
-    },
-    "[cpp]": {
-        "editor.defaultFormatter": "xaver.clang-format"
-    },
+    // "[c]": {
+    //     "editor.defaultFormatter": "xaver.clang-format"
+    // },
+    // "[cpp]": {
+    //     "editor.defaultFormatter": "xaver.clang-format"
+    // },
     // clangd/clang-format 路径
-    "clangd.path": "clangd",
-    "clang-format.executable": "clang-format",
-    "shfmt.executablePath": "shfmt",
-    "clang-format.style": "file",
+    // "clangd.path": "clangd",
+    // "clang-format.executable": "clang-format",
+    // "shfmt.executablePath": "shfmt",
+    // "clang-format.style": "file",
     // clangd 参数
-    "clangd.arguments": [
-        "--background-index", // 后台建立索引
-        "--all-scopes-completion", // 所有作用域的补全
-        "--completion-style=detailed", // 详细的补全样式
-        "--j=32", // 并行任务数量
-        "--clang-tidy", // 启用clang-tidy检查
-        "--compile-commands-dir=build", // 编译命令目录
-        "--function-arg-placeholders=true", // 函数参数占位符
-        "--query-driver=/usr/bin/clang-*,/usr/bin/g++*,/usr/bin/gcc*", // 查询的编译器路径
-        "--header-insertion=iwyu", // 按iwyu规则插入头文件
-        "--header-insertion-decorators", // 头文件插入装饰
-        "--pch-storage=memory", // PCH存储方式
+    // "clangd.arguments": [
+    //     "--background-index", // 后台建立索引
+    //     "--all-scopes-completion", // 所有作用域的补全
+    //     "--completion-style=detailed", // 详细的补全样式
+    //     "--j=32", // 并行任务数量
+    //     "--clang-tidy", // 启用clang-tidy检查
+    //     "--compile-commands-dir=build", // 编译命令目录
+    //     "--function-arg-placeholders=true", // 函数参数占位符
+    //     "--query-driver=/usr/bin/clang-*,/usr/bin/g++*,/usr/bin/gcc*", // 查询的编译器路径
+    //     "--header-insertion=iwyu", // 按iwyu规则插入头文件
+    //     "--header-insertion-decorators", // 头文件插入装饰
+    //     "--pch-storage=memory", // PCH存储方式
+    // ],
+    // "clangd.checkUpdates": true, // 检查clangd更新
+    // "Lua.workspace.useGitIgnore": true, // Lua 应用.gitignore
+    // "Lua.workspace.ignoreSubmodules": false, // Lua 解析子模块
+    // "Lua.workspace.checkThirdParty": false, // 忽略 HOME 目录
+    // "Lua.workspace.ignoreDir": [
+    //     "${env:HOME}"
+    // ],
+    "[cpp]": {
+        "editor.defaultFormatter": "ms-vscode.cpptools"
+    },
+    "[c]": {
+        "editor.defaultFormatter": "ms-vscode.cpptools"
+    },
+    "C_Cpp.intelliSenseEngine": "default",
+    "C_Cpp.errorSquiggles": "enabled",
+    "C_Cpp.loggingLevel": "Information",
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "C_Cpp.default.intelliSenseMode": "linux-gcc-x64",
+    "C_Cpp.default.compilerPath": "/usr/bin/g++",
+    "C_Cpp.default.cppStandard": "gnu++17",
+    "C_Cpp.default.cStandard": "gnu17",
+    "C_Cpp.codeAnalysis.clangTidy.enabled": true,
+    // 指定头文件包含路径，让 IntelliSense 找到 include 目录下的文件
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}/SERES_TOOL/soa_dump/include",
+        "./**"
     ],
-    "clangd.checkUpdates": true, // 检查clangd更新
-    "Lua.workspace.useGitIgnore": true, // Lua 应用.gitignore
-    "Lua.workspace.ignoreSubmodules": false, // Lua 解析子模块
-    "Lua.workspace.checkThirdParty": false, // 忽略 HOME 目录
-    "Lua.workspace.ignoreDir": [
-        "${env:HOME}"
+    // 指定 compile_commands.json 路径，辅助 vscode 识别宏定义
+    "C_Cpp.default.compileCommands": [
+        "${workspaceFolder}/SERES_TOOL/soa_dump/build/compile_commands.json"
     ],
     // ======================= 编辑器设置 =======================
     "editor.insertSpaces": true, // 强制用空格缩进
@@ -47,6 +71,14 @@
         "zh-hans": true
     },
     "workbench.editor.enablePreview": false, // 禁用预览模式
+    "files.exclude": {
+        "**/node_modules": true,
+        "**/build": false,
+        "**/dist": true,
+        "**/.git": true,
+        "**/.vscode": false,
+        "**/.vscode-server": true
+    },
     // ======================= 终端设置 =======================
     "terminal.integrated.cursorStyle": "line", // 终端光标样式
     "terminal.integrated.cursorWidth": 1, // 光标宽度（1为最细）
@@ -74,4 +106,8 @@
             ]
         }
     },
+    // ======================= Python 设置 ======================= 
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter"
+    }
 }

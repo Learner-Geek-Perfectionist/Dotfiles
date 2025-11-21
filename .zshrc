@@ -76,9 +76,9 @@ export FZF_DEFAULT_OPTS='--preview "${HOME}/.config/zsh/fzf/fzf-preview.sh {}" -
 
 export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --no-sort --tac"
 
-export FZF_DEFAULT_COMMAND='fd -g -HIia -E /System/Volumes/Data'
+export FZF_DEFAULT_COMMAND='fd -g -HIia -E /System/Volumes/Data -E '.Trash''
 
-alias fd='fd -g -HIia -E /System/Volumes/Data'
+alias fd='fd -g -HIia -E /System/Volumes/Data -E '.Trash''
 
 alias getip="$HOME/sh-script/get-my-ip.sh"
 

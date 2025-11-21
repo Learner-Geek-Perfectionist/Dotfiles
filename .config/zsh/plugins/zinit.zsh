@@ -34,7 +34,7 @@ fi
 zinit light romkatv/powerlevel10k
 
 # 3.加载 p10k 主题的配置文件
-[[ ! -f ~/.config/zsh/.p10k.zsh ]] || source ~/.config/zsh/.p10k.zsh
+[[  -f ~/.config/zsh/.p10k.zsh ]] && source ~/.config/zsh/.p10k.zsh
 
 
 # OMZ 迁移和插件配置

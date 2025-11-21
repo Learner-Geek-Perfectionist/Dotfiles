@@ -34,6 +34,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
 	# pycharm 映射到 py
 	alias py=pycharm
 	alias rg='rg -uuu -i --threads=$(sysctl -n hw.ncpu)'
+	alias open='open -R'
 
 else
 	alias rg='rg -uuu -i --threads=$(nproc)'
@@ -106,5 +107,3 @@ alias cp='cp -r'
 alias show='kitty +kitten icat'
 
 alias reboot='sudo reboot'
-
-alias open='open -R'

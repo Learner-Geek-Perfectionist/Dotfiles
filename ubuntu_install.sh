@@ -9,9 +9,9 @@ CODENAME=$(grep VERSION_CODENAME /etc/os-release | cut -d= -f2)
 ARCH=$(dpkg --print-architecture)
 
 if [[ $ARCH =~ ^(arm|arm64|aarch64|powerpc|s390x)$ ]]; then
-    REPO_PATH="ubuntu-ports" # 非x86架构（含arm64）使用ports源
+	REPO_PATH="ubuntu-ports" # 非x86架构（含arm64）使用ports源
 else
-    REPO_PATH="ubuntu" # x86架构使用标准源
+	REPO_PATH="ubuntu" # x86架构使用标准源
 fi
 
 # 选择国内镜像（清华镜像支持plucky的ubuntu-ports源）
@@ -39,7 +39,6 @@ echo "LC_ALL=zh_CN.UTF-8" | sudo tee -a /etc/default/locale
 
 # 添加PPA并更新
 sudo add-apt-repository -y ppa:wireshark-dev/stable
-sudo add-apt-repository -y ppa:openjdk-r/ppa
 echo "wireshark-common wireshark-common/install-setuid boolean true" | sudo debconf-set-selections
 echo "wireshark-common wireshark-common/install-setuid seen true" | sudo debconf-set-selections
 sudo apt update && sudo apt upgrade -y
@@ -53,8 +52,14 @@ source /tmp/Dotfiles/ubuntu_install_tools.sh
 sudo apt search unminimize 2>/dev/null | grep -q "^unminimize/" && (sudo apt install unminimize -y && yes | sudo unminimize) || echo -e "${RED}unminimize包不可用。${NC}"
 
 # 搜索可用的 OpenJDK 包并尝试获取最新版本
-sudo apt install -y "$(apt search openjdk | grep -oP 'openjdk-\d+-jdk' | sort -V | tail -n1)"
+if curl -fsI "https://ppa.launchpadcontent.net/openjdk-r/ppa/ubuntu/dists/$(lsb_release -sc)/Release" >/dev/null; then
+	sudo add-apt-repository -y ppa:openjdk-r/ppa && sudo apt update
+else
+	echo "${RED}PPA not available for $(lsb_release -sc), skipping.${NC}"
+fi
 
+# 从官方源中自动安装最新的 openjdk-*-jdk
+sudo apt install -y "$(apt search ^openjdk-[0-9]+-jdk$ 2>/dev/null | grep -oP 'openjdk-\d+-jdk' | sort -V | tail -n1)"
 # =================================开始安装 Docker=================================
 install_and_configure_docker
 # =================================开始安装 Docker=================================

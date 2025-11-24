@@ -74,12 +74,3 @@ Manual install
 # Gitee
 
 /bin/bash -c "$(curl -H 'Cache-Control: no-cache' -fsSL "https://gitee.com/oyzxin/Dotfiles/raw/master/manual_install_plugin.sh?$(date +%s)")" 
-
-
-```
-
-Search for the `BundleId` of an `Application`
-```shell
-
-mdls -name kMDItemCFBundleIdentifier /Applications/*.app | fzf
-```

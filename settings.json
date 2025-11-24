@@ -60,6 +60,7 @@
     "C_Cpp.default.compileCommands": [
         // "${workspaceFolder}/SERES_TOOL/soa_dump/build/compile_commands.json"
     ],
+    "shfmt.executablePath": "shfmt",
     // ======================= 编辑器设置 =======================
     "editor.insertSpaces": true, // 强制用空格缩进
     "editor.tabSize": 4, // 宽度为 4

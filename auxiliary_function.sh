@@ -1,13 +1,13 @@
 set -e
 
-KOTLIN_NATIVE_URL=""
-KOTLIN_COMPILER_URL=""
-INSTALL_DIR=""
-COMPILER_INSTALL_DIR=""
-LATEST_VERSION=""
+export KOTLIN_NATIVE_URL="" \
+	KOTLIN_COMPILER_URL="" \
+	INSTALL_DIR="" \
+	COMPILER_INSTALL_DIR="" \
+	LATEST_VERSION=""
 
 # 全局状态变量：记录上一次调用的阶段（init=初始/start=开始安装/complete=安装完成）
-[[ -z ${LAST_CALL_STATE+x} ]] && LAST_CALL_STATE="init"
+[[ -z ${LAST_CALL_STATE+x} ]] && export LAST_CALL_STATE="init"
 
 print_centered_message() {
 	local message="$1"

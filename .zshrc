@@ -39,15 +39,14 @@ if [[ "$(uname)" == "Darwin" ]]; then
 else
 	alias rg='rg -uuu -i --threads=$(nproc)'
 	# 加载 rust 的环境变量
-    export CARGO_HOME=/opt/rust/cargo
-    export RUSTUP_HOME=/opt/rust/rustup
+	export CARGO_HOME=/opt/rust/cargo
+	export RUSTUP_HOME=/opt/rust/rustup
 
 fi
 
-
 # 加载 Plugins
-source "${HOME}/.config/zsh/plugins/homebrew.zsh"
-source "$HOME/.config/zsh/plugins/zinit.zsh"
+[[ -f "${HOME}/.config/zsh/plugins/homebrew.zsh" ]] && source "${HOME}/.config/zsh/plugins/homebrew.zsh" || echo "${RED}No ${HOME}/.config/zsh/plugins/homebrew.zsh${NC}"
+[[ -f "${HOME}/.config/zsh/plugins/zinit.zsh" ]] && source "${HOME}/.config/zsh/plugins/zinit.zsh" || echo "${RED}No ${HOME}/.config/zsh/plugins/homebrew.zsh${NC}"
 
 # 自动启动 ssh-agent 并加载密钥
 if [ -z "$SSH_AUTH_SOCK" ]; then
@@ -59,12 +58,12 @@ fi
 
 setopt interactive_comments # 注释行不报错
 setopt no_nomatch           # 通配符 * 匹配不到文件也不报错
-setopt nocaseglob   # 路径名匹配时忽略大小写
-setopt notify       # 后台任务完成后通知
-setopt no_beep      # 关闭终端提示音
-setopt no_bang_hist # 不对双引号当中的叹号做历史记录拓展 "!"
-setopt GLOB_DOTS    # 文件名展开（globbing）包括以点(dot)开始的文件
-setopt rm_star_silent # 取消 zsh 的安全防护功能（默认对 rm -rf ./* 删除操作触发）
+setopt nocaseglob           # 路径名匹配时忽略大小写
+setopt notify               # 后台任务完成后通知
+setopt no_beep              # 关闭终端提示音
+setopt no_bang_hist         # 不对双引号当中的叹号做历史记录拓展 "!"
+setopt GLOB_DOTS            # 文件名展开（globbing）包括以点(dot)开始的文件
+setopt rm_star_silent       # 取消 zsh 的安全防护功能（默认对 rm -rf ./* 删除操作触发）
 
 # 让 history 命令的最大容量为无限
 export HISTSIZE=10000000

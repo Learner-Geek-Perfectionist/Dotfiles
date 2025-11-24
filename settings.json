@@ -46,7 +46,7 @@
     // linux-gcc-arm64
     "C_Cpp.default.intelliSenseMode": "linux-gcc-x64",
     "C_Cpp.default.compilerPath": "/usr/bin/g++",
-    "C_Cpp.default.cppStandard": "gnu++17",
+    "C_Cpp.default.cppStandard": "gnu++23",
     "C_Cpp.default.cStandard": "gnu17",
     "C_Cpp.codeAnalysis.clangTidy.enabled": true,
     // 指定头文件包含路径，让 IntelliSense 找到 include 目录下的文件

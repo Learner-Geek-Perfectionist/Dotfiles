@@ -2,6 +2,7 @@
 
 # 设置脚本在遇到错误时退出
 set -e
+source /tmp/Dotfiles/auxiliary_function.sh
 
 # 定义颜色
 export RED='\033[0;31m' \
@@ -112,13 +113,8 @@ elif [[ $(uname -s) == "Linux" ]]; then
 	if [[ $os_type == "ubuntu" ]]; then
 		sudo apt update
 		tools=("zsh" "git" "curl" "make" "g++" "gcc" "openssh-server" "man-db" "wget" "gnupg" "pkg-config" "xz-utils" "gtk-update-icon-cache" "bc" "graphviz" "language-pack-zh-hans" "language-pack-zh-hans-base")
-		# 遍历工具列表，检查是否已安装
-		for tool in "${tools[@]}"; do
-			if ! command -v "$tool" >/dev/null 2>&1; then
-				sudo apt install -y "$tool"
-			fi
-		done
-		# 先安装 git，再 clone
+		install_packages "tools"
+
 		echo -e "${YELLOW}📥 Cloning repository into $TMP_DIR...${NC}"
 		git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR" || {
 			echo "Failed to clone repository"
@@ -130,12 +126,8 @@ elif [[ $(uname -s) == "Linux" ]]; then
 		sudo dnf -y update
 		tools=("zsh" "git" "curl" "make" "gcc-c++" "gcc" "openssh-server" "man-db" "wget" "shfmt" "llvm" "clang
 " "clang-devel" "clang-tools-extra" "lldb" "lld" "cmake" "fastfetch" "lua" "bat" "ripgrep" "fd-find" "fzf" "rustup" "graphviz")
-		# 遍历工具列表，检查是否已安装
-		for tool in "${tools[@]}"; do
-			if ! command -v "$tool" >/dev/null 2>&1; then
-				sudo dnf install -y "$tool"
-			fi
-		done
+		install_packages "tools"
+
 		# 先安装 git，再 clone
 		echo -e "${YELLOW}📥 Cloning repository into $TMP_DIR...${NC}"
 		git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR" || {

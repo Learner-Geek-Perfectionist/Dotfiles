@@ -1,7 +1,7 @@
 # =================================开始安装 cmake=================================
 # 检查 cmake 是否已安装
 if command -v cmake >/dev/null 2>&1; then
-	print_centered_message "${GREEN}cmake 已安装，跳过安装。${NC}" "true" "true"
+	print_centered_message "${GREEN}cmake 已安装，跳过安装。版本: $(cmake --version | head -n1 | awk '{print $3}')${NC}" "false" "true"
 else
 	print_centered_message "${GREEN}开始安装 cmake... ${NC}" "true" "false"
 
@@ -62,10 +62,9 @@ fi
 # =================================结束安装 cmake=================================
 
 # =================================开始安装 llvm 套装=================================
-
 # 检查 llvm 套装 是否已安装
 if command -v llvm-config >/dev/null 2>&1; then
-	print_centered_message "${GREEN}llvm 套装 已安装，跳过安装。${NC}" "true" "true"
+	print_centered_message "${GREEN}llvm 套装 已安装，跳过安装。版本: $(llvm-config --version)${NC}" "true" "true"
 else
 	print_centered_message "${GREEN}开始安装 llvm 套装... ${NC}" "true" "false"
 
@@ -120,17 +119,18 @@ else
 	# 清理临时目录
 	rm -rf "$TEMP_DIR"
 
-	if command -v clangd >/dev/null 2>&1; then
-		print_centered_message "${GREEN}llvm 套装安装完成 ✅${NC}" "false" "true"
+	if command -v llvm-config >/dev/null 2>&1; then
+		print_centered_message "${GREEN}llvm 套装安装完成 ✅ 版本: $(llvm-config --version)${NC}" "false" "true"
 	else
 		print_centered_message "${RED}llvm 套装安装失败 ❌${NC}" "false" "true"
 		exit 1
 	fi
 fi
+# =================================结束安装 llvm 套装=================================
 
 # =================================开始安装 fastfetch=================================
 if command -v fastfetch >/dev/null 2>&1; then
-	print_centered_message "${GREEN} fastfetch 已安装，跳过安装。${NC}" "true" "true"
+	print_centered_message "${GREEN}fastfetch 已安装，跳过安装。版本: $(fastfetch --version | head -n1 | awk '{print $2}')${NC}" "true" "true"
 else
 	print_centered_message "${GREEN}开始安装 fastfetch${NC}" "true" "false"
 	RELEASES_PAGE=$(curl -s "https://github.com/fastfetch-cli/fastfetch/releases")
@@ -171,14 +171,18 @@ else
 	# 清理临时文件
 	rm -rf "$TMP_DIR"
 
-	print_centered_message "${GREEN} fastfetch 安装完成 ✅${NC}" "false" "true"
-
+	if command -v fastfetch >/dev/null 2>&1; then
+		print_centered_message "${GREEN}fastfetch 安装完成 ✅ 版本: $(fastfetch --version | head -n1 | awk '{print $2}')${NC}" "false" "true"
+	else
+		print_centered_message "${RED}fastfetch 安装失败 ❌${NC}" "false" "true"
+		exit 1
+	fi
 fi
 # =================================结束安装 fastfetch=================================
 
 # =================================开始安装 kitty=================================
 if command -v kitty >/dev/null 2>&1; then
-	print_centered_message "${GREEN} kitty 已安装，跳过安装。${NC}" "true" "true"
+	print_centered_message "${GREEN}kitty 已安装，跳过安装。版本: $(kitty --version | awk '{print $2}')${NC}" "true" "true"
 else
 	print_centered_message "${GREEN}开始安装 kitty... ${NC}" "true" "false"
 	sudo mkdir -p /opt/kitty && sudo chmod -R a+rw /opt/kitty
@@ -203,15 +207,18 @@ else
 	sudo sed -i 's|Exec=kitty|Exec=/opt/kitty/kitty.app/bin/kitty|g' /usr/share/applications/kitty*.desktop
 	sudo sed -i 's|Icon=kitty|Icon=/opt/kitty/kitty.app/share/icons/hicolor/256x256/apps/kitty.png|g' /usr/share/applications/kitty*.desktop
 
-	print_centered_message "${GREEN} kitty 安装完成 ✅${NC}" "false" "true"
-
+	if command -v kitty >/dev/null 2>&1; then
+		print_centered_message "${GREEN}kitty 安装完成 ✅ 版本: $(kitty --version | awk '{print $2}')${NC}" "false" "true"
+	else
+		print_centered_message "${RED}kitty 安装失败 ❌${NC}" "false" "true"
+		exit 1
+	fi
 fi
-
 # =================================结束安装 kitty=================================
 
 # =================================开始安装 fzf=================================
 if command -v fzf >/dev/null 2>&1; then
-	print_centered_message "${GREEN}fzf 已安装，跳过安装。${NC}" "false" "false"
+	print_centered_message "${GREEN}fzf 已安装，跳过安装。版本: $(fzf --version | awk '{print $2}')${NC}" "false" "false"
 else
 	print_centered_message "${GREEN}开始安装 fzf... ${NC}" "false" "false"
 	[[ -d "/tmp/.fzf" ]] && sudo rm -rf "/tmp/.fzf"
@@ -222,7 +229,13 @@ else
 
 	# 清理安装目录
 	sudo rm -rf "/tmp/.fzf"
-	print_centered_message "${GREEN} fzf 安装完成 ✅${NC}" "false" "false"
+
+	if command -v fzf >/dev/null 2>&1; then
+		print_centered_message "${GREEN}fzf 安装完成 ✅ 版本: $(fzf --version | awk '{print $2}')${NC}" "false" "false"
+	else
+		print_centered_message "${RED}fzf 安装失败 ❌${NC}" "false" "false"
+		exit 1
+	fi
 fi
 # =================================结束安装 fzf=================================
 
@@ -230,7 +243,7 @@ export CARGO_HOME=/opt/rust/cargo
 export RUSTUP_HOME=/opt/rust/rustup
 # =================================开始安装 Rust 工具=================================
 if command -v rustc >/dev/null 2>&1; then
-	print_centered_message "${GREEN}rustc 已安装，跳过安装。${NC}" "true" "true"
+	print_centered_message "${GREEN}rustc 已安装，跳过安装。版本: $(rustc --version | awk '{print $2}')${NC}" "true" "true"
 else
 	print_centered_message "${GREEN}开始安装 rustc...${NC}" "true" "false"
 
@@ -249,14 +262,19 @@ else
 	sudo -E rustup update
 	# 5. 初始化 rustup 环境
 	rustup default stable
-	# .rustup 目录安装在 RUSTUP_HOME；cargo、rustc、rustup、eza、rg、fd 都安装在 CARGO_HOME（但是它们符号链接在 /usr/local/bin/）
-	print_centered_message "${GREEN} rustc 安装完成 ✅${NC}" "false" "true"
+
+	if command -v rustc >/dev/null 2>&1; then
+		print_centered_message "${GREEN}rustc 安装完成 ✅ 版本: $(rustc --version | awk '{print $2}')${NC}" "false" "true"
+	else
+		print_centered_message "${RED}rustc 安装失败 ❌${NC}" "false" "true"
+		exit 1
+	fi
 fi
 # =================================结束安装 Rust 工具=================================
 
 # =================================开始安装 cargo-binstall=================================
 if command -v cargo-binstall >/dev/null 2>&1; then
-	print_centered_message "${GREEN}cargo-binstall 已安装，跳过安装。${NC}" "true" "true"
+	print_centered_message "${GREEN}cargo-binstall 已安装，跳过安装。版本: $(cargo-binstall --version | awk '{print $2}')${NC}" "true" "true"
 else
 	print_centered_message "${GREEN}开始安装 cargo-binstall... ${NC}" "true" "false"
 	# 安装 cargo-binstall
@@ -264,100 +282,125 @@ else
 	sudo ln -snf /opt/rust/cargo/bin/cargo-binstall /usr/local/bin/
 	# 利用 cargo-binstall 自举，自己安装自己，这样 cargo 包管理工具就可以管理 cargo-binstall
 	cargo-binstall --force -y cargo-binstall
-	print_centered_message "${GREEN} cargo-binstall 安装完成 ✅${NC}" "false" "false"
+
+	if command -v cargo-binstall >/dev/null 2>&1; then
+		print_centered_message "${GREEN}cargo-binstall 安装完成 ✅ 版本: $(cargo-binstall --version | awk '{print $2}')${NC}" "false" "false"
+	else
+		print_centered_message "${RED}cargo-binstall 安装失败 ❌${NC}" "false" "false"
+		exit 1
+	fi
 fi
 # =================================结束安装 cargo-binstall=================================
 
 # =================================开始安装 cargo-update=================================
 if command -v cargo-install-update >/dev/null 2>&1; then
-	print_centered_message "${GREEN}cargo-update 已安装，跳过安装。${NC}" "true" "true"
+	print_centered_message "${GREEN}cargo-update 已安装，跳过安装。版本: $(cargo-install-update --version | awk '{print $2}')${NC}" "true" "true"
 else
 	print_centered_message "${GREEN}开始安装 cargo-update... ${NC}" "true" "false"
 
 	# 安装 cargo-update
 	cargo-binstall -y cargo-update
 	sudo ln -snf /opt/rust/cargo/bin/cargo-install-update /usr/local/bin/
-	print_centered_message "${GREEN} cargo-update 安装完成 ✅${NC}" "false" "false"
+
+	if command -v cargo-install-update >/dev/null 2>&1; then
+		print_centered_message "${GREEN}cargo-update 安装完成 ✅ 版本: $(cargo-install-update --version | awk '{print $2}')${NC}" "false" "false"
+	else
+		print_centered_message "${RED}cargo-update 安装失败 ❌${NC}" "false" "false"
+		exit 1
+	fi
 fi
 # =================================结束安装 cargo-update=================================
 
-# 更新 rustup 自身
-# rustup self update
-
-# # 更新所有已安装的工具链（rustc, cargo, rustfmt, clippy）
-# rustup update
-
-# #更新 第三方 Cargo 工具（fd-find, eza, bat, starship cargo-binstall）
-# cargo install-update -a
-
 # =================================开始安装 eza=================================
 if command -v eza >/dev/null 2>&1; then
-	print_centered_message "${GREEN}eza 已安装，跳过安装。${NC}" "true" "true"
+	print_centered_message "${GREEN}eza 已安装，跳过安装。版本: $(eza --version | awk '{print $2}')${NC}" "true" "true"
 else
 	print_centered_message "${GREEN}开始安装 eza... ${NC}" "true" "false"
 
 	# 安装 eza
 	cargo-binstall -y eza
 	sudo ln -snf /opt/rust/cargo/bin/eza /usr/local/bin/
-	print_centered_message "${GREEN} eza 安装完成 ✅${NC}" "false" "false"
+
+	if command -v eza >/dev/null 2>&1; then
+		print_centered_message "${GREEN}eza 安装完成 ✅ 版本: $(eza --version | awk '{print $2}')${NC}" "false" "false"
+	else
+		print_centered_message "${RED}eza 安装失败 ❌${NC}" "false" "false"
+		exit 1
+	fi
 fi
 # =================================结束安装 eza=================================
 
 # =================================开始安装 fd=================================
-
 if command -v fd >/dev/null 2>&1; then
-	print_centered_message "${GREEN}fd 已安装，跳过安装。${NC}" "true" "true"
+	print_centered_message "${GREEN}fd 已安装，跳过安装。版本: $(fd --version | awk '{print $2}')${NC}" "true" "true"
 else
 	print_centered_message "${GREEN}开始安装 fd... ${NC}" "true" "false"
 	cargo-binstall -y fd-find
 	sudo ln -snf /opt/rust/cargo/bin/fd /usr/local/bin/
-	print_centered_message "${GREEN} fd 安装完成 ✅${NC}" "false" "true"
-fi
 
+	if command -v fd >/dev/null 2>&1; then
+		print_centered_message "${GREEN}fd 安装完成 ✅ 版本: $(fd --version | awk '{print $2}')${NC}" "false" "true"
+	else
+		print_centered_message "${RED}fd 安装失败 ❌${NC}" "false" "true"
+		exit 1
+	fi
+fi
 # =================================结束安装 fd=================================
 
 # =================================开始安装 rg=================================
-
 if command -v rg >/dev/null 2>&1; then
-	print_centered_message "${GREEN}rg 已安装，跳过安装。${NC}" "false" "false"
+	print_centered_message "${GREEN}rg 已安装，跳过安装。版本: $(rg --version | awk '{print $2}')${NC}" "false" "false"
 else
 	print_centered_message "${GREEN}开始安装 rg... ${NC}" "false" "false"
 	cargo-binstall -y ripgrep
 	sudo ln -snf /opt/rust/cargo/bin/rg /usr/local/bin/
-	print_centered_message "${GREEN} rg 安装完成 ✅${NC}" "false" "false"
-fi
 
+	if command -v rg >/dev/null 2>&1; then
+		print_centered_message "${GREEN}rg 安装完成 ✅ 版本: $(rg --version | awk '{print $2}')${NC}" "false" "false"
+	else
+		print_centered_message "${RED}rg 安装失败 ❌${NC}" "false" "false"
+		exit 1
+	fi
+fi
 # =================================结束安装 rg=================================
 
 # =================================开始安装 bat=================================
-
 if command -v bat >/dev/null 2>&1; then
-	print_centered_message "${GREEN}bat 已安装，跳过安装。${NC}" "true" "true"
+	print_centered_message "${GREEN}bat 已安装，跳过安装。版本: $(bat --version | awk '{print $2}')${NC}" "true" "true"
 else
 	print_centered_message "${GREEN}开始安装 bat... ${NC}" "true" "false"
 	cargo-binstall -y bat
 	sudo ln -snf /opt/rust/cargo/bin/bat /usr/local/bin/
-	print_centered_message "${GREEN} bat 安装完成 ✅${NC}" "false" "true"
+
+	if command -v bat >/dev/null 2>&1; then
+		print_centered_message "${GREEN}bat 安装完成 ✅ 版本: $(bat --version | awk '{print $2}')${NC}" "false" "true"
+	else
+		print_centered_message "${RED}bat 安装失败 ❌${NC}" "false" "true"
+		exit 1
+	fi
 fi
 # =================================结束安装 bat=================================
 
 # =================================开始安装 lua=================================
-
 if command -v lua >/dev/null 2>&1; then
-	print_centered_message "${GREEN}lua 已安装，跳过安装。${NC}" "false" "true"
+	print_centered_message "${GREEN}lua 已安装，跳过安装。版本: $(lua -v | awk '{print $2}')${NC}" "false" "true"
 else
 	print_centered_message "${GREEN}开始安装 lua... ${NC}" "false" "false"
 	latest=$(apt list lua* 2>/dev/null | grep -oP 'lua\d+\.\d+' | sort -V | tail -n 1)
 	sudo apt install -y ${latest} lib${latest}-dev
-	print_centered_message "${GREEN} lua 安装完成 ✅${NC}" "false" "true"
 
+	if command -v lua >/dev/null 2>&1; then
+		print_centered_message "${GREEN}lua 安装完成 ✅ 版本: $(lua -v | awk '{print $2}')${NC}" "false" "true"
+	else
+		print_centered_message "${RED}lua 安装失败 ❌${NC}" "false" "true"
+		exit 1
+	fi
 fi
 # =================================结束安装 lua=================================
 
 # =================================开始安装 shfmt=================================
-
 if command -v shfmt >/dev/null 2>&1; then
-	print_centered_message "${GREEN}shfmt 已安装，跳过安装。${NC}" "false" "true"
+	print_centered_message "${GREEN}shfmt 已安装，跳过安装。版本: $(shfmt -version)${NC}" "false" "true"
 else
 	print_centered_message "${GREEN}开始安装 shfmt... ${NC}" "false" "false"
 
@@ -395,26 +438,36 @@ else
 
 	# 构建下载URL
 	FILENAME="/tmp/shfmt_${VERSION}_${OS}_${ARCH}"
-	DOWNLOAD_URL="https://github.com/mvdan/sh/releases/download/${VERSION}/${FILENAME}"
+	DOWNLOAD_URL="https://github.com/mvdan/sh/releases/download/${VERSION}/${FILENAME##*/}"
 
 	curl -L -o "$FILENAME" "$DOWNLOAD_URL"
 	chmod +x "$FILENAME"
-	sudo mv "$FILENAME" /usr/local/bin/shfmt # 这里添加了重命名
+	sudo mv "$FILENAME" /usr/local/bin/shfmt
 
-	print_centered_message "${GREEN} shfmt 安装完成 ✅${NC}" "false" "true"
-
+	if command -v shfmt >/dev/null 2>&1; then
+		print_centered_message "${GREEN}shfmt 安装完成 ✅ 版本: $(shfmt -version)${NC}" "false" "true"
+	else
+		print_centered_message "${RED}shfmt 安装失败 ❌${NC}" "false" "true"
+		exit 1
+	fi
 fi
 # =================================结束安装 shfmt=================================
 
 # =================================开始安装 dust=================================
 if command -v dust >/dev/null 2>&1; then
-	print_centered_message "${GREEN}dust 已安装，跳过安装。${NC}" "true" "true"
+	print_centered_message "${GREEN}dust 已安装，跳过安装。版本: $(dust --version | awk '{print $2}')${NC}" "true" "true"
 else
 	print_centered_message "${GREEN}开始安装 dust... ${NC}" "true" "false"
 
 	# 安装 dust
 	cargo-binstall -y du-dust
 	sudo ln -snf /opt/rust/cargo/bin/dust /usr/local/bin/
-	print_centered_message "${GREEN} dust 安装完成 ✅${NC}" "false" "false"
+
+	if command -v dust >/dev/null 2>&1; then
+		print_centered_message "${GREEN}dust 安装完成 ✅ 版本: $(dust --version | awk '{print $2}')${NC}" "false" "false"
+	else
+		print_centered_message "${RED}dust 安装失败 ❌${NC}" "false" "false"
+		exit 1
+	fi
 fi
 # =================================结束安装 dust=================================

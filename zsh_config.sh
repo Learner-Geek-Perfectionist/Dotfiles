@@ -2,7 +2,6 @@
 
 # 设置脚本在遇到错误时退出
 set -e
-source /tmp/Dotfiles/auxiliary_function.sh
 
 # 定义颜色
 export RED='\033[0;31m' \
@@ -67,6 +66,8 @@ if [[ $(uname -s) == "Darwin" ]]; then
 		echo "Failed to clone repository"
 		exit 1
 	}
+	source /tmp/Dotfiles/auxiliary_function.sh
+	source /tmp/Dotfiles/macos_install.sh
 
 elif [[ $(uname -s) == "Linux" ]]; then
 
@@ -84,6 +85,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
 			echo "Failed to clone repository"
 			exit 1
 		}
+		source /tmp/Dotfiles/auxiliary_function.sh
 		source /tmp/Dotfiles/ubuntu_install_tools.sh
 
 	elif [[ $os_type == "fedora" ]]; then
@@ -98,6 +100,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
 			echo "Failed to clone repository"
 			exit 1
 		}
+		source /tmp/Dotfiles/auxiliary_function.sh
 		source /tmp/Dotfiles/fedora_install_tools.sh
 
 	else

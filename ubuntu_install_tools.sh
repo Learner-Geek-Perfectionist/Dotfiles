@@ -231,7 +231,7 @@ else
 	sudo rm -rf "/tmp/.fzf"
 
 	if command -v fzf >/dev/null 2>&1; then
-		print_centered_message "${GREEN}fzf 安装完成 ✅ 版本: $(fzf --version | awk '{print $2}')${NC}" "false" "false"
+		print_centered_message "${GREEN}fzf 安装完成 ✅ 版本: $(fzf --version | awk '{print $1}')${NC}" "false" "false"
 	else
 		print_centered_message "${RED}fzf 安装失败 ❌${NC}" "false" "false"
 		exit 1
@@ -284,7 +284,7 @@ else
 	cargo-binstall --force -y cargo-binstall
 
 	if command -v cargo-binstall >/dev/null 2>&1; then
-		print_centered_message "${GREEN}cargo-binstall 安装完成 ✅ 版本: $(cargo-binstall --version | awk '{print $2}')${NC}" "false" "false"
+		print_centered_message "${GREEN}cargo-binstall 安装完成 ✅ 版本: $(cargo-binstall -V | awk '{print $1}')${NC}" "false" "false"
 	else
 		print_centered_message "${RED}cargo-binstall 安装失败 ❌${NC}" "false" "false"
 		exit 1

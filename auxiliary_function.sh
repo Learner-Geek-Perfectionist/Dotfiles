@@ -12,7 +12,6 @@ LAST_CALL_STATE="init"
 print_centered_message() {
 	local message="$1"
 	local cols=${COLUMNS:-$(tput cols 2>/dev/null)} # 兼容终端/非终端
-	cols=${cols:-80}                                # 非终端默认宽度
 	local line=$(printf '%*s' "$cols" '' | tr ' ' '-')
 
 	# -------------------------- 1. 过滤颜色码，确保居中精准 --------------------------

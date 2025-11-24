@@ -23,6 +23,8 @@ caffeinate -i /bin/zsh -c "$(curl -H 'Cache-Control: no-cache' -fsSL "https://ra
 
 caffeinate -i /bin/zsh -c "$(curl -H 'Cache-Control: no-cache' -fsSL "https://gitee.com/oyzxin/Dotfiles/raw/master/install.sh?$(date +%s)")"
 
+
+
 # Linux
 
 # GitHub

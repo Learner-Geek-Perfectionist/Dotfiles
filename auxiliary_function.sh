@@ -6,32 +6,61 @@ INSTALL_DIR=""
 COMPILER_INSTALL_DIR=""
 LATEST_VERSION=""
 
-# 全局变量，记录是否是第一次调用
-PRINT_LINE_STATE=0
+# 全局状态变量：记录上一次调用的阶段（init=初始/start=开始安装/complete=安装完成）
+LAST_CALL_STATE="init"
 
 print_centered_message() {
 	local message="$1"
-	local cols=$(tput cols)
-	# 兼容非终端环境（避免 cols 为空导致格式错乱）
+	local cols=${COLUMNS:-$(tput cols 2>/dev/null)} # 兼容终端/非终端
+	cols=${cols:-80}                                # 非终端默认宽度
 	local line=$(printf '%*s' "$cols" '' | tr ' ' '-')
 
-	# 第一次调用打印顶部横线（变量已初始化，条件成立）
-	if [[ $PRINT_LINE_STATE -eq 0 ]]; then
-		echo "$line"
-		PRINT_LINE_STATE=1 # 标记为已打印，后续调用不再重复打顶部横线
-	fi
-
-	# 修正：过滤颜色码，计算真实可视长度（避免居中偏移）
-	local ansi_pattern=$'\x1B\[[0-9;]*m'
+	# -------------------------- 1. 过滤颜色码，确保居中精准 --------------------------
+	local ansi_pattern=$'\x1B\[[0-9;]*[mGKH]'
 	local visible_message="${message//$ansi_pattern/}"
 	local visible_len=${#visible_message}
 	local pad_length=$(((cols - visible_len) / 2))
+	pad_length=$((pad_length < 0 ? 0 : pad_length)) # 避免负数偏移
 
-	printf "%${pad_length}s" ''
-	echo -e "$message"
+	# -------------------------- 2. 自动识别当前阶段（开始安装 vs 安装完成） --------------------------
+	local current_state
+	if [[ $message == 开始安装* ]]; then
+		current_state="start"
+	elif [[ $message == *安装完成* ]]; then
+		current_state="complete"
+	else
+		# 非标准消息：直接居中，不加横线（改：%s → %b）
+		printf "%*s%b\n" "$pad_length" "" "$message"
+		return
+	fi
 
-	# 2. 每次调用都打印底部横线（补回你之前删掉的逻辑）
-	echo "$line"
+	# -------------------------- 3. 核心逻辑：共享分隔线，避免重复 --------------------------
+	case "$LAST_CALL_STATE-$current_state" in
+	# 场景1：初始状态 → 第一个工具开始（改：%s → %b）
+	init-start)
+		echo "$line"
+		printf "%*s%b\n\n" "$pad_length" "" "$message"
+		LAST_CALL_STATE="start"
+		;;
+
+	# 场景2：上一个工具完成 → 下一个工具开始（改：%s → %b）
+	complete-start)
+		printf "%*s%b\n\n" "$pad_length" "" "$message"
+		LAST_CALL_STATE="start"
+		;;
+
+	# 场景3：当前工具开始 → 当前工具完成（改：%s → %b）
+	start-complete)
+		printf "%*s%b\n" "$pad_length" "" "$message"
+		echo "$line"
+		LAST_CALL_STATE="complete"
+		;;
+
+	# 异常场景（重复调用开始/完成）：直接居中（改：%s → %b）
+	*)
+		printf "%*s%b\n" "$pad_length" "" "$message"
+		;;
+	esac
 }
 
 get_latest_version() {

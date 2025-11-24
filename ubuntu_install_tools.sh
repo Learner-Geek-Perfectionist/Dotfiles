@@ -303,7 +303,7 @@ else
 	sudo ln -snf /opt/rust/cargo/bin/cargo-install-update /usr/local/bin/
 
 	if command -v cargo-install-update >/dev/null 2>&1; then
-		print_centered_message "${GREEN}cargo-update 安装完成 ✅ 版本: $(cargo-install-update --version | awk '{print $2}')${NC}" "false" "false"
+		print_centered_message "${GREEN}cargo-update 安装完成 ✅ 版本: $(cargo-binstall -V | awk '{print $1}')${NC}" "false" "false"
 	else
 		print_centered_message "${RED}cargo-update 安装失败 ❌${NC}" "false" "false"
 		exit 1
@@ -322,7 +322,7 @@ else
 	sudo ln -snf /opt/rust/cargo/bin/eza /usr/local/bin/
 
 	if command -v eza >/dev/null 2>&1; then
-		print_centered_message "${GREEN}eza 安装完成 ✅ 版本: $(eza --version | awk '{print $2}')${NC}" "false" "false"
+		print_centered_message "${GREEN}eza 安装完成 ✅ 版本: $(eza --version | awk 'NR==2 {print $1}')${NC}" "false" "false"
 	else
 		print_centered_message "${RED}eza 安装失败 ❌${NC}" "false" "false"
 		exit 1
@@ -356,7 +356,7 @@ else
 	sudo ln -snf /opt/rust/cargo/bin/rg /usr/local/bin/
 
 	if command -v rg >/dev/null 2>&1; then
-		print_centered_message "${GREEN}rg 安装完成 ✅ 版本: $(rg --version | awk '{print $2}')${NC}" "false" "false"
+		print_centered_message "${GREEN}rg 安装完成 ✅ 版本: $(rg --version | awk 'NR==1 {print $2}')${NC}" "false" "false"
 	else
 		print_centered_message "${RED}rg 安装失败 ❌${NC}" "false" "false"
 		exit 1

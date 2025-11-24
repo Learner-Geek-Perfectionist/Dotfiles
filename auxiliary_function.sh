@@ -12,19 +12,25 @@ PRINT_LINE_STATE=0
 print_centered_message() {
 	local message="$1"
 	local cols=$(tput cols)
+	# 兼容非终端环境（避免 cols 为空导致格式错乱）
 	local line=$(printf '%*s' "$cols" '' | tr ' ' '-')
 
-	# 第一次打印：先打印横线
+	# 第一次调用打印顶部横线（变量已初始化，条件成立）
 	if [[ $PRINT_LINE_STATE -eq 0 ]]; then
 		echo "$line"
-		PRINT_LINE_STATE=1
+		PRINT_LINE_STATE=1 # 标记为已打印，后续调用不再重复打顶部横线
 	fi
 
-	# 居中 message
-	local pad=$(((cols - ${#message}) / 2))
-	printf "%*s%s\n\n" "$pad" "" "$message"
+	# 修正：过滤颜色码，计算真实可视长度（避免居中偏移）
+	local ansi_pattern=$'\x1B\[[0-9;]*m'
+	local visible_message="${message//$ansi_pattern/}"
+	local visible_len=${#visible_message}
+	local pad_length=$(((cols - visible_len) / 2))
 
-	# 每次调用之后自动打印横线
+	printf "%${pad_length}s" ''
+	echo -e "$message"
+
+	# 2. 每次调用都打印底部横线（补回你之前删掉的逻辑）
 	echo "$line"
 }
 

@@ -56,18 +56,18 @@ sudo rm -rf /tmp/Fonts/
 echo -e "${GREEN}🚀 Starting script...${NC}"
 
 if [[ $(uname -s) == "Darwin" ]]; then
-	source /tmp/Dotfiles/auxiliary_function.sh
-	brew update
-	# 定义需要安装的工具
-	tools=("fzf" "eza" "fd" "rg" "kitty" "bat" "fastfetch" "man-db" "lua")
-	install_packages "tools"
+
 	# 先安装 git，再 clone
 	echo -e "${YELLOW}📥 Cloning repository into $TMP_DIR...${NC}"
 	git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR" || {
 		echo "Failed to clone repository"
 		exit 1
 	}
-
+	source /tmp/Dotfiles/auxiliary_function.sh
+	brew update
+	# 定义需要安装的工具
+	tools=("fzf" "eza" "fd" "rg" "kitty" "bat" "fastfetch" "man-db" "lua")
+	install_packages "tools"
 	source /tmp/Dotfiles/macos_install.sh
 
 elif [[ $(uname -s) == "Linux" ]]; then
@@ -77,25 +77,20 @@ elif [[ $(uname -s) == "Linux" ]]; then
 
 	# 根据操作系统安装......
 	if [[ $os_type == "ubuntu" ]]; then
-		source /tmp/Dotfiles/auxiliary_function.sh
-		sudo apt update
-		tools=("zsh" "git" "curl" "make" "g++" "gcc" "openssh-server" "man-db" "wget" "gnupg" "pkg-config" "xz-utils" "gtk-update-icon-cache" "bc" "graphviz" "language-pack-zh-hans" "language-pack-zh-hans-base")
-		install_packages "tools"
 
 		echo -e "${YELLOW}📥 Cloning repository into $TMP_DIR...${NC}"
 		git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR" || {
 			echo "Failed to clone repository"
 			exit 1
 		}
+		source /tmp/Dotfiles/auxiliary_function.sh
+		sudo apt update
+		tools=("zsh" "git" "curl" "make" "g++" "gcc" "openssh-server" "man-db" "wget" "gnupg" "pkg-config" "xz-utils" "gtk-update-icon-cache" "bc" "graphviz" "language-pack-zh-hans" "language-pack-zh-hans-base")
+		install_packages "tools"
 
 		source /tmp/Dotfiles/ubuntu_install_tools.sh
 
 	elif [[ $os_type == "fedora" ]]; then
-		source /tmp/Dotfiles/auxiliary_function.sh
-		sudo dnf -y update
-		tools=("zsh" "git" "curl" "make" "gcc-c++" "gcc" "openssh-server" "man-db" "wget" "shfmt" "llvm" "clang
-" "clang-devel" "clang-tools-extra" "lldb" "lld" "cmake" "fastfetch" "lua" "bat" "ripgrep" "fd-find" "fzf" "rustup" "graphviz")
-		install_packages "tools"
 
 		# 先安装 git，再 clone
 		echo -e "${YELLOW}📥 Cloning repository into $TMP_DIR...${NC}"
@@ -103,7 +98,11 @@ elif [[ $(uname -s) == "Linux" ]]; then
 			echo "Failed to clone repository"
 			exit 1
 		}
-
+		source /tmp/Dotfiles/auxiliary_function.sh
+		sudo dnf -y update
+		tools=("zsh" "git" "curl" "make" "gcc-c++" "gcc" "openssh-server" "man-db" "wget" "shfmt" "llvm" "clang
+" "clang-devel" "clang-tools-extra" "lldb" "lld" "cmake" "fastfetch" "lua" "bat" "ripgrep" "fd-find" "fzf" "rustup" "graphviz")
+		install_packages "tools"
 		source /tmp/Dotfiles/fedora_install_tools.sh
 
 	else

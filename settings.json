@@ -43,20 +43,22 @@
     "C_Cpp.errorSquiggles": "enabled",
     "C_Cpp.loggingLevel": "Information",
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
-    // linux-gcc-arm64
-    "C_Cpp.default.intelliSenseMode": "linux-gcc-x64",
+    "C_Cpp.default.intelliSenseMode": "linux-gcc-arm64",
     "C_Cpp.default.compilerPath": "/usr/bin/g++",
     "C_Cpp.default.cppStandard": "gnu++23",
     "C_Cpp.default.cStandard": "gnu17",
     "C_Cpp.codeAnalysis.clangTidy.enabled": true,
     // 指定头文件包含路径，让 IntelliSense 找到 include 目录下的文件
     "C_Cpp.default.includePath": [
-        "${workspaceFolder}/SERES_TOOL/soa_dump/include",
-        "./**"
+        "${workspaceFolder}/include",
+        "${workspaceFolder}/**"
+        // "./**",
+        // "${workspaceFolder}/include/**",
+        // "/Users/ouyangzhaoxin/Desktop/clangd-header-repro/include/"
     ],
     // 指定 compile_commands.json 路径，辅助 vscode 识别宏定义
     "C_Cpp.default.compileCommands": [
-        "${workspaceFolder}/SERES_TOOL/soa_dump/build/compile_commands.json"
+        // "${workspaceFolder}/SERES_TOOL/soa_dump/build/compile_commands.json"
     ],
     // ======================= 编辑器设置 =======================
     "editor.insertSpaces": true, // 强制用空格缩进
@@ -82,6 +84,8 @@
     },
     // ======================= 终端设置 =======================
     "terminal.integrated.cursorStyle": "line", // 终端光标样式
+    "terminal.integrated.fontFamily": "Maple Mono NF CN ExtraLight", // 终端字体
+    "terminal.integrated.fontSize": 14, // 终端字体大小
     "terminal.integrated.cursorWidth": 1, // 光标宽度（1为最细）
     // 颜色自定义
     "workbench.colorCustomizations": {
@@ -110,5 +114,6 @@
     // ======================= Python 设置 ======================= 
     "[python]": {
         "editor.defaultFormatter": "ms-python.black-formatter"
-    }
+    },
+    "git.ignoreRebaseWarning": true
 }

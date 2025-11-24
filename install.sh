@@ -23,14 +23,15 @@ echo "$(whoami) ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers
 echo -e "${LIGHT_BLUE}已配置用户 $(whoami) 无需 sudo 密码。${NC}"
 
 if [[ $(uname -s) == "Linux" ]]; then
-    # 安装 git、sudo
-    if grep -q 'ID=ubuntu' /etc/os-release; then
-        export DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai
-        sudo apt update -y && sudo apt install -E -y --no-install-recommends git software-properties-common bc unzip locales lsb-release wget tzdata gnupg
-        sudo -E dpkg-reconfigure -f noninteractive tzdata
-    elif grep -q 'ID=fedora' /etc/os-release; then
-        sudo dnf update -y && sudo dnf install -y git bc unzip glibc glibc-common glibc-langpack-zh langpacks-zh_CN glibc-locale-source
-    fi
+	# 安装 git、sudo
+	if grep -q 'ID=ubuntu' /etc/os-release; then
+		export DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai
+		sudo -E apt update &&
+			sudo -E apt install -y --no-install-recommends git software-properties-common bc unzip locales lsb-release wget tzdata gnupg
+		sudo -E dpkg-reconfigure -f noninteractive tzdata
+	elif grep -q 'ID=fedora' /etc/os-release; then
+		sudo dnf update -y && sudo dnf install -y git bc unzip glibc glibc-common glibc-langpack-zh langpacks-zh_CN glibc-locale-source
+	fi
 fi
 
 echo -e "${BLUE}Cloning Dotfiles repository...${NC}"

@@ -259,7 +259,7 @@ else
 	# 3. 链接 cargo、rustc、rustup cargo-binstall 到系统的 PATH 中
 	sudo ln -snf /opt/rust/cargo/bin/* /usr/local/bin/
 	# 4. -E 保持了环境变量
-	sudo -E rustup update
+	rustup update
 	# 5. 初始化 rustup 环境
 	rustup default stable
 

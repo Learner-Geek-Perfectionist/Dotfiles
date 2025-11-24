@@ -7,7 +7,7 @@ COMPILER_INSTALL_DIR=""
 LATEST_VERSION=""
 
 # 全局状态变量：记录上一次调用的阶段（init=初始/start=开始安装/complete=安装完成）
-LAST_CALL_STATE="init"
+[[ -z ${LAST_CALL_STATE+x} ]] && LAST_CALL_STATE="init"
 
 print_centered_message() {
 	local message="$1"

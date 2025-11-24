@@ -49,37 +49,6 @@ elif [[ -f /etc/fedora-release ]]; then
 	sudo dnf -y upgrade --refresh
 fi
 
-# 定义打印居中消息的函数
-print_centered_message() {
-	local message="$1"
-	local single_flag="${2:-true}" # 如果没有提供第二个参数，默认为 true
-	local double_flag="${3:-true}" # 如果没有提供第三个参数，默认为 true
-	local cols=$(stty size | cut -d ' ' -f 2)
-	local line=''
-
-	# 创建横线，长度与终端宽度相等
-	for ((i = 0; i < cols; i++)); do
-		line+='-'
-	done
-
-	if [[ $single_flag == "true" ]]; then
-		# 如果是 true，执行打印上边框的操作
-		echo "$line"
-	fi
-
-	# 计算居中的空格数
-	local pad_length=$(((cols - ${#message}) / 2))
-
-	# 打印居中的消息
-	printf "%${pad_length}s" '' # 打印左边的空格以居中对齐
-	echo -e "$message"
-
-	if [[ $double_flag == "true" ]]; then
-		# 如果是 true，执行打印下边框的操作
-		echo "$line"
-	fi
-}
-
 # 定义临时目录路径
 TMP_DIR="/tmp/Dotfiles"
 
@@ -91,12 +60,7 @@ if [[ $(uname -s) == "Darwin" ]]; then
 	brew update
 	# 定义需要安装的工具
 	tools=("fzf" "eza" "fd" "rg" "kitty" "bat" "fastfetch" "man-db" "lua")
-	# 遍历工具列表，检查是否已安装
-	for tool in "${tools[@]}"; do
-		if ! command -v "$tool" >/dev/null 2>&1; then
-			brew install "$tool"
-		fi
-	done
+	install_packages "tools"
 	# 先安装 git，再 clone
 	echo -e "${YELLOW}📥 Cloning repository into $TMP_DIR...${NC}"
 	git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR" || {

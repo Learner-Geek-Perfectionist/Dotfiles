@@ -231,7 +231,7 @@ else
 	sudo rm -rf "/tmp/.fzf"
 
 	if command -v fzf >/dev/null 2>&1; then
-		print_centered_message "${GREEN}fzf 安装完成 ✅ 版本: fzf --version | awk '{print $1}'${NC}" "false" "false"
+		print_centered_message "${GREEN}fzf 安装完成 ✅ 版本: $(fzf --version | awk '{print $1}')" "false" "false"
 	else
 		print_centered_message "${RED}fzf 安装失败 ❌${NC}" "false" "false"
 		exit 1

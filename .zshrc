@@ -57,9 +57,11 @@ else
 
 fi
 
-# 加载 Plugins
-[[ -f "${HOME}/.config/zsh/plugins/homebrew.zsh" ]] && source "${HOME}/.config/zsh/plugins/homebrew.zsh" || echo "${RED}No ${HOME}/.config/zsh/plugins/homebrew.zsh${NC}"
-[[ -f "${HOME}/.config/zsh/plugins/zinit.zsh" ]] && source "${HOME}/.config/zsh/plugins/zinit.zsh" || echo "${RED}No ${HOME}/.config/zsh/plugins/homebrew.zsh${NC}"
+# 加载 homebrew 插件
+[[ -x "${HOME}/.config/zsh/plugins/homebrew.zsh" ]] && source "$_" || echo "${RED}No ${HOME}/.config/zsh/plugins/homebrew.zsh${NC}"
+
+# 加载 zinit 插件（修正错误路径）
+[[ -x "${HOME}/.config/zsh/plugins/zinit.zsh" ]] && source "$_" || echo "${RED}No ${HOME}/.config/zsh/plugins/zinit.zsh${NC}"
 
 # 自动启动 ssh-agent 并加载密钥
 if [ -z "$SSH_AUTH_SOCK" ]; then

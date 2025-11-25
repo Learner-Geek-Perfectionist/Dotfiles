@@ -1,3 +1,4 @@
+#!/bin/bash
 set -e
 
 export KOTLIN_NATIVE_URL="" \
@@ -6,58 +7,62 @@ export KOTLIN_NATIVE_URL="" \
 	COMPILER_INSTALL_DIR="" \
 	LATEST_VERSION=""
 
-# 全局状态变量：记录上一次调用的阶段（init=初始/start=开始安装/complete=安装完成）
-[[ -z ${LAST_CALL_STATE+x} ]] && export LAST_CALL_STATE="init"
+export RED='\033[0;31m' \
+	GREEN='\033[0;32m' \
+	YELLOW='\033[1;33m' \
+	BLUE='\033[0;34m' \
+	ORANGE='\033[0;93m' \
+	MAGENTA='\033[0;35m' \
+	PURPLE='\033[0;35m' \
+	CYAN='\033[0;36m' \
+	LIGHT_BLUE='\033[1;34m' \
+	DARK_RED='\033[1;31m' \
+	NC='\033[0m' # 没有颜色
 
+# 单一函数：动态获取屏幕宽度 + 消息转义 + 居中打印 + 状态流转
 print_centered_message() {
-	local message="$1"
-	local cols=${COLUMNS:-$(tput cols 2>/dev/null)} # 兼容终端/非终端
-	local line=$(printf '%*s' "$cols" '' | tr ' ' '-')
+	# 1. 动态获取屏幕宽度（优先 tput cols，失败则退出）
+	local term_width
+	term_width=$(tput cols 2>/dev/null)
 
-	# -------------------------- 1. 过滤颜色码，确保居中精准 --------------------------
-	local ansi_pattern=$'\x1B\[[0-9;]*[mGKH]'
-	local visible_message="${message//$ansi_pattern/}"
-	local visible_len=${#visible_message}
-	local pad_length=$(((cols - visible_len) / 2))
-	pad_length=$((pad_length < 0 ? 0 : pad_length)) # 避免负数偏移
-
-	# -------------------------- 2. 自动识别当前阶段（开始安装 vs 安装完成） --------------------------
-	local current_state
-	if [[ $message == 开始安装* ]]; then
-		current_state="start"
-	elif [[ $message == *安装完成* ]]; then
-		current_state="complete"
-	else
-		# 非标准消息：直接居中，不加横线（改：%s → %b）
-		printf "%*s%b\n" "$pad_length" "" "$message"
-		return
+	# 检查 tput 是否成功获取屏幕宽度，如果失败，则退出
+	if [[ -z "$term_width" ]]; then
+		echo -e "${RED}无法获取屏幕宽度，无法继续执行。${NC}"
+		exit 1
 	fi
 
-	# -------------------------- 3. 核心逻辑：共享分隔线，避免重复 --------------------------
-	case "$LAST_CALL_STATE-$current_state" in
-	# 场景1：初始状态 → 第一个工具开始（改：%s → %b）
-	init-start)
-		echo "$line"
-		printf "%*s%b\n\n" "$pad_length" "" "$message"
-		LAST_CALL_STATE="start"
-		;;
+	# 2. 状态管理（用函数内全局变量保存状态，避免全局污染）
+	[[ -z "$__PRINT_CENTERED_STATE" ]] && __PRINT_CENTERED_STATE="none"
 
-	# 场景2：上一个工具完成 → 下一个工具开始（改：%s → %b）
-	complete-start)
-		printf "%*s%b\n\n" "$pad_length" "" "$message"
-		LAST_CALL_STATE="start"
-		;;
+	# 3. 消息转义 + 输出
+	local raw_msg="$1"
+	local escaped_msg
+	escaped_msg=$(echo -e "$raw_msg") # 用 echo -e 进行转义
 
-	# 场景3：当前工具开始 → 当前工具完成（改：%s → %b）
-	start-complete)
-		printf "%*s%b\n" "$pad_length" "" "$message"
-		echo "$line"
-		LAST_CALL_STATE="complete"
-		;;
+	# 4. 生成对应屏幕宽度的横线（动态长度）
+	local dashes
+	dashes=$(printf "%0.s-" $(seq 1 "$term_width"))
 
-	# 异常场景（重复调用开始/完成）：直接居中（改：%s → %b）
-	*)
-		printf "%*s%b\n" "$pad_length" "" "$message"
+	# 5. 核心状态流转 + 居中打印
+	case "$__PRINT_CENTERED_STATE" in
+	none)
+		# 首次调用：横线 → 居中消息 → 空行
+		echo "$dashes"
+		printf "%*s\n" $(((term_width + ${#escaped_msg}) / 2)) "$escaped_msg"
+		echo
+		__PRINT_CENTERED_STATE="start"
+		;;
+	start)
+		# 上一次是开始 → 当前是结束：居中消息 → 横线
+		printf "%*s\n" $(((term_width + ${#escaped_msg}) / 2)) "$escaped_msg"
+		echo "$dashes"
+		__PRINT_CENTERED_STATE="end"
+		;;
+	end)
+		# 上一次是结束 → 当前是新开始：居中消息 → 空行（复用上次底线）
+		printf "%*s\n" $(((term_width + ${#escaped_msg}) / 2)) "$escaped_msg"
+		echo
+		__PRINT_CENTERED_STATE="start"
 		;;
 	esac
 }

@@ -218,7 +218,7 @@ fi
 
 # =================================开始安装 fzf=================================
 if command -v fzf >/dev/null 2>&1; then
-	print_centered_message "${GREEN}fzf 已安装，跳过安装。版本: $(fzf --version | awk '{print $2}')${NC}" "false" "false"
+	print_centered_message "${GREEN}fzf 已安装，跳过安装。版本: $(fzf --version | awk '{print $1}')${NC}" "false" "false"
 else
 	print_centered_message "${GREEN}开始安装 fzf... ${NC}" "false" "false"
 	[[ -d "/tmp/.fzf" ]] && sudo rm -rf "/tmp/.fzf"
@@ -294,7 +294,7 @@ fi
 
 # =================================开始安装 cargo-update=================================
 if command -v cargo-install-update >/dev/null 2>&1; then
-	print_centered_message "${GREEN}cargo-update 已安装，跳过安装。版本: $(cargo-install-update --version | awk '{print $2}')${NC}" "true" "true"
+	print_centered_message "${GREEN}cargo-update 已安装，跳过安装。版本: $(cargo-binstall -V | awk '{print $1}')${NC}" "true" "true"
 else
 	print_centered_message "${GREEN}开始安装 cargo-update... ${NC}" "true" "false"
 
@@ -313,7 +313,7 @@ fi
 
 # =================================开始安装 eza=================================
 if command -v eza >/dev/null 2>&1; then
-	print_centered_message "${GREEN}eza 已安装，跳过安装。版本: $(eza --version | awk '{print $2}')${NC}" "true" "true"
+	print_centered_message "${GREEN}eza 已安装，跳过安装。版本: $(eza --version | awk 'NR==2 {print $1}')${NC}" "true" "true"
 else
 	print_centered_message "${GREEN}开始安装 eza... ${NC}" "true" "false"
 

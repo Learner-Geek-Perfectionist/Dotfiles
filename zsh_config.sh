@@ -57,11 +57,10 @@ echo -e "${GREEN}🚀 Starting script...${NC}"
 
 if [[ $(uname -s) == "Darwin" ]]; then
 
-	# 先安装 git，再 clone
 	echo -e "${YELLOW}📥 Cloning repository into $TMP_DIR...${NC}"
-	git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR" || {
-		brew install git
-	}
+	command -v git >/dev/null 2>&1 || brew install git
+	git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR"
+
 	source /tmp/Dotfiles/auxiliary_function.sh
 	brew update
 	# 定义需要安装的工具
@@ -78,9 +77,9 @@ elif [[ $(uname -s) == "Linux" ]]; then
 	if [[ $os_type == "ubuntu" ]]; then
 
 		echo -e "${YELLOW}📥 Cloning repository into $TMP_DIR...${NC}"
-		git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR" || {
-			sudo apt install -y git
-		}
+		command -v git >/dev/null 2>&1 || sudo apt install -y git
+		git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR"
+
 		source /tmp/Dotfiles/auxiliary_function.sh
 		sudo apt update
 		tools=("zsh" "git" "curl" "make" "g++" "gcc" "openssh-server" "man-db" "wget" "gnupg" "pkg-config" "xz-utils" "gtk-update-icon-cache" "bc" "graphviz" "language-pack-zh-hans" "language-pack-zh-hans-base")
@@ -90,11 +89,10 @@ elif [[ $(uname -s) == "Linux" ]]; then
 
 	elif [[ $os_type == "fedora" ]]; then
 
-		# 先安装 git，再 clone
 		echo -e "${YELLOW}📥 Cloning repository into $TMP_DIR...${NC}"
-		git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR" || {
-			sudo dnf install -y git
-		}
+		command -v git >/dev/null 2>&1 || sudo dnf install -y git
+		git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR"
+
 		source /tmp/Dotfiles/auxiliary_function.sh
 		sudo dnf -y update
 		tools=("zsh" "git" "curl" "make" "gcc-c++" "gcc" "openssh-server" "man-db" "wget" "shfmt" "llvm" "clang

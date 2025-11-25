@@ -274,7 +274,7 @@ fi
 
 # =================================开始安装 cargo-binstall=================================
 if command -v cargo-binstall >/dev/null 2>&1; then
-	print_centered_message "${GREEN}cargo-binstall 已安装，跳过安装。版本: $(cargo-binstall --version | awk '{print $2}')${NC}" "true" "true"
+	print_centered_message "${GREEN}cargo-binstall 已安装，跳过安装。版本: $(cargo-binstall -V | awk '{print $1}')${NC}" "true" "true"
 else
 	print_centered_message "${GREEN}开始安装 cargo-binstall... ${NC}" "true" "false"
 	# 安装 cargo-binstall

@@ -60,8 +60,7 @@ if [[ $(uname -s) == "Darwin" ]]; then
 	# 先安装 git，再 clone
 	echo -e "${YELLOW}📥 Cloning repository into $TMP_DIR...${NC}"
 	git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR" || {
-		echo "Failed to clone repository"
-		exit 1
+		brew install git
 	}
 	source /tmp/Dotfiles/auxiliary_function.sh
 	brew update
@@ -80,8 +79,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
 
 		echo -e "${YELLOW}📥 Cloning repository into $TMP_DIR...${NC}"
 		git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR" || {
-			echo "Failed to clone repository"
-			exit 1
+			sudo apt install -y git
 		}
 		source /tmp/Dotfiles/auxiliary_function.sh
 		sudo apt update
@@ -95,8 +93,7 @@ elif [[ $(uname -s) == "Linux" ]]; then
 		# 先安装 git，再 clone
 		echo -e "${YELLOW}📥 Cloning repository into $TMP_DIR...${NC}"
 		git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR" || {
-			echo "Failed to clone repository"
-			exit 1
+			sudo dnf install -y git
 		}
 		source /tmp/Dotfiles/auxiliary_function.sh
 		sudo dnf -y update

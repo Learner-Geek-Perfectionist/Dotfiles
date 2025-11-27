@@ -1,3 +1,6 @@
+#!/bin/bash
+# Package definitions for different platforms
+
 # 一旦错误，就退出
 set -e
 
@@ -70,6 +73,7 @@ packages_ubuntu=(
 	libgtest-dev
 	libboost-all-dev
 	rsync
+	xz-utils
 )
 
 #fedora
@@ -137,4 +141,21 @@ packages_fedora=(
 	flang
 	du-dust
 	rsync
+	gum
+)
+
+# Zsh Configuration Tools (Subset for zsh_config.sh)
+zsh_tools_macos=(
+	"fzf" "eza" "fd" "ripgrep" "kitty" "bat" "fastfetch" "man-db" "lua" "git" "curl" "zsh"
+)
+
+zsh_tools_ubuntu=(
+	"zsh" "git" "curl" "make" "g++" "gcc" "openssh-server" "man-db" "wget" "gnupg" "pkg-config"
+	"xz-utils" "gtk-update-icon-cache" "bc" "graphviz" "language-pack-zh-hans" "language-pack-zh-hans-base"
+)
+
+zsh_tools_fedora=(
+	"zsh" "git" "curl" "make" "gcc-c++" "gcc" "openssh-server" "man-db" "wget" "shfmt"
+	"llvm" "clang" "clang-devel" "clang-tools-extra" "lldb" "lld" "cmake" "fastfetch"
+	"lua" "bat" "ripgrep" "fd-find" "fzf" "rustup" "graphviz"
 )

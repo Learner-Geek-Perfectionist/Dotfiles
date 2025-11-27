@@ -1,118 +1,116 @@
 #!/bin/bash
 
-# 设置脚本在遇到错误时退出
+# Exit on error
 set -e
 
-# 定义颜色
-export RED='\033[0;31m' \
-	GREEN='\033[0;32m' \
-	YELLOW='\033[1;33m' \
-	BLUE='\033[0;34m' \
-	ORANGE='\033[0;93m' \
-	MAGENTA='\033[0;35m' \
-	PURPLE='\033[0;35m' \
-	CYAN='\033[0;36m' \
-	LIGHT_BLUE='\033[1;34m' \
-	DARK_RED='\033[1;31m' \
-	NC='\033[0m' # 没有颜色
+# Minimal colors for bootstrap
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
 
-# 判断操作系统类型
-if [[ -f /etc/lsb-release ]]; then
-	# 获取Ubuntu版本代号（如focal、jammy、plucky等）
-	CODENAME=$(grep VERSION_CODENAME /etc/os-release | cut -d= -f2)
+# Log file
+LOG_FILE="/tmp/dotfiles-install.log"
 
-	# 获取系统架构
-	ARCH=$(dpkg --print-architecture)
-
-	if [[ $ARCH =~ ^(arm|arm64|aarch64|powerpc|s390x)$ ]]; then
-		REPO_PATH="ubuntu-ports" # 非x86架构（含arm64）使用ports源
-	else
-		REPO_PATH="ubuntu" # x86架构使用标准源
+# Auto-install git if missing
+if ! command -v git &>/dev/null; then
+	echo -e "${YELLOW}Git not found, installing automatically...${NC}"
+	OS_TYPE=$(uname -s)
+	if [[ "$OS_TYPE" == "Darwin" ]]; then
+		xcode-select --install 2>/dev/null || true
+		echo -e "${YELLOW}Please complete the Xcode Tools installation, then press Enter...${NC}"
+		read -r
+	elif [[ "$OS_TYPE" == "Linux" ]]; then
+		if [[ -f /etc/os-release ]]; then
+			DISTRO=$(grep '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
+			case "$DISTRO" in
+			ubuntu | debian)
+				export DEBIAN_FRONTEND=noninteractive
+				sudo apt-get update && sudo apt-get install -y git curl
+				;;
+			fedora)
+				sudo dnf install -y git curl
+				;;
+			esac
+		fi
 	fi
-
-	# 选择国内镜像（清华镜像支持plucky的ubuntu-ports源）
-	MIRROR_DOMAIN="mirrors.tuna.tsinghua.edu.cn"
-
-	# 替换源地址（确保路径为ubuntu-ports，保留发行版和组件）
-	sudo sed -i -E "s|http://[^/]*/ubuntu(-ports)?|https://${MIRROR_DOMAIN}/${REPO_PATH}|g" /etc/apt/sources.list
-
-	# 更新源缓存
-	sudo apt update
-elif [[ -f /etc/fedora-release ]]; then
-	# Fedora 系统
-	sudo sed -e 's|^metalink=|#metalink=|g' \
-		-e 's|^#baseurl=http://download.example/pub/fedora/linux|baseurl=https://mirrors.ustc.edu.cn/fedora|g' \
-		-i.bak \
-		/etc/yum.repos.d/fedora.repo \
-		/etc/yum.repos.d/fedora-updates.repo
-	sudo dnf -y upgrade --refresh
 fi
 
-# 定义临时目录路径
-TMP_DIR="/tmp/Dotfiles"
+# Define paths (allow override for local testing)
+WORK_DIR="${DOTFILES_DIR:-/tmp/Dotfiles}"
+LIB_DIR="${LIB_DIR:-$WORK_DIR/lib}"
+SCRIPTS_DIR="${SCRIPTS_DIR:-$WORK_DIR/scripts}"
 
-sudo rm -rf "$TMP_DIR"
-sudo rm -rf /tmp/Fonts/
-echo -e "${GREEN}🚀 Starting script...${NC}"
-
-if [[ $(uname -s) == "Darwin" ]]; then
-
-	echo -e "${YELLOW}📥 Cloning repository into $TMP_DIR...${NC}"
-	command -v git >/dev/null 2>&1 || brew install git
-	git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR"
-
-	source /tmp/Dotfiles/auxiliary_function.sh
-	brew update
-	# 定义需要安装的工具
-	tools=("fzf" "eza" "fd" "rg" "kitty" "bat" "fastfetch" "man-db" "lua")
-	install_packages "tools"
-	source /tmp/Dotfiles/macos_install.sh
-
-elif [[ $(uname -s) == "Linux" ]]; then
-
-	# 检测操作系统
-	os_type=$(grep '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
-
-	# 根据操作系统安装......
-	if [[ $os_type == "ubuntu" ]]; then
-
-		echo -e "${YELLOW}📥 Cloning repository into $TMP_DIR...${NC}"
-		command -v git >/dev/null 2>&1 || sudo apt install -y git
-		git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR"
-
-		source /tmp/Dotfiles/auxiliary_function.sh
-		sudo apt update
-		tools=("zsh" "git" "curl" "make" "g++" "gcc" "openssh-server" "man-db" "wget" "gnupg" "pkg-config" "xz-utils" "gtk-update-icon-cache" "bc" "graphviz" "language-pack-zh-hans" "language-pack-zh-hans-base")
-		install_packages "tools"
-
-		source /tmp/Dotfiles/ubuntu_install_tools.sh
-
-	elif [[ $os_type == "fedora" ]]; then
-
-		echo -e "${YELLOW}📥 Cloning repository into $TMP_DIR...${NC}"
-		command -v git >/dev/null 2>&1 || sudo dnf install -y git
-		git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR"
-
-		source /tmp/Dotfiles/auxiliary_function.sh
-		sudo dnf -y update
-		tools=("zsh" "git" "curl" "make" "gcc-c++" "gcc" "openssh-server" "man-db" "wget" "shfmt" "llvm" "clang
-" "clang-devel" "clang-tools-extra" "lldb" "lld" "cmake" "fastfetch" "lua" "bat" "ripgrep" "fd-find" "fzf" "rustup" "graphviz")
-		install_packages "tools"
-		source /tmp/Dotfiles/fedora_install_tools.sh
-
-	else
-
-		print_centered_message "${RED}不支持的发行版，目前只支持 fedora、ubuntu${NC}"
-	fi
-
-	# 修改默认的登录 shell 为 zsh
-	# 获取当前用户的默认 shell
-	current_shell=$(getent passwd "$(whoami)" | cut -d: -f7)
-	# 如果当前 shell 不是 zsh，则更改为 zsh
-	[[ "$(command -v zsh)" != "$current_shell" ]] && sudo chsh -s "$(command -v zsh)" "$(whoami)"
+# Prepare workspace (reuse if already cloned)
+if [[ -d "$WORK_DIR/.git" ]]; then
+	echo -e "${BLUE}Updating existing Dotfiles clone in $WORK_DIR...${NC}"
+	git -C "$WORK_DIR" pull --ff-only
 else
-	echo -e "${MAGENTA}未知的操作系统类型${NC}"
+	if [[ -d "$WORK_DIR" ]]; then
+		if [[ "$WORK_DIR" == /tmp/* ]]; then
+			rm -rf "$WORK_DIR"
+		else
+			echo -e "${RED}Directory $WORK_DIR already exists and is not a Git repository. Please remove it or set DOTFILES_DIR to an empty path.${NC}"
+			exit 1
+		fi
+	fi
+	echo -e "${BLUE}Cloning Dotfiles repository into $WORK_DIR...${NC}"
+	git clone --depth=1 https://github.com/Learner-Geek-Perfectionist/Dotfiles.git "$WORK_DIR"
 fi
 
-# 安装 zsh 的 dotfiles
-source /tmp/Dotfiles/update_dotfiles.sh
+export DOTFILES_DIR="$WORK_DIR"
+export LIB_DIR SCRIPTS_DIR
+
+# Source Libraries
+source "$LIB_DIR/constants.sh"
+source "$LIB_DIR/packages.sh"
+source "$LIB_DIR/utils.sh"
+
+# Initialize logging
+init_logging
+
+echo -e "${GREEN}🚀 Starting Zsh Configuration Script...${NC}"
+
+OS_TYPE=$(uname -s)
+
+if [[ "$OS_TYPE" == "Darwin" ]]; then
+	# Check Homebrew
+	if ! command -v brew >/dev/null 2>&1; then
+		print_msg "${YELLOW}Homebrew not found. Installing...${NC}" "212"
+		/bin/zsh -c "$(curl -fsSL https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh)"
+		source "${HOME}/.zprofile"
+	fi
+
+	print_msg "${BLUE}Installing Zsh tools for macOS...${NC}" "35"
+	install_packages "zsh_tools_macos"
+
+elif [[ "$OS_TYPE" == "Linux" ]]; then
+	DISTRO_ID=$(grep '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
+
+	if [[ "$DISTRO_ID" == "ubuntu" ]]; then
+		sudo apt update
+		print_msg "${BLUE}Installing Zsh tools for Ubuntu...${NC}" "35"
+		install_packages "zsh_tools_ubuntu"
+		# Source the extra tools script (cmake, llvm, etc)
+		source "$SCRIPTS_DIR/ubuntu_tools.sh"
+
+	elif [[ "$DISTRO_ID" == "fedora" ]]; then
+		sudo dnf -y update
+		print_msg "${BLUE}Installing Zsh tools for Fedora...${NC}" "35"
+		install_packages "zsh_tools_fedora"
+		# Source the extra tools script
+		source "$SCRIPTS_DIR/fedora_tools.sh"
+	fi
+
+	# Change Shell
+	CURRENT_SHELL=$(getent passwd "$(whoami)" | cut -d: -f7)
+	ZSH_PATH=$(command -v zsh)
+	if [[ -n "$ZSH_PATH" && "$ZSH_PATH" != "$CURRENT_SHELL" ]]; then
+		print_msg "${YELLOW}Changing default shell to zsh...${NC}" "212"
+		sudo chsh -s "$ZSH_PATH" "$(whoami)"
+	fi
+fi
+
+# Setup Dotfiles
+source "$SCRIPTS_DIR/setup_dotfiles.sh"

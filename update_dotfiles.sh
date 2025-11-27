@@ -1,92 +1,51 @@
 #!/bin/bash
+# Wrapper script to maintain compatibility with user's workflow
+# Usage 3: "仅仅安装 zsh 的 dotfiles"
 
-# 设置脚本在遇到错误时退出
 set -e
 
-# 定义颜色
-export RED='\033[0;31m' \
-	GREEN='\033[0;32m' \
-	YELLOW='\033[1;33m' \
-	BLUE='\033[0;34m' \
-	ORANGE='\033[0;93m' \
-	MAGENTA='\033[0;35m' \
-	PURPLE='\033[0;35m' \
-	CYAN='\033[0;36m' \
-	LIGHT_BLUE='\033[1;34m' \
-	DARK_RED='\033[1;31m' \
-	NC='\033[0m' # 没有颜色
+# Minimal colors
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
 
-# 定义临时目录路径
-TMP_DIR="/tmp/Dotfiles"
-
-rm -rf "$TMP_DIR"
-rm -rf /tmp/Fonts/
-echo -e "${GREEN}🚀 Starting script...${NC}"
-
-# 先安装 git，再 clone
-echo -e "${YELLOW}📥 Cloning repository into $TMP_DIR...${NC}"
-git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Dotfiles "$TMP_DIR" || {
-	echo "Failed to clone repository"
-	exit 1
-}
-
-# ================================= 开始安装 dotfiles =================================
-
-# Ensure XDG base directories exist
-mkdir -p "$HOME/.config/zsh/plugins" "${HOME}/.config/kitty" "$HOME/.cache/zsh" "${HOME}/.local/share/zinit" "$HOME/.local/state"
-
-# 定义配置列表
-configs=(".zshenv" ".zprofile" ".zshrc" ".config/kitty" ".config/zsh")
-
-# 删除旧配置和复制新配置
-echo -e "${YELLOW}🔍 Checking and removing old configuration files if they exist...${NC}"
-for config in "${configs[@]}"; do
-	if [[ -f "${HOME}/${config}" ]] || [[ -d "${HOME}/${config}" ]]; then
-		echo -e "${RED}🗑️ Removing old ${HOME}/${config} ${NC}"
-		rm -rf "${HOME}/$config"
+# Auto-install git if missing
+if ! command -v git &>/dev/null; then
+	echo -e "${YELLOW}Git not found, installing automatically...${NC}"
+	OS_TYPE=$(uname -s)
+	if [[ "$OS_TYPE" == "Darwin" ]]; then
+		xcode-select --install 2>/dev/null || true
+		echo -e "${YELLOW}Please complete the Xcode Tools installation, then press Enter...${NC}"
+		read -r
+	elif [[ "$OS_TYPE" == "Linux" ]]; then
+		if [[ -f /etc/os-release ]]; then
+			DISTRO=$(grep '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
+			case "$DISTRO" in
+			ubuntu | debian)
+				export DEBIAN_FRONTEND=noninteractive
+				sudo apt-get update && sudo apt-get install -y git
+				;;
+			fedora)
+				sudo dnf install -y git
+				;;
+			esac
+		fi
 	fi
-	echo -e "${PURPLE}📋 Moving new ${config} to ${HOME}/${config} ${NC}"
-	cp -r "${TMP_DIR}/${config}" "${HOME}/${config}"
-done
-
-# 针对 macOS 的配置,
-# 在文件中添加以下代码
-[[ "$(uname)" == "Darwin" ]] && cp -r "$TMP_DIR/sh-script/" "$HOME/sh-script/"
-
-# 添加 .hammerspoon 文件夹
-if [[ "$(uname)" == "Darwin" ]]; then
-	if [[ -d "${HOME}/.hammerspoon" ]]; then
-		echo -e "${RED}🗑️ Removing old .hammerspoon...${NC}"
-		rm -rf "${HOME}/.hammerspoon"
-	fi
-	echo -e "${PURPLE}📋 Copying new .hammerspoon to "${HOME}/.hammerspoon"...${NC}"
-	cp -r "${TMP_DIR}/.hammerspoon" "${HOME}/.hammerspoon"
 fi
 
-# 添加 karabiner 的配置文件：karabiner.json
-if [[ "$(uname)" == "Darwin" ]]; then
-	if [[ -f "${HOME}/.config/karabiner/karabiner.json" ]]; then
-		echo -e "${RED}🗑️ Removing old karabiner.json....${NC}"
-		rm -rf "${HOME}/.config/karabiner/karabiner.json"
-	fi
-	echo -e "${PURPLE}📋 Copying new karabiner.json to "${HOME}/.config/karabiner/karabiner.json"...${NC}"
-	cp -r "${TMP_DIR}/.config/karabiner/karabiner.json" "${HOME}/.config/karabiner/karabiner.json"
+# Clone if needed (if run standalone without repo)
+DOTFILES_DIR="${DOTFILES_DIR:-/tmp/Dotfiles}"
+if [[ -d "$DOTFILES_DIR/.git" ]]; then
+	echo -e "${BLUE}Updating existing Dotfiles...${NC}"
+	git -C "$DOTFILES_DIR" pull --ff-only
+elif [[ -d "$DOTFILES_DIR" ]]; then
+	rm -rf "$DOTFILES_DIR"
+	git clone --depth=1 https://github.com/Learner-Geek-Perfectionist/Dotfiles.git "$DOTFILES_DIR"
+else
+	git clone --depth=1 https://github.com/Learner-Geek-Perfectionist/Dotfiles.git "$DOTFILES_DIR"
 fi
 
-echo -e "${GREEN}🧹 Old configuration files removed and new ones copied.${NC}"
-echo -e "${GREEN}✔️ New configuration files copied.${NC}"
-
-# 清理临时目录
-echo -e "${YELLOW}🧼 Cleaning up temporary files...${NC}"
-rm -rf "$TMP_DIR"
-rm -rf /tmp/Fonts/
-
-echo -e "${GREEN}✔️ Temporary files removed.${NC}"
-echo -e "${GREEN}✅ Script completed successfully. Files have been successfully copied to the user's home directory.${NC}"
-
-# 安装 zsh 插件
-~/.config/zsh/plugins/zinit-plugin.zsh
-
-rm -rf $HOME/.zcompdump $HOME/.zsh_history
-
-# ================================= 结束安装 dotfiles =================================
+export DOTFILES_DIR
+export LIB_DIR="$DOTFILES_DIR/lib"
+export SCRIPTS_DIR="$DOTFILES_DIR/scripts"
+source "$SCRIPTS_DIR/setup_dotfiles.sh"

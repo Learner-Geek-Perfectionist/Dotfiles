@@ -117,10 +117,65 @@ ensure_gum() {
 	fi
 }
 
+# Function: Convert ANSI 256 color codes to hex strings understood by gum/lipgloss
+_ansi256_to_hex() {
+	local code="$1"
+
+	# Allow direct hex input like #FF0000 or FF0000
+	if [[ "$code" =~ ^#?[0-9a-fA-F]{6}$ ]]; then
+		printf '#%s' "${code#\#}"
+		return 0
+	fi
+
+	# Only process numeric codes beyond this point
+	if ! [[ "$code" =~ ^[0-9]+$ ]]; then
+		return 1
+	fi
+
+	local value=$((code))
+
+	# Standard 16 ANSI colors
+	if ((value >= 0 && value <= 15)); then
+		local standard=(
+			"#000000" "#800000" "#008000" "#808000"
+			"#000080" "#800080" "#008080" "#c0c0c0"
+			"#808080" "#ff0000" "#00ff00" "#ffff00"
+			"#0000ff" "#ff00ff" "#00ffff" "#ffffff"
+		)
+		printf '%s' "${standard[value]}"
+		return 0
+	fi
+
+	# 6x6x6 color cube (codes 16-231)
+	if ((value >= 16 && value <= 231)); then
+		local -a palette=(0 95 135 175 215 255)
+		local idx=$((value - 16))
+		local r=${palette[idx / 36]}
+		local g=${palette[(idx / 6) % 6]}
+		local b=${palette[idx % 6]}
+		printf '#%02X%02X%02X' "$r" "$g" "$b"
+		return 0
+	fi
+
+	# Grayscale ramp (codes 232-255)
+	if ((value >= 232 && value <= 255)); then
+		local gray=$((8 + (value - 232) * 10))
+		printf '#%02X%02X%02X' "$gray" "$gray" "$gray"
+		return 0
+	fi
+
+	return 1
+}
+
 # Function: Print styled message using gum
 # Usage: print_msg "Message" "ColorCode(optional)"
 print_msg() {
-	local color="${2:-212}"
+	local color_input="${2:-212}"
+	local color_hex
+
+	color_hex=$(_ansi256_to_hex "$color_input") || color_hex=""
+	[[ -z "$color_hex" ]] && color_hex="#FF87D7"
+
 	ensure_gum
 	gum style \
 		--border double \
@@ -128,8 +183,8 @@ print_msg() {
 		--width "$(($(tput cols) - 2))" \
 		--margin "0 0" \
 		--padding "0 2" \
-		--border-foreground "$color" \
-		--foreground "$color" \
+		--border-foreground "$color_hex" \
+		--foreground "$color_hex" \
 		"$1"
 }
 

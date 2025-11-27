@@ -120,8 +120,8 @@ ensure_gum() {
 # Function: Print styled message using gum
 # Usage: print_msg "Message" "ColorCode(optional)"
 print_msg() {
+	local color="${2:-212}"
 	ensure_gum
-	local color="${2:-99}"
 	gum style \
 		--border double \
 		--align center \

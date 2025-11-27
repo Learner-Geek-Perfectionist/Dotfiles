@@ -54,7 +54,7 @@ if [[ -z "$packages_to_reinstall" ]]; then
 	echo -e "${GREEN}No packages need man-page reinstallation.${NC}"
 else
 	# Might fail if list is too long, but usually ok
-	sudo dnf -y reinstall $packages_to_reinstall && sudo mandb -c
+	sudo dnf -y reinstall $packages_to_reinstall && sudo mandb -q 2>/dev/null || true
 fi
 
 # 8. Docker

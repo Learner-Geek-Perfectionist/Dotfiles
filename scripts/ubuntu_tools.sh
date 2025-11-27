@@ -87,7 +87,9 @@ else
 	if [[ "${LLVM_VERSION:-0}" -gt 14 ]]; then
 		PKG="$PKG libclang-rt-$LLVM_VERSION-dev libpolly-$LLVM_VERSION-dev"
 	fi
-	apt_update && apt_install $PKG
+	apt_update
+	# Use apt directly to avoid 403 errors with apt-fast on third-party mirrors
+	sudo DEBIAN_FRONTEND=noninteractive apt install -y $PKG
 
 	tools=(clang clang++ clangd clang-format clang-tidy clang-cpp lld lldb)
 	llvm_tools=(llvm-ar llvm-ranlib llvm-objdump llvm-objcopy llvm-nm llvm-readelf llvm-readobj llvm-strip
@@ -167,7 +169,7 @@ else
 	sudo ln -snf /opt/kitty/kitty.app/bin/* /usr/local/bin/
 	sudo install -Dm644 /opt/kitty/kitty.app/share/terminfo/x/xterm-kitty /usr/share/terminfo/x/xterm-kitty
 	sudo cp -r /opt/kitty/kitty.app/share/man/* /usr/share/man/
-	sudo mandb
+	sudo mandb -q 2>/dev/null || true
 	sudo cp -r /opt/kitty/kitty.app/share/icons/* /usr/share/icons/
 	sudo update-icon-caches /usr/share/icons/*
 	sudo cp /opt/kitty/kitty.app/share/applications/kitty*.desktop /usr/share/applications/

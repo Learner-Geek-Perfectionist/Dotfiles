@@ -177,17 +177,8 @@ print_msg() {
 	color_hex=$(_ansi256_to_hex "$color_input") || color_hex=""
 	[[ -z "$color_hex" ]] && color_hex="#FF87D7"
 
-	# Get terminal width dynamically using multiple methods
-	if [[ -n "$COLUMNS" && "$COLUMNS" -gt 0 ]]; then
-		term_width=$COLUMNS
-	elif command -v stty &>/dev/null && [[ -t 1 ]]; then
-		term_width=$(stty size 2>/dev/null | awk '{print $2}')
-	else
-		term_width=$(tput cols 2>/dev/null)
-	fi
-
-	# Ensure valid width (minimum 20 for readability)
-	[[ -z "$term_width" || "$term_width" -lt 20 ]] && term_width="$COLUMNS"
+	# Get terminal width using stty (most reliable, doesn't depend on TERM)
+	term_width=$(stty size </dev/tty 2>/dev/null | awk '{print $2}')
 	term_width=$((term_width - 2))
 
 	ensure_gum

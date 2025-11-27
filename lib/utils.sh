@@ -172,15 +172,29 @@ _ansi256_to_hex() {
 print_msg() {
 	local color_input="${2:-212}"
 	local color_hex
+	local term_width
 
 	color_hex=$(_ansi256_to_hex "$color_input") || color_hex=""
 	[[ -z "$color_hex" ]] && color_hex="#FF87D7"
+
+	# Get terminal width dynamically using multiple methods
+	if [[ -n "$COLUMNS" && "$COLUMNS" -gt 0 ]]; then
+		term_width=$COLUMNS
+	elif command -v stty &>/dev/null && [[ -t 1 ]]; then
+		term_width=$(stty size 2>/dev/null | awk '{print $2}')
+	else
+		term_width=$(tput cols 2>/dev/null)
+	fi
+
+	# Ensure valid width (minimum 20 for readability)
+	[[ -z "$term_width" || "$term_width" -lt 20 ]] && term_width="$COLUMNS"
+	term_width=$((term_width - 2))
 
 	ensure_gum
 	gum style \
 		--border double \
 		--align center \
-		--width "$(($(tput cols) - 2))" \
+		--width "$term_width" \
 		--margin "0 0" \
 		--padding "0 2" \
 		--border-foreground "$color_hex" \

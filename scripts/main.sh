@@ -52,7 +52,7 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
 	CURRENT_SHELL=$(getent passwd "$(whoami)" | cut -d: -f7)
 	ZSH_PATH=$(command -v zsh)
 	if [[ -n "$ZSH_PATH" && "$ZSH_PATH" != "$CURRENT_SHELL" ]]; then
-		print_msg "${YELLOW}Changing default shell to zsh...${NC}" "212"
+		print_msg "Changing default shell to zsh..." "212"
 		sudo chsh -s "$ZSH_PATH" "$(whoami)"
 	fi
 

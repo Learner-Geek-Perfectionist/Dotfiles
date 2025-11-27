@@ -181,6 +181,9 @@ print_msg() {
 	term_width=$(stty size </dev/tty 2>/dev/null | awk '{print $2}')
 	term_width=$((term_width - 2))
 
+	# Debug: print to /dev/tty to bypass any redirections
+	echo "=== DEBUG: color_hex='$color_hex', term_width='$term_width' ===" >/dev/tty
+
 	ensure_gum
 	gum style \
 		--border double \

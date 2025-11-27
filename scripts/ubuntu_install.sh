@@ -14,7 +14,7 @@ else
 	REPO_PATH="ubuntu"
 fi
 
-MIRROR_DOMAIN="mirrors.tuna.tsinghua.edu.cn"
+MIRROR_DOMAIN="mirrors.ustc.edu.cn"
 
 # Backup sources
 if [[ ! -f /etc/apt/sources.list.bak ]]; then

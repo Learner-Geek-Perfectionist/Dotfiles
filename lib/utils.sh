@@ -121,14 +121,15 @@ ensure_gum() {
 # Usage: print_msg "Message" "ColorCode(optional)"
 print_msg() {
 	ensure_gum
+	local color="${2:-99}"
 	gum style \
 		--border double \
 		--align center \
 		--width "$(($(tput cols) - 2))" \
 		--margin "0 0" \
 		--padding "0 2" \
-		--border-foreground "${2:-99}" \
-		--foreground "${2:-99}" \
+		--border-foreground "$color" \
+		--foreground "$color" \
 		"$1"
 }
 

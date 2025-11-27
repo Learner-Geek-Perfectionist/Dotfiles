@@ -198,11 +198,10 @@ install_apt_fast() {
 # Function: Smart apt install - uses apt-fast if available, otherwise apt
 # Usage: apt_install package1 package2 ...
 apt_install() {
-	export DEBIAN_FRONTEND=noninteractive
 	if command -v apt-fast &>/dev/null; then
-		sudo -E apt-fast install -y "$@"
+		sudo DEBIAN_FRONTEND=noninteractive apt-fast install -y "$@"
 	else
-		sudo -E apt install -y "$@"
+		sudo DEBIAN_FRONTEND=noninteractive apt install -y "$@"
 	fi
 }
 

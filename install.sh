@@ -55,10 +55,9 @@ fi
 if [[ $(uname -s) == "Linux" ]]; then
 	echo -e "${BLUE}Installing Linux prerequisites...${NC}"
 	if grep -q 'ID=ubuntu' /etc/os-release; then
-		export DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai
-		sudo -E apt update &&
-			sudo -E apt install -y --no-install-recommends git software-properties-common bc unzip locales lsb-release wget tzdata gnupg curl
-		sudo -E dpkg-reconfigure -f noninteractive tzdata
+		sudo DEBIAN_FRONTEND=noninteractive apt update &&
+			sudo DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends git software-properties-common bc unzip locales lsb-release wget tzdata gnupg curl
+		sudo DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai dpkg-reconfigure -f noninteractive tzdata
 
 		# Install apt-fast for faster package downloads
 		echo -e "${BLUE}Installing apt-fast for faster downloads...${NC}"

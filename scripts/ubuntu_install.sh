@@ -26,11 +26,10 @@ sudo sed -i -E "s|http://[^/]*/ubuntu(-ports)?|https://${MIRROR_DOMAIN}/${REPO_P
 apt_update
 
 # 2. Configure Locale & Timezone
-export DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai
 sudo ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-echo "$TZ" | sudo tee /etc/timezone >/dev/null
+echo "Asia/Shanghai" | sudo tee /etc/timezone >/dev/null
 apt_install tzdata
-sudo -E dpkg-reconfigure -f noninteractive tzdata
+sudo DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai dpkg-reconfigure -f noninteractive tzdata
 
 sudo locale-gen zh_CN.UTF-8
 echo "LANG=zh_CN.UTF-8" | sudo tee /etc/default/locale

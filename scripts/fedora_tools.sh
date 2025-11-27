@@ -21,8 +21,8 @@ else
 
 	# 3. 链接 cargo、rustc、rustup 到系统的 PATH 中
 	sudo ln -snf /opt/rust/cargo/bin/* /usr/local/bin/
-	# 4. -E 保持了环境变量
-	sudo -E rustup update
+	# 4. 使用指定环境变量的方式运行 rustup update
+	sudo CARGO_HOME=/opt/rust/cargo RUSTUP_HOME=/opt/rust/rustup rustup update
 	# 5. 初始化 rustup 环境
 	rustup default stable
 	# .rustup 目录安装在 RUSTUP_HOME；cargo、rustc、rustup、eza、rg、fd 都安装在 CARGO_HOME（但是它们符号链接在 /usr/local/bin/）

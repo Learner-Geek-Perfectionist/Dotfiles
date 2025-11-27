@@ -42,11 +42,15 @@
 # OS generated files #
 ######################
 .DS_Store
+**/.DS_Store
 ._*
+**/._*
 .Spotlight-V100
 .Trashes
 ehthumbs.db
 Thumbs.db
+# Windows
+desktop.ini
 
 # Editor directories and files #
 ###############################

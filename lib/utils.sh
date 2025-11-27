@@ -169,6 +169,7 @@ _ansi256_to_hex() {
 
 # Function: Print styled message using gum
 # Usage: print_msg "Message" "ColorCode(optional)"
+# Set DEBUG_PRINT_MSG=1 to enable debug output
 print_msg() {
 	local color_input="${2:-212}"
 	local color_hex
@@ -180,6 +181,19 @@ print_msg() {
 	# Get terminal width using stty (most reliable, doesn't depend on TERM)
 	term_width=$(stty size </dev/tty 2>/dev/null | awk '{print $2}')
 	term_width=$((term_width - 2))
+
+	# Debug output
+	if [[ "$DEBUG_PRINT_MSG" == "1" ]]; then
+		echo "=== DEBUG print_msg ===" >&2
+		echo "  color_input: '$color_input'" >&2
+		echo "  color_hex: '$color_hex'" >&2
+		echo "  term_width: '$term_width'" >&2
+		echo "  TERM: '$TERM'" >&2
+		echo "  COLORTERM: '$COLORTERM'" >&2
+		echo "  gum path: $(command -v gum)" >&2
+		echo "  gum version: $(gum --version 2>&1)" >&2
+		echo "=======================" >&2
+	fi
 
 	ensure_gum
 	gum style \

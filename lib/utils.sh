@@ -6,17 +6,26 @@ if [[ -z "$RED" ]]; then
 fi
 
 # Function: Initialize logging
-# Creates log file and writes header
+# Creates log file and redirects all output to both terminal and log file
+# Usage: Call this function ONCE at the start of your main script
 init_logging() {
 	local log_file="${DOTFILES_LOG:-/tmp/dotfiles-install.log}"
-	echo "======================================" >"$log_file"
-	echo "Dotfiles Installation Log" >>"$log_file"
-	echo "Version: ${DOTFILES_VERSION:-unknown}" >>"$log_file"
-	echo "Started: $(date '+%Y-%m-%d %H:%M:%S')" >>"$log_file"
-	echo "OS: $(uname -s) $(uname -r)" >>"$log_file"
-	echo "User: $(whoami)" >>"$log_file"
-	echo "======================================" >>"$log_file"
-	echo "" >>"$log_file"
+
+	# Write header to log file
+	{
+		echo "======================================"
+		echo "Dotfiles Installation Log"
+		echo "Version: ${DOTFILES_VERSION:-unknown}"
+		echo "Started: $(date '+%Y-%m-%d %H:%M:%S')"
+		echo "OS: $(uname -s) $(uname -r)"
+		echo "User: $(whoami)"
+		echo "======================================"
+		echo ""
+	} >"$log_file"
+
+	# Redirect all stdout and stderr to both terminal and log file
+	# This captures EVERYTHING from this point forward
+	exec > >(tee -a "$log_file") 2>&1
 }
 
 # Function: Log message to file and optionally to stdout
@@ -66,7 +75,11 @@ ensure_git() {
 			case "$distro" in
 			ubuntu | debian)
 				export DEBIAN_FRONTEND=noninteractive
-				sudo apt-get update && sudo apt-get install -y git
+				if command -v apt-fast &>/dev/null; then
+					sudo apt-fast update && sudo apt-fast install -y git
+				else
+					sudo apt-get update && sudo apt-get install -y git
+				fi
 				;;
 			fedora)
 				sudo dnf install -y git
@@ -88,11 +101,21 @@ ensure_git() {
 	fi
 }
 
+# Function: Strip ANSI color codes from text
+# Usage: strip_colors "text with \033[0;31mcolors\033[0m"
+strip_colors() {
+	echo -e "$1" | sed 's/\x1b\[[0-9;]*m//g'
+}
+
 # Function: Print message (Gum style or Fallback)
 # Usage: print_msg "Message" "ColorCode(optional)"
+# Note: Pass plain text messages without color codes for best gum compatibility
 print_msg() {
 	local msg="$1"
 	local color="${2:-99}" # Default color (Purple-ish)
+	# Strip any ANSI color codes before passing to gum
+	local plain_msg
+	plain_msg=$(strip_colors "$msg")
 	if command -v gum &>/dev/null; then
 		gum style \
 			--border double \
@@ -102,9 +125,9 @@ print_msg() {
 			--padding "0 2" \
 			--border-foreground "$color" \
 			--foreground "$color" \
-			"$msg"
+			"$plain_msg"
 	else
-		# Fallback
+		# Fallback - use original message with colors
 		echo -e "${BLUE}==================================================${NC}"
 		echo -e "  $msg"
 		echo -e "${BLUE}==================================================${NC}"
@@ -151,6 +174,83 @@ detect_package_manager() {
 	else
 		echo "unsupported"
 	fi
+}
+
+# Function: Install apt-fast for faster package downloads
+# Should be called early in the installation process
+install_apt_fast() {
+	if command -v apt-fast &>/dev/null; then
+		echo -e "${GREEN}apt-fast is already installed.${NC}"
+		return 0
+	fi
+
+	echo -e "${BLUE}Installing apt-fast for faster downloads...${NC}"
+	sudo add-apt-repository -y ppa:apt-fast/stable
+	sudo apt-get update
+	# Use DEBIAN_FRONTEND to avoid interactive prompts
+	echo debconf apt-fast/maxdownloads string 16 | sudo debconf-set-selections
+	echo debconf apt-fast/dlflag boolean true | sudo debconf-set-selections
+	echo debconf apt-fast/aptmanager string apt-get | sudo debconf-set-selections
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install -y apt-fast
+	echo -e "${GREEN}apt-fast installed successfully.${NC}"
+}
+
+# Function: Smart apt install - uses apt-fast if available, otherwise apt
+# Usage: apt_install package1 package2 ...
+apt_install() {
+	export DEBIAN_FRONTEND=noninteractive
+	if command -v apt-fast &>/dev/null; then
+		sudo -E apt-fast install -y "$@"
+	else
+		sudo -E apt install -y "$@"
+	fi
+}
+
+# Function: Smart apt update - uses apt-fast if available
+apt_update() {
+	if command -v apt-fast &>/dev/null; then
+		sudo apt-fast update
+	else
+		sudo apt update
+	fi
+}
+
+# Function: Configure DNF for faster downloads (Fedora)
+# Enables parallel downloads, fastest mirror selection, and delta RPMs
+configure_dnf_fast() {
+	if [[ ! -f /etc/dnf/dnf.conf ]]; then
+		return 1
+	fi
+
+	echo -e "${BLUE}Configuring DNF for faster downloads...${NC}"
+
+	# Add max_parallel_downloads if not present
+	if ! grep -q "^max_parallel_downloads=" /etc/dnf/dnf.conf; then
+		echo "max_parallel_downloads=10" | sudo tee -a /etc/dnf/dnf.conf
+	fi
+
+	# Add fastestmirror if not present
+	if ! grep -q "^fastestmirror=" /etc/dnf/dnf.conf; then
+		echo "fastestmirror=True" | sudo tee -a /etc/dnf/dnf.conf
+	fi
+
+	# Add deltarpm if not present
+	if ! grep -q "^deltarpm=" /etc/dnf/dnf.conf; then
+		echo "deltarpm=True" | sudo tee -a /etc/dnf/dnf.conf
+	fi
+
+	echo -e "${GREEN}DNF configured for parallel downloads.${NC}"
+}
+
+# Function: Smart dnf install
+# Usage: dnf_install package1 package2 ...
+dnf_install() {
+	sudo dnf install -y "$@"
+}
+
+# Function: Smart dnf update
+dnf_update() {
+	sudo dnf -y upgrade --refresh
 }
 
 # Function: Install Packages
@@ -223,11 +323,10 @@ install_packages() {
 		fi
 		;;
 	"apt")
-		export DEBIAN_FRONTEND=noninteractive
-		sudo -E apt install -y "${uninstalled_packages[@]}"
+		apt_install "${uninstalled_packages[@]}"
 		;;
 	"dnf")
-		sudo dnf install -y "${uninstalled_packages[@]}"
+		dnf_install "${uninstalled_packages[@]}"
 		;;
 	esac
 }
@@ -264,7 +363,7 @@ install_and_configure_docker() {
 	print_msg "开始检查 Docker 环境..." "212"
 
 	# Check if running inside a container (simple check)
-	if [ -f /.dockerenv ]; then
+	if [[ -f /.dockerenv ]]; then
 		echo -e "${GREEN}Running inside Docker container. Skipping Docker installation.${NC}"
 		return 0
 	fi

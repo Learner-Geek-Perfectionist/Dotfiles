@@ -13,6 +13,20 @@ NC='\033[0m'
 # Log file
 LOG_FILE="/tmp/dotfiles-install.log"
 
+# Initialize log with header
+{
+	echo "======================================"
+	echo "Dotfiles Zsh Config Log"
+	echo "Started: $(date '+%Y-%m-%d %H:%M:%S')"
+	echo "OS: $(uname -s) $(uname -r)"
+	echo "User: $(whoami)"
+	echo "======================================"
+	echo ""
+} >"$LOG_FILE"
+
+# Redirect all output to both terminal and log file
+exec > >(tee -a "$LOG_FILE") 2>&1
+
 # Auto-install git if missing
 if ! command -v git &>/dev/null; then
 	echo -e "${YELLOW}Git not found, installing automatically...${NC}"
@@ -27,7 +41,7 @@ if ! command -v git &>/dev/null; then
 			case "$DISTRO" in
 			ubuntu | debian)
 				export DEBIAN_FRONTEND=noninteractive
-				sudo apt-get update && sudo apt-get install -y git curl
+				sudo apt-get update && sudo apt-get install -y git curl apt-fast || sudo apt-get install -y git curl
 				;;
 			fedora)
 				sudo dnf install -y git curl
@@ -77,27 +91,28 @@ OS_TYPE=$(uname -s)
 if [[ "$OS_TYPE" == "Darwin" ]]; then
 	# Check Homebrew
 	if ! command -v brew >/dev/null 2>&1; then
-		print_msg "${YELLOW}Homebrew not found. Installing...${NC}" "212"
+		print_msg "Homebrew not found. Installing..." "212"
 		/bin/zsh -c "$(curl -fsSL https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh)"
 		source "${HOME}/.zprofile"
 	fi
 
-	print_msg "${BLUE}Installing Zsh tools for macOS...${NC}" "35"
+	print_msg "Installing Zsh tools for macOS..." "35"
 	install_packages "zsh_tools_macos"
 
 elif [[ "$OS_TYPE" == "Linux" ]]; then
 	DISTRO_ID=$(grep '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
 
 	if [[ "$DISTRO_ID" == "ubuntu" ]]; then
-		sudo apt update
-		print_msg "${BLUE}Installing Zsh tools for Ubuntu...${NC}" "35"
+		apt_update
+		print_msg "Installing Zsh tools for Ubuntu..." "35"
 		install_packages "zsh_tools_ubuntu"
 		# Source the extra tools script (cmake, llvm, etc)
 		source "$SCRIPTS_DIR/ubuntu_tools.sh"
 
 	elif [[ "$DISTRO_ID" == "fedora" ]]; then
-		sudo dnf -y update
-		print_msg "${BLUE}Installing Zsh tools for Fedora...${NC}" "35"
+		configure_dnf_fast
+		dnf_update
+		print_msg "Installing Zsh tools for Fedora..." "35"
 		install_packages "zsh_tools_fedora"
 		# Source the extra tools script
 		source "$SCRIPTS_DIR/fedora_tools.sh"
@@ -107,7 +122,7 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
 	CURRENT_SHELL=$(getent passwd "$(whoami)" | cut -d: -f7)
 	ZSH_PATH=$(command -v zsh)
 	if [[ -n "$ZSH_PATH" && "$ZSH_PATH" != "$CURRENT_SHELL" ]]; then
-		print_msg "${YELLOW}Changing default shell to zsh...${NC}" "212"
+		print_msg "Changing default shell to zsh..." "212"
 		sudo chsh -s "$ZSH_PATH" "$(whoami)"
 	fi
 fi

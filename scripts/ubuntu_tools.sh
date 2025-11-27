@@ -6,7 +6,7 @@ if ! command -v gum &>/dev/null; then
 	sudo mkdir -p /etc/apt/keyrings
 	curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
 	echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
-	sudo apt update && sudo apt install -y gum
+	apt_update && apt_install gum
 fi
 
 # =================================开始安装 cmake=================================
@@ -55,7 +55,7 @@ else
 	sudo GNUPGHOME="$GNUPG_TEMP_DIR" gpg --dearmor -o /etc/apt/keyrings/kitware.gpg "$TEMP_DIR/kitware-archive-latest.asc"
 
 	# 更新仓库并安装CMake
-	sudo apt update && sudo apt install -y cmake
+	apt_update && apt_install cmake
 
 	rm -rf "$TEMP_DIR"
 
@@ -95,7 +95,7 @@ else
 	if [[ "${LLVM_VERSION:-0}" -gt 14 ]]; then
 		PKG="$PKG libclang-rt-$LLVM_VERSION-dev libpolly-$LLVM_VERSION-dev"
 	fi
-	sudo apt update && sudo apt install -y $PKG
+	apt_update && apt_install $PKG
 
 	tools=(clang clang++ clangd clang-format clang-tidy clang-cpp lld lldb)
 	llvm_tools=(llvm-ar llvm-ranlib llvm-objdump llvm-objcopy llvm-nm llvm-readelf llvm-readobj llvm-strip

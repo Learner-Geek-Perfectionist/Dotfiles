@@ -19,14 +19,20 @@ export NC='\033[0m'
 # Log file
 LOG_FILE="/tmp/dotfiles-install.log"
 
-# Initialize log
-echo "======================================" >"$LOG_FILE"
-echo "Dotfiles Installation Log" >>"$LOG_FILE"
-echo "Version: $DOTFILES_VERSION" >>"$LOG_FILE"
-echo "Started: $(date '+%Y-%m-%d %H:%M:%S')" >>"$LOG_FILE"
-echo "OS: $(uname -s) $(uname -r)" >>"$LOG_FILE"
-echo "User: $(whoami)" >>"$LOG_FILE"
-echo "======================================" >>"$LOG_FILE"
+# Initialize log with header
+{
+	echo "======================================"
+	echo "Dotfiles Installation Log"
+	echo "Version: $DOTFILES_VERSION"
+	echo "Started: $(date '+%Y-%m-%d %H:%M:%S')"
+	echo "OS: $(uname -s) $(uname -r)"
+	echo "User: $(whoami)"
+	echo "======================================"
+	echo ""
+} >"$LOG_FILE"
+
+# Redirect all output to both terminal and log file
+exec > >(tee -a "$LOG_FILE") 2>&1
 
 TMP_DIR="/tmp/Dotfiles"
 
@@ -42,18 +48,27 @@ if [[ "$ENABLE_NOPASSWD_SUDO" == "true" ]] && command -v sudo >/dev/null; then
 	if ! sudo grep -q "^$(whoami) ALL=(ALL) NOPASSWD: ALL" /etc/sudoers 2>/dev/null; then
 		echo "$(whoami) ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers >/dev/null
 		echo -e "${LIGHT_BLUE}User $(whoami) configured for passwordless sudo.${NC}"
-		echo "[$(date '+%Y-%m-%d %H:%M:%S')] Configured passwordless sudo for $(whoami)" >>"$LOG_FILE"
 	fi
 fi
 
 # Pre-requisites for Linux
 if [[ $(uname -s) == "Linux" ]]; then
-	echo "[$(date '+%Y-%m-%d %H:%M:%S')] Installing Linux prerequisites..." >>"$LOG_FILE"
+	echo -e "${BLUE}Installing Linux prerequisites...${NC}"
 	if grep -q 'ID=ubuntu' /etc/os-release; then
 		export DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai
 		sudo -E apt update &&
 			sudo -E apt install -y --no-install-recommends git software-properties-common bc unzip locales lsb-release wget tzdata gnupg curl
 		sudo -E dpkg-reconfigure -f noninteractive tzdata
+
+		# Install apt-fast for faster package downloads
+		echo -e "${BLUE}Installing apt-fast for faster downloads...${NC}"
+		sudo add-apt-repository -y ppa:apt-fast/stable
+		sudo apt update
+		echo debconf apt-fast/maxdownloads string 16 | sudo debconf-set-selections
+		echo debconf apt-fast/dlflag boolean true | sudo debconf-set-selections
+		echo debconf apt-fast/aptmanager string apt-get | sudo debconf-set-selections
+		sudo DEBIAN_FRONTEND=noninteractive apt install -y apt-fast
+		echo -e "${GREEN}apt-fast installed successfully.${NC}"
 	elif grep -q 'ID=fedora' /etc/os-release; then
 		sudo dnf update -y && sudo dnf install -y git bc unzip glibc glibc-common glibc-langpack-zh langpacks-zh_CN glibc-locale-source curl
 	fi
@@ -69,15 +84,14 @@ if [[ $(uname -s) == "Darwin" ]] && ! command -v git &>/dev/null; then
 fi
 
 echo -e "${BLUE}Cloning Dotfiles repository (v$DOTFILES_VERSION)...${NC}"
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] Cloning Dotfiles repository..." >>"$LOG_FILE"
 git clone --depth=1 https://github.com/Learner-Geek-Perfectionist/Dotfiles.git "$TMP_DIR"
 
 # Ensure XDG base directories exist
 mkdir -p "$HOME/.config/zsh/plugins" "${HOME}/.config/kitty" "$HOME/.cache/zsh" "${HOME}/.local/share/zinit" "$HOME/.local/state"
 
 # Execute main script from the scripts directory
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting main installation..." >>"$LOG_FILE"
+echo -e "${BLUE}Starting main installation...${NC}"
 source "$TMP_DIR/scripts/main.sh"
 
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] Installation completed!" >>"$LOG_FILE"
+echo -e "${GREEN}✅ Installation completed!${NC}"
 echo -e "${GREEN}📝 Installation log saved to: $LOG_FILE${NC}"

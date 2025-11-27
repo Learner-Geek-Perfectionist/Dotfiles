@@ -6,9 +6,9 @@ export RUSTUP_HOME=/opt/rust/rustup
 
 # =================================开始安装 Rust 工具=================================
 if command -v rustc >/dev/null 2>&1; then
-	print_msg "${GREEN}rustc 已安装，跳过安装。${NC}" "35"
+	print_msg "rustc 已安装，跳过安装。" "35"
 else
-	print_msg "${GREEN}开始安装 rustc...${NC}" "212"
+	print_msg "开始安装 rustc..." "212"
 
 	# 1. 创建系统级安装目录并设置权限
 	sudo mkdir -p /opt/rust/{cargo,rustup}
@@ -26,47 +26,47 @@ else
 	# 5. 初始化 rustup 环境
 	rustup default stable
 	# .rustup 目录安装在 RUSTUP_HOME；cargo、rustc、rustup、eza、rg、fd 都安装在 CARGO_HOME（但是它们符号链接在 /usr/local/bin/）
-	print_msg "${GREEN} rustc 安装完成 ✅${NC}" "35"
+	print_msg "rustc 安装完成 ✅" "35"
 fi
 # =================================结束安装 Rust 工具=================================
 
 # =================================开始安装 cargo-binstall=================================
 if command -v cargo-binstall >/dev/null 2>&1; then
-	print_msg "${GREEN}cargo-binstall 已安装，跳过安装。${NC}" "35"
+	print_msg "cargo-binstall 已安装，跳过安装。" "35"
 else
-	print_msg "${GREEN}开始安装 cargo-binstall... ${NC}" "212"
+	print_msg "开始安装 cargo-binstall..." "212"
 	# 安装 cargo-binstall
 	curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
 	sudo ln -snf /opt/rust/cargo/bin/cargo-binstall /usr/local/bin/
 	# 利用 cargo-binstall 自举，自己安装自己，这样 cargo 包管理工具就可以管理 cargo-binstall
 	cargo-binstall --force cargo-binstall --no-confirm
-	print_msg "${GREEN} cargo-binstall 安装完成 ✅${NC}" "35"
+	print_msg "cargo-binstall 安装完成 ✅" "35"
 fi
 # =================================结束安装 cargo-binstall=================================
 
 # =================================开始安装 cargo-update=================================
 if command -v cargo-install-update >/dev/null 2>&1; then
-	print_msg "${GREEN}cargo-update 已安装，跳过安装。${NC}" "35"
+	print_msg "cargo-update 已安装，跳过安装。" "35"
 else
-	print_msg "${GREEN}开始安装 cargo-update... ${NC}" "212"
+	print_msg "开始安装 cargo-update..." "212"
 
 	# 安装 cargo-update
 	cargo-binstall cargo-update --no-confirm
 	sudo ln -snf /opt/rust/cargo/bin/cargo-install-update /usr/local/bin/
-	print_msg "${GREEN} cargo-update 安装完成 ✅${NC}" "35"
+	print_msg "cargo-update 安装完成 ✅" "35"
 fi
 # =================================结束安装 cargo-update=================================
 
 # =================================开始安装 eza=================================
 if command -v eza >/dev/null 2>&1; then
-	print_msg "${GREEN}eza 已安装，跳过安装。${NC}" "35"
+	print_msg "eza 已安装，跳过安装。" "35"
 else
-	print_msg "${GREEN}开始安装 eza... ${NC}" "212"
+	print_msg "开始安装 eza..." "212"
 
 	# 安装 eza
 	cargo-binstall -y eza
 	sudo ln -snf /opt/rust/cargo/bin/eza /usr/local/bin/
-	print_msg "${GREEN} eza 安装完成 ✅${NC}" "35"
+	print_msg "eza 安装完成 ✅" "35"
 fi
 # =================================结束安装 eza=================================
 # 更新 rustup 自身

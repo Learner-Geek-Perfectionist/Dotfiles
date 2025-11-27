@@ -7,7 +7,25 @@ set -e
 # Minimal colors
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+GREEN='\033[0;32m'
 NC='\033[0m'
+
+# Log file
+LOG_FILE="/tmp/dotfiles-install.log"
+
+# Initialize log with header
+{
+	echo "======================================"
+	echo "Dotfiles Update Log"
+	echo "Started: $(date '+%Y-%m-%d %H:%M:%S')"
+	echo "OS: $(uname -s) $(uname -r)"
+	echo "User: $(whoami)"
+	echo "======================================"
+	echo ""
+} >"$LOG_FILE"
+
+# Redirect all output to both terminal and log file
+exec > >(tee -a "$LOG_FILE") 2>&1
 
 # Auto-install git if missing
 if ! command -v git &>/dev/null; then
@@ -23,7 +41,7 @@ if ! command -v git &>/dev/null; then
 			case "$DISTRO" in
 			ubuntu | debian)
 				export DEBIAN_FRONTEND=noninteractive
-				sudo apt-get update && sudo apt-get install -y git
+				sudo apt-get update && sudo apt-get install -y git apt-fast || sudo apt-get install -y git
 				;;
 			fedora)
 				sudo dnf install -y git

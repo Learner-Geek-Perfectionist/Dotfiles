@@ -55,19 +55,27 @@ fi
 if [[ $(uname -s) == "Linux" ]]; then
 	echo -e "${BLUE}Installing Linux prerequisites...${NC}"
 	if grep -q 'ID=ubuntu' /etc/os-release; then
-		sudo DEBIAN_FRONTEND=noninteractive apt update &&
-			sudo DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends git software-properties-common bc unzip locales lsb-release wget tzdata gnupg curl
+		# Clean up potentially broken third-party repositories before apt update
+		sudo rm -f /etc/apt/sources.list.d/charm.list 2>/dev/null || true
+		sudo rm -f /etc/apt/keyrings/charm.gpg 2>/dev/null || true
+
+		sudo DEBIAN_FRONTEND=noninteractive apt-get update &&
+			sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git software-properties-common bc unzip locales lsb-release wget tzdata gnupg curl
 		sudo DEBIAN_FRONTEND=noninteractive TZ=Asia/Shanghai dpkg-reconfigure -f noninteractive tzdata
 
 		# Install apt-fast for faster package downloads
-		echo -e "${BLUE}Installing apt-fast for faster downloads...${NC}"
-		sudo add-apt-repository -y ppa:apt-fast/stable
-		sudo apt update
-		echo debconf apt-fast/maxdownloads string 16 | sudo debconf-set-selections
-		echo debconf apt-fast/dlflag boolean true | sudo debconf-set-selections
-		echo debconf apt-fast/aptmanager string apt-get | sudo debconf-set-selections
-		sudo DEBIAN_FRONTEND=noninteractive apt install -y apt-fast
-		echo -e "${GREEN}apt-fast installed successfully.${NC}"
+		if ! command -v apt-fast &>/dev/null; then
+			echo -e "${BLUE}Installing apt-fast for faster downloads...${NC}"
+			sudo add-apt-repository -y ppa:apt-fast/stable
+			sudo apt-get update
+			echo debconf apt-fast/maxdownloads string 16 | sudo debconf-set-selections
+			echo debconf apt-fast/dlflag boolean true | sudo debconf-set-selections
+			echo debconf apt-fast/aptmanager string apt-get | sudo debconf-set-selections
+			sudo DEBIAN_FRONTEND=noninteractive apt-get install -y apt-fast
+			echo -e "${GREEN}apt-fast installed successfully.${NC}"
+		else
+			echo -e "${GREEN}apt-fast is already installed.${NC}"
+		fi
 	elif grep -q 'ID=fedora' /etc/os-release; then
 		sudo dnf update -y && sudo dnf install -y git bc unzip glibc glibc-common glibc-langpack-zh langpacks-zh_CN glibc-locale-source curl
 	fi

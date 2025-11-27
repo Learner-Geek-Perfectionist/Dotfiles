@@ -1,14 +1,5 @@
 #!/bin/bash
 
-# ======================= Gum 环境检测 =======================
-if ! command -v gum &>/dev/null; then
-	echo "正在安装 gum 以支持 TUI..."
-	sudo mkdir -p /etc/apt/keyrings
-	curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
-	echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
-	apt_update && apt_install gum
-fi
-
 # =================================开始安装 cmake=================================
 # 检查 cmake 是否已安装
 if command -v cmake >/dev/null 2>&1; then
@@ -33,8 +24,9 @@ else
 	# 创建密钥存储目录（适用于所有Ubuntu版本）
 	sudo mkdir -p /etc/apt/keyrings
 
-	# 使用 curl 获取 Kitware 支持的版本列表
-	SUPPORTED_VERSIONS=$(curl -Ls https://apt.kitware.com/ubuntu/ | grep -oP 'For Ubuntu [^<]+' | sed -E 's/For Ubuntu (.*):/\1/' | sort -r | uniq)
+	# 使用 curl 获取 Kitware 支持的版本列表（静默获取，失败时不输出 HTML）
+	KITWARE_HTML=$(curl -fsSL https://apt.kitware.com/ubuntu/ 2>/dev/null) || KITWARE_HTML=""
+	SUPPORTED_VERSIONS=$(echo "$KITWARE_HTML" | grep -oP 'For Ubuntu [^<]+' | sed -E 's/For Ubuntu (.*):/\1/' | sort -r | uniq)
 
 	# 提取最新的版本代号
 	SUPPORTED_VERSION_CODE=$(echo "$SUPPORTED_VERSIONS" | sed -E 's/ .*//g' | tr '[:upper:]' '[:lower:]' | head -n 1)
@@ -47,7 +39,7 @@ else
 	elif [[ $(echo "$CURRENT_VERSION_NUM < $SUPPORTED_VERSION_NUM_MIN" | bc -l) -eq 1 ]]; then
 		echo "deb [signed-by=/etc/apt/keyrings/kitware.gpg] https://apt.kitware.com/ubuntu/ $CURRENT_VERSION_CODE main" | sudo tee /etc/apt/sources.list.d/kitware.list >/dev/null
 	else
-		curl -s https://apt.kitware.com/kitware-archive.sh | sudo bash
+		curl -fsSL https://apt.kitware.com/kitware-archive.sh 2>/dev/null | sudo bash
 	fi
 
 	# 下载密钥到临时目录
@@ -132,9 +124,8 @@ if command -v fastfetch >/dev/null 2>&1; then
 else
 	print_msg "开始安装 fastfetch" "212"
 
-	RELEASES_PAGE=$(curl -s "https://github.com/fastfetch-cli/fastfetch/releases")
-	VERSION=$(echo "$RELEASES_PAGE" | grep -oP 'href="/fastfetch-cli/fastfetch/releases/tag/\K(.*?)(?=")' | head -n1)
-	VERSION=$(echo "$VERSION" | sed 's/^v//')
+	# 使用 GitHub API 获取最新版本（避免解析 HTML）
+	VERSION=$(curl -fsSL "https://api.github.com/repos/fastfetch-cli/fastfetch/releases/latest" 2>/dev/null | grep -oP '"tag_name":\s*"\K[^"]+' | sed 's/^v//')
 	ARCH=$(uname -m)
 	case $ARCH in
 	x86_64) BIN_ARCH="amd64" ;;
@@ -150,7 +141,7 @@ else
 
 	TMP_DIR=$(mktemp -d)
 	wget -q -O "${TMP_DIR}/fastfetch.tar.gz" "$URL"
-	tar -zxvf "${TMP_DIR}/fastfetch.tar.gz" -C "$TMP_DIR"
+	tar -zxf "${TMP_DIR}/fastfetch.tar.gz" -C "$TMP_DIR"
 	sudo mv "${TMP_DIR}/${UNPACK_DIR}/usr/bin/fastfetch" /usr/local/bin/
 	sudo chmod +x /usr/local/bin/fastfetch
 	rm -rf "$TMP_DIR"

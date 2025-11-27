@@ -101,37 +101,35 @@ ensure_git() {
 	fi
 }
 
-# Function: Strip ANSI color codes from text
-# Usage: strip_colors "text with \033[0;31mcolors\033[0m"
-strip_colors() {
-	echo -e "$1" | sed 's/\x1b\[[0-9;]*m//g'
+# Function: Ensure gum is installed
+ensure_gum() {
+	command -v gum &>/dev/null && return 0
+
+	if command -v apt &>/dev/null; then
+		sudo mkdir -p /etc/apt/keyrings
+		curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg 2>/dev/null
+		echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list >/dev/null
+		sudo apt update -qq && sudo DEBIAN_FRONTEND=noninteractive apt install -y -qq gum >/dev/null
+	elif command -v dnf &>/dev/null; then
+		sudo dnf install -y -q gum >/dev/null
+	elif command -v brew &>/dev/null; then
+		brew install -q gum >/dev/null
+	fi
 }
 
-# Function: Print message (Gum style or Fallback)
+# Function: Print styled message using gum
 # Usage: print_msg "Message" "ColorCode(optional)"
-# Note: Pass plain text messages without color codes for best gum compatibility
 print_msg() {
-	local msg="$1"
-	local color="${2:-99}" # Default color (Purple-ish)
-	# Strip any ANSI color codes before passing to gum
-	local plain_msg
-	plain_msg=$(strip_colors "$msg")
-	if command -v gum &>/dev/null; then
-		gum style \
-			--border double \
-			--align center \
-			--width "$(($(tput cols) - 2))" \
-			--margin "0 0" \
-			--padding "0 2" \
-			--border-foreground "$color" \
-			--foreground "$color" \
-			"$plain_msg"
-	else
-		# Fallback - use original message with colors
-		echo -e "${BLUE}==================================================${NC}"
-		echo -e "  $msg"
-		echo -e "${BLUE}==================================================${NC}"
-	fi
+	ensure_gum
+	gum style \
+		--border double \
+		--align center \
+		--width "$(($(tput cols) - 2))" \
+		--margin "0 0" \
+		--padding "0 2" \
+		--border-foreground "${2:-99}" \
+		--foreground "${2:-99}" \
+		"$1"
 }
 
 # Function: Countdown timer

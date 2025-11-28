@@ -37,7 +37,14 @@ if [[ -z "$__DOTFILES_PTY" ]]; then
 	} >"$LOG_FILE"
 
 	SCRIPT_SOURCE="${BASH_SOURCE[0]:-$0}"
-	if [[ -n "$SCRIPT_SOURCE" && -r "$SCRIPT_SOURCE" && -f "$SCRIPT_SOURCE" ]]; then
+	# 检查是否是真正的脚本文件，排除以下情况：
+	# 1. shell 二进制文件（bash -c "script" 时 $0=/bin/bash）
+	# 2. 文件描述符（bash <(curl ...) 时 $0=/dev/fd/XX）
+	# 3. 管道/stdin（curl ... | bash）
+	if [[ -n "$SCRIPT_SOURCE" && -r "$SCRIPT_SOURCE" && -f "$SCRIPT_SOURCE" ]] &&
+		[[ ! "$SCRIPT_SOURCE" =~ (^|/)(bash|sh|zsh|dash|ksh)$ ]] &&
+		[[ ! "$SCRIPT_SOURCE" =~ ^/dev/ ]] &&
+		[[ ! "$SCRIPT_SOURCE" =~ ^/proc/ ]]; then
 		SCRIPT_PATH="$(cd "$(dirname "$SCRIPT_SOURCE")" && pwd)/$(basename "$SCRIPT_SOURCE")"
 	else
 		SCRIPT_PATH=""

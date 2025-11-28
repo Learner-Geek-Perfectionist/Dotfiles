@@ -75,11 +75,7 @@ ensure_git() {
 			case "$distro" in
 			ubuntu | debian)
 				export DEBIAN_FRONTEND=noninteractive
-				if command -v apt-fast &>/dev/null; then
-					sudo apt-fast update && sudo apt-fast install -y git
-				else
-					sudo apt-get update && sudo apt-get install -y git
-				fi
+				sudo apt update && sudo apt install -y git
 				;;
 			fedora)
 				sudo dnf install -y git
@@ -117,81 +113,35 @@ ensure_gum() {
 	fi
 }
 
-# Function: Convert ANSI 256 color codes to hex strings understood by gum/lipgloss
-_ansi256_to_hex() {
-	local code="$1"
-
-	# Allow direct hex input like #FF0000 or FF0000
-	if [[ "$code" =~ ^#?[0-9a-fA-F]{6}$ ]]; then
-		printf '#%s' "${code#\#}"
-		return 0
-	fi
-
-	# Only process numeric codes beyond this point
-	if ! [[ "$code" =~ ^[0-9]+$ ]]; then
-		return 1
-	fi
-
-	local value=$((code))
-
-	# Standard 16 ANSI colors
-	if ((value >= 0 && value <= 15)); then
-		local standard=(
-			"#000000" "#800000" "#008000" "#808000"
-			"#000080" "#800080" "#008080" "#c0c0c0"
-			"#808080" "#ff0000" "#00ff00" "#ffff00"
-			"#0000ff" "#ff00ff" "#00ffff" "#ffffff"
-		)
-		printf '%s' "${standard[value]}"
-		return 0
-	fi
-
-	# 6x6x6 color cube (codes 16-231)
-	if ((value >= 16 && value <= 231)); then
-		local -a palette=(0 95 135 175 215 255)
-		local idx=$((value - 16))
-		local r=${palette[idx / 36]}
-		local g=${palette[(idx / 6) % 6]}
-		local b=${palette[idx % 6]}
-		printf '#%02X%02X%02X' "$r" "$g" "$b"
-		return 0
-	fi
-
-	# Grayscale ramp (codes 232-255)
-	if ((value >= 232 && value <= 255)); then
-		local gray=$((8 + (value - 232) * 10))
-		printf '#%02X%02X%02X' "$gray" "$gray" "$gray"
-		return 0
-	fi
-
-	return 1
-}
-
 # Function: Print styled message using gum
 # Usage: print_msg "Message" "ColorCode(optional)"
+# ColorCode can be ANSI 256 number (e.g. 212, 35) or hex (e.g. #FF87D7)
 print_msg() {
-	local color_input="${2:-212}"
-	local color_hex
+	local color="${2:-212}"
 	local term_width
-
-	color_hex=$(_ansi256_to_hex "$color_input") || color_hex=""
-	[[ -z "$color_hex" ]] && color_hex="#FF87D7"
+	local gum_output
+	local log_file="${DOTFILES_LOG:-/tmp/dotfiles-install.log}"
 
 	# Get terminal width using stty (most reliable, doesn't depend on TERM)
 	term_width=$(stty size </dev/tty 2>/dev/null | awk '{print $2}')
 	term_width=$((term_width - 2))
 
 	ensure_gum
-	# Output directly to /dev/tty to bypass any redirections and preserve colors
-	gum style \
+	gum_output=$(gum style \
 		--border double \
 		--align center \
 		--width "$term_width" \
 		--margin "0 0" \
 		--padding "0 2" \
-		--border-foreground "$color_hex" \
-		--foreground "$color_hex" \
-		"$1" >/dev/tty
+		--border-foreground "$color" \
+		--foreground "$color" \
+		"$1")
+
+	# Output to terminal (preserve colors)
+	echo "$gum_output" >/dev/tty
+
+	# Output to log file
+	echo "$gum_output" >>"$log_file"
 }
 
 # Function: Countdown timer
@@ -234,82 +184,6 @@ detect_package_manager() {
 	else
 		echo "unsupported"
 	fi
-}
-
-# Function: Install apt-fast for faster package downloads
-# Should be called early in the installation process
-install_apt_fast() {
-	if command -v apt-fast &>/dev/null; then
-		echo -e "${GREEN}apt-fast is already installed.${NC}"
-		return 0
-	fi
-
-	echo -e "${BLUE}Installing apt-fast for faster downloads...${NC}"
-	sudo add-apt-repository -y ppa:apt-fast/stable
-	sudo apt-get update
-	# Use DEBIAN_FRONTEND to avoid interactive prompts
-	echo debconf apt-fast/maxdownloads string 16 | sudo debconf-set-selections
-	echo debconf apt-fast/dlflag boolean true | sudo debconf-set-selections
-	echo debconf apt-fast/aptmanager string apt-get | sudo debconf-set-selections
-	sudo DEBIAN_FRONTEND=noninteractive apt-get install -y apt-fast
-	echo -e "${GREEN}apt-fast installed successfully.${NC}"
-}
-
-# Function: Smart apt install - uses apt-fast if available, otherwise apt
-# Usage: apt_install package1 package2 ...
-apt_install() {
-	if command -v apt-fast &>/dev/null; then
-		sudo DEBIAN_FRONTEND=noninteractive apt-fast install -y "$@"
-	else
-		sudo DEBIAN_FRONTEND=noninteractive apt install -y "$@"
-	fi
-}
-
-# Function: Smart apt update - uses apt-fast if available
-apt_update() {
-	if command -v apt-fast &>/dev/null; then
-		sudo apt-fast update
-	else
-		sudo apt update
-	fi
-}
-
-# Function: Configure DNF for faster downloads (Fedora)
-# Enables parallel downloads, fastest mirror selection, and delta RPMs
-configure_dnf_fast() {
-	if [[ ! -f /etc/dnf/dnf.conf ]]; then
-		return 1
-	fi
-
-	echo -e "${BLUE}Configuring DNF for faster downloads...${NC}"
-
-	# Add max_parallel_downloads if not present
-	if ! grep -q "^max_parallel_downloads=" /etc/dnf/dnf.conf; then
-		echo "max_parallel_downloads=10" | sudo tee -a /etc/dnf/dnf.conf
-	fi
-
-	# Add fastestmirror if not present
-	if ! grep -q "^fastestmirror=" /etc/dnf/dnf.conf; then
-		echo "fastestmirror=True" | sudo tee -a /etc/dnf/dnf.conf
-	fi
-
-	# Add deltarpm if not present
-	if ! grep -q "^deltarpm=" /etc/dnf/dnf.conf; then
-		echo "deltarpm=True" | sudo tee -a /etc/dnf/dnf.conf
-	fi
-
-	echo -e "${GREEN}DNF configured for parallel downloads.${NC}"
-}
-
-# Function: Smart dnf install
-# Usage: dnf_install package1 package2 ...
-dnf_install() {
-	sudo dnf install -y "$@"
-}
-
-# Function: Smart dnf update
-dnf_update() {
-	sudo dnf -y upgrade --refresh
 }
 
 # Function: Install Packages
@@ -382,10 +256,10 @@ install_packages() {
 		fi
 		;;
 	"apt")
-		apt_install "${uninstalled_packages[@]}"
+		sudo DEBIAN_FRONTEND=noninteractive apt install -y "${uninstalled_packages[@]}"
 		;;
 	"dnf")
-		dnf_install "${uninstalled_packages[@]}"
+		sudo dnf install -y "${uninstalled_packages[@]}"
 		;;
 	esac
 }

@@ -41,7 +41,7 @@ if ! command -v git &>/dev/null; then
 			case "$DISTRO" in
 			ubuntu | debian)
 				export DEBIAN_FRONTEND=noninteractive
-				sudo apt-get update && sudo apt-get install -y git apt-fast || sudo apt-get install -y git
+				sudo apt update && sudo apt install -y git
 				;;
 			fedora)
 				sudo dnf install -y git

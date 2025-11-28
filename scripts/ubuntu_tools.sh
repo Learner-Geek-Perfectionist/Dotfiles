@@ -47,7 +47,7 @@ else
 	sudo GNUPGHOME="$GNUPG_TEMP_DIR" gpg --dearmor -o /etc/apt/keyrings/kitware.gpg "$TEMP_DIR/kitware-archive-latest.asc"
 
 	# 更新仓库并安装CMake
-	apt_update && apt_install cmake
+	sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y cmake
 
 	rm -rf "$TEMP_DIR"
 
@@ -87,8 +87,7 @@ else
 	if [[ "${LLVM_VERSION:-0}" -gt 14 ]]; then
 		PKG="$PKG libclang-rt-$LLVM_VERSION-dev libpolly-$LLVM_VERSION-dev"
 	fi
-	apt_update
-	# Use apt directly to avoid 403 errors with apt-fast on third-party mirrors
+	sudo apt update
 	sudo DEBIAN_FRONTEND=noninteractive apt install -y $PKG
 
 	tools=(clang clang++ clangd clang-format clang-tidy clang-cpp lld lldb)

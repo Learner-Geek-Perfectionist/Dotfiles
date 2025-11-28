@@ -6,19 +6,6 @@ log_msg "Starting Fedora installation..." "false"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPTS_DIR="${SCRIPTS_DIR:-$SCRIPT_DIR}"
 
-# 0. Configure DNF for faster downloads (parallel downloads + fastest mirror)
-echo -e "${BLUE}Configuring DNF for faster downloads...${NC}"
-if ! grep -q "^max_parallel_downloads=" /etc/dnf/dnf.conf; then
-	echo "max_parallel_downloads=10" | sudo tee -a /etc/dnf/dnf.conf
-fi
-if ! grep -q "^fastestmirror=" /etc/dnf/dnf.conf; then
-	echo "fastestmirror=True" | sudo tee -a /etc/dnf/dnf.conf
-fi
-if ! grep -q "^deltarpm=" /etc/dnf/dnf.conf; then
-	echo "deltarpm=True" | sudo tee -a /etc/dnf/dnf.conf
-fi
-echo -e "${GREEN}DNF configured for parallel downloads.${NC}"
-
 # 1. Configure Mirrors (USTC)
 sudo sed -e 's|^metalink=|#metalink=|g' \
 	-e 's|^#baseurl=http://download.example/pub/fedora/linux|baseurl=https://mirrors.ustc.edu.cn/fedora|g' \

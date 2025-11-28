@@ -41,7 +41,7 @@ if ! command -v git &>/dev/null; then
 			case "$DISTRO" in
 			ubuntu | debian)
 				export DEBIAN_FRONTEND=noninteractive
-				sudo apt-get update && sudo apt-get install -y git curl apt-fast || sudo apt-get install -y git curl
+				sudo apt update && sudo apt install -y git curl
 				;;
 			fedora)
 				sudo dnf install -y git curl
@@ -103,15 +103,14 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
 	DISTRO_ID=$(grep '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
 
 	if [[ "$DISTRO_ID" == "ubuntu" ]]; then
-		apt_update
+		sudo apt update
 		print_msg "Installing Zsh tools for Ubuntu..." "35"
 		install_packages "zsh_tools_ubuntu"
 		# Source the extra tools script (cmake, llvm, etc)
 		source "$SCRIPTS_DIR/ubuntu_tools.sh"
 
 	elif [[ "$DISTRO_ID" == "fedora" ]]; then
-		configure_dnf_fast
-		dnf_update
+		sudo dnf -y upgrade --refresh
 		print_msg "Installing Zsh tools for Fedora..." "35"
 		install_packages "zsh_tools_fedora"
 		# Source the extra tools script

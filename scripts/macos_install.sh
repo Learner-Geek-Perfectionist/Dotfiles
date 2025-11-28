@@ -38,16 +38,9 @@ print_msg "${GREEN}CLI Tools Installed ✅${NC}" "35"
 
 # 4. Install GUI Applications
 print_msg "${RED}Installing macOS GUI Applications...${NC}" "212"
+# 添加第三方 tap（mihomo-party 需要）
+brew tap mihomo-party-org/mihomo-party 2>/dev/null || true
 install_packages "brew_casks" "cask"
-
-# Manual extra installs
-echo "Installing specific casks..."
-brew install --cask wireshark
-brew install --cask maczip
-brew install --cask display-pilot
-brew install --cask github@beta
-brew tap mihomo-party-org/mihomo-party
-brew install --cask mihomo-party
 
 print_msg "${GREEN}GUI Applications Installed ✅${NC}" "35"
 

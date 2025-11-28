@@ -12,10 +12,11 @@ brew_casks=(
 	intellij-idea qqmusic jetbrains-gateway telegram cmake-app
 	clion jordanbaird-ice visual-studio-code discord keycastr wechat
 	douyin kitty feishu microsoft-edge Eudic karabiner-elements
+	wireshark maczip display-pilot github@beta mihomo-party
 )
 
 brew_formulas=(
-	gettext msgpack ruby graphviz kotlin python
+	gettext msgpack ruby graphviz kotlin python tmux
 	brotli git lpeg ncurses sqlite openjdk grep
 	c-ares htop lua neovim tree-sitter bash tcpdump
 	ca-certificates icu4c luajit node unibilium
@@ -74,6 +75,7 @@ packages_ubuntu=(
 	libboost-all-dev
 	rsync
 	xz-utils
+	tmux
 )
 
 #fedora
@@ -142,6 +144,7 @@ packages_fedora=(
 	du-dust
 	rsync
 	gum
+	tmux
 )
 
 # Zsh Configuration Tools (Subset for zsh_config.sh)

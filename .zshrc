@@ -11,8 +11,9 @@ export RED='\033[0;31m' \
 	DARK_RED='\033[1;31m' \
 	NC='\033[0m' # 没有颜色
 
-# 注意：HISTFILE 和 ZSH_COMPDUMP 已在 .zshenv 中设置并锁定
-# 这样可以防止被 /etc/zsh/ 下的系统配置覆盖
+# 设置历史文件路径（覆盖 /etc/zshrc 中的设置）
+# .zshrc 在 /etc/zshrc 之后加载，所以这里的值会生效
+export HISTFILE="$HOME/.cache/zsh/.zsh_history"
 
 # 获取操作系统信息并设置 PATH
 if [[ "$(uname)" == "Darwin" ]]; then

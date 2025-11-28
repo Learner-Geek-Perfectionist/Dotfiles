@@ -241,7 +241,7 @@ install_packages() {
 		return 0
 	fi
 
-	echo -e "${RED}The following packages need to be installed:${NC}"
+	print_msg "${RED}The following packages need to be installed:${NC}"
 	for package in "${uninstalled_packages[@]}"; do
 		echo "- $package"
 	done

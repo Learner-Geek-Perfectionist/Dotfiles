@@ -331,8 +331,10 @@ setup_kotlin_environment() {
 		ARCH="x86_64"
 		;;
 	*)
-		echo -e "${RED}Unsupported architecture: ${ARCH}${NC}"
-		exit 1
+		echo -e "${YELLOW}⚠️ Unsupported architecture: ${ARCH}, skipping Kotlin installation${NC}"
+		KOTLIN_NATIVE_URL=""
+		KOTLIN_COMPILER_URL=""
+		return 0
 		;;
 	esac
 	get_latest_version
@@ -344,11 +346,22 @@ setup_kotlin_environment() {
 		SYSTEM_TYPE="linux"
 		;;
 	*)
-		echo -e "${RED}Unsupported system type: $(uname -s)${NC}"
-		exit 1
+		echo -e "${YELLOW}⚠️ Unsupported system type: $(uname -s), skipping Kotlin installation${NC}"
+		KOTLIN_NATIVE_URL=""
+		KOTLIN_COMPILER_URL=""
+		return 0
 		;;
 	esac
-	KOTLIN_NATIVE_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-native-prebuilt-$SYSTEM_TYPE-$ARCH-${LATEST_VERSION#v}.tar.gz"
+
+	# Kotlin Native 不支持 Linux ARM64
+	if [[ "$SYSTEM_TYPE" == "linux" && "$ARCH" == "aarch64" ]]; then
+		KOTLIN_NATIVE_URL=""
+		echo -e "${YELLOW}⚠️ Kotlin Native 不支持 Linux ARM64，将跳过安装${NC}"
+	else
+		KOTLIN_NATIVE_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-native-prebuilt-$SYSTEM_TYPE-$ARCH-${LATEST_VERSION#v}.tar.gz"
+	fi
+
+	# Kotlin Compiler (JVM) 是跨平台的，始终可用
 	KOTLIN_COMPILER_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-compiler-${LATEST_VERSION#v}.zip"
 }
 
@@ -356,6 +369,12 @@ setup_kotlin_environment() {
 download_and_extract_kotlin() {
 	URL=$1
 	TARGET_DIR=$2
+
+	# 如果 URL 为空，跳过下载
+	if [[ -z "$URL" ]]; then
+		return 0
+	fi
+
 	FILE_NAME=$(basename "${URL}")
 	if [[ -d "$TARGET_DIR" ]]; then
 		print_msg "${FILE_NAME} is already installed in ${TARGET_DIR}." "35"

@@ -142,8 +142,7 @@ else
 
 	TMP_DIR=$(mktemp -d)
 	print_msg "正在下载 fastfetch ${VERSION}..." "214"
-	wget --progress=bar:force -O "${TMP_DIR}/fastfetch.tar.gz" "$URL" 2>&1
-	print_msg "正在解压并安装..." "214"
+	wget -q --show-progress -O "${TMP_DIR}/fastfetch.tar.gz" "$URL"
 	tar -zxf "${TMP_DIR}/fastfetch.tar.gz" -C "$TMP_DIR"
 	sudo mv "${TMP_DIR}/${UNPACK_DIR}/usr/bin/fastfetch" /usr/local/bin/
 	sudo chmod +x /usr/local/bin/fastfetch
@@ -264,7 +263,7 @@ fi
 
 # =================================开始安装 cargo-update=================================
 if command -v cargo-install-update >/dev/null 2>&1; then
-	print_msg "cargo-update 已安装，跳过安装。" "35"
+	print_msg "cargo-update 已安装，跳过安装。版本: $(cargo-install-update -V 2>&1 | awk 'NF {print $2; exit}')" "35"
 else
 	print_msg "开始安装 cargo-update..." "212"
 
@@ -273,7 +272,7 @@ else
 	sudo ln -snf /opt/rust/cargo/bin/cargo-install-update /usr/local/bin/
 
 	if command -v cargo-install-update >/dev/null 2>&1; then
-		print_msg "cargo-update 安装完成 ✅" "35"
+		print_msg "cargo-update 安装完成 ✅ 版本: $(cargo-install-update -V 2>&1 | awk 'NF {print $2; exit}')" "35"
 	else
 		print_msg "cargo-update 安装失败 ❌" "196"
 		exit 1

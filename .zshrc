@@ -36,6 +36,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
 	export PATH="/opt/homebrew/opt/bash/bin:$PATH"
 	export PATH="/opt/homebrew/opt/grep/libexec/gnubin:$PATH"
 	export PATH="/Applications/Visual Studio Code.app/Contents/Resources/app/bin:$PATH"
+	export PATH="/Applications/Cursor.app/Contents/Resources/app/bin:$PATH"
 	export PATH="/Applications/CLion.app/Contents/MacOS:$PATH"
 	export PATH="/Applications/PyCharm.app/Contents/MacOS:$PATH"
 	export PATH="/Applications/IntelliJ IDEA.app/Contents/MacOS:$PATH"
@@ -54,6 +55,8 @@ else
 	# 加载 rust 的环境变量
 	export CARGO_HOME=/opt/rust/cargo
 	export RUSTUP_HOME=/opt/rust/rustup
+	# Cursor 编辑器
+	[[ -d "/opt/Cursor/resources/app/bin" ]] && export PATH="/opt/Cursor/resources/app/bin:$PATH"
 
 	# OrbStack Linux 支持 open 命令打开 macOS Finder
 	if [[ -n "$ORBSTACK" ]] && command -v open >/dev/null 2>&1; then
@@ -68,7 +71,7 @@ fi
 [[ -x "${HOME}/.config/zsh/plugins/zinit.zsh" ]] && source "${HOME}/.config/zsh/plugins/zinit.zsh" || echo "${RED}No ${HOME}/.config/zsh/plugins/zinit.zsh${NC}"
 
 # 自动启动 ssh-agent 并加载密钥
-if [ -z "$SSH_AUTH_SOCK" ]; then
+if [[ -z "$SSH_AUTH_SOCK" ]]; then
 	# 检查是否已有 ssh-agent 进程
 	eval $(ssh-agent -s >/dev/null 2>&1)
 	# 加载默认私钥（替换为你的密钥路径，如 ~/.ssh/id_rsa）

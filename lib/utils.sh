@@ -305,10 +305,15 @@ install_and_configure_docker() {
 		print_msg "⚠️ 在 WSL2 中或者不需要安装 Docker，跳过" "214"
 	else
 		if command -v docker >/dev/null; then
-			print_msg "✅ Docker 已安装，跳过安装步骤" "35"
+			print_msg "Docker 已安装，跳过安装。版本: $(docker --version | awk '{print $3}' | tr -d ',')" "35"
 		else
-			print_msg "Docker 未安装，开始安装过程..." "214"
+			print_msg "开始安装 Docker..." "212"
 			install_docker
+			if command -v docker >/dev/null; then
+				print_msg "Docker 安装完成 ✅ 版本: $(docker --version | awk '{print $3}' | tr -d ',')" "35"
+			else
+				print_msg "Docker 安装失败 ❌" "196"
+			fi
 		fi
 	fi
 }

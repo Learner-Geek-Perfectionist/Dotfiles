@@ -51,25 +51,39 @@ install_packages "packages_ubuntu"
 source "$SCRIPTS_DIR/ubuntu_tools.sh"
 
 # 6. Unminimize (Restore man pages etc.)
-if sudo apt search unminimize 2>/dev/null | grep -q "^unminimize/"; then
+if dpkg -l unminimize 2>/dev/null | grep -q "^ii"; then
+	print_msg "unminimize 已安装，系统已取消最小化安装，跳过" "35"
+elif apt-cache show unminimize &>/dev/null; then
+	print_msg "开始安装 unminimize..." "212"
 	sudo DEBIAN_FRONTEND=noninteractive apt install -y unminimize
-	print_msg "正在 Unminimize..." "212"
-	yes | sudo unminimize || print_msg "⚠️ Unminimize 跳过或失败" "214"
+	print_msg "正在执行 Unminimize..." "212"
+	yes | sudo unminimize || print_msg "⚠️ Unminimize 执行跳过或失败" "214"
+	print_msg "Unminimize 完成 ✅" "35"
 else
 	print_msg "⚠️ unminimize 包不可用" "214"
 fi
 
 # 7. Java (OpenJDK)
-# 尝试添加 PPA 获取更新版本（可选）
-if curl -fsI "https://ppa.launchpadcontent.net/openjdk-r/ppa/ubuntu/dists/$(lsb_release -sc)/Release" >/dev/null; then
-	sudo add-apt-repository -y ppa:openjdk-r/ppa && sudo apt update
+if command -v java >/dev/null 2>&1; then
+	JAVA_VERSION=$(java -version 2>&1 | head -n1 | awk -F '"' '{print $2}')
+	print_msg "OpenJDK 已安装，跳过安装。版本: $JAVA_VERSION" "35"
 else
-	print_msg "⚠️ OpenJDK PPA 不支持 $(lsb_release -sc)，将从默认源安装" "214"
-fi
-# 无论 PPA 是否可用，都安装最新的 JDK
-LATEST_JDK=$(apt search ^openjdk-[0-9]+-jdk$ 2>/dev/null | grep -oP 'openjdk-\d+-jdk' | sort -V | tail -n1)
-if [[ -n "$LATEST_JDK" ]]; then
-	sudo DEBIAN_FRONTEND=noninteractive apt install -y "$LATEST_JDK"
+	print_msg "开始安装 OpenJDK..." "212"
+	# 尝试添加 PPA 获取更新版本
+	if curl -fsI "https://ppa.launchpadcontent.net/openjdk-r/ppa/ubuntu/dists/$(lsb_release -sc)/Release" >/dev/null 2>&1; then
+		sudo add-apt-repository -y ppa:openjdk-r/ppa && sudo apt update
+	else
+		print_msg "⚠️ OpenJDK PPA 不支持 $(lsb_release -sc)，将从默认源安装" "214"
+	fi
+	# 安装最新的 JDK
+	LATEST_JDK=$(apt search ^openjdk-[0-9]+-jdk$ 2>/dev/null | grep -oP 'openjdk-\d+-jdk' | sort -V | tail -n1)
+	if [[ -n "$LATEST_JDK" ]]; then
+		sudo DEBIAN_FRONTEND=noninteractive apt install -y "$LATEST_JDK"
+		JAVA_VERSION=$(java -version 2>&1 | head -n1 | awk -F '"' '{print $2}')
+		print_msg "OpenJDK 安装完成 ✅ 版本: $JAVA_VERSION" "35"
+	else
+		print_msg "⚠️ 未找到可用的 OpenJDK 包" "214"
+	fi
 fi
 
 # 8. Docker

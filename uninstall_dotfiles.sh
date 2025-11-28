@@ -51,23 +51,23 @@ for dir in "${dirs[@]}"; do
 	fi
 done
 
-# Remove zcompdump files
-rm -f "$HOME/.zcompdump"*
+# Remove zsh cache files (both old and new locations)
+rm -f "$HOME/.zcompdump"* "$HOME/.zsh_history" 2>/dev/null || true
 
 # macOS specific
 if [[ "$(uname)" == "Darwin" ]]; then
 	echo -e "${BLUE}🍎 Removing macOS specific files...${NC}"
-	
+
 	if [[ -d "$HOME/sh-script" ]]; then
 		echo -e "   Removing ${YELLOW}$HOME/sh-script${NC}"
 		rm -rf "$HOME/sh-script"
 	fi
-	
+
 	if [[ -d "$HOME/.hammerspoon" ]]; then
 		echo -e "   Removing ${YELLOW}$HOME/.hammerspoon${NC}"
 		rm -rf "$HOME/.hammerspoon"
 	fi
-	
+
 	if [[ -f "$HOME/.config/karabiner/karabiner.json" ]]; then
 		echo -e "   Removing ${YELLOW}$HOME/.config/karabiner/karabiner.json${NC}"
 		rm -f "$HOME/.config/karabiner/karabiner.json"
@@ -77,4 +77,3 @@ fi
 echo ""
 echo -e "${GREEN}✅ Dotfiles uninstalled successfully!${NC}"
 echo -e "${GREEN}🎉 Uninstall complete! Please restart your terminal.${NC}"
-

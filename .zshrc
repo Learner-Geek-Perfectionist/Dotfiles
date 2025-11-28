@@ -11,19 +11,8 @@ export RED='\033[0;31m' \
 	DARK_RED='\033[1;31m' \
 	NC='\033[0m' # 没有颜色
 
-if [[ "$HISTFILE" != "$HOME/.cache/zsh/.zsh_history" ]]; then
-	export HISTFILE="$HOME/.cache/zsh/.zsh_history"
-	if [[ -f "$HOME/.cache/zsh/.zsh_history" ]]; then
-		readonly HISTFILE
-	fi
-fi
-
-if [[ "$ZSH_COMPDUMP" != "$HOME/.cache/zsh/.zcompdump" ]]; then
-	export ZSH_COMPDUMP="$HOME/.cache/zsh/.zcompdump"
-	if [[ -f "$HOME/.cache/zsh/.zcompdump" ]]; then
-		readonly ZSH_COMPDUMP
-	fi
-fi
+# 注意：HISTFILE 和 ZSH_COMPDUMP 已在 .zshenv 中设置并锁定
+# 这样可以防止被 /etc/zsh/ 下的系统配置覆盖
 
 # 获取操作系统信息并设置 PATH
 if [[ "$(uname)" == "Darwin" ]]; then

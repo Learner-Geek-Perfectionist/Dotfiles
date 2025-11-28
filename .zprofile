@@ -4,20 +4,19 @@ zmodload zsh/zprof
 # 删除 Apple Terminal 的 .zsh_sessions 文件
 [[ -e "$HOME/.zsh_sessions" ]] && rm -rf "$HOME/.zsh_sessions" && echo "已成功删除 $HOME/.zsh_sessions。"
 
-# 删除 $HOME 目录下的 .zcompdump 缓存文件
-[[ -f $HOME/.zcompdump ]] && rm -rf "$HOME/.zcompdump" && echo "已成功删除 $HOME/.zcompdump。"
+# 注意：.zcompdump 路径已在 .zshenv 中通过 ZSH_COMPDUMP 变量锁定到 ~/.cache/zsh/
 
 # 添加 homebrew 的环境变量
 if [[ -x "/opt/homebrew/bin/brew" ]]; then
-    eval $(/opt/homebrew/bin/brew shellenv)
+	eval $(/opt/homebrew/bin/brew shellenv)
 fi
 
 # 添加 anaconda 的环境变量
 if [[ -x "/opt/homebrew/anaconda3/etc/profile.d/conda.sh" ]]; then
-    source /opt/homebrew/anaconda3/etc/profile.d/conda.sh
+	source /opt/homebrew/anaconda3/etc/profile.d/conda.sh
 fi
 
 # 添加 orbstack 的环境变量
 if [[ -f "$HOME/.orbstack/shell/init.zsh" ]]; then
-    source $HOME/.orbstack/shell/init.zsh 2>/dev/null || :
+	source $HOME/.orbstack/shell/init.zsh 2>/dev/null || :
 fi

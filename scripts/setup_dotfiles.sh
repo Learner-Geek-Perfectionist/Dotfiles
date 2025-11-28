@@ -76,6 +76,7 @@ if command -v zsh >/dev/null 2>&1; then
 	fi
 fi
 
-rm -rf "$HOME/.zcompdump"
+# 清理旧位置的 zsh 缓存文件（迁移到 ~/.cache/zsh/）
+rm -f "$HOME/.zcompdump"* "$HOME/.zsh_history" 2>/dev/null || true
 
 echo -e "${GREEN}🎉 Setup Complete! Run 'zsh' to enter zsh shell.${NC}"

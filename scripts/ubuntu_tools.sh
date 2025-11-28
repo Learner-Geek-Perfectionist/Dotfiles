@@ -282,7 +282,7 @@ fi
 
 # =================================开始安装 eza=================================
 if command -v eza >/dev/null 2>&1; then
-	print_msg "eza 已安装，跳过安装。版本: $(eza --version | awk 'NR==1 {print $2}')" "35"
+	print_msg "eza 已安装，跳过安装。版本: $(eza --version | awk 'NR==3 {print $1}')" "35"
 else
 	print_msg "开始安装 eza..." "212"
 
@@ -291,7 +291,7 @@ else
 	sudo ln -snf /opt/rust/cargo/bin/eza /usr/local/bin/
 
 	if command -v eza >/dev/null 2>&1; then
-		print_msg "eza 安装完成 ✅ 版本: $(eza --version | awk 'NR==1 {print $2}')" "35"
+		print_msg "eza 安装完成 ✅ 版本: $(eza --version | awk 'NR==3 {print $1}')" "35"
 	else
 		print_msg "eza 安装失败 ❌" "196"
 		exit 1

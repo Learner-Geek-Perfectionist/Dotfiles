@@ -65,7 +65,7 @@ fi
 
 # 7. Java (OpenJDK)
 if command -v java >/dev/null 2>&1; then
-	JAVA_VERSION=$(java -version 2>&1 | head -n1 | awk -F '"' '{print $2}')
+	JAVA_VERSION=$(java -version 2>&1 | head -n1 | awk '{gsub(/"/, ""); print $3, $4}')
 	print_msg "OpenJDK 已安装，跳过安装。版本: $JAVA_VERSION" "35"
 else
 	print_msg "开始安装 OpenJDK..." "212"
@@ -79,7 +79,7 @@ else
 	LATEST_JDK=$(apt search ^openjdk-[0-9]+-jdk$ 2>/dev/null | grep -oP 'openjdk-\d+-jdk' | sort -V | tail -n1)
 	if [[ -n "$LATEST_JDK" ]]; then
 		sudo DEBIAN_FRONTEND=noninteractive apt install -y "$LATEST_JDK"
-		JAVA_VERSION=$(java -version 2>&1 | head -n1 | awk -F '"' '{print $2}')
+		JAVA_VERSION=$(java -version 2>&1 | head -n1 | awk '{gsub(/"/, ""); print $3, $4}')
 		print_msg "OpenJDK 安装完成 ✅ 版本: $JAVA_VERSION" "35"
 	else
 		print_msg "⚠️ 未找到可用的 OpenJDK 包" "214"

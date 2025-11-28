@@ -41,9 +41,11 @@ flowchart TB
             UT2 --> UT3[安装 fastfetch]
             UT3 --> UT4[安装 kitty]
             UT4 --> UT5[安装 fzf]
+            UT5 --> UT6[安装 Rust 工具链<br/>rustup/cargo/rustc]
+            UT6 --> UT7[安装 Cargo 工具<br/>eza/fd/rg/bat/lua]
         end
 
-        UT5 --> U6[执行 Unminimize]
+        UT7 --> U6[执行 Unminimize]
         U6 --> U7[安装 OpenJDK]
         U7 --> U8[安装 Docker]
         U8 --> U9[安装 Kotlin<br/>Native + Compiler]

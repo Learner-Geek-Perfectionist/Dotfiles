@@ -67,14 +67,6 @@ fi
 
 echo -e "${GREEN}✅ Dotfiles installed successfully.${NC}"
 
-# Install ZSH plugins (if the script exists)
-ZINIT_PLUGIN_SCRIPT="$HOME/.config/zsh/plugins/zinit-plugin.zsh"
-if [[ -f "$ZINIT_PLUGIN_SCRIPT" ]]; then
-	echo -e "${BLUE}Executing zinit-plugin.zsh...${NC}"
-	# Sourcing it might be risky if it has exit, but let's try or execute
-	zsh "$ZINIT_PLUGIN_SCRIPT" || echo -e "${RED}Failed to run zinit plugin script${NC}"
-fi
-
 rm -rf "$HOME/.zcompdump"
 
-echo -e "${GREEN}🎉 Setup Complete! Please restart your shell or terminal.${NC}"
+echo -e "${GREEN}🎉 Setup Complete! Run 'zsh' to start zsh and auto-install plugins.${NC}"

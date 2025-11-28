@@ -1,14 +1,12 @@
 #!/bin/bash
 
-# Exit immediately if a command exits with a non-zero status
 set -e
 
-# Dotfiles Version (duplicated here for pre-clone display)
-DOTFILES_VERSION="1.0.0"
+# Shared metadata
+DOTFILES_VERSION="${DOTFILES_VERSION:-1.0.0}"
+LOG_FILE="${LOG_FILE:-/tmp/dotfiles-install.log}"
 
-# Define minimal colors for bootstrap (before repo is cloned)
-# Note: Full color definitions are in lib/constants.sh, but we need these
-# basic colors for output before the repository is available.
+# Minimal colors so logs remain readable before repo files exist
 export RED='\033[0;31m'
 export GREEN='\033[0;32m'
 export YELLOW='\033[1;33m'
@@ -16,15 +14,8 @@ export BLUE='\033[0;34m'
 export LIGHT_BLUE='\033[1;34m'
 export NC='\033[0m'
 
-# Log file
-LOG_FILE="/tmp/dotfiles-install.log"
-
-# Use script command to create PTY environment, preserving TTY for color output
-# This prevents the issue where exec > >(tee ...) makes stdout non-TTY
-if [[ -z "$__DOTFILES_PTY" ]]; then
-	export __DOTFILES_PTY=1
-
-	# Initialize log with header
+# Initialize log header once
+if [[ -z "$__DOTFILES_LOG_HEADER" ]]; then
 	{
 		echo "======================================"
 		echo "Dotfiles Installation Log"
@@ -35,42 +26,7 @@ if [[ -z "$__DOTFILES_PTY" ]]; then
 		echo "======================================"
 		echo ""
 	} >"$LOG_FILE"
-
-	SCRIPT_SOURCE="${BASH_SOURCE[0]:-$0}"
-	# 检查是否是真正的脚本文件，排除以下情况：
-	# 1. shell 二进制文件（bash -c "script" 时 $0=/bin/bash）
-	# 2. 文件描述符（bash <(curl ...) 时 $0=/dev/fd/XX）
-	# 3. 管道/stdin（curl ... | bash）
-	if [[ -n "$SCRIPT_SOURCE" && -r "$SCRIPT_SOURCE" && -f "$SCRIPT_SOURCE" ]] &&
-		[[ ! "$SCRIPT_SOURCE" =~ (^|/)(bash|sh|zsh|dash|ksh)$ ]] &&
-		[[ ! "$SCRIPT_SOURCE" =~ ^/dev/ ]] &&
-		[[ ! "$SCRIPT_SOURCE" =~ ^/proc/ ]]; then
-		SCRIPT_PATH="$(cd "$(dirname "$SCRIPT_SOURCE")" && pwd)/$(basename "$SCRIPT_SOURCE")"
-	else
-		SCRIPT_PATH=""
-	fi
-
-	# macOS and Linux have different script syntax
-	if [[ -n "$SCRIPT_PATH" ]]; then
-		# 直接执行本地脚本文件
-		if [[ $(uname -s) == "Darwin" ]]; then
-			exec script -q -a "$LOG_FILE" /bin/bash "$SCRIPT_PATH" "$@"
-		else
-			exec script -q -a "$LOG_FILE" -c "/bin/bash \"$SCRIPT_PATH\" $*"
-		fi
-	else
-		# 通过 stdin/pipe/bash -c 执行时，将脚本保存到临时文件再用 script 执行
-		TEMP_SCRIPT="/tmp/dotfiles-install-$$.sh"
-		# 获取当前脚本的完整内容（通过读取自身）
-		# 由于 bash -c 执行时脚本已在内存中，我们需要重新下载
-		curl -fsSL "https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/master/install.sh" -o "$TEMP_SCRIPT"
-		chmod +x "$TEMP_SCRIPT"
-		if [[ $(uname -s) == "Darwin" ]]; then
-			exec script -q -a "$LOG_FILE" /bin/bash "$TEMP_SCRIPT" "$@"
-		else
-			exec script -q -a "$LOG_FILE" -c "/bin/bash \"$TEMP_SCRIPT\" $*"
-		fi
-	fi
+	export __DOTFILES_LOG_HEADER=1
 fi
 
 TMP_DIR="/tmp/Dotfiles"
@@ -129,3 +85,4 @@ source "$TMP_DIR/scripts/main.sh"
 
 echo -e "${GREEN}✅ Installation completed!${NC}"
 echo -e "${GREEN}📝 Installation log saved to: $LOG_FILE${NC}"
+

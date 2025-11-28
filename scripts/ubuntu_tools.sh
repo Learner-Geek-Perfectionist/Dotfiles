@@ -141,7 +141,6 @@ else
 	URL="https://github.com/fastfetch-cli/fastfetch/releases/download/${VERSION}/fastfetch-linux-${BIN_ARCH}.tar.gz"
 
 	TMP_DIR=$(mktemp -d)
-	print_msg "正在下载 fastfetch ${VERSION}..." "214"
 	wget -q --show-progress -O "${TMP_DIR}/fastfetch.tar.gz" "$URL"
 	tar -zxf "${TMP_DIR}/fastfetch.tar.gz" -C "$TMP_DIR"
 	sudo mv "${TMP_DIR}/${UNPACK_DIR}/usr/bin/fastfetch" /usr/local/bin/

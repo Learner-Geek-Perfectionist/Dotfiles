@@ -205,3 +205,163 @@ else
 	fi
 fi
 # =================================结束安装 fzf=================================
+
+export CARGO_HOME=/opt/rust/cargo
+export RUSTUP_HOME=/opt/rust/rustup
+
+# =================================开始安装 Rust 工具=================================
+if command -v rustc >/dev/null 2>&1; then
+	print_msg "rustc 已安装，跳过安装。版本: $(rustc --version | awk '{print $2}')" "35"
+else
+	print_msg "开始安装 rustc..." "212"
+
+	# 1. 创建系统级安装目录并设置权限
+	sudo mkdir -p /opt/rust/{cargo,rustup}
+	sudo chmod -R a+rw /opt/rust/
+	export CARGO_HOME=/opt/rust/cargo
+	export RUSTUP_HOME=/opt/rust/rustup
+
+	# 2. 安装 rustup（工具链管理器）、rustc（Rust 编译器）、cargo（包管理与构建工具）
+	curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
+
+	# 3. 链接 cargo、rustc、rustup 到系统的 PATH 中
+	sudo ln -snf /opt/rust/cargo/bin/* /usr/local/bin/
+	# 4. 更新 rustup
+	rustup update
+	# 5. 初始化 rustup 环境
+	rustup default stable
+
+	if command -v rustc >/dev/null 2>&1; then
+		print_msg "rustc 安装完成 ✅ 版本: $(rustc --version | awk '{print $2}')" "35"
+	else
+		print_msg "rustc 安装失败 ❌" "196"
+		exit 1
+	fi
+fi
+# =================================结束安装 Rust 工具=================================
+
+# =================================开始安装 cargo-binstall=================================
+if command -v cargo-binstall >/dev/null 2>&1; then
+	print_msg "cargo-binstall 已安装，跳过安装。版本: $(cargo-binstall -V | awk '{print $2}')" "35"
+else
+	print_msg "开始安装 cargo-binstall..." "212"
+	# 安装 cargo-binstall
+	curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+	sudo ln -snf /opt/rust/cargo/bin/cargo-binstall /usr/local/bin/
+	# 利用 cargo-binstall 自举，自己安装自己，这样 cargo 包管理工具就可以管理 cargo-binstall
+	cargo-binstall --force cargo-binstall --no-confirm
+
+	if command -v cargo-binstall >/dev/null 2>&1; then
+		print_msg "cargo-binstall 安装完成 ✅ 版本: $(cargo-binstall -V | awk '{print $2}')" "35"
+	else
+		print_msg "cargo-binstall 安装失败 ❌" "196"
+		exit 1
+	fi
+fi
+# =================================结束安装 cargo-binstall=================================
+
+# =================================开始安装 cargo-update=================================
+if command -v cargo-install-update >/dev/null 2>&1; then
+	print_msg "cargo-update 已安装，跳过安装。" "35"
+else
+	print_msg "开始安装 cargo-update..." "212"
+
+	# 安装 cargo-update
+	cargo-binstall cargo-update --no-confirm
+	sudo ln -snf /opt/rust/cargo/bin/cargo-install-update /usr/local/bin/
+
+	if command -v cargo-install-update >/dev/null 2>&1; then
+		print_msg "cargo-update 安装完成 ✅" "35"
+	else
+		print_msg "cargo-update 安装失败 ❌" "196"
+		exit 1
+	fi
+fi
+# =================================结束安装 cargo-update=================================
+
+# =================================开始安装 eza=================================
+if command -v eza >/dev/null 2>&1; then
+	print_msg "eza 已安装，跳过安装。版本: $(eza --version | awk 'NR==1 {print $2}')" "35"
+else
+	print_msg "开始安装 eza..." "212"
+
+	# 安装 eza
+	cargo-binstall -y eza
+	sudo ln -snf /opt/rust/cargo/bin/eza /usr/local/bin/
+
+	if command -v eza >/dev/null 2>&1; then
+		print_msg "eza 安装完成 ✅ 版本: $(eza --version | awk 'NR==1 {print $2}')" "35"
+	else
+		print_msg "eza 安装失败 ❌" "196"
+		exit 1
+	fi
+fi
+# =================================结束安装 eza=================================
+
+# =================================开始安装 fd=================================
+if command -v fd >/dev/null 2>&1; then
+	print_msg "fd 已安装，跳过安装。版本: $(fd --version | awk '{print $2}')" "35"
+else
+	print_msg "开始安装 fd..." "212"
+	cargo-binstall -y fd-find
+	sudo ln -snf /opt/rust/cargo/bin/fd /usr/local/bin/
+
+	if command -v fd >/dev/null 2>&1; then
+		print_msg "fd 安装完成 ✅ 版本: $(fd --version | awk '{print $2}')" "35"
+	else
+		print_msg "fd 安装失败 ❌" "196"
+		exit 1
+	fi
+fi
+# =================================结束安装 fd=================================
+
+# =================================开始安装 rg=================================
+if command -v rg >/dev/null 2>&1; then
+	print_msg "rg 已安装，跳过安装。版本: $(rg --version | awk 'NR==1 {print $2}')" "35"
+else
+	print_msg "开始安装 rg..." "212"
+	cargo-binstall -y ripgrep
+	sudo ln -snf /opt/rust/cargo/bin/rg /usr/local/bin/
+
+	if command -v rg >/dev/null 2>&1; then
+		print_msg "rg 安装完成 ✅ 版本: $(rg --version | awk 'NR==1 {print $2}')" "35"
+	else
+		print_msg "rg 安装失败 ❌" "196"
+		exit 1
+	fi
+fi
+# =================================结束安装 rg=================================
+
+# =================================开始安装 bat=================================
+if command -v bat >/dev/null 2>&1; then
+	print_msg "bat 已安装，跳过安装。版本: $(bat --version | awk '{print $2}')" "35"
+else
+	print_msg "开始安装 bat..." "212"
+	cargo-binstall -y bat
+	sudo ln -snf /opt/rust/cargo/bin/bat /usr/local/bin/
+
+	if command -v bat >/dev/null 2>&1; then
+		print_msg "bat 安装完成 ✅ 版本: $(bat --version | awk '{print $2}')" "35"
+	else
+		print_msg "bat 安装失败 ❌" "196"
+		exit 1
+	fi
+fi
+# =================================结束安装 bat=================================
+
+# =================================开始安装 lua=================================
+if command -v lua >/dev/null 2>&1; then
+	print_msg "lua 已安装，跳过安装。版本: $(lua -v 2>&1 | awk '{print $2}')" "35"
+else
+	print_msg "开始安装 lua..." "212"
+	latest=$(apt list lua* 2>/dev/null | grep -oP 'lua\d+\.\d+' | sort -V | tail -n 1)
+	sudo DEBIAN_FRONTEND=noninteractive apt install -y ${latest} lib${latest}-dev
+
+	if command -v lua >/dev/null 2>&1; then
+		print_msg "lua 安装完成 ✅ 版本: $(lua -v 2>&1 | awk '{print $2}')" "35"
+	else
+		print_msg "lua 安装失败 ❌" "196"
+		exit 1
+	fi
+fi
+# =================================结束安装 lua=================================

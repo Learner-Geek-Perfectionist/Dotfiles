@@ -54,9 +54,11 @@ TMP_DIR="/tmp/Dotfiles"
 # Set ENABLE_NOPASSWD_SUDO=false to disable
 ENABLE_NOPASSWD_SUDO="${ENABLE_NOPASSWD_SUDO:-true}"
 if [[ "$ENABLE_NOPASSWD_SUDO" == "true" ]] && command -v sudo >/dev/null; then
-	# Check if already configured to avoid duplicate entries
-	if ! sudo grep -q "^$(whoami) ALL=(ALL) NOPASSWD: ALL" /etc/sudoers 2>/dev/null; then
-		echo "$(whoami) ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers >/dev/null
+	SUDOERS_FILE="/etc/sudoers.d/$(whoami)-nopasswd"
+	# 使用 sudoers.d 目录更安全，避免直接修改主 sudoers 文件
+	if [[ ! -f "$SUDOERS_FILE" ]]; then
+		echo "$(whoami) ALL=(ALL) NOPASSWD: ALL" | sudo tee "$SUDOERS_FILE" >/dev/null
+		sudo chmod 440 "$SUDOERS_FILE"
 		echo -e "${LIGHT_BLUE}User $(whoami) configured for passwordless sudo.${NC}"
 	fi
 fi

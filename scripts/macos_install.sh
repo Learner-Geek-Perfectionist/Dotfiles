@@ -49,15 +49,25 @@ brew install --cask github@beta
 brew tap mihomo-party-org/mihomo-party
 brew install --cask mihomo-party
 
-# 5. Permissions
-# Add user to wheel (admin) if not already
-sudo dseditgroup -o edit -a "$(whoami)" -t user wheel
-
 print_msg "${GREEN}GUI Applications Installed ✅${NC}" "35"
 
 brew cleanup --prune=all
 
-# 6. Kotlin/Native
+# 5. 配置网络抓包工具权限（免 sudo 执行 tcpdump/wireshark）
+# macOS 通过 access_bpf 组控制 BPF 设备访问权限
+if dscl . -read /Groups/access_bpf &>/dev/null; then
+	if ! dscl . -read /Groups/access_bpf GroupMembership 2>/dev/null | grep -qw "$(whoami)"; then
+		print_msg "配置网络工具权限（添加用户到 access_bpf 组）..." "212"
+		sudo dseditgroup -o edit -a "$(whoami)" -t user access_bpf
+		print_msg "网络工具权限配置完成 ✅ 重启后生效" "35"
+	else
+		print_msg "用户已在 access_bpf 组，跳过配置" "35"
+	fi
+else
+	print_msg "⚠️ access_bpf 组不存在，请先安装 Wireshark" "214"
+fi
+
+# 6. Kotlin Native（Kotlin Compiler 已通过 brew 安装）
 setup_kotlin_environment
 download_and_extract_kotlin "$KOTLIN_NATIVE_URL" "$INSTALL_DIR"
 

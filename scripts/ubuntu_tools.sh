@@ -123,7 +123,7 @@ fi
 if command -v fastfetch >/dev/null 2>&1; then
 	print_msg "fastfetch 已安装，跳过安装。版本: $(fastfetch --version | head -n1 | awk '{print $2}')" "35"
 else
-	print_msg "开始安装 fastfetch" "212"
+	print_msg "开始安装 fastfetch..." "212"
 
 	# 使用 GitHub API 获取最新版本（避免解析 HTML）
 	VERSION=$(curl -fsSL "https://api.github.com/repos/fastfetch-cli/fastfetch/releases/latest" 2>/dev/null | grep -oP '"tag_name":\s*"\K[^"]+' | sed 's/^v//')
@@ -141,7 +141,9 @@ else
 	URL="https://github.com/fastfetch-cli/fastfetch/releases/download/${VERSION}/fastfetch-linux-${BIN_ARCH}.tar.gz"
 
 	TMP_DIR=$(mktemp -d)
-	wget -q -O "${TMP_DIR}/fastfetch.tar.gz" "$URL"
+	print_msg "正在下载 fastfetch ${VERSION}..." "214"
+	wget --progress=bar:force -O "${TMP_DIR}/fastfetch.tar.gz" "$URL" 2>&1
+	print_msg "正在解压并安装..." "214"
 	tar -zxf "${TMP_DIR}/fastfetch.tar.gz" -C "$TMP_DIR"
 	sudo mv "${TMP_DIR}/${UNPACK_DIR}/usr/bin/fastfetch" /usr/local/bin/
 	sudo chmod +x /usr/local/bin/fastfetch
@@ -242,7 +244,7 @@ fi
 
 # =================================开始安装 cargo-binstall=================================
 if command -v cargo-binstall >/dev/null 2>&1; then
-	print_msg "cargo-binstall 已安装，跳过安装。版本: $(cargo-binstall -V | awk '{print $2}')" "35"
+	print_msg "cargo-binstall 已安装，跳过安装。版本: $(cargo-binstall -V 2>&1 | head -1)" "35"
 else
 	print_msg "开始安装 cargo-binstall..." "212"
 	# 安装 cargo-binstall
@@ -252,7 +254,7 @@ else
 	cargo-binstall --force cargo-binstall --no-confirm
 
 	if command -v cargo-binstall >/dev/null 2>&1; then
-		print_msg "cargo-binstall 安装完成 ✅ 版本: $(cargo-binstall -V | awk '{print $2}')" "35"
+		print_msg "cargo-binstall 安装完成 ✅ 版本: $(cargo-binstall -V 2>&1 | head -1)" "35"
 	else
 		print_msg "cargo-binstall 安装失败 ❌" "196"
 		exit 1
@@ -351,14 +353,14 @@ fi
 
 # =================================开始安装 lua=================================
 if command -v lua >/dev/null 2>&1; then
-	print_msg "lua 已安装，跳过安装。版本: $(lua -v 2>&1 | awk '{print $2}')" "35"
+	print_msg "lua 已安装，跳过安装。版本: $(lua -v 2>&1 | grep -oP 'Lua \K[\d.]+')" "35"
 else
 	print_msg "开始安装 lua..." "212"
 	latest=$(apt list lua* 2>/dev/null | grep -oP 'lua\d+\.\d+' | sort -V | tail -n 1)
 	sudo DEBIAN_FRONTEND=noninteractive apt install -y ${latest} lib${latest}-dev
 
 	if command -v lua >/dev/null 2>&1; then
-		print_msg "lua 安装完成 ✅ 版本: $(lua -v 2>&1 | awk '{print $2}')" "35"
+		print_msg "lua 安装完成 ✅ 版本: $(lua -v 2>&1 | grep -oP 'Lua \K[\d.]+')" "35"
 	else
 		print_msg "lua 安装失败 ❌" "196"
 		exit 1

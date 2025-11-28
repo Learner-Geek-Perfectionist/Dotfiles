@@ -2,7 +2,7 @@
 
 # Exit immediately if a command exits with a non-zero status
 set -e
-
+set -x
 # Dotfiles Version (duplicated here for pre-clone display)
 DOTFILES_VERSION="1.0.0"
 

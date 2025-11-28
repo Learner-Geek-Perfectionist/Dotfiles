@@ -26,4 +26,9 @@ Host fedora
   Port 32222  
   User fedora
   ProxyJump mac
+
+Host github.com
+    Hostname ssh.github.com
+    Port 443
+    User git
     

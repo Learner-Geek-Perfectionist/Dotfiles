@@ -221,7 +221,8 @@ install_packages() {
 		fi
 		;;
 	"apt")
-		installed_packages="$(dpkg -l | awk '/^ii/ {print $2}')"
+		# 去掉架构后缀（如 pkg-config:amd64 -> pkg-config）
+		installed_packages="$(dpkg -l | awk '/^ii/ {print $2}' | cut -d: -f1)"
 		;;
 	"dnf")
 		installed_packages="$(dnf list installed | awk 'NR>1 {print $1}' | cut -d. -f1)"
@@ -293,7 +294,6 @@ install_docker() {
 
 # Function: Check and Install Docker
 install_and_configure_docker() {
-	print_msg "开始检查 Docker 环境..." "212"
 
 	# Check if running inside a container (simple check)
 	if [[ -f /.dockerenv ]]; then
@@ -376,11 +376,14 @@ download_and_extract_kotlin() {
 	fi
 
 	FILE_NAME=$(basename "${URL}")
+	# 显示友好名称（去掉扩展名）
+	DISPLAY_NAME="${FILE_NAME%.tar.gz}"
+	DISPLAY_NAME="${DISPLAY_NAME%.zip}"
 	if [[ -d "$TARGET_DIR" ]]; then
-		print_msg "${FILE_NAME} is already installed in ${TARGET_DIR}." "35"
+		print_msg "${DISPLAY_NAME} is already installed in ${TARGET_DIR}." "35"
 		return 0
 	fi
-	print_msg "正在下载 $FILE_NAME......" "212"
+	print_msg "正在下载 $DISPLAY_NAME......" "212"
 	echo -e "${CYAN}The Latest Version is $RED$LATEST_VERSION${NC}"
 	echo -e "${YELLOW}Downloading $BLUE$FILE_NAME$YELLOW from ${MAGENTA}${URL}${NC}"
 	curl -L -f -s -S "${URL}" -o "/tmp/${FILE_NAME}" || {
@@ -401,7 +404,7 @@ download_and_extract_kotlin() {
 	# 更改 kotlin 目录权限，添加符号链接到系统的 PATH 中
 	[[ -d "/opt/kotlin-native/" ]] && sudo chmod -R a+rw /opt/kotlin-native/ && sudo ln -snf /opt/kotlin-native/bin/* /usr/local/bin/
 	[[ -d "/opt/kotlin-compiler/" ]] && sudo chmod -R a+rw /opt/kotlin-compiler/ && sudo ln -snf /opt/kotlin-compiler/kotlinc/bin/* /usr/local/bin/
-	print_msg "${FILE_NAME} has been installed successfully to ${TARGET_DIR}" "35"
+	print_msg "${DISPLAY_NAME} has been installed successfully to ${TARGET_DIR}" "35"
 }
 
 # Function: Install Fonts

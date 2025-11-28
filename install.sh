@@ -19,20 +19,30 @@ export NC='\033[0m'
 # Log file
 LOG_FILE="/tmp/dotfiles-install.log"
 
-# Initialize log with header
-{
-	echo "======================================"
-	echo "Dotfiles Installation Log"
-	echo "Version: $DOTFILES_VERSION"
-	echo "Started: $(date '+%Y-%m-%d %H:%M:%S')"
-	echo "OS: $(uname -s) $(uname -r)"
-	echo "User: $(whoami)"
-	echo "======================================"
-	echo ""
-} >"$LOG_FILE"
+# Use script command to create PTY environment, preserving TTY for gum color output
+# This prevents the issue where exec > >(tee ...) makes stdout non-TTY
+if [[ -z "$__DOTFILES_PTY" ]]; then
+	export __DOTFILES_PTY=1
 
-# Redirect all output to both terminal and log file
-exec > >(tee -a "$LOG_FILE") 2>&1
+	# Initialize log with header (outside script to avoid control characters)
+	{
+		echo "======================================"
+		echo "Dotfiles Installation Log"
+		echo "Version: $DOTFILES_VERSION"
+		echo "Started: $(date '+%Y-%m-%d %H:%M:%S')"
+		echo "OS: $(uname -s) $(uname -r)"
+		echo "User: $(whoami)"
+		echo "======================================"
+		echo ""
+	} >"$LOG_FILE"
+
+	# macOS and Linux have different script syntax
+	if [[ $(uname -s) == "Darwin" ]]; then
+		exec script -q -a "$LOG_FILE" /bin/bash "$0" "$@"
+	else
+		exec script -q -a "$LOG_FILE" -c "/bin/bash \"$0\" $*"
+	fi
+fi
 
 TMP_DIR="/tmp/Dotfiles"
 

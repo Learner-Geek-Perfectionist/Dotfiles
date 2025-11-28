@@ -241,7 +241,7 @@ install_packages() {
 		return 0
 	fi
 
-	print_msg "${RED}The following packages need to be installed:${NC}"
+	print_msg "The following packages need to be installed:" "196"
 	for package in "${uninstalled_packages[@]}"; do
 		echo "- $package"
 	done
@@ -302,12 +302,12 @@ install_and_configure_docker() {
 	fi
 
 	if grep -qi microsoft /proc/version || [[ "$AUTO_RUN" == "true" ]]; then
-		echo -e "${GREEN}在 WSL2 中或者不需要安装 Docker${NC}"
+		print_msg "⚠️ 在 WSL2 中或者不需要安装 Docker，跳过" "214"
 	else
 		if command -v docker >/dev/null; then
-			echo -e "${GREEN}Docker 已安装✅，跳过安装步骤。${NC}"
+			print_msg "✅ Docker 已安装，跳过安装步骤" "35"
 		else
-			echo -e "${YELLOW}Docker 未安装，开始安装过程...${NC}"
+			print_msg "Docker 未安装，开始安装过程..." "214"
 			install_docker
 		fi
 	fi
@@ -331,7 +331,7 @@ setup_kotlin_environment() {
 		ARCH="x86_64"
 		;;
 	*)
-		echo -e "${YELLOW}⚠️ Unsupported architecture: ${ARCH}, skipping Kotlin installation${NC}"
+		print_msg "⚠️ 不支持的架构: ${ARCH}，跳过 Kotlin 安装" "214"
 		KOTLIN_NATIVE_URL=""
 		KOTLIN_COMPILER_URL=""
 		return 0
@@ -346,7 +346,7 @@ setup_kotlin_environment() {
 		SYSTEM_TYPE="linux"
 		;;
 	*)
-		echo -e "${YELLOW}⚠️ Unsupported system type: $(uname -s), skipping Kotlin installation${NC}"
+		print_msg "⚠️ 不支持的系统类型: $(uname -s)，跳过 Kotlin 安装" "214"
 		KOTLIN_NATIVE_URL=""
 		KOTLIN_COMPILER_URL=""
 		return 0
@@ -356,7 +356,7 @@ setup_kotlin_environment() {
 	# Kotlin Native 不支持 Linux ARM64
 	if [[ "$SYSTEM_TYPE" == "linux" && "$ARCH" == "aarch64" ]]; then
 		KOTLIN_NATIVE_URL=""
-		echo -e "${YELLOW}⚠️ Kotlin Native 不支持 Linux ARM64，将跳过安装${NC}"
+		print_msg "⚠️ Kotlin Native 不支持 Linux ARM64，跳过安装" "214"
 	else
 		KOTLIN_NATIVE_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-native-prebuilt-$SYSTEM_TYPE-$ARCH-${LATEST_VERSION#v}.tar.gz"
 	fi

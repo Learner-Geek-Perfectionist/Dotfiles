@@ -53,16 +53,16 @@ source "$SCRIPTS_DIR/ubuntu_tools.sh"
 # 6. Unminimize (Restore man pages etc.)
 if sudo apt search unminimize 2>/dev/null | grep -q "^unminimize/"; then
 	sudo DEBIAN_FRONTEND=noninteractive apt install -y unminimize
-	yes | sudo unminimize || echo "Unminimize skipped or failed."
+	yes | sudo unminimize || print_msg "⚠️ Unminimize 跳过或失败" "214"
 else
-	echo -e "${RED}unminimize package not available.${NC}"
+	print_msg "⚠️ unminimize 包不可用" "214"
 fi
 
 # 7. Java (OpenJDK)
 if curl -fsI "https://ppa.launchpadcontent.net/openjdk-r/ppa/ubuntu/dists/$(lsb_release -sc)/Release" >/dev/null; then
 	sudo add-apt-repository -y ppa:openjdk-r/ppa && sudo apt update
 else
-	echo -e "${RED}OpenJDK PPA not available for $(lsb_release -sc), skipping.${NC}"
+	print_msg "⚠️ OpenJDK PPA 不支持 $(lsb_release -sc)，跳过" "214"
 fi
 # Install latest jdk
 LATEST_JDK=$(apt search ^openjdk-[0-9]+-jdk$ 2>/dev/null | grep -oP 'openjdk-\d+-jdk' | sort -V | tail -n1)

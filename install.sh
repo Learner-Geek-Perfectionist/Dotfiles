@@ -36,11 +36,22 @@ if [[ -z "$__DOTFILES_PTY" ]]; then
 		echo ""
 	} >"$LOG_FILE"
 
-	# macOS and Linux have different script syntax
-	if [[ $(uname -s) == "Darwin" ]]; then
-		exec script -q -a "$LOG_FILE" /bin/bash "$0" "$@"
+	SCRIPT_SOURCE="${BASH_SOURCE[0]:-$0}"
+	if [[ -n "$SCRIPT_SOURCE" && -r "$SCRIPT_SOURCE" && -f "$SCRIPT_SOURCE" ]]; then
+		SCRIPT_PATH="$(cd "$(dirname "$SCRIPT_SOURCE")" && pwd)/$(basename "$SCRIPT_SOURCE")"
 	else
-		exec script -q -a "$LOG_FILE" -c "/bin/bash \"$0\" $*"
+		SCRIPT_PATH=""
+	fi
+
+	# macOS and Linux have different script syntax
+	if [[ -n "$SCRIPT_PATH" ]]; then
+		if [[ $(uname -s) == "Darwin" ]]; then
+			exec script -q -a "$LOG_FILE" /bin/bash "$SCRIPT_PATH" "$@"
+		else
+			exec script -q -a "$LOG_FILE" -c "/bin/bash \"$SCRIPT_PATH\" $*"
+		fi
+	else
+		echo -e "${YELLOW}Warning: running installer from stdin/pipe; skipping PTY wrapper.${NC}"
 	fi
 fi
 

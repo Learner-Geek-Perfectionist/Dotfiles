@@ -55,6 +55,10 @@ else
 	export CARGO_HOME=/opt/rust/cargo
 	export RUSTUP_HOME=/opt/rust/rustup
 
+	# OrbStack Linux 支持 open 命令打开 macOS Finder
+	if [[ -n "$ORBSTACK" ]] && command -v open >/dev/null 2>&1; then
+		alias open='open -R'
+	fi
 fi
 
 # 加载 homebrew 插件

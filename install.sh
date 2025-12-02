@@ -248,7 +248,7 @@ install_macos_homebrew() {
 }
 
 # ========================================
-# Linux: 安装 Pixi 二进制
+# Linux: 安装 Pixi + Chezmoi
 # ========================================
 install_pixi_binary() {
 	local dotfiles_dir="$1"
@@ -258,7 +258,7 @@ install_pixi_binary() {
 	print_step "步骤 ${step_num}: 安装 Pixi (包管理器)"
 	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-	# 仅安装 Pixi 二进制，不安装工具包
+	# 安装 Pixi 二进制
 	if [[ -f "$dotfiles_dir/scripts/install_pixi.sh" ]]; then
 		bash "$dotfiles_dir/scripts/install_pixi.sh" --install-only
 	else
@@ -268,6 +268,22 @@ install_pixi_binary() {
 
 	# 确保 pixi 在 PATH 中
 	export PATH="$HOME/.pixi/bin:$PATH"
+
+	# 通过 pixi 单独安装 chezmoi（解决鸡生蛋问题）
+	if ! command -v chezmoi &>/dev/null; then
+		print_info "安装 Chezmoi..."
+		pixi global install chezmoi
+	fi
+
+	# 部署 pixi manifest（在 chezmoi apply 之前手动复制）
+	local manifest_src="$dotfiles_dir/chezmoi/private_dot_pixi/manifests/pixi-global.toml"
+	local manifest_dest="$HOME/.pixi/manifests/pixi-global.toml"
+
+	if [[ -f "$manifest_src" ]]; then
+		print_info "部署 Pixi 配置..."
+		mkdir -p "$(dirname "$manifest_dest")"
+		cp "$manifest_src" "$manifest_dest"
+	fi
 
 	print_success "✓ Pixi 安装完成"
 }

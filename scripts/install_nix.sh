@@ -58,6 +58,43 @@ get_os() {
 	esac
 }
 
+# 检查必要的依赖工具
+check_dependencies() {
+	print_info "检查必要依赖..."
+
+	local missing=()
+
+	# 检查 xz（解压 Nix tarball 必需）
+	if ! command -v xz >/dev/null 2>&1; then
+		missing+=("xz")
+	fi
+
+	# 检查 tar
+	if ! command -v tar >/dev/null 2>&1; then
+		missing+=("tar")
+	fi
+
+	# 检查 curl
+	if ! command -v curl >/dev/null 2>&1; then
+		missing+=("curl")
+	fi
+
+	if [[ ${#missing[@]} -gt 0 ]]; then
+		print_error "✗ 缺少必要的依赖工具: ${missing[*]}"
+		print_info ""
+		print_info "请先安装这些工具："
+		print_info "  Ubuntu/Debian: sudo apt install ${missing[*]}"
+		print_info "  CentOS/RHEL:   sudo yum install ${missing[*]}"
+		print_info "  Fedora:        sudo dnf install ${missing[*]}"
+		print_info "  Alpine:        sudo apk add ${missing[*]}"
+		print_info ""
+		return 1
+	fi
+
+	print_success "✓ 依赖检查通过"
+	return 0
+}
+
 # 检测是否支持用户命名空间
 check_user_namespace() {
 	print_info "检测用户命名空间支持..."
@@ -128,6 +165,11 @@ install_nix_user_chroot() {
 	print_info "=========================================="
 	print_info "使用 nix-user-chroot 安装 Nix（用户级）"
 	print_info "=========================================="
+
+	# 检查必要依赖
+	if ! check_dependencies; then
+		exit 1
+	fi
 
 	# 检查用户命名空间支持
 	if ! check_user_namespace; then

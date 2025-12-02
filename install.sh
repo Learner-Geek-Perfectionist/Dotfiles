@@ -165,18 +165,13 @@ clone_dotfiles() {
 	# 清理之前的运行
 	[[ -d "$tmp_dir" ]] && rm -rf "$tmp_dir"
 
-	resolve_branch
+	# 硬编码使用 beta 分支
+	local branch="beta"
+	
+	print_header "克隆 Dotfiles 仓库 (分支: ${branch})..." >&2
 
-	local branch_label="${DOTFILES_BRANCH:-default}"
-	print_header "克隆 Dotfiles 仓库 (分支: ${branch_label})..."
-
-	local clone_args=(--depth=1)
-	if [[ -n "$DOTFILES_BRANCH" ]]; then
-		clone_args+=(--branch "$DOTFILES_BRANCH" --single-branch)
-	fi
-
-	if ! git clone "${clone_args[@]}" "$DOTFILES_REPO_URL" "$tmp_dir"; then
-		print_error "克隆仓库失败（分支: ${branch_label}）"
+	if ! git clone --depth=1 --branch "$branch" --single-branch "$DOTFILES_REPO_URL" "$tmp_dir"; then
+		print_error "克隆仓库失败（分支: ${branch}）" >&2
 		exit 1
 	fi
 

@@ -108,23 +108,22 @@ LANG = "en_US.UTF-8"
 LC_ALL = "en_US.UTF-8"
 
 # XDG 目录
-XDG_CONFIG_HOME = "{{ env.HOME }}/.config"
-XDG_DATA_HOME = "{{ env.HOME }}/.local/share"
-XDG_CACHE_HOME = "{{ env.HOME }}/.cache"
-XDG_STATE_HOME = "{{ env.HOME }}/.local/state"
+XDG_CONFIG_HOME = "$HOME/.config"
+XDG_DATA_HOME = "$HOME/.local/share"
+XDG_CACHE_HOME = "$HOME/.cache"
+XDG_STATE_HOME = "$HOME/.local/state"
 
 # Go
-GOPATH = "{{ env.HOME }}/go"
+GOPATH = "$HOME/go"
 
 # FZF
 FZF_DEFAULT_OPTS = "--height 40% --layout=reverse --border"
 FZF_DEFAULT_COMMAND = "fd --type f --hidden --follow --exclude .git"
 
-# ============================================
-# PATH 扩展
-# ============================================
-[env._.path]
-"{{ env.HOME }}/.local/bin" = true
-"{{ env.HOME }}/.cargo/bin" = true
-"{{ env.HOME }}/go/bin" = true
+# PATH 扩展 (mise 会自动追加到 PATH)
+_.path = [
+    "$HOME/.local/bin",
+    "$HOME/.cargo/bin",
+    "$HOME/go/bin",
+]
 

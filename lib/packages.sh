@@ -1,164 +1,180 @@
 #!/bin/bash
-# Package definitions for different platforms
+# Package definitions for macOS (Homebrew)
+# Linux 包管理已迁移到 devbox.json
 
-# 一旦错误，就退出
 set -e
 
-# macOS
+# ========================================
+# macOS Homebrew Casks (GUI 应用)
+# ========================================
 brew_casks=(
-	videofusion wpsoffice-cn tencent-meeting google-chrome
-	orbstack dingtalk baidunetdisk anaconda iina
-	pycharm android-studio qq chatgpt fleet hammerspoon
-	intellij-idea qqmusic jetbrains-gateway telegram cmake-app
-	clion jordanbaird-ice visual-studio-code discord keycastr wechat
-	douyin kitty feishu microsoft-edge Eudic karabiner-elements
-	wireshark maczip display-pilot github@beta mihomo-party
+    # 开发工具
+    visual-studio-code
+    kitty
+    orbstack
+    github@beta
+    
+    # JetBrains IDE
+    intellij-idea
+    pycharm
+    clion
+    android-studio
+    fleet
+    jetbrains-gateway
+    
+    # 网络工具
+    wireshark
+    mihomo-party
+    
+    # 浏览器
+    google-chrome
+    microsoft-edge
+    
+    # 通讯工具
+    wechat
+    qq
+    telegram
+    discord
+    dingtalk
+    feishu
+    tencent-meeting
+    
+    # 媒体
+    iina
+    qqmusic
+    douyin
+    
+    # 办公
+    wpsoffice-cn
+    baidunetdisk
+    
+    # 系统工具
+    karabiner-elements
+    hammerspoon
+    jordanbaird-ice
+    maczip
+    keycastr
+    display-pilot
+    
+    # AI
+    chatgpt
+    
+    # 其他
+    anaconda
+    Eudic
+    videofusion
+    cmake-app
 )
 
+# ========================================
+# macOS Homebrew Formulas (CLI 工具)
+# ========================================
 brew_formulas=(
-	gettext msgpack ruby graphviz kotlin python tmux
-	brotli git lpeg ncurses sqlite openjdk grep
-	c-ares htop lua neovim tree-sitter bash tcpdump
-	ca-certificates icu4c luajit node unibilium
-	cmake libnghttp2 luv openssl@3 vim perl dust
-	cmake-docs libsodium lz4 pcre2 xz llvm shfmt
-	fastfetch libuv lzip z3 tree autoconf chafa
-	fd libvterm make readline zstd eza less boost rsync
-	fzf libyaml mpdecimal ripgrep go coreutils rustup rust cargo-update cargo-binstall
-	gcc ninja wget mas pkgconf jq doxygen googletest google-benchmark
+    # 核心工具
+    git
+    curl
+    wget
+    coreutils
+    
+    # Shell
+    zsh
+    bash
+    
+    # 编辑器
+    neovim
+    vim
+    
+    # 终端增强
+    fzf
+    ripgrep
+    fd
+    eza
+    bat
+    htop
+    tree
+    less
+    tmux
+    
+    # 系统信息
+    fastfetch
+    
+    # 开发工具
+    cmake
+    cmake-docs
+    ninja
+    make
+    autoconf
+    pkg-config
+    
+    # 编译器
+    gcc
+    llvm
+    
+    # 语言
+    python
+    nodejs
+    go
+    rustup
+    rust
+    ruby
+    kotlin
+    openjdk
+    lua
+    luajit
+    perl
+    
+    # Rust 工具
+    cargo-update
+    cargo-binstall
+    dust
+    
+    # 网络工具
+    tcpdump
+    
+    # 文档和分析
+    graphviz
+    doxygen
+    jq
+    shfmt
+    chafa
+    
+    # 库
+    openssl@3
+    sqlite
+    ncurses
+    readline
+    libyaml
+    libvterm
+    boost
+    
+    # 压缩
+    xz
+    lz4
+    lzip
+    zstd
+    brotli
+    
+    # 其他
+    rsync
+    mas
+    tree-sitter
+    z3
+    googletest
+    google-benchmark
 )
 
-#ubuntu
-packages_ubuntu=(
-	openssh-server
-	lsof
-	debconf-utils
-	apt-utils
-	pkg-config
-	ncurses-bin
-	net-tools
-	lsb-release
-	zip
-	ninja-build
-	neovim
-	ruby-full
-	nodejs
-	iputils-ping
-	procps
-	htop
-	traceroute
-	tree
-	coreutils
-	zsh
-	fontconfig
-	python3
-	iproute2
-	wget
-	graphviz
-	sudo
-	tcpdump
-	golang
-	valgrind
-	curl
-	tar
-	make
-	man-db
-	jq
-	tshark
-	autoconf
-	systemd
-	language-pack-zh-hans
-	wireshark
-	doxygen
-	gtk-update-icon-cache
-	libgtest-dev
-	libboost-all-dev
-	rsync
-	xz-utils
-	tmux
-)
-
-#fedora
-packages_fedora=(
-	coreutils
-	coreutils-common
-	lsof
-	dnf-utils
-	man-pages
-	man-db
-	openssh-server
-	iproute
-	net-tools
-	zip
-	ninja-build
-	neovim
-	ruby
-	kitty
-	cmake
-	nodejs
-	iputils
-	procps-ng
-	htop
-	traceroute
-	tree
-	coreutils
-	zsh
-	fontconfig
-	python3
-	wget
-	pkgconf-pkg-config
-	graphviz
-	wireshark
-	tcpdump
-	java-latest-openjdk
-	golang
-	jq
-	openssl
-	hyperfine
-	sudo
-	autoconf
-	systemd
-	chafa
-	doxygen
-	rustup
-	lua
-	bat
-	ripgrep
-	fd-find
-	fzf
-	fastfetch
-	gtest-devel
-	google-benchmark
-	boost-devel
-	shfmt
-	llvm
-	clang
-	clang-devel
-	clang-tools-extra
-	lldb
-	lld
-	clang-analyzer
-	libomp
-	llvm-polly
-	flang
-	du-dust
-	rsync
-	gum
-	tmux
-)
-
-# Zsh Configuration Tools (Subset for zsh_config.sh)
+# ========================================
+# Zsh 最小依赖工具（仅安装 zsh 配置时使用）
+# ========================================
 zsh_tools_macos=(
-	"fzf" "eza" "fd" "ripgrep" "kitty" "bat" "fastfetch" "man-db" "lua" "git" "curl" "zsh"
-)
-
-zsh_tools_ubuntu=(
-	"zsh" "git" "curl" "make" "g++" "gcc" "openssh-server" "man-db" "wget" "gnupg" "pkg-config"
-	"xz-utils" "gtk-update-icon-cache" "bc" "graphviz" "language-pack-zh-hans" "language-pack-zh-hans-base"
-)
-
-zsh_tools_fedora=(
-	"zsh" "git" "curl" "make" "gcc-c++" "gcc" "openssh-server" "man-db" "wget" "shfmt"
-	"llvm" "clang" "clang-devel" "clang-tools-extra" "lldb" "lld" "cmake" "fastfetch"
-	"lua" "bat" "ripgrep" "fd-find" "fzf" "rustup" "graphviz"
+    zsh
+    git
+    curl
+    fzf
+    eza
+    fd
+    ripgrep
+    bat
+    fastfetch
+    lua
 )

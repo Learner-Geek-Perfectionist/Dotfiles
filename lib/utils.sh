@@ -1,179 +1,85 @@
 #!/bin/bash
+# 工具函数库 - 简化版
+# 主要用于 macOS 安装和通用工具函数
 
-# Source constants if not already sourced
-if [[ -z "$RED" ]]; then
-	source "$(dirname "${BASH_SOURCE[0]}")/constants.sh"
-fi
+# ========================================
+# 颜色定义
+# ========================================
+export RED='\033[0;31m'
+export GREEN='\033[0;32m'
+export YELLOW='\033[1;33m'
+export BLUE='\033[0;34m'
+export CYAN='\033[0;36m'
+export PURPLE='\033[0;35m'
+export MAGENTA='\033[0;35m'
+export ORANGE='\033[0;93m'
+export NC='\033[0m'
 
-# Function: Initialize logging
-# Creates log file and redirects all output to both terminal and log file
-# Usage: Call this function ONCE at the start of your main script
-init_logging() {
-	local log_file="${DOTFILES_LOG:-/tmp/dotfiles-install.log}"
+# ========================================
+# 版本信息
+# ========================================
+export DOTFILES_VERSION="${DOTFILES_VERSION:-2.0.0}"
+export DOTFILES_LOG="${DOTFILES_LOG:-/tmp/dotfiles-install-$(whoami).log}"
 
-	# Write header to log file
-	{
-		echo "======================================"
-		echo "Dotfiles Installation Log"
-		echo "Version: ${DOTFILES_VERSION:-unknown}"
-		echo "Started: $(date '+%Y-%m-%d %H:%M:%S')"
-		echo "OS: $(uname -s) $(uname -r)"
-		echo "User: $(whoami)"
-		echo "======================================"
-		echo ""
-	} >"$log_file"
+# ========================================
+# 打印函数
+# ========================================
+print_info() { echo -e "${CYAN}$1${NC}"; }
+print_success() { echo -e "${GREEN}$1${NC}"; }
+print_warn() { echo -e "${YELLOW}$1${NC}"; }
+print_error() { echo -e "${RED}$1${NC}"; }
+print_header() { echo -e "${BLUE}$1${NC}"; }
 
-	# Redirect all stdout and stderr to both terminal and log file
-	# This captures EVERYTHING from this point forward
-	exec > >(tee -a "$log_file") 2>&1
+# 带边框的消息（简化版，不依赖 gum）
+print_msg() {
+	local msg="$1"
+	local color="${2:-$CYAN}"
+	local width=60
+	local border=$(printf '=%.0s' $(seq 1 $width))
+
+	echo -e "${color}${border}${NC}"
+	echo -e "${color}  ${msg}${NC}"
+	echo -e "${color}${border}${NC}"
 }
 
-# Function: Log message to file and optionally to stdout
-# Usage: log_msg "message" [show_stdout]
+# ========================================
+# 日志函数
+# ========================================
 log_msg() {
 	local msg="$1"
 	local show_stdout="${2:-true}"
-	local log_file="${DOTFILES_LOG:-/tmp/dotfiles-install.log}"
 	local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-	echo "[$timestamp] $msg" >>"$log_file"
+
+	echo "[$timestamp] $msg" >>"$DOTFILES_LOG"
+
 	if [[ "$show_stdout" == "true" ]]; then
 		echo -e "$msg"
 	fi
 }
 
-# Function: Log error message
-log_error() {
-	local msg="$1"
-	log_msg "${RED}ERROR: $msg${NC}"
+log_error() { log_msg "${RED}ERROR: $1${NC}"; }
+log_success() { log_msg "${GREEN}$1${NC}"; }
+
+# ========================================
+# 检测函数
+# ========================================
+detect_os() {
+	case "$(uname -s)" in
+	Darwin) echo "macos" ;;
+	Linux) echo "linux" ;;
+	*) echo "unknown" ;;
+	esac
 }
 
-# Function: Log success message
-log_success() {
-	local msg="$1"
-	log_msg "${GREEN}$msg${NC}"
+detect_arch() {
+	case "$(uname -m)" in
+	x86_64) echo "x86_64" ;;
+	aarch64) echo "aarch64" ;;
+	arm64) echo "aarch64" ;;
+	*) echo "$(uname -m)" ;;
+	esac
 }
 
-# Function: Ensure git is installed (auto-install if missing)
-ensure_git() {
-	if command -v git &>/dev/null; then
-		return 0
-	fi
-
-	log_msg "${YELLOW}Git not found, installing...${NC}"
-
-	local os_type=$(uname -s)
-	if [[ "$os_type" == "Darwin" ]]; then
-		# macOS: Install Xcode Command Line Tools
-		xcode-select --install 2>/dev/null || true
-		# Wait for installation
-		until command -v git &>/dev/null; do
-			sleep 5
-		done
-	elif [[ "$os_type" == "Linux" ]]; then
-		if [[ -f /etc/os-release ]]; then
-			local distro=$(grep '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
-			case "$distro" in
-			ubuntu | debian)
-				export DEBIAN_FRONTEND=noninteractive
-				sudo apt update && sudo apt install -y git
-				;;
-			fedora)
-				sudo dnf install -y git
-				;;
-			*)
-				log_error "Unsupported distribution: $distro"
-				return 1
-				;;
-			esac
-		fi
-	fi
-
-	if command -v git &>/dev/null; then
-		log_success "Git installed successfully"
-		return 0
-	else
-		log_error "Failed to install git"
-		return 1
-	fi
-}
-
-# Function: Ensure gum is installed
-ensure_gum() {
-	command -v gum &>/dev/null && return 0
-
-	if command -v apt &>/dev/null; then
-		sudo mkdir -p /etc/apt/keyrings
-		curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg 2>/dev/null
-		echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list >/dev/null
-		sudo apt update -qq && sudo DEBIAN_FRONTEND=noninteractive apt install -y -qq gum >/dev/null
-	elif command -v dnf &>/dev/null; then
-		sudo dnf install -y -q gum >/dev/null
-	elif command -v brew &>/dev/null; then
-		brew install -q gum >/dev/null
-	fi
-}
-
-# Function: Print styled message using gum
-# Usage: print_msg "Message" "ColorCode(optional)"
-# ColorCode can be ANSI 256 number (e.g. 212, 35) or hex (e.g. #FF87D7)
-print_msg() {
-	local color="${2:-212}"
-	local term_width
-	local gum_output
-	local log_file="${DOTFILES_LOG:-/tmp/dotfiles-install.log}"
-
-	# Get terminal width using stty (most reliable, doesn't depend on TERM)
-	term_width=$(stty size </dev/tty 2>/dev/null | awk '{print $2}')
-	term_width=$((term_width - 2))
-
-	ensure_gum
-	gum_output=$(gum style \
-		--border double \
-		--align center \
-		--width "$term_width" \
-		--margin "0 0" \
-		--padding "0 2" \
-		--border-foreground "$color" \
-		--foreground "$color" \
-		"$1")
-
-	# Output to terminal (preserve colors)
-	echo "$gum_output" >/dev/tty
-
-	# Output to log file
-	echo "$gum_output" >>"$log_file"
-}
-
-# Function: Countdown timer
-countdown() {
-	local timeout=${1:-60}
-	local message=${2:-"Waiting for input"}
-	local str
-	local key_pressed=0
-
-	# Skip countdown if not interactive
-	if [[ ! -t 0 ]]; then
-		echo "Non-interactive mode detected. Skipping countdown."
-		return 0
-	fi
-
-	for ((i = timeout; i > 0; i--)); do
-		echo -ne "\r$message (timeout in $i seconds): "
-		if read -t 1 -r -n1 str; then
-			key_pressed=1
-			break
-		fi
-	done
-	if [[ $key_pressed -eq 0 ]]; then
-		echo -e "\nTime out. No input received.\n"
-		return 1
-	else
-		echo -e "\nUser input received: '$str'\n"
-		return 0
-	fi
-}
-
-# Function: Detect Package Manager
 detect_package_manager() {
 	if command -v brew &>/dev/null; then
 		echo "brew"
@@ -186,49 +92,45 @@ detect_package_manager() {
 	fi
 }
 
-# Function: Install Packages
+# ========================================
+# Homebrew 包安装（macOS）
+# ========================================
 install_packages() {
 	local package_group_name="$1"
 	local brew_package_type="${2:-formula}"
 
 	if [[ -z "$package_group_name" ]]; then
-		echo -e "${RED}No package group specified.${NC}"
+		print_error "未指定包组名称"
 		return 1
 	fi
 
 	local pkg_manager
 	pkg_manager=$(detect_package_manager)
-	if [[ "$pkg_manager" == "unsupported" ]]; then
-		echo -e "${RED}Unsupported package manager${NC}"
+
+	if [[ "$pkg_manager" != "brew" ]]; then
+		print_warn "此函数仅支持 Homebrew (macOS)"
+		print_warn "Linux 请使用 devbox"
 		return 1
 	fi
 
+	# 获取包列表
 	local packages=()
 	eval "packages=(\"\${${package_group_name}[@]}\")"
 
 	if [[ ${#packages[@]} -eq 0 ]]; then
-		print_msg "Package group ${package_group_name} is empty. Skipping." "35"
+		print_warn "包组 ${package_group_name} 为空，跳过"
 		return 0
 	fi
 
+	# 获取已安装的包
 	local installed_packages=""
-	case "$pkg_manager" in
-	"brew")
-		if [[ "$brew_package_type" == "cask" ]]; then
-			installed_packages="$(brew list --cask 2>/dev/null || true)"
-		else
-			installed_packages="$(brew list --formula 2>/dev/null || true)"
-		fi
-		;;
-	"apt")
-		# 去掉架构后缀（如 pkg-config:amd64 -> pkg-config）
-		installed_packages="$(dpkg -l | awk '/^ii/ {print $2}' | cut -d: -f1)"
-		;;
-	"dnf")
-		installed_packages="$(dnf list installed | awk 'NR>1 {print $1}' | cut -d. -f1)"
-		;;
-	esac
+	if [[ "$brew_package_type" == "cask" ]]; then
+		installed_packages="$(brew list --cask 2>/dev/null || true)"
+	else
+		installed_packages="$(brew list --formula 2>/dev/null || true)"
+	fi
 
+	# 筛选未安装的包
 	local uninstalled_packages=()
 	for package in "${packages[@]}"; do
 		[[ -z "$package" ]] && continue
@@ -238,212 +140,67 @@ install_packages() {
 	done
 
 	if [[ ${#uninstalled_packages[@]} -eq 0 ]]; then
-		print_msg "🎉 All packages from $package_group_name were already installed." "35"
+		print_success "✓ 包组 $package_group_name 中的所有包已安装"
 		return 0
 	fi
 
-	print_msg "The following packages need to be installed:" "196"
+	print_info "安装 ${#uninstalled_packages[@]} 个包..."
 	for package in "${uninstalled_packages[@]}"; do
-		echo "- $package"
+		echo "  - $package"
 	done
 
-	print_msg "Installing ${#uninstalled_packages[@]} packages..." "212"
-	case "$pkg_manager" in
-	"brew")
-		if [[ "$brew_package_type" == "cask" ]]; then
-			brew install --cask "${uninstalled_packages[@]}"
-		else
-			brew install "${uninstalled_packages[@]}"
-		fi
-		;;
-	"apt")
-		sudo DEBIAN_FRONTEND=noninteractive apt install -y "${uninstalled_packages[@]}"
-		;;
-	"dnf")
-		sudo dnf install -y "${uninstalled_packages[@]}"
-		;;
-	esac
-}
-
-# Function: Install Docker
-install_docker() {
-	echo -e "$BLUE获取 Docker 安装脚本...${NC}"
-	curl -fsSL https://get.docker.com -o get-docker.sh || {
-		echo -e "$DARK_RED下载安装脚本失败${NC}"
-		return 1
-	}
-	echo -e "$BLUE运行安装脚本...${NC}"
-	sudo sh get-docker.sh || {
-		echo -e "$DARK_RED安装 Docker 失败${NC}"
-		rm -rf get-docker.sh
-		return 1
-	}
-	rm -rf get-docker.sh
-	echo -e "$BLUE将当前用户添加到 docker 组...${NC}"
-	sudo usermod -aG docker "$USER" || {
-		echo -e "$DARK_RED添加用户到 docker 组失败${NC}"
-		return 1
-	}
-	echo -e "$BLUE启动并设置 Docker 服务开机自启...${NC}"
-	(sudo systemctl start docker && sudo systemctl enable docker && sudo systemctl restart docker) || {
-		echo -e "$DARK_RED启动或设置开机自启失败${NC}"
-		return 1
-	}
-	echo -e "${GREEN}Docker 安装完成。请考虑重新登录或重启以使组设置生效。${NC}"
-}
-
-# Function: Check and Install Docker
-install_and_configure_docker() {
-
-	# Check if running inside a container (simple check)
-	if [[ -f /.dockerenv ]]; then
-		echo -e "${GREEN}Running inside Docker container. Skipping Docker installation.${NC}"
-		return 0
-	fi
-
-	if grep -qi microsoft /proc/version || [[ "$AUTO_RUN" == "true" ]]; then
-		print_msg "⚠️ 在 WSL2 中或者不需要安装 Docker，跳过" "214"
+	if [[ "$brew_package_type" == "cask" ]]; then
+		brew install --cask "${uninstalled_packages[@]}"
 	else
-		if command -v docker >/dev/null; then
-			print_msg "Docker 已安装，跳过安装。版本: $(docker --version | awk '{print $3}' | tr -d ',')" "35"
-		else
-			print_msg "开始安装 Docker..." "212"
-			install_docker
-			if command -v docker >/dev/null; then
-				print_msg "Docker 安装完成 ✅ 版本: $(docker --version | awk '{print $3}' | tr -d ',')" "35"
-			else
-				print_msg "Docker 安装失败 ❌" "196"
-			fi
-		fi
+		brew install "${uninstalled_packages[@]}"
 	fi
+
+	print_success "✓ 包安装完成"
 }
 
-# Function: Get Latest Kotlin Version
-get_latest_version() {
-	LATEST_VERSION=$(curl -s -L -I https://github.com/JetBrains/kotlin/releases/latest | grep -i location | sed -E 's/.*tag\/(v[0-9\.]+).*/\1/')
-}
-
-# Function: Setup Kotlin Vars
-setup_kotlin_environment() {
-	ARCH=$(uname -m)
-	INSTALL_DIR="/opt/kotlin-native/"
-	COMPILER_INSTALL_DIR="/opt/kotlin-compiler/"
-	case "$ARCH" in
-	arm64 | aarch64)
-		ARCH="aarch64"
-		;;
-	x86_64)
-		ARCH="x86_64"
-		;;
-	*)
-		print_msg "⚠️ 不支持的架构: ${ARCH}，跳过 Kotlin 安装" "214"
-		KOTLIN_NATIVE_URL=""
-		KOTLIN_COMPILER_URL=""
-		return 0
-		;;
-	esac
-	get_latest_version
-	case "$(uname -s)" in
-	Darwin)
-		SYSTEM_TYPE="macos"
-		;;
-	Linux)
-		SYSTEM_TYPE="linux"
-		;;
-	*)
-		print_msg "⚠️ 不支持的系统类型: $(uname -s)，跳过 Kotlin 安装" "214"
-		KOTLIN_NATIVE_URL=""
-		KOTLIN_COMPILER_URL=""
-		return 0
-		;;
-	esac
-
-	# Kotlin Native 不支持 Linux ARM64
-	if [[ "$SYSTEM_TYPE" == "linux" && "$ARCH" == "aarch64" ]]; then
-		KOTLIN_NATIVE_URL=""
-		print_msg "⚠️ Kotlin Native 不支持 Linux ARM64，跳过安装" "214"
-	else
-		KOTLIN_NATIVE_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-native-prebuilt-$SYSTEM_TYPE-$ARCH-${LATEST_VERSION#v}.tar.gz"
-	fi
-
-	# Kotlin Compiler (JVM) 是跨平台的，始终可用
-	KOTLIN_COMPILER_URL="https://github.com/JetBrains/kotlin/releases/download/$LATEST_VERSION/kotlin-compiler-${LATEST_VERSION#v}.zip"
-}
-
-# Function: Download and Extract Kotlin
-download_and_extract_kotlin() {
-	URL=$1
-	TARGET_DIR=$2
-
-	# 如果 URL 为空，跳过下载
-	if [[ -z "$URL" ]]; then
-		return 0
-	fi
-
-	FILE_NAME=$(basename "${URL}")
-	# 显示友好名称（去掉扩展名）
-	DISPLAY_NAME="${FILE_NAME%.tar.gz}"
-	DISPLAY_NAME="${DISPLAY_NAME%.zip}"
-	if [[ -d "$TARGET_DIR" ]]; then
-		print_msg "${DISPLAY_NAME} is already installed in ${TARGET_DIR}." "35"
-		return 0
-	fi
-	print_msg "正在下载 $DISPLAY_NAME......" "212"
-	echo -e "${CYAN}The Latest Version is $RED$LATEST_VERSION${NC}"
-	echo -e "${YELLOW}Downloading $BLUE$FILE_NAME$YELLOW from ${MAGENTA}${URL}${NC}"
-	curl -L -f -s -S "${URL}" -o "/tmp/${FILE_NAME}" || {
-		echo -e "$RED❌ Failed to download $FILE_NAME.Please check your internet connection and URL.${NC}"
-		return 0
-	}
-	echo -e "${YELLOW}Installing $GREEN$FILE_NAME$YELLOW to $BLUE$TARGET_DIR$YELLOW...${NC}"
-	sudo mkdir -p $TARGET_DIR
-	if [[ $FILE_NAME == *.tar.gz ]]; then
-		if [[ $(uname) == "Darwin" ]]; then
-			sudo tar -xzf "/tmp/$FILE_NAME" -C $TARGET_DIR --strip-components=1
-		else
-			sudo tar -xzf "/tmp/$FILE_NAME" -C $TARGET_DIR --strip-components=1 --overwrite
-		fi
-	elif [[ $FILE_NAME == *.zip ]]; then
-		sudo unzip -o "/tmp/$FILE_NAME" -d $TARGET_DIR
-	fi
-	# 更改 kotlin 目录权限，添加符号链接到系统的 PATH 中
-	[[ -d "/opt/kotlin-native/" ]] && sudo chmod -R a+rw /opt/kotlin-native/ && sudo ln -snf /opt/kotlin-native/bin/* /usr/local/bin/
-	[[ -d "/opt/kotlin-compiler/" ]] && sudo chmod -R a+rw /opt/kotlin-compiler/ && sudo ln -snf /opt/kotlin-compiler/kotlinc/bin/* /usr/local/bin/
-	print_msg "${DISPLAY_NAME} has been installed successfully to ${TARGET_DIR}" "35"
-}
-
-# Function: Install Fonts
+# ========================================
+# 字体安装
+# ========================================
 install_fonts() {
-	if [[ $AUTO_RUN == "true" ]] || [[ ! -t 0 ]]; then
-		echo -e "${YELLOW}Skipping font installation (non-interactive or auto-run).${NC}"
+	# 非交互模式跳过
+	if [[ ! -t 0 ]]; then
+		print_warn "跳过字体安装（非交互模式）"
 		return 0
 	fi
-	echo -ne "$GREEN是否需要下载字体以支持终端模拟器的渲染？(y/n): ${NC}"
-	read download_confirm
-	if [[ $download_confirm != 'y' ]]; then
-		echo -e "$GREEN跳过字体下载。${NC}"
+
+	echo -ne "${GREEN}是否需要下载字体？(y/n): ${NC}"
+	read -r download_confirm
+
+	if [[ "$download_confirm" != 'y' ]]; then
+		print_info "跳过字体下载"
 		return 0
 	fi
-	font_source="/tmp/Fonts/"
-	git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Fonts.git $font_source && print_msg "✅Fonts 完成下载" "35"
+
+	local font_source="/tmp/Fonts/"
+
+	print_info "下载字体..."
+	git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Fonts.git "$font_source"
+
+	local font_dest
 	if [[ "$(uname)" == "Darwin" ]]; then
 		font_dest="$HOME/Library/Fonts"
 	else
 		font_dest="$HOME/.local/share/fonts/"
 	fi
-	print_msg "正在安装字体......" "212"
-	if [[ ! -d "$font_source" ]]; then
-		echo "字体目录 '$font_source' 不存在，请确认当前目录下有 $dest_Fonts 文件夹。"
-		exit 1
+
+	print_info "安装字体到 $font_dest..."
+	mkdir -p "$font_dest"
+
+	find "$font_source" -type f \( -iname "*.ttf" -o -iname "*.otf" \) ! -iname "README*" \
+		-exec cp {} "$font_dest" \;
+
+	# Linux 刷新字体缓存
+	if [[ "$(uname)" != "Darwin" ]]; then
+		fc-cache -fv 2>/dev/null || true
 	fi
-	sudo mkdir -p "$font_dest"
-	print_msg "正在复制字体文件到 $font_dest..." "212"
-	find "$font_source" -type f \( -iname "*.ttf" -o -iname "*.otf" \) ! -iname "README*" -exec sudo cp -v {} "$font_dest" \;
-	if [[ "$(uname)" == "Darwin" ]]; then
-		print_msg "在 macOS 上，字体缓存将自动更新。" "35"
-	else
-		print_msg "在 Linux 上，刷新字体缓存" "35"
-		fc-cache -fv
-	fi
-	print_msg "字体安装完成。✅" "35"
+
+	print_success "✓ 字体安装完成"
+
+	# 清理
+	rm -rf "$font_source"
 }

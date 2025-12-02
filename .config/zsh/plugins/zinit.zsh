@@ -91,7 +91,7 @@ zstyle ':fzf-tab:*' switch-group '<' '>'
 
 # 添加 _fzf 补全函数
 zinit ice as"completion"
-zinit snippet https://github.com/Learner-Geek-Perfectionist/Dotfiles/blob/master/.config/zsh/fzf/_fzf
+zinit snippet https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/master/.config/zsh/fzf/_fzf
 
 # zsh-completions 提供大量的补全定义
 zinit ice wait blockf lucid depth=1

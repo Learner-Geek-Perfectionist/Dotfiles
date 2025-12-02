@@ -11,7 +11,7 @@ GREEN='\033[0;32m'
 NC='\033[0m'
 
 # Log file
-LOG_FILE="/tmp/dotfiles-install.log"
+LOG_FILE="/tmp/dotfiles-install-$(whoami).log"
 
 # Initialize log with header
 {
@@ -52,7 +52,7 @@ if ! command -v git &>/dev/null; then
 fi
 
 # Clone if needed (if run standalone without repo)
-DOTFILES_DIR="${DOTFILES_DIR:-/tmp/Dotfiles}"
+DOTFILES_DIR="${DOTFILES_DIR:-/tmp/Dotfiles-$(whoami)}"
 if [[ -d "$DOTFILES_DIR/.git" ]]; then
 	echo -e "${BLUE}Updating existing Dotfiles...${NC}"
 	git -C "$DOTFILES_DIR" pull --ff-only

@@ -1,0 +1,34 @@
+# 全局配置（对所有Host生效）
+Host *
+  # 禁用严格主机密钥检查，无需手动输入yes
+  StrictHostKeyChecking no
+  # 不存储已知主机密钥（空路径）
+  UserKnownHostsFile /dev/null  # Windows下也可识别此路径，等价于不存储
+  ServerAliveInterval 60
+  ForwardAgent yes
+
+# # 连接到Mac的配置
+# Host mac
+#   HostName MacBook-Pro.local
+#   Port 22
+#   User ouyangzhaoxin
+
+# # 连接OrbStack的Ubuntu
+# Host ubuntu
+#   HostName 127.0.0.1
+#   Port 32222
+#   User ubuntu
+#   ProxyJump mac
+
+# # 连接OrbStack的Fedora
+# Host fedora
+#   HostName 127.0.0.1
+#   Port 32222  
+#   User fedora
+#   ProxyJump mac
+
+Host github.com
+    Hostname ssh.github.com
+    Port 443
+    User git
+

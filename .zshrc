@@ -15,9 +15,6 @@ export RED='\033[0;31m' \
 # .zshrc 在 /etc/zshrc 之后加载，所以这里的值会生效
 export HISTFILE="$HOME/.cache/zsh/.zsh_history"
 
-# ~/.local/bin 加入 PATH（用户本地安装的工具，包括 devbox 包装脚本等）
-[[ -d "$HOME/.local/bin" ]] && export PATH="$HOME/.local/bin:$PATH"
-
 # 获取操作系统信息并设置 PATH
 if [[ "$(uname)" == "Darwin" ]]; then
 	# macOS specific settings，设置 git 、clang++、ruby、make bash、VSCode、gre、less 等工具的环境变量
@@ -57,11 +54,11 @@ else
 	fi
 fi
 
-# 加载平台相关配置（macOS: Homebrew 镜像源，Linux: FPATH）
-[[ -f "${HOME}/.config/zsh/plugins/platform.zsh" ]] && source "${HOME}/.config/zsh/plugins/platform.zsh"
+# 加载 homebrew 插件
+[[ -x "${HOME}/.config/zsh/plugins/platform.zsh" ]] && source "${HOME}/.config/zsh/plugins/homebrew.zsh" || echo "${RED}No ${HOME}/.config/zsh/plugins/homebrew.zsh${NC}"
 
 # 加载 zinit 插件
-[[ -f "${HOME}/.config/zsh/plugins/zinit.zsh" ]] && source "${HOME}/.config/zsh/plugins/zinit.zsh"
+[[ -x "${HOME}/.config/zsh/plugins/zinit.zsh" ]] && source "${HOME}/.config/zsh/plugins/zinit.zsh" || echo "${RED}No ${HOME}/.config/zsh/plugins/zinit.zsh${NC}"
 
 # 自动启动 ssh-agent 并加载密钥
 if [[ -z "$SSH_AUTH_SOCK" ]]; then
@@ -92,14 +89,9 @@ export FZF_DEFAULT_OPTS='--preview "${HOME}/.config/zsh/fzf/fzf-preview.sh {}" -
 
 export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --no-sort --tac"
 
-# fd/fzf 配置（按系统区分排除路径）
-if [[ "$(uname)" == "Darwin" ]]; then
-	export FZF_DEFAULT_COMMAND='fd -g -HIia -E /System/Volumes/Data -E .Trash'
-	alias fd='fd -g -HIia -E /System/Volumes/Data -E .Trash'
-else
-	export FZF_DEFAULT_COMMAND='fd -g -HIia'
-	alias fd='fd -g -HIia'
-fi
+export FZF_DEFAULT_COMMAND='fd -g -HIia -E /System/Volumes/Data -E '.Trash''
+
+alias fd='fd -g -HIia -E /System/Volumes/Data -E '.Trash''
 
 alias getip="$HOME/sh-script/get-my-ip.sh"
 

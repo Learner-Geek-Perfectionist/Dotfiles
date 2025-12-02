@@ -1,224 +1,184 @@
 # Dotfiles
 
-个人 macOS 和 Linux 开发环境自动化配置脚本。
+个人开发环境配置。
 
-## 特性
+## ✨ 特性
 
-- **Linux**: 使用 [Nix](https://nixos.org/) + [Devbox](https://www.jetify.com/devbox) 管理开发环境
-  - 默认**无需 sudo 权限**，适合服务器环境
-  - 使用 [nix-user-chroot](https://github.com/nix-community/nix-user-chroot) 实现用户级安装
-  - 统一的包管理，无需针对不同发行版编写脚本
-  - **包装脚本透明处理 nix 环境，直接 `devbox shell` 即可**
-- **macOS**: 使用 [Homebrew](https://brew.sh/) 管理 CLI 工具和 GUI 应用
-- **Zsh**: zinit 插件管理、Powerlevel10k 主题、自动补全
-- **终端**: kitty 终端配置
-- **VSCode**: 插件自动安装
+- 🚀 **原生体验** - 无需 wrapper、chroot 或额外的环境激活
+- 🔒 **完全 Rootless** - Linux 上所有内容安装在用户目录，无需 root 权限
+- 🏗️ **跨平台** - 支持 Linux (x86_64, aarch64) 和 macOS (x86_64, arm64)
+- ⚡ **快速** - Shell 启动迅速，工具即开即用
 
-## 快速安装
+## 🏛️ 架构
 
-### GitHub
+| 平台 | 包管理 | 配置管理 |
+|------|--------|----------|
+| **macOS** | Homebrew | Chezmoi (brew) |
+| **Linux** | Mise | Chezmoi |
 
-```bash
-# 默认安装
-bash <(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/beta/install.sh)
-
-# 使用 sudo 安装（Linux 系统级 Nix）
-bash <(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/beta/install.sh) --use-sudo
-
-# 仅安装 dotfiles 配置
-bash <(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/beta/install.sh) --dotfiles-only
-
-# 跳过 VSCode 插件安装
-bash <(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/beta/install.sh) --skip-vscode
+```
+┌─────────────────────────────────────────────────────────┐
+│                     Dotfiles 架构                        │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  ┌─────────────┐     ┌─────────────┐     ┌───────────┐ │
+│  │  Homebrew   │     │    Mise     │     │  Chezmoi  │ │
+│  │  (macOS)    │     │  工具管理    │     │  配置管理  │ │
+│  └──────┬──────┘     └──────┬──────┘     └─────┬─────┘ │
+│         │                   │                  │       │
+│         ▼                   ▼                  ▼       │
+│  ┌─────────────┐     ┌─────────────┐     ┌───────────┐ │
+│  │ CLI + GUI   │     │ ~/.local/   │     │ ~/.config │ │
+│  │ 应用程序     │     │   bin/      │     │ ~/.zshrc  │ │
+│  └─────────────┘     └─────────────┘     └───────────┘ │
+│                                                         │
+│         完全用户级，无需 root，原生集成                   │
+└─────────────────────────────────────────────────────────┘
 ```
 
-### Gitee（国内加速）
+## 📦 包含的工具
 
-```bash
-# 默认安装
-bash <(curl -fsSL https://gitee.com/oyzxin/Dotfiles/raw/beta/install.sh)
+### 编程语言 (Mise)
 
-# 使用 sudo 安装（Linux 系统级 Nix）
-bash <(curl -fsSL https://gitee.com/oyzxin/Dotfiles/raw/beta/install.sh) --use-sudo
+| 语言 | 版本 | 说明 |
+|------|------|------|
+| Node.js | LTS | JavaScript 运行时 |
+| Python | 3.12 | 通用脚本语言 |
+| Go | Latest | 系统编程 |
+| Rust | Stable | 安全的系统编程 |
+| Ruby | Latest | 脚本和 Web 开发 |
+| Java | Temurin 21 | 企业级开发 |
 
-# 仅安装 dotfiles 配置
-bash <(curl -fsSL https://gitee.com/oyzxin/Dotfiles/raw/beta/install.sh) --dotfiles-only
+### CLI 工具 (Mise)
 
-# 跳过 VSCode 插件安装
-bash <(curl -fsSL https://gitee.com/oyzxin/Dotfiles/raw/beta/install.sh) --skip-vscode
-```
-
-### 安装选项说明
-
-| 选项 | 说明 |
+| 工具 | 说明 |
 |------|------|
-| (无) | 默认安装，Linux 使用 nix-user-chroot（无需 sudo） |
-| `--use-sudo` | Linux 使用系统级 Nix 安装（需要 sudo） |
-| `--dotfiles-only` | 仅安装配置文件，不安装工具 |
-| `--skip-vscode` | 跳过 VSCode 插件安装 |
+| fzf | 模糊搜索 |
+| ripgrep (rg) | 快速代码搜索 |
+| fd | 现代化 find |
+| bat | 带语法高亮的 cat |
+| eza | 现代化 ls |
+| delta | Git diff 美化 |
+| lazygit | Git TUI |
+| neovim | 编辑器 |
+| starship | Shell 提示符 |
+| zoxide | 智能 cd |
 
-## 架构
+### macOS 应用 (Homebrew)
 
+通过 `lib/packages.sh` 定义的 GUI 应用和 CLI 工具。
+
+## 🚀 快速开始
+
+### 一键安装
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/beta/install.sh | bash
 ```
-┌─────────────────────────────────────────────────────┐
-│                   install.sh (入口)                  │
-├─────────────────────────────────────────────────────┤
-│              检测 OS → macOS / Linux                 │
-└──────────┬──────────────────────────┬───────────────┘
-           ↓                          ↓
-┌──────────────────────┐   ┌──────────────────────────┐
-│   macOS (Homebrew)   │   │   Linux (Nix/Devbox)     │
-│   • brew formulas    │   │   • nix-user-chroot      │
-│   • brew casks       │   │   • devbox 包装脚本      │
-│   • dotfiles         │   │   • 无需 sudo            │
-└──────────────────────┘   └──────────────────────────┘
+
+### 安装选项
+
+```bash
+# 完整安装
+./install.sh
+
+# 仅安装 Mise（工具管理）
+./install.sh --mise-only
+
+# 跳过 VSCode 插件
+./install.sh --skip-vscode
+
+# 指定分支
+./install.sh --branch main
 ```
 
-## 目录结构
+## 📁 目录结构
 
 ```
 Dotfiles/
-├── install.sh              # 统一入口
-├── devbox.json             # Devbox 包定义（Linux）
+├── install.sh              # 主安装脚本
+├── mise.toml               # Mise 工具配置
+├── chezmoi/                # Chezmoi 配置源
+│   ├── .chezmoi.toml.tmpl  # Chezmoi 配置
+│   ├── dot_zshrc.tmpl      # Zsh 配置
+│   ├── dot_gitconfig.tmpl  # Git 配置
+│   └── dot_config/         # XDG 配置
 ├── scripts/
-│   ├── install_nix.sh      # Nix 安装（支持 nix-user-chroot）
-│   ├── install_devbox.sh   # Devbox 安装 + 包装脚本
-│   ├── install_vscode_ext.sh # VSCode 插件安装
-│   ├── setup_dotfiles.sh   # 配置文件部署
-│   └── macos_install.sh    # macOS Homebrew 安装
+│   ├── install_mise.sh     # Mise 安装
+│   ├── install_chezmoi.sh  # Chezmoi 安装
+│   ├── install_vscode_ext.sh # VSCode 扩展
+│   ├── macos_install.sh    # macOS Homebrew 安装
+│   └── uninstall_nix.sh    # 卸载旧 Nix 方案
 ├── lib/
-│   ├── packages.sh         # macOS 包定义
+│   ├── packages.sh         # Homebrew 包定义
 │   └── utils.sh            # 工具函数
-├── .config/
-│   ├── zsh/                # Zsh 插件配置
-│   └── kitty/              # Kitty 终端配置
-├── .zshrc                  # Zsh 主配置
-├── .zshenv                 # Zsh 环境变量
-└── .zprofile               # Zsh 登录配置
+└── config                  # SSH 配置
 ```
 
-## Linux 使用
+## 🔧 常用命令
 
-### 无 sudo 权限（默认）
-
-适用于没有 root 权限的服务器环境。安装流程：
-
-1. 检测用户命名空间支持
-2. 下载 nix-user-chroot 到 `~/.local/bin`
-3. 在 `~/.nix` 目录安装 Nix
-4. 安装 Devbox + 创建包装脚本
-5. 配置 dotfiles
-
-**安装完成后，直接使用：**
+### Mise (工具管理)
 
 ```bash
-# 进入开发环境（包装脚本自动处理 nix 环境）
-cd ~/.dotfiles && devbox shell
+mise install          # 安装所有工具
+mise upgrade          # 升级所有工具
+mise list             # 列出已安装的工具
+mise use node@20      # 安装特定版本
+mise doctor           # 诊断
 ```
 
-> 💡 无需先运行 `nix-enter`，包装脚本会透明处理 nix-user-chroot。
-
-### 有 sudo 权限
+### Chezmoi (配置管理)
 
 ```bash
-curl -fsSL .../install.sh | bash -s -- --use-sudo
+chezmoi cd            # 进入配置源目录
+chezmoi edit ~/.zshrc # 编辑配置
+chezmoi diff          # 查看变更
+chezmoi apply         # 应用配置
+chezmoi update        # 从远程更新
 ```
 
-使用官方 Nix 安装器，以 daemon 模式安装到系统级。
-
-## macOS 使用
-
-自动安装以下内容：
-
-### CLI 工具 (brew formulas)
-
-| 类型 | 工具 |
-|------|------|
-| 核心 | git, curl, wget, coreutils |
-| 编辑器 | neovim, vim |
-| 终端增强 | fzf, ripgrep, fd, eza, bat, htop |
-| 开发 | cmake, ninja, gcc, llvm |
-| 语言 | python, nodejs, go, rust, ruby, kotlin |
-
-### GUI 应用 (brew casks)
-
-| 类型 | 应用 |
-|------|------|
-| 开发 | VS Code, Kitty, OrbStack |
-| IDE | IntelliJ IDEA, PyCharm, CLion |
-| 浏览器 | Chrome, Edge |
-| 通讯 | WeChat, QQ, Telegram, Discord |
-
-## Devbox 使用
-
-安装完成后，`~/.dotfiles/devbox.json` 包含所有开发工具定义：
+### Homebrew (macOS)
 
 ```bash
-# 进入开发环境
-cd ~/.dotfiles
-devbox shell
-
-# 运行脚本
-devbox run setup        # 配置 dotfiles
-devbox run vscode-ext   # 安装 VSCode 插件
-
-# 更新包
-devbox update
+brew update           # 更新索引
+brew upgrade          # 升级所有包
+brew cleanup          # 清理缓存
 ```
 
-## VSCode 插件
+## ⚙️ 自定义
 
-运行 `scripts/install_vscode_ext.sh` 自动安装以下插件：
+### 添加新工具 (Mise)
 
-- C/C++: cpptools, CMake Tools, clangd
-- Rust: rust-analyzer
-- Go: golang.go
-- Python: Python, Pylance
-- Git: GitLens, Git Graph
-- 远程开发: Remote SSH
-- 主题: Material Icon Theme, One Dark Pro
+编辑 `~/.config/mise/config.toml`：
 
-## 卸载
+```toml
+[tools]
+deno = "latest"
+"ubi:owner/repo" = "latest"
+```
+
+### 修改配置 (Chezmoi)
 
 ```bash
-# 移除 dotfiles 配置
-rm -f ~/.zshrc ~/.zshenv ~/.zprofile
-rm -rf ~/.config/kitty ~/.config/zsh
-
-# 移除 Nix（用户级安装）
-rm -rf ~/.nix ~/.local/bin/nix-* ~/.local/bin/devbox
-
-# 移除 Devbox
-rm -rf ~/.local/share/devbox ~/.dotfiles
+chezmoi edit ~/.zshrc
+chezmoi apply
 ```
 
-## 常见问题
+### 本地配置（不受版本控制）
 
-### Q: 无 sudo 安装失败？
-
-检查系统是否支持用户命名空间：
+创建 `~/.zshrc.local`：
 
 ```bash
-unshare --user --pid echo YES
+export MY_SECRET_TOKEN="xxx"
+alias myalias='...'
 ```
 
-如果输出 `YES`，则支持。否则需要管理员启用：
+## 📋 系统要求
 
-```bash
-sudo sysctl kernel.unprivileged_userns_clone=1
-```
+- **操作系统**: Linux (x86_64, aarch64) 或 macOS (x86_64, arm64)
+- **Shell**: Bash 4+ 或 Zsh
+- **依赖**: git, curl
 
-### Q: 如何更新开发工具？
+## 📄 许可证
 
-```bash
-cd ~/.dotfiles
-devbox update
-```
-
-### Q: macOS Homebrew 安装很慢？
-
-建议开启代理，或使用国内镜像（已自动配置清华源）。
-
-## License
-
-MIT
+MIT License

@@ -1,0 +1,84 @@
+# Git 全局配置
+# 由 Chezmoi 管理
+
+[user]
+    name = {{ .name | quote }}
+    email = {{ .email | quote }}
+
+[init]
+    defaultBranch = main
+
+[core]
+    editor = nvim
+    autocrlf = input
+    # 使用 delta 作为 pager（如果安装）
+    pager = delta
+
+[pull]
+    rebase = false
+
+[push]
+    default = current
+    autoSetupRemote = true
+
+[fetch]
+    prune = true
+
+[merge]
+    conflictstyle = diff3
+
+[diff]
+    colorMoved = default
+
+[interactive]
+    diffFilter = delta --color-only
+
+[delta]
+    navigate = true
+    light = false
+    side-by-side = true
+    line-numbers = true
+
+[alias]
+    # 状态
+    st = status
+    s = status -sb
+    
+    # 分支
+    br = branch
+    co = checkout
+    cb = checkout -b
+    
+    # 提交
+    ci = commit
+    cm = commit -m
+    ca = commit --amend
+    
+    # 日志
+    lg = log --oneline --graph --decorate
+    ll = log --pretty=format:'%C(yellow)%h%Creset %s %C(green)(%cr)%Creset %C(blue)<%an>%Creset' --abbrev-commit
+    
+    # Diff
+    df = diff
+    dc = diff --cached
+    
+    # 其他
+    unstage = reset HEAD --
+    last = log -1 HEAD
+    aliases = config --get-regexp alias
+
+[color]
+    ui = auto
+
+[credential]
+    helper = store
+
+# GitHub CLI
+[credential "https://github.com"]
+    helper = 
+    helper = !/usr/bin/env gh auth git-credential
+
+[credential "https://gist.github.com"]
+    helper = 
+    helper = !/usr/bin/env gh auth git-credential
+

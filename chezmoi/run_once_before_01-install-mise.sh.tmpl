@@ -1,0 +1,30 @@
+#!/bin/bash
+# Chezmoi run_once 脚本：安装 Mise (仅 Linux)
+# 此脚本在 chezmoi apply 时自动运行（仅运行一次）
+
+{{ if eq .chezmoi.os "linux" }}
+set -e
+
+echo "🚀 检查并安装 Mise..."
+
+# 检查 mise 是否已安装
+if command -v mise &>/dev/null; then
+	echo "✅ Mise 已安装: $(mise --version)"
+	exit 0
+fi
+
+# 安装 mise
+echo "📦 安装 Mise..."
+curl -fsSL https://mise.run | sh
+
+# 验证安装
+if command -v mise &>/dev/null || [[ -x "$HOME/.local/bin/mise" ]]; then
+	echo "✅ Mise 安装成功"
+else
+	echo "❌ Mise 安装失败"
+	exit 1
+fi
+{{ else }}
+# macOS 使用 Homebrew 安装工具，跳过 Mise
+echo "ℹ️  macOS 系统，跳过 Mise 安装（使用 Homebrew）"
+{{ end }}

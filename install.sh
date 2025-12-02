@@ -1,14 +1,17 @@
 #!/bin/bash
 # Dotfiles 统一安装入口
-# Linux: 默认使用 nix-user-chroot + devbox（无需 sudo）
-# macOS: 使用 Homebrew
+#
+# Linux: Mise (工具管理) + Chezmoi (配置管理) - 原生 Rootless
+# macOS: Homebrew (包管理 + Chezmoi)
+#
+# 支持: Linux (x86_64, aarch64) / macOS (x86_64, arm64)
 
 set -e
 
 # ========================================
 # 版本和配置
 # ========================================
-DOTFILES_VERSION="2.0.0"
+DOTFILES_VERSION="4.0.0"
 DOTFILES_REPO_URL="${DOTFILES_REPO_URL:-https://github.com/Learner-Geek-Perfectionist/Dotfiles.git}"
 DEFAULT_BRANCH="${DEFAULT_BRANCH:-beta}"
 DOTFILES_BRANCH="${DOTFILES_BRANCH:-}"
@@ -19,13 +22,13 @@ export GREEN='\033[0;32m'
 export YELLOW='\033[1;33m'
 export BLUE='\033[0;34m'
 export CYAN='\033[0;36m'
-export LIGHT_BLUE='\033[1;34m'
+export PURPLE='\033[0;35m'
 export NC='\033[0m'
 
 # 默认配置
-USE_SUDO="${USE_SUDO:-false}"
 SKIP_VSCODE="${SKIP_VSCODE:-false}"
-DOTFILES_ONLY="${DOTFILES_ONLY:-false}"
+SKIP_CHEZMOI="${SKIP_CHEZMOI:-false}"
+MISE_ONLY="${MISE_ONLY:-false}"
 
 # 日志文件
 LOG_FILE="${LOG_FILE:-/tmp/dotfiles-install-$(whoami).log}"
@@ -44,8 +47,9 @@ print_success() { print_msg "$1" "$GREEN"; }
 print_warn() { print_msg "$1" "$YELLOW"; }
 print_error() { print_msg "$1" "$RED"; }
 print_header() { print_msg "$1" "$BLUE"; }
+print_step() { print_msg "$1" "$PURPLE"; }
 
-# 解析需要克隆的 Git 分支
+# 解析 Git 分支
 resolve_branch() {
 	if [[ -n "$DOTFILES_BRANCH" ]]; then
 		return
@@ -57,38 +61,6 @@ resolve_branch() {
 	fi
 
 	DOTFILES_BRANCH="$DEFAULT_BRANCH"
-}
-
-# 显示帮助
-show_help() {
-	cat <<HELP_EOF
-Dotfiles 安装脚本 v${DOTFILES_VERSION}
-
-用法: $0 [选项]
-
-选项:
-    --use-sudo          使用 sudo 安装（Linux 系统级 Nix）
-    --skip-vscode       跳过 VSCode 插件安装
-    --dotfiles-only     仅安装 dotfiles 配置，不安装工具
-    --branch BRANCH     指定 Git 分支（默认: \$DOTFILES_BRANCH 或 ${DEFAULT_BRANCH}）
-    --help, -h          显示帮助信息
-
-环境变量:
-    USE_SUDO            设为 "true" 使用 sudo 安装
-    SKIP_VSCODE         设为 "true" 跳过 VSCode 插件
-    DOTFILES_ONLY       设为 "true" 仅安装配置文件
-    DOTFILES_BRANCH     指定 Git 分支
-
-示例:
-    # 默认安装（无需 sudo，适合服务器环境）
-    curl -fsSL https://raw.githubusercontent.com/.../install.sh | bash
-
-    # 使用 sudo 安装
-    curl -fsSL https://raw.githubusercontent.com/.../install.sh | bash -s -- --use-sudo
-
-    # 仅安装 dotfiles
-    curl -fsSL https://raw.githubusercontent.com/.../install.sh | bash -s -- --dotfiles-only
-HELP_EOF
 }
 
 # 检测操作系统
@@ -108,24 +80,71 @@ detect_arch() {
 	arch=$(uname -m)
 	case "$arch" in
 	x86_64) echo "x86_64" ;;
-	aarch64) echo "aarch64" ;;
-	arm64) echo "aarch64" ;;
+	aarch64 | arm64) echo "aarch64" ;;
 	*) echo "$arch" ;;
 	esac
 }
 
-# 检测 Linux 发行版
-detect_distro() {
-	[[ -f /etc/os-release ]] && . /etc/os-release && echo "$ID" && return
-	command -v lsb_release >/dev/null 2>&1 && lsb_release -si | tr '[:upper:]' '[:lower:]' && return
-	echo "unknown"
+# 显示帮助
+show_help() {
+	cat <<HELP_EOF
+Dotfiles 安装脚本 v${DOTFILES_VERSION}
+
+架构:
+    Linux: Mise (工具管理) + Chezmoi (配置管理) - 原生 Rootless
+    macOS: Homebrew (包管理 + Chezmoi)
+
+用法: $0 [选项]
+
+选项:
+    --mise-only         仅安装 Mise（仅 Linux）
+    --skip-chezmoi      跳过 Chezmoi 配置安装
+    --skip-vscode       跳过 VSCode 插件安装
+    --branch BRANCH     指定 Git 分支（默认: ${DEFAULT_BRANCH}）
+    --help, -h          显示帮助信息
+
+环境变量:
+    MISE_ONLY           设为 "true" 仅安装 Mise（仅 Linux）
+    SKIP_CHEZMOI        设为 "true" 跳过 Chezmoi
+    SKIP_VSCODE         设为 "true" 跳过 VSCode 插件
+    DOTFILES_BRANCH     指定 Git 分支
+
+示例:
+    # 完整安装
+    curl -fsSL https://raw.githubusercontent.com/.../install.sh | bash
+
+    # 仅安装 Mise（Linux）
+    curl -fsSL https://raw.githubusercontent.com/.../install.sh | bash -s -- --mise-only
+
+    # 跳过 VSCode 插件
+    curl -fsSL https://raw.githubusercontent.com/.../install.sh | bash -s -- --skip-vscode
+HELP_EOF
 }
 
-# 检查并安装依赖（Linux）
-check_and_install_dependencies() {
+# ========================================
+# 日志设置
+# ========================================
+setup_logging() {
+	{
+		echo "======================================"
+		echo "Dotfiles Installation Log"
+		echo "Version: $DOTFILES_VERSION"
+		echo "Started: $(date '+%Y-%m-%d %H:%M:%S')"
+		echo "OS: $(uname -s) $(uname -r)"
+		echo "Arch: $(detect_arch)"
+		echo "User: $(whoami)"
+		echo "======================================"
+		echo ""
+	} >"$LOG_FILE"
+}
+
+# ========================================
+# 依赖检查
+# ========================================
+check_dependencies() {
 	print_info "检查基础依赖..."
 
-	local -a deps=(git curl tar xz) missing=()
+	local -a deps=(git curl) missing=()
 	for dep in "${deps[@]}"; do
 		command -v "$dep" >/dev/null 2>&1 || missing+=("$dep")
 	done
@@ -135,113 +154,9 @@ check_and_install_dependencies() {
 		return 0
 	fi
 
-	local missing_str="${missing[*]}"
-	print_warn "缺少依赖: $missing_str"
-
-	# 检查 sudo 权限
-	local -a sudo_cmd=()
-	if [[ $EUID -ne 0 ]]; then
-		command -v sudo >/dev/null 2>&1 || {
-			print_error "无法自动安装：没有 root 权限且未安装 sudo"
-			print_info "请手动安装: $missing_str"
-			exit 1
-		}
-		sudo_cmd=(sudo)
-	fi
-
-	local distro
-	distro=$(detect_distro)
-	print_info "检测到发行版: $distro，开始安装..."
-
-	local -a packages=("${missing[@]}")
-	local -a install_cmd=()
-	local -a update_cmd=()
-
-	case "$distro" in
-	ubuntu | debian | linuxmint | pop)
-		# Debian/Ubuntu 系的 xz 包名是 xz-utils
-		packages=("${packages[@]/xz/xz-utils}")
-		update_cmd=(apt-get update)
-		install_cmd=(apt-get install -y)
-		;;
-	centos | rhel | rocky | almalinux)
-		install_cmd=(yum install -y)
-		;;
-	fedora)
-		install_cmd=(dnf install -y)
-		;;
-	arch | manjaro)
-		install_cmd=(pacman -Sy --noconfirm)
-		;;
-	alpine)
-		install_cmd=(apk add)
-		;;
-	opensuse* | sles)
-		install_cmd=(zypper install -y)
-		;;
-	*)
-		print_error "未知发行版: $distro，请手动安装: $missing_str"
-		exit 1
-		;;
-	esac
-
-	local fail_msg="依赖安装失败，请手动安装: $missing_str"
-
-	if [[ ${#update_cmd[@]} -gt 0 ]]; then
-		"${sudo_cmd[@]}" "${update_cmd[@]}" || {
-			print_error "$fail_msg"
-			exit 1
-		}
-	fi
-
-	if "${sudo_cmd[@]}" "${install_cmd[@]}" "${packages[@]}"; then
-		print_success "✓ 依赖安装完成"
-	else
-		print_error "$fail_msg"
-		exit 1
-	fi
-}
-
-# ========================================
-# 日志设置
-# ========================================
-setup_logging() {
-	# 使用 script 命令创建 PTY 环境
-	if [[ -z "$__DOTFILES_PTY" ]]; then
-		export __DOTFILES_PTY=1
-
-		# 初始化日志
-		{
-			echo "======================================"
-			echo "Dotfiles Installation Log"
-			echo "Version: $DOTFILES_VERSION"
-			echo "Started: $(date '+%Y-%m-%d %H:%M:%S')"
-			echo "OS: $(uname -s) $(uname -r)"
-			echo "Arch: $(detect_arch)"
-			echo "User: $(whoami)"
-			echo "======================================"
-			echo ""
-		} >"$LOG_FILE"
-
-		SCRIPT_SOURCE="${BASH_SOURCE[0]:-$0}"
-
-		if [[ -n "$SCRIPT_SOURCE" && -r "$SCRIPT_SOURCE" && -f "$SCRIPT_SOURCE" ]] &&
-			[[ ! "$SCRIPT_SOURCE" =~ (^|/)(bash|sh|zsh|dash|ksh)$ ]] &&
-			[[ ! "$SCRIPT_SOURCE" =~ ^/dev/ ]] &&
-			[[ ! "$SCRIPT_SOURCE" =~ ^/proc/ ]]; then
-			SCRIPT_PATH="$(cd "$(dirname "$SCRIPT_SOURCE")" && pwd)/$(basename "$SCRIPT_SOURCE")"
-		else
-			SCRIPT_PATH=""
-		fi
-
-		if [[ -n "$SCRIPT_PATH" ]]; then
-			if [[ $(uname -s) == "Darwin" ]]; then
-				exec script -q -a "$LOG_FILE" /bin/bash "$SCRIPT_PATH" "$@"
-			else
-				exec script -q -a "$LOG_FILE" -c "/bin/bash \"$SCRIPT_PATH\" $*"
-			fi
-		fi
-	fi
+	print_error "缺少依赖: ${missing[*]}"
+	print_info "请先安装这些依赖后再运行此脚本"
+	exit 1
 }
 
 # ========================================
@@ -253,7 +168,7 @@ clone_dotfiles() {
 	# 清理之前的运行
 	[[ -d "$tmp_dir" ]] && rm -rf "$tmp_dir"
 
-	# 解析需要使用的分支
+	# 解析分支
 	resolve_branch
 	local branch="${DOTFILES_BRANCH:-$DEFAULT_BRANCH}"
 
@@ -268,128 +183,141 @@ clone_dotfiles() {
 }
 
 # ========================================
-# macOS 安装流程
+# macOS: 安装 Homebrew 包
 # ========================================
-install_macos() {
+install_macos_homebrew() {
 	local dotfiles_dir="$1"
+	local step_num="$2"
 
-	print_header "=========================================="
-	print_header "macOS 安装流程"
-	print_header "=========================================="
+	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	print_step "步骤 ${step_num}: 安装 Homebrew 包"
+	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-	# 确保 Xcode CLI 工具已安装
-	if ! command -v git &>/dev/null; then
-		print_info "安装 Xcode Command Line Tools..."
-		xcode-select --install 2>/dev/null || true
-		print_warn "请完成安装对话框，然后按 Enter 继续..."
-		read -r
-	fi
-
-	# 执行 macOS 安装脚本
 	if [[ -f "$dotfiles_dir/scripts/macos_install.sh" ]]; then
-		print_info "执行 macOS 安装脚本..."
-		source "$dotfiles_dir/scripts/macos_install.sh"
+		bash "$dotfiles_dir/scripts/macos_install.sh"
+	else
+		print_warn "未找到 macOS 安装脚本，跳过 Homebrew 包安装"
 	fi
 
-	# 配置 dotfiles
-	setup_dotfiles "$dotfiles_dir"
-
-	# 安装 VSCode 插件
-	if [[ "$SKIP_VSCODE" != "true" ]]; then
-		install_vscode_extensions "$dotfiles_dir"
-	fi
+	print_success "✓ Homebrew 包安装完成"
 }
 
 # ========================================
-# Linux 安装流程（默认无 sudo）
+# Linux: 安装 Mise
 # ========================================
-install_linux() {
+install_mise() {
 	local dotfiles_dir="$1"
+	local step_num="$2"
 
-	print_header "=========================================="
-	print_header "Linux 安装流程"
-	print_header "模式: $([ "$USE_SUDO" == "true" ] && echo "系统级 (sudo)" || echo "用户级 (nix-user-chroot)")"
-	print_header "=========================================="
+	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	print_step "步骤 ${step_num}: 安装 Mise (工具版本管理)"
+	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-	if [[ "$DOTFILES_ONLY" != "true" ]]; then
-		# 安装 Nix
-		print_info "步骤 1/3: 安装 Nix..."
-		if [[ "$USE_SUDO" == "true" ]]; then
-			bash "$dotfiles_dir/scripts/install_nix.sh" --use-sudo
+	if [[ -f "$dotfiles_dir/scripts/install_mise.sh" ]]; then
+		bash "$dotfiles_dir/scripts/install_mise.sh"
+	else
+		print_error "未找到 Mise 安装脚本"
+		exit 1
+	fi
+
+	# 确保 mise 在 PATH 中
+	export PATH="$HOME/.local/bin:$PATH"
+
+	print_success "✓ Mise 安装完成"
+}
+
+# ========================================
+# Linux: 安装 Chezmoi
+# ========================================
+install_chezmoi_linux() {
+	local dotfiles_dir="$1"
+	local step_num="$2"
+
+	if [[ "$SKIP_CHEZMOI" == "true" ]]; then
+		print_warn "跳过 Chezmoi 安装"
+		return 0
+	fi
+
+	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	print_step "步骤 ${step_num}: 安装 Chezmoi (配置管理)"
+	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+	if [[ -f "$dotfiles_dir/scripts/install_chezmoi.sh" ]]; then
+		bash "$dotfiles_dir/scripts/install_chezmoi.sh"
+	else
+		print_error "未找到 Chezmoi 安装脚本"
+		exit 1
+	fi
+
+	print_success "✓ Chezmoi 配置完成"
+}
+
+# ========================================
+# macOS: 配置 Chezmoi（已通过 brew 安装）
+# ========================================
+setup_chezmoi_macos() {
+	local dotfiles_dir="$1"
+	local step_num="$2"
+
+	if [[ "$SKIP_CHEZMOI" == "true" ]]; then
+		print_warn "跳过 Chezmoi 配置"
+		return 0
+	fi
+
+	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	print_step "步骤 ${step_num}: 配置 Chezmoi"
+	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+	# chezmoi 已通过 brew 安装
+	if ! command -v chezmoi &>/dev/null; then
+		print_warn "Chezmoi 未安装，跳过配置"
+		return 0
+	fi
+
+	local chezmoi_src="$dotfiles_dir/chezmoi"
+	local chezmoi_dest="$HOME/.local/share/chezmoi"
+
+	if [[ -d "$chezmoi_src" ]]; then
+		print_info "初始化 Chezmoi 源..."
+
+		# 清理旧的源目录
+		[[ -d "$chezmoi_dest" ]] && rm -rf "$chezmoi_dest"
+
+		# 创建并复制
+		mkdir -p "$chezmoi_dest"
+		cp -r "$chezmoi_src/"* "$chezmoi_dest/"
+
+		# 应用配置
+		print_info "应用 Chezmoi 配置..."
+		if [[ ! -f "$HOME/.config/chezmoi/chezmoi.toml" ]]; then
+			chezmoi init --apply
 		else
-			bash "$dotfiles_dir/scripts/install_nix.sh"
+			chezmoi apply
 		fi
 
-		# 安装 Devbox
-		print_info "步骤 2/3: 安装 Devbox..."
-		bash "$dotfiles_dir/scripts/install_devbox.sh"
-	fi
-
-	# 配置 dotfiles
-	print_info "步骤 3/3: 配置 Dotfiles..."
-	setup_dotfiles "$dotfiles_dir"
-
-	# 安装 VSCode 插件
-	if [[ "$SKIP_VSCODE" != "true" ]]; then
-		install_vscode_extensions "$dotfiles_dir"
-	fi
-}
-
-# ========================================
-# Dotfiles 配置
-# ========================================
-setup_dotfiles() {
-	local dotfiles_dir="$1"
-
-	print_info "配置 Dotfiles..."
-
-	# 创建 XDG 目录结构
-	mkdir -p "$HOME/.config/zsh/plugins"
-	mkdir -p "$HOME/.config/kitty"
-	mkdir -p "$HOME/.cache/zsh"
-	mkdir -p "$HOME/.local/share/zinit"
-	mkdir -p "$HOME/.local/bin"
-	mkdir -p "$HOME/.local/state"
-
-	# 执行 setup_dotfiles.sh
-	if [[ -f "$dotfiles_dir/scripts/setup_dotfiles.sh" ]]; then
-		bash "$dotfiles_dir/scripts/setup_dotfiles.sh"
+		print_success "✓ Chezmoi 配置完成"
 	else
-		# 手动复制配置文件
-		copy_dotfiles "$dotfiles_dir"
-	fi
-
-	print_success "✓ Dotfiles 配置完成"
-}
-
-# 复制配置文件
-copy_dotfiles() {
-	local dotfiles_dir="$1"
-
-	# Zsh 配置
-	[[ -f "$dotfiles_dir/.zshrc" ]] && cp "$dotfiles_dir/.zshrc" "$HOME/.zshrc"
-	[[ -f "$dotfiles_dir/.zshenv" ]] && cp "$dotfiles_dir/.zshenv" "$HOME/.zshenv"
-	[[ -f "$dotfiles_dir/.zprofile" ]] && cp "$dotfiles_dir/.zprofile" "$HOME/.zprofile"
-
-	# Kitty 配置
-	if [[ -d "$dotfiles_dir/.config/kitty" ]]; then
-		cp -r "$dotfiles_dir/.config/kitty/"* "$HOME/.config/kitty/"
-	fi
-
-	# Zsh 插件配置
-	if [[ -d "$dotfiles_dir/.config/zsh" ]]; then
-		cp -r "$dotfiles_dir/.config/zsh/"* "$HOME/.config/zsh/"
+		print_warn "未找到 Chezmoi 源目录，跳过"
 	fi
 }
 
 # ========================================
-# VSCode 插件安装
+# 安装 VSCode 插件
 # ========================================
-install_vscode_extensions() {
+install_vscode() {
 	local dotfiles_dir="$1"
+	local step_num="$2"
+
+	if [[ "$SKIP_VSCODE" == "true" ]]; then
+		print_warn "跳过 VSCode 插件安装"
+		return 0
+	fi
+
+	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	print_step "步骤 ${step_num}: 安装 VSCode 插件"
+	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 	if [[ -f "$dotfiles_dir/scripts/install_vscode_ext.sh" ]]; then
-		print_info "安装 VSCode 插件..."
 		bash "$dotfiles_dir/scripts/install_vscode_ext.sh" || {
 			print_warn "VSCode 插件安装跳过（可能未安装 VSCode）"
 		}
@@ -397,35 +325,74 @@ install_vscode_extensions() {
 }
 
 # ========================================
-# 初始化 Devbox 全局环境
+# 配置 SSH
 # ========================================
-initialize_devbox() {
+setup_ssh() {
+	local dotfiles_dir="$1"
+	local step_num="$2"
+
+	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	print_step "步骤 ${step_num}: 配置 SSH"
+	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+	if [[ -f "$dotfiles_dir/config" ]]; then
+		mkdir -p "$HOME/.ssh"
+		chmod 700 "$HOME/.ssh"
+
+		if [[ -f "$HOME/.ssh/config" ]]; then
+			cp "$HOME/.ssh/config" "$HOME/.ssh/config.bak"
+			print_info "已备份旧的 SSH 配置"
+		fi
+
+		cp "$dotfiles_dir/config" "$HOME/.ssh/config"
+		chmod 600 "$HOME/.ssh/config"
+		print_success "✓ SSH 配置完成"
+	else
+		print_warn "未找到 SSH 配置文件，跳过"
+	fi
+}
+
+# ========================================
+# Linux 安装流程
+# ========================================
+install_linux() {
 	local dotfiles_dir="$1"
 
-	if [[ -f "$dotfiles_dir/devbox.json" ]]; then
-		print_info "初始化 Devbox 全局环境..."
+	# 步骤 1: 安装 Mise
+	install_mise "$dotfiles_dir" "1/4"
 
-		# 从 devbox.json 读取包列表并全局安装
-		# 使用 devbox global 让工具在普通 shell 中直接可用
-		local packages
-		packages=$(grep -oP '"[^"]+@[^"]+"' "$dotfiles_dir/devbox.json" | tr -d '"' | tr '\n' ' ')
-
-		if [[ -n "$packages" ]]; then
-			print_info "全局安装 Devbox 包..."
-			print_info "包列表: $packages"
-
-			# 使用 devbox 包装脚本执行全局安装
-			for pkg in $packages; do
-				print_info "  安装: $pkg"
-				devbox global add "$pkg" 2>/dev/null || true
-			done
-
-			print_success "✓ Devbox 全局包安装完成"
-			print_info ""
-			print_info "工具已全局安装，可直接使用（无需 devbox shell）"
-			print_info "查看已安装的包: devbox global list"
-		fi
+	if [[ "$MISE_ONLY" == "true" ]]; then
+		print_success "✓ Mise 安装完成（仅 Mise 模式）"
+		return 0
 	fi
+
+	# 步骤 2: 安装 Chezmoi
+	install_chezmoi_linux "$dotfiles_dir" "2/4"
+
+	# 步骤 3: VSCode 插件
+	install_vscode "$dotfiles_dir" "3/4"
+
+	# 步骤 4: SSH 配置
+	setup_ssh "$dotfiles_dir" "4/4"
+}
+
+# ========================================
+# macOS 安装流程
+# ========================================
+install_macos() {
+	local dotfiles_dir="$1"
+
+	# 步骤 1: 安装 Homebrew 包（包括 chezmoi）
+	install_macos_homebrew "$dotfiles_dir" "1/4"
+
+	# 步骤 2: 配置 Chezmoi
+	setup_chezmoi_macos "$dotfiles_dir" "2/4"
+
+	# 步骤 3: VSCode 插件
+	install_vscode "$dotfiles_dir" "3/4"
+
+	# 步骤 4: SSH 配置
+	setup_ssh "$dotfiles_dir" "4/4"
 }
 
 # ========================================
@@ -435,16 +402,16 @@ main() {
 	# 解析参数
 	while [[ $# -gt 0 ]]; do
 		case "$1" in
-		--use-sudo)
-			USE_SUDO="true"
+		--mise-only)
+			MISE_ONLY="true"
+			shift
+			;;
+		--skip-chezmoi)
+			SKIP_CHEZMOI="true"
 			shift
 			;;
 		--skip-vscode)
 			SKIP_VSCODE="true"
-			shift
-			;;
-		--dotfiles-only)
-			DOTFILES_ONLY="true"
 			shift
 			;;
 		--branch)
@@ -464,34 +431,34 @@ main() {
 	done
 
 	# 设置日志
-	setup_logging "$@"
+	setup_logging
 
-	local os
+	local os arch
 	os=$(detect_os)
+	arch=$(detect_arch)
 
-	print_header "=========================================="
-	print_header "🚀 Dotfiles 安装脚本 v${DOTFILES_VERSION}"
-	print_header "=========================================="
+	print_header "╔══════════════════════════════════════════╗"
+	print_header "║  🚀 Dotfiles 安装脚本 v${DOTFILES_VERSION}          ║"
+	print_header "╚══════════════════════════════════════════╝"
+	echo ""
 	print_info "操作系统: $os"
-	print_info "架构: $(detect_arch)"
+	print_info "架构: $arch"
 	print_info "用户: $(whoami)"
-	print_info "=========================================="
+
+	if [[ "$os" == "macos" ]]; then
+		print_info "安装方式: Homebrew + Chezmoi"
+	else
+		print_info "安装方式: Mise + Chezmoi (原生 Rootless)"
+	fi
 	echo ""
 
-	# 检查并安装基础依赖
-	if [[ "$os" == "linux" ]]; then
-		check_and_install_dependencies
-	elif [[ "$os" == "macos" ]]; then
-		# macOS 检查 curl（git 会在后面通过 Xcode CLI 安装）
-		if ! command -v curl &>/dev/null; then
-			print_error "需要 curl，请先安装"
-			exit 1
-		fi
-	fi
+	# 检查依赖
+	check_dependencies
 
 	# 克隆仓库
 	local dotfiles_dir
 	dotfiles_dir=$(clone_dotfiles)
+	export DOTFILES_DIR="$dotfiles_dir"
 
 	# 根据操作系统执行安装
 	case "$os" in
@@ -507,28 +474,34 @@ main() {
 		;;
 	esac
 
-	# 初始化 Devbox 环境
-	if [[ "$os" == "linux" && "$DOTFILES_ONLY" != "true" ]]; then
-		initialize_devbox "$dotfiles_dir"
-	fi
-
 	# 完成
-	print_success "=========================================="
-	print_success "✅ 安装完成！"
-	print_success "=========================================="
+	echo ""
+	print_success "╔══════════════════════════════════════════╗"
+	print_success "║  ✅ 安装完成！                           ║"
+	print_success "╚══════════════════════════════════════════╝"
+	echo ""
 	print_info "📝 安装日志: $LOG_FILE"
 	echo ""
+	print_info "下一步:"
+	print_info "  1. 重新打开终端（或运行: source ~/.zshrc）"
 
-	if [[ "$os" == "linux" && "$DOTFILES_ONLY" != "true" ]]; then
-		print_info "下一步："
-		print_info "1. 重新加载 shell: source ~/.zshrc"
-		print_info "2. 进入项目目录运行: devbox shell"
-		print_info "   （包装脚本会自动处理 nix 环境）"
+	if [[ "$os" == "linux" ]]; then
+		print_info "  2. 验证安装: mise doctor"
+		print_info "  3. 查看已安装工具: mise list"
 		echo ""
+		print_info "常用命令:"
+		print_info "  mise install        - 安装配置文件中的所有工具"
+		print_info "  mise upgrade        - 升级所有工具"
+	else
+		print_info "  2. 验证安装: brew list"
+		echo ""
+		print_info "常用命令:"
+		print_info "  brew update && brew upgrade - 更新所有包"
 	fi
 
-	print_info "重新加载 shell 以应用配置:"
-	print_info "  exec zsh -l"
+	print_info "  chezmoi edit <file> - 编辑配置文件"
+	print_info "  chezmoi apply       - 应用配置变更"
+	echo ""
 }
 
 main "$@"

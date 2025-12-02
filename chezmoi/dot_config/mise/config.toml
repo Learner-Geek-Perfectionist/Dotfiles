@@ -1,0 +1,130 @@
+# ============================================
+# Mise 全局配置
+# 原生、Rootless 的工具版本管理
+# ============================================
+# 文档: https://mise.jdx.dev/configuration.html
+
+[settings]
+# 实验性功能
+experimental = true
+# 自动安装缺失的工具
+auto_install = true
+# 不显示激活警告
+quiet = false
+
+# ============================================
+# 编程语言运行时
+# ============================================
+[tools]
+# Node.js (使用 LTS 版本)
+node = "lts"
+
+# Python
+python = "latest"
+
+# Go
+go = "latest"
+
+# Rust (通过 rustup)
+rust = "stable"
+
+# Ruby
+ruby = "latest"
+
+# Java (使用 Temurin/Adoptium)
+java = "temurin-21"
+
+# Lua
+lua = "latest"
+
+# ============================================
+# CLI 工具 (通过 ubi 从 GitHub Releases 安装)
+# ============================================
+
+# --- 终端增强 ---
+"ubi:junegunn/fzf" = "latest"                    # 模糊搜索
+"ubi:BurntSushi/ripgrep" = "latest"              # 快速搜索 (rg)
+"ubi:sharkdp/fd" = "latest"                      # 现代 find
+"ubi:sharkdp/bat" = "latest"                     # 现代 cat
+"ubi:eza-community/eza" = "latest"               # 现代 ls
+"ubi:bootandy/dust" = "latest"                   # 现代 du
+"ubi:sharkdp/hyperfine" = "latest"               # 基准测试
+"ubi:fastfetch-cli/fastfetch" = "latest"         # 系统信息
+
+# --- 开发工具 ---
+"ubi:neovim/neovim" = "latest"                   # Neovim 编辑器
+"ubi:jqlang/jq" = "latest"                       # JSON 处理
+"ubi:mikefarah/yq" = "latest"                    # YAML 处理
+
+# --- 代码格式化 ---
+"ubi:mvdan/sh" = "latest"                        # Shell 格式化 (shfmt)
+"ubi:astral-sh/ruff" = "latest"                  # Python linter/formatter
+
+# --- Dotfiles 管理 ---
+"ubi:twpayne/chezmoi" = "latest"                 # Dotfiles 管理器
+
+# --- 其他工具 ---
+"ubi:starship/starship" = "latest"               # Shell 提示符
+"ubi:charmbracelet/glow" = "latest"              # Markdown 渲染
+
+# ============================================
+# npm 全局工具
+# ============================================
+"npm:typescript" = "latest"
+"npm:ts-node" = "latest"
+"npm:pnpm" = "latest"
+"npm:prettier" = "latest"
+"npm:eslint" = "latest"
+
+
+# ============================================
+# 任务定义
+# ============================================
+[tasks.install-exts]
+description = "安装 VSCode 扩展"
+run = "bash ~/.local/bin/install_vscode_ext.sh"
+
+[tasks.doctor]
+description = "诊断环境"
+run = """
+echo "=== Mise 诊断 ==="
+mise doctor
+echo ""
+echo "=== 已安装工具 ==="
+mise list
+"""
+
+[tasks.update]
+description = "更新所有工具"
+run = "mise upgrade"
+
+# ============================================
+# 环境变量
+# ============================================
+[env]
+EDITOR = "nvim"
+VISUAL = "nvim"
+LANG = "en_US.UTF-8"
+LC_ALL = "en_US.UTF-8"
+
+# XDG 目录
+XDG_CONFIG_HOME = "{{ env.HOME }}/.config"
+XDG_DATA_HOME = "{{ env.HOME }}/.local/share"
+XDG_CACHE_HOME = "{{ env.HOME }}/.cache"
+XDG_STATE_HOME = "{{ env.HOME }}/.local/state"
+
+# Go
+GOPATH = "{{ env.HOME }}/go"
+
+# FZF
+FZF_DEFAULT_OPTS = "--height 40% --layout=reverse --border"
+FZF_DEFAULT_COMMAND = "fd --type f --hidden --follow --exclude .git"
+
+# ============================================
+# PATH 扩展
+# ============================================
+[env._.path]
+"{{ env.HOME }}/.local/bin" = true
+"{{ env.HOME }}/.cargo/bin" = true
+"{{ env.HOME }}/go/bin" = true
+

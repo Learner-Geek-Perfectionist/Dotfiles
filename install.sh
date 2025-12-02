@@ -1,7 +1,7 @@
 #!/bin/bash
 # Dotfiles 统一安装入口
 #
-# Linux: Mise (工具管理) + Chezmoi (配置管理) - 原生 Rootless
+# Linux: Pixi (包管理) + Chezmoi (配置管理) - 完全 Rootless
 # macOS: Homebrew (包管理 + Chezmoi)
 #
 # 支持: Linux (x86_64, aarch64) / macOS (x86_64, arm64)
@@ -28,7 +28,7 @@ export NC='\033[0m'
 # 默认配置
 SKIP_VSCODE="${SKIP_VSCODE:-false}"
 SKIP_CHEZMOI="${SKIP_CHEZMOI:-false}"
-MISE_ONLY="${MISE_ONLY:-false}"
+PIXI_ONLY="${PIXI_ONLY:-false}"
 
 # 日志文件
 LOG_FILE="${LOG_FILE:-/tmp/dotfiles-install-$(whoami).log}"
@@ -91,20 +91,20 @@ show_help() {
 Dotfiles 安装脚本 v${DOTFILES_VERSION}
 
 架构:
-    Linux: Mise (工具管理) + Chezmoi (配置管理) - 原生 Rootless
+    Linux: Pixi (包管理) + Chezmoi (配置管理) - 完全 Rootless
     macOS: Homebrew (包管理 + Chezmoi)
 
 用法: $0 [选项]
 
 选项:
-    --mise-only         仅安装 Mise（仅 Linux）
+    --pixi-only         仅安装 Pixi（仅 Linux）
     --skip-chezmoi      跳过 Chezmoi 配置安装
     --skip-vscode       跳过 VSCode 插件安装
     --branch BRANCH     指定 Git 分支（默认: ${DEFAULT_BRANCH}）
     --help, -h          显示帮助信息
 
 环境变量:
-    MISE_ONLY           设为 "true" 仅安装 Mise（仅 Linux）
+    PIXI_ONLY           设为 "true" 仅安装 Pixi（仅 Linux）
     SKIP_CHEZMOI        设为 "true" 跳过 Chezmoi
     SKIP_VSCODE         设为 "true" 跳过 VSCode 插件
     DOTFILES_BRANCH     指定 Git 分支
@@ -113,8 +113,8 @@ Dotfiles 安装脚本 v${DOTFILES_VERSION}
     # 完整安装
     curl -fsSL https://raw.githubusercontent.com/.../install.sh | bash
 
-    # 仅安装 Mise（Linux）
-    curl -fsSL https://raw.githubusercontent.com/.../install.sh | bash -s -- --mise-only
+    # 仅安装 Pixi（Linux）
+    curl -fsSL https://raw.githubusercontent.com/.../install.sh | bash -s -- --pixi-only
 
     # 跳过 VSCode 插件
     curl -fsSL https://raw.githubusercontent.com/.../install.sh | bash -s -- --skip-vscode
@@ -248,53 +248,78 @@ install_macos_homebrew() {
 }
 
 # ========================================
-# Linux: 安装 Mise
+# Linux: 安装 Pixi
 # ========================================
-install_mise() {
+install_pixi() {
 	local dotfiles_dir="$1"
 	local step_num="$2"
 
 	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	print_step "步骤 ${step_num}: 安装 Mise (工具版本管理)"
+	print_step "步骤 ${step_num}: 安装 Pixi (包管理器)"
 	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-	if [[ -f "$dotfiles_dir/scripts/install_mise.sh" ]]; then
-		bash "$dotfiles_dir/scripts/install_mise.sh"
+	if [[ -f "$dotfiles_dir/scripts/install_pixi.sh" ]]; then
+		bash "$dotfiles_dir/scripts/install_pixi.sh"
 	else
-		print_error "未找到 Mise 安装脚本"
+		print_error "未找到 Pixi 安装脚本"
 		exit 1
 	fi
 
-	# 确保 mise 在 PATH 中
-	export PATH="$HOME/.local/bin:$PATH"
+	# 确保 pixi 在 PATH 中
+	export PATH="$HOME/.pixi/bin:$PATH"
 
-	print_success "✓ Mise 安装完成"
+	print_success "✓ Pixi 安装完成"
 }
 
 # ========================================
-# Linux: 安装 Chezmoi
+# Linux: 配置 Chezmoi（已通过 Pixi 安装）
 # ========================================
-install_chezmoi_linux() {
+setup_chezmoi_linux() {
 	local dotfiles_dir="$1"
 	local step_num="$2"
 
 	if [[ "$SKIP_CHEZMOI" == "true" ]]; then
-		print_warn "跳过 Chezmoi 安装"
+		print_warn "跳过 Chezmoi 配置"
 		return 0
 	fi
 
 	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	print_step "步骤 ${step_num}: 安装 Chezmoi (配置管理)"
+	print_step "步骤 ${step_num}: 配置 Chezmoi"
 	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-	if [[ -f "$dotfiles_dir/scripts/install_chezmoi.sh" ]]; then
-		bash "$dotfiles_dir/scripts/install_chezmoi.sh"
-	else
-		print_error "未找到 Chezmoi 安装脚本"
-		exit 1
+	# chezmoi 已通过 pixi 安装
+	export PATH="$HOME/.pixi/bin:$PATH"
+
+	if ! command -v chezmoi &>/dev/null; then
+		print_warn "Chezmoi 未安装，跳过配置"
+		return 0
 	fi
 
-	print_success "✓ Chezmoi 配置完成"
+	local chezmoi_src="$dotfiles_dir/chezmoi"
+	local chezmoi_dest="$HOME/.local/share/chezmoi"
+
+	if [[ -d "$chezmoi_src" ]]; then
+		print_info "初始化 Chezmoi 源..."
+
+		# 清理旧的源目录
+		[[ -d "$chezmoi_dest" ]] && rm -rf "$chezmoi_dest"
+
+		# 创建并复制
+		mkdir -p "$chezmoi_dest"
+		cp -r "$chezmoi_src/"* "$chezmoi_dest/"
+
+		# 应用配置
+		print_info "应用 Chezmoi 配置..."
+		if [[ ! -f "$HOME/.config/chezmoi/chezmoi.toml" ]]; then
+			chezmoi init --apply
+		else
+			chezmoi apply
+		fi
+
+		print_success "✓ Chezmoi 配置完成"
+	else
+		print_warn "未找到 Chezmoi 源目录，跳过"
+	fi
 }
 
 # ========================================
@@ -403,16 +428,16 @@ setup_ssh() {
 install_linux() {
 	local dotfiles_dir="$1"
 
-	# 步骤 1: 安装 Mise
-	install_mise "$dotfiles_dir" "1/4"
+	# 步骤 1: 安装 Pixi
+	install_pixi "$dotfiles_dir" "1/4"
 
-	if [[ "$MISE_ONLY" == "true" ]]; then
-		print_success "✓ Mise 安装完成（仅 Mise 模式）"
+	if [[ "$PIXI_ONLY" == "true" ]]; then
+		print_success "✓ Pixi 安装完成（仅 Pixi 模式）"
 		return 0
 	fi
 
-	# 步骤 2: 安装 Chezmoi
-	install_chezmoi_linux "$dotfiles_dir" "2/4"
+	# 步骤 2: 安装 Chezmoi（通过 Pixi 已安装）
+	setup_chezmoi_linux "$dotfiles_dir" "2/4"
 
 	# 步骤 3: VSCode 插件
 	install_vscode "$dotfiles_dir" "3/4"
@@ -447,8 +472,8 @@ main() {
 	# 解析参数
 	while [[ $# -gt 0 ]]; do
 		case "$1" in
-		--mise-only)
-			MISE_ONLY="true"
+		--pixi-only)
+			PIXI_ONLY="true"
 			shift
 			;;
 		--skip-chezmoi)
@@ -493,7 +518,7 @@ main() {
 	if [[ "$os" == "macos" ]]; then
 		print_info "安装方式: Homebrew + Chezmoi"
 	else
-		print_info "安装方式: Mise + Chezmoi (原生 Rootless)"
+		print_info "安装方式: Pixi + Chezmoi (完全 Rootless)"
 	fi
 	echo ""
 
@@ -531,12 +556,11 @@ main() {
 	print_info "  1. 重新打开终端（或运行: source ~/.zshrc）"
 
 	if [[ "$os" == "linux" ]]; then
-		print_info "  2. 验证安装: mise doctor"
-		print_info "  3. 查看已安装工具: mise list"
+		print_info "  2. 查看已安装工具: pixi global list"
 		echo ""
 		print_info "常用命令:"
-		print_info "  mise install        - 安装配置文件中的所有工具"
-		print_info "  mise upgrade        - 升级所有工具"
+		print_info "  pixi global install <pkg>  - 安装包"
+		print_info "  pixi global upgrade        - 升级所有包"
 	else
 		print_info "  2. 验证安装: brew list"
 		echo ""

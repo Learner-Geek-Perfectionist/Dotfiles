@@ -1,0 +1,189 @@
+# ============================================
+# Pixi 全局配置
+# 完全 Rootless 的包管理器
+# ============================================
+# 文档: https://pixi.sh/latest/reference/pixi_global_configuration/
+
+version = 1
+
+# ============================================
+# 编程语言运行时
+# ============================================
+
+[envs.python]
+channels = ["conda-forge"]
+[envs.python.dependencies]
+python = "*"
+
+[envs.node]
+channels = ["conda-forge"]
+[envs.node.dependencies]
+nodejs = "*"
+
+[envs.go]
+channels = ["conda-forge"]
+[envs.go.dependencies]
+go = "*"
+
+[envs.ruby]
+channels = ["conda-forge"]
+[envs.ruby.dependencies]
+ruby = "*"
+
+[envs.lua]
+channels = ["conda-forge"]
+[envs.lua.dependencies]
+lua = "*"
+
+[envs.rust]
+channels = ["conda-forge"]
+[envs.rust.dependencies]
+rust = "*"
+
+[envs.java]
+channels = ["conda-forge"]
+[envs.java.dependencies]
+openjdk = "*"
+
+# ============================================
+# 终端增强工具
+# ============================================
+
+[envs.ripgrep]
+channels = ["conda-forge"]
+[envs.ripgrep.dependencies]
+ripgrep = "*"
+[envs.ripgrep.exposed]
+rg = "rg"
+
+[envs.fd]
+channels = ["conda-forge"]
+[envs.fd.dependencies]
+fd-find = "*"
+[envs.fd.exposed]
+fd = "fd"
+
+[envs.bat]
+channels = ["conda-forge"]
+[envs.bat.dependencies]
+bat = "*"
+
+[envs.eza]
+channels = ["conda-forge"]
+[envs.eza.dependencies]
+eza = "*"
+
+[envs.fzf]
+channels = ["conda-forge"]
+[envs.fzf.dependencies]
+fzf = "*"
+
+[envs.dust]
+channels = ["conda-forge"]
+[envs.dust.dependencies]
+dust = "*"
+
+[envs.hyperfine]
+channels = ["conda-forge"]
+[envs.hyperfine.dependencies]
+hyperfine = "*"
+
+[envs.fastfetch]
+channels = ["conda-forge"]
+[envs.fastfetch.dependencies]
+fastfetch = "*"
+
+# ============================================
+# 开发工具
+# ============================================
+
+[envs.neovim]
+channels = ["conda-forge"]
+[envs.neovim.dependencies]
+neovim = "*"
+[envs.neovim.exposed]
+nvim = "nvim"
+
+[envs.jq]
+channels = ["conda-forge"]
+[envs.jq.dependencies]
+jq = "*"
+
+[envs.yq]
+channels = ["conda-forge"]
+[envs.yq.dependencies]
+yq = "*"
+
+# ============================================
+# 代码格式化
+# ============================================
+
+[envs.shfmt]
+channels = ["conda-forge"]
+[envs.shfmt.dependencies]
+shfmt = "*"
+
+[envs.ruff]
+channels = ["conda-forge"]
+[envs.ruff.dependencies]
+ruff = "*"
+
+# ============================================
+# 其他工具
+# ============================================
+
+[envs.starship]
+channels = ["conda-forge"]
+[envs.starship.dependencies]
+starship = "*"
+
+[envs.glow]
+channels = ["conda-forge"]
+[envs.glow.dependencies]
+glow = "*"
+
+[envs.chezmoi]
+channels = ["conda-forge"]
+[envs.chezmoi.dependencies]
+chezmoi = "*"
+
+# ============================================
+# 构建工具 (完全 Rootless!)
+# ============================================
+
+[envs.build-tools]
+channels = ["conda-forge"]
+[envs.build-tools.dependencies]
+# C/C++ 编译器
+cxx-compiler = "*"
+c-compiler = "*"
+# 构建工具
+make = "*"
+cmake = "*"
+ninja = "*"
+pkg-config = "*"
+autoconf = "*"
+automake = "*"
+libtool = "*"
+# 开发库
+openssl = "*"
+readline = "*"
+zlib = "*"
+ncurses = "*"
+libffi = "*"
+libyaml = "*"
+
+[envs.build-tools.exposed]
+gcc = "gcc"
+g++ = "g++"
+make = "make"
+cmake = "cmake"
+ninja = "ninja"
+pkg-config = "pkg-config"
+
+# ============================================
+# npm 全局工具 (通过 Node.js 环境)
+# ============================================
+# 使用 pixi 安装 node 后，可以用 npm install -g 安装
+# 或者在项目级别使用 pixi.toml 管理
+

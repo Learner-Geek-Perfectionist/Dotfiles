@@ -13,7 +13,7 @@
     # Git 配置
     git_user = "{{ $gitUser }}"
 
-    # Dotfiles 元数据（来自 install.sh / README）
+    # Dotfiles 元数据
     dotfiles_version = "4.0.0"
     dotfiles_repo = "https://github.com/Learner-Geek-Perfectionist/Dotfiles.git"
     default_branch = "beta"
@@ -25,66 +25,17 @@
     arch = "{{ .chezmoi.arch }}"
     is_macos = {{ if eq .chezmoi.os "darwin" }}true{{ else }}false{{ end }}
     is_linux = {{ if eq .chezmoi.os "linux" }}true{{ else }}false{{ end }}
-    manage_mise = {{ if eq .chezmoi.os "linux" }}true{{ else }}false{{ end }}
+    manage_pixi = {{ if eq .chezmoi.os "linux" }}true{{ else }}false{{ end }}
     manage_homebrew = {{ if eq .chezmoi.os "darwin" }}true{{ else }}false{{ end }}
 
-    # 需要在 chezmoi 阶段自动运行的脚本
-    install_scripts = [
-        "run_once_before_01-install-mise.sh.tmpl",
-        "run_onchange_after_02-mise-install.sh.tmpl"
-    ]
-
 [data.paths]
-    dotfiles = "{{ env.HOME }}/Dotfiles"
     chezmoi_source = "{{ .chezmoi.sourceDir }}"
     destination = "{{ .chezmoi.homeDir }}"
-    scripts = "{{ env.HOME }}/Dotfiles/scripts"
-    lib = "{{ env.HOME }}/Dotfiles/lib"
-    sh_script_dir = "{{ env.HOME }}/sh-script"
-    mise_config = "{{ env.HOME }}/.config/mise/config.toml"
-    zsh_cache = "{{ env.HOME }}/.cache/zsh"
-    zsh_history = "{{ env.HOME }}/.cache/zsh/.zsh_history"
-    ssh_config = "{{ env.HOME }}/.ssh/config"
-
-[data.mise.languages]
-    node = "lts"
-    python = "latest"
-    go = "latest"
-    rust = "stable"
-    ruby = "latest"
-    java = "temurin-21"
-    lua = "latest"
-
-[data.mise.cli]
-    "ubi:junegunn/fzf" = "latest"
-    "ubi:BurntSushi/ripgrep" = "latest"
-    "ubi:sharkdp/fd" = "latest"
-    "ubi:sharkdp/bat" = "latest"
-    "ubi:eza-community/eza" = "latest"
-    "ubi:bootandy/dust" = "latest"
-    "ubi:sharkdp/hyperfine" = "latest"
-    "ubi:fastfetch-cli/fastfetch" = "latest"
-    "ubi:neovim/neovim" = "latest"
-    "ubi:jqlang/jq" = "latest"
-    "ubi:mikefarah/yq" = "latest"
-    "ubi:mvdan/sh" = "latest"
-    "ubi:astral-sh/ruff" = "latest"
-    "ubi:twpayne/chezmoi" = "latest"
-    "ubi:starship/starship" = "latest"
-    "ubi:ajeetdsouza/zoxide" = "latest"
-    "ubi:charmbracelet/glow" = "latest"
-
-[data.mise.npm]
-    typescript = "latest"
-    ts-node = "latest"
-    pnpm = "latest"
-    prettier = "latest"
-    eslint = "latest"
-
-[data.mise.tasks]
-    install_exts = "bash ~/Dotfiles/scripts/install_vscode_ext.sh"
-    doctor = "mise doctor && mise list"
-    update = "mise upgrade"
+    sh_script_dir = "{{ .chezmoi.homeDir }}/sh-script"
+    pixi_home = "{{ .chezmoi.homeDir }}/.pixi"
+    zsh_cache = "{{ .chezmoi.homeDir }}/.cache/zsh"
+    zsh_history = "{{ .chezmoi.homeDir }}/.cache/zsh/.zsh_history"
+    ssh_config = "{{ .chezmoi.homeDir }}/.ssh/config"
 
 [edit]
     command = "nvim"
@@ -105,9 +56,3 @@
 # 脚本执行
 [interpreters.sh]
     command = "bash"
-
-# 加密（可选，使用 age）
-# [age]
-#     identity = "~/.config/chezmoi/key.txt"
-#     recipient = "age1..."
-

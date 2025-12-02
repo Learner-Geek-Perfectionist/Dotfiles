@@ -53,11 +53,8 @@ if [[ -n "$ORBSTACK" ]] && command -v open >/dev/null 2>&1; then
 alias open='open -R'
 fi
 
-# Mise 激活（Linux 工具版本管理）
-export PATH="$HOME/.local/bin:$PATH"
-if command -v mise &>/dev/null; then
-    eval "$(mise activate zsh)"
-fi
+# Pixi 路径（Linux 包管理）
+export PATH="$HOME/.pixi/bin:$PATH"
 fi
 
 # 加载平台配置插件

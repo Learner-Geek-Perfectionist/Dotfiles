@@ -49,8 +49,17 @@ install_chezmoi() {
 		print_info "使用 mise 安装 chezmoi..."
 		mise install ubi:twpayne/chezmoi
 		mise use -g ubi:twpayne/chezmoi@latest
-		print_success "✓ Chezmoi 已通过 mise 安装"
-		return 0
+
+		# 激活 mise 以便 chezmoi 命令可用
+		eval "$(mise activate bash)"
+
+		# 验证 chezmoi 是否可用
+		if command -v chezmoi &>/dev/null; then
+			print_success "✓ Chezmoi 已通过 mise 安装"
+			return 0
+		else
+			print_warn "mise 安装后 chezmoi 不可用，尝试直接下载..."
+		fi
 	fi
 
 	# 回退：直接下载
@@ -79,8 +88,9 @@ init_chezmoi() {
 	dotfiles_dir=$(get_dotfiles_dir)
 	local chezmoi_src="$dotfiles_dir/chezmoi"
 
-	# 确保 chezmoi 在 PATH 中
+	# 确保 mise 和 chezmoi 在 PATH 中
 	export PATH="$HOME/.local/bin:$PATH"
+	command -v mise &>/dev/null && eval "$(mise activate bash)"
 
 	if [[ ! -d "$chezmoi_src" ]]; then
 		print_error "Chezmoi 源目录不存在: $chezmoi_src"
@@ -119,7 +129,9 @@ apply_chezmoi() {
 	print_header "应用 Dotfiles 配置"
 	print_header "=========================================="
 
+	# 确保 mise 和 chezmoi 在 PATH 中
 	export PATH="$HOME/.local/bin:$PATH"
+	command -v mise &>/dev/null && eval "$(mise activate bash)"
 
 	print_info "运行 chezmoi apply..."
 

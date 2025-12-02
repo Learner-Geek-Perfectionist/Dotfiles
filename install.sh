@@ -369,17 +369,13 @@ setup_chezmoi_linux() {
 		# 清理旧的源目录
 		[[ -d "$chezmoi_dest" ]] && rm -rf "$chezmoi_dest"
 
-		# 创建并复制
+		# 创建并复制（使用 /. 确保复制隐藏文件如 .chezmoi.toml.tmpl）
 		mkdir -p "$chezmoi_dest"
-		cp -r "$chezmoi_src/"* "$chezmoi_dest/"
+		cp -r "$chezmoi_src/." "$chezmoi_dest/"
 
-		# 应用配置
+		# 应用配置（chezmoi 会自动处理 .chezmoi.toml.tmpl 生成配置）
 		print_info "应用 Chezmoi 配置..."
-		if [[ ! -f "$HOME/.config/chezmoi/chezmoi.toml" ]]; then
-			chezmoi init --apply
-		else
-			chezmoi apply
-		fi
+		chezmoi init --apply
 
 		print_success "✓ Chezmoi 配置完成"
 	else
@@ -418,17 +414,13 @@ setup_chezmoi_macos() {
 		# 清理旧的源目录
 		[[ -d "$chezmoi_dest" ]] && rm -rf "$chezmoi_dest"
 
-		# 创建并复制
+		# 创建并复制（使用 /. 确保复制隐藏文件如 .chezmoi.toml.tmpl）
 		mkdir -p "$chezmoi_dest"
-		cp -r "$chezmoi_src/"* "$chezmoi_dest/"
+		cp -r "$chezmoi_src/." "$chezmoi_dest/"
 
-		# 应用配置
+		# 应用配置（chezmoi 会自动处理 .chezmoi.toml.tmpl 生成配置）
 		print_info "应用 Chezmoi 配置..."
-		if [[ ! -f "$HOME/.config/chezmoi/chezmoi.toml" ]]; then
-			chezmoi init --apply
-		else
-			chezmoi apply
-		fi
+		chezmoi init --apply
 
 		print_success "✓ Chezmoi 配置完成"
 	else

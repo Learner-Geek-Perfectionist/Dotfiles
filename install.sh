@@ -139,8 +139,39 @@ setup_logging() {
 }
 
 # ========================================
-# 依赖检查
+# 依赖检查和安装
 # ========================================
+# apt 缓存标记，避免重复 update
+_APT_UPDATED=false
+
+install_dependency() {
+	local dep="$1"
+
+	print_info "尝试安装 $dep..."
+
+	# Linux: 尝试各种包管理器
+	if command -v apt &>/dev/null; then
+		# 只在第一次时执行 apt update
+		if [[ "$_APT_UPDATED" == "false" ]]; then
+			sudo apt update
+			_APT_UPDATED=true
+		fi
+		sudo apt install -y "$dep" && return 0
+	elif command -v dnf &>/dev/null; then
+		sudo dnf install -y "$dep" && return 0
+	elif command -v yum &>/dev/null; then
+		sudo yum install -y "$dep" && return 0
+	elif command -v pacman &>/dev/null; then
+		sudo pacman -S --noconfirm "$dep" && return 0
+	elif command -v apk &>/dev/null; then
+		# Alpine Linux (常见于容器环境，可能不需要 sudo)
+		apk add "$dep" 2>/dev/null || sudo apk add "$dep" && return 0
+	else
+		print_warn "未找到支持的包管理器"
+		return 1
+	fi
+}
+
 check_dependencies() {
 	print_info "检查基础依赖..."
 
@@ -154,9 +185,23 @@ check_dependencies() {
 		return 0
 	fi
 
-	print_error "缺少依赖: ${missing[*]}"
-	print_info "请先安装这些依赖后再运行此脚本"
-	exit 1
+	print_warn "缺少依赖: ${missing[*]}"
+	print_info "尝试自动安装..."
+
+	local failed=()
+	for dep in "${missing[@]}"; do
+		if ! install_dependency "$dep"; then
+			failed+=("$dep")
+		fi
+	done
+
+	if ((${#failed[@]} > 0)); then
+		print_error "无法自动安装: ${failed[*]}"
+		print_info "请手动安装后重新运行此脚本"
+		exit 1
+	fi
+
+	print_success "✓ 依赖安装完成"
 }
 
 # ========================================

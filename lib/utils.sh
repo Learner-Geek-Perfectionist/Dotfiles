@@ -33,29 +33,29 @@ print_step() { echo -e "${PURPLE}$1${NC}"; }
 
 # 带边框的消息
 print_msg() {
-    local msg="$1"
-    local color="${2:-$CYAN}"
-    local width=60
-    local border=$(printf '=%.0s' $(seq 1 $width))
+	local msg="$1"
+	local color="${2:-$CYAN}"
+	local width=60
+	local border=$(printf '=%.0s' $(seq 1 $width))
 
-    echo -e "${color}${border}${NC}"
-    echo -e "${color}  ${msg}${NC}"
-    echo -e "${color}${border}${NC}"
+	echo -e "${color}${border}${NC}"
+	echo -e "${color}  ${msg}${NC}"
+	echo -e "${color}${border}${NC}"
 }
 
 # ========================================
 # 日志函数
 # ========================================
 log_msg() {
-    local msg="$1"
-    local show_stdout="${2:-true}"
-    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+	local msg="$1"
+	local show_stdout="${2:-true}"
+	local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
 
-    echo "[$timestamp] $msg" >>"$DOTFILES_LOG"
+	echo "[$timestamp] $msg" >>"$DOTFILES_LOG"
 
-    if [[ "$show_stdout" == "true" ]]; then
-        echo -e "$msg"
-    fi
+	if [[ "$show_stdout" == "true" ]]; then
+		echo -e "$msg"
+	fi
 }
 
 log_error() { log_msg "${RED}ERROR: $1${NC}"; }
@@ -65,31 +65,31 @@ log_success() { log_msg "${GREEN}$1${NC}"; }
 # 检测函数
 # ========================================
 detect_os() {
-    case "$(uname -s)" in
-        Darwin) echo "macos" ;;
-        Linux) echo "linux" ;;
-        *) echo "unknown" ;;
-    esac
+	case "$(uname -s)" in
+	Darwin) echo "macos" ;;
+	Linux) echo "linux" ;;
+	*) echo "unknown" ;;
+	esac
 }
 
 detect_arch() {
-    case "$(uname -m)" in
-        x86_64) echo "x86_64" ;;
+	case "$(uname -m)" in
+	x86_64) echo "x86_64" ;;
         aarch64|arm64) echo "aarch64" ;;
-        *) echo "$(uname -m)" ;;
-    esac
+	*) echo "$(uname -m)" ;;
+	esac
 }
 
 detect_package_manager() {
-    if command -v brew &>/dev/null; then
-        echo "brew"
-    elif command -v apt &>/dev/null; then
-        echo "apt"
-    elif command -v dnf &>/dev/null; then
-        echo "dnf"
-    else
-        echo "unsupported"
-    fi
+	if command -v brew &>/dev/null; then
+		echo "brew"
+	elif command -v apt &>/dev/null; then
+		echo "apt"
+	elif command -v dnf &>/dev/null; then
+		echo "dnf"
+	else
+		echo "unsupported"
+	fi
 }
 
 # ========================================
@@ -116,110 +116,110 @@ confirm() {
 # Homebrew 包安装（macOS）
 # ========================================
 install_packages() {
-    local package_group_name="$1"
-    local brew_package_type="${2:-formula}"
+	local package_group_name="$1"
+	local brew_package_type="${2:-formula}"
 
-    if [[ -z "$package_group_name" ]]; then
-        print_error "未指定包组名称"
-        return 1
-    fi
+	if [[ -z "$package_group_name" ]]; then
+		print_error "未指定包组名称"
+		return 1
+	fi
 
-    local pkg_manager
-    pkg_manager=$(detect_package_manager)
+	local pkg_manager
+	pkg_manager=$(detect_package_manager)
 
-    if [[ "$pkg_manager" != "brew" ]]; then
-        print_warn "此函数仅支持 Homebrew (macOS)"
-        return 1
-    fi
+	if [[ "$pkg_manager" != "brew" ]]; then
+		print_warn "此函数仅支持 Homebrew (macOS)"
+		return 1
+	fi
 
-    # 获取包列表
-    local packages=()
-    eval "packages=(\"\${${package_group_name}[@]}\")"
+	# 获取包列表
+	local packages=()
+	eval "packages=(\"\${${package_group_name}[@]}\")"
 
-    if [[ ${#packages[@]} -eq 0 ]]; then
-        print_warn "包组 ${package_group_name} 为空，跳过"
-        return 0
-    fi
+	if [[ ${#packages[@]} -eq 0 ]]; then
+		print_warn "包组 ${package_group_name} 为空，跳过"
+		return 0
+	fi
 
-    # 获取已安装的包
-    local installed_packages=""
-    if [[ "$brew_package_type" == "cask" ]]; then
-        installed_packages="$(brew list --cask 2>/dev/null || true)"
-    else
-        installed_packages="$(brew list --formula 2>/dev/null || true)"
-    fi
+	# 获取已安装的包
+	local installed_packages=""
+	if [[ "$brew_package_type" == "cask" ]]; then
+		installed_packages="$(brew list --cask 2>/dev/null || true)"
+	else
+		installed_packages="$(brew list --formula 2>/dev/null || true)"
+	fi
 
-    # 筛选未安装的包
-    local uninstalled_packages=()
-    for package in "${packages[@]}"; do
-        [[ -z "$package" ]] && continue
-        if ! grep -Fqx "$package" <<<"$installed_packages"; then
-            uninstalled_packages+=("$package")
-        fi
-    done
+	# 筛选未安装的包
+	local uninstalled_packages=()
+	for package in "${packages[@]}"; do
+		[[ -z "$package" ]] && continue
+		if ! grep -Fqx "$package" <<<"$installed_packages"; then
+			uninstalled_packages+=("$package")
+		fi
+	done
 
-    if [[ ${#uninstalled_packages[@]} -eq 0 ]]; then
-        print_success "✓ 包组 $package_group_name 中的所有包已安装"
-        return 0
-    fi
+	if [[ ${#uninstalled_packages[@]} -eq 0 ]]; then
+		print_success "✓ 包组 $package_group_name 中的所有包已安装"
+		return 0
+	fi
 
-    print_info "安装 ${#uninstalled_packages[@]} 个包..."
-    for package in "${uninstalled_packages[@]}"; do
-        echo "  - $package"
-    done
+	print_info "安装 ${#uninstalled_packages[@]} 个包..."
+	for package in "${uninstalled_packages[@]}"; do
+		echo "  - $package"
+	done
 
-    if [[ "$brew_package_type" == "cask" ]]; then
-        brew install --cask "${uninstalled_packages[@]}"
-    else
-        brew install "${uninstalled_packages[@]}"
-    fi
+	if [[ "$brew_package_type" == "cask" ]]; then
+		brew install --cask "${uninstalled_packages[@]}"
+	else
+		brew install "${uninstalled_packages[@]}"
+	fi
 
-    print_success "✓ 包安装完成"
+	print_success "✓ 包安装完成"
 }
 
 # ========================================
 # 字体安装
 # ========================================
 install_fonts() {
-    # 非交互模式跳过
-    if [[ ! -t 0 ]]; then
-        print_warn "跳过字体安装（非交互模式）"
-        return 0
-    fi
+	# 非交互模式跳过
+	if [[ ! -t 0 ]]; then
+		print_warn "跳过字体安装（非交互模式）"
+		return 0
+	fi
 
-    echo -ne "${GREEN}是否需要下载字体？(y/n): ${NC}"
-    read -r download_confirm
+	echo -ne "${GREEN}是否需要下载字体？(y/n): ${NC}"
+	read -r download_confirm
 
-    if [[ "$download_confirm" != 'y' ]]; then
-        print_info "跳过字体下载"
-        return 0
-    fi
+	if [[ "$download_confirm" != 'y' ]]; then
+		print_info "跳过字体下载"
+		return 0
+	fi
 
-    local font_source="/tmp/Fonts/"
+	local font_source="/tmp/Fonts/"
 
-    print_info "下载字体..."
-    git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Fonts.git "$font_source"
+	print_info "下载字体..."
+	git clone --depth 1 https://github.com/Learner-Geek-Perfectionist/Fonts.git "$font_source"
 
-    local font_dest
-    if [[ "$(uname)" == "Darwin" ]]; then
-        font_dest="$HOME/Library/Fonts"
-    else
-        font_dest="$HOME/.local/share/fonts/"
-    fi
+	local font_dest
+	if [[ "$(uname)" == "Darwin" ]]; then
+		font_dest="$HOME/Library/Fonts"
+	else
+		font_dest="$HOME/.local/share/fonts/"
+	fi
 
-    print_info "安装字体到 $font_dest..."
-    mkdir -p "$font_dest"
+	print_info "安装字体到 $font_dest..."
+	mkdir -p "$font_dest"
 
-    find "$font_source" -type f \( -iname "*.ttf" -o -iname "*.otf" \) ! -iname "README*" \
-        -exec cp {} "$font_dest" \;
+	find "$font_source" -type f \( -iname "*.ttf" -o -iname "*.otf" \) ! -iname "README*" \
+		-exec cp {} "$font_dest" \;
 
-    # Linux 刷新字体缓存
-    if [[ "$(uname)" != "Darwin" ]]; then
-        fc-cache -fv 2>/dev/null || true
-    fi
+	# Linux 刷新字体缓存
+	if [[ "$(uname)" != "Darwin" ]]; then
+		fc-cache -fv 2>/dev/null || true
+	fi
 
-    print_success "✓ 字体安装完成"
+	print_success "✓ 字体安装完成"
 
-    # 清理
-    rm -rf "$font_source"
+	# 清理
+	rm -rf "$font_source"
 }

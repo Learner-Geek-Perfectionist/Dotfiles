@@ -9,6 +9,9 @@ set -e
 # 版本和配置
 # ========================================
 DOTFILES_VERSION="2.0.0"
+DOTFILES_REPO_URL="${DOTFILES_REPO_URL:-https://github.com/Learner-Geek-Perfectionist/Dotfiles.git}"
+DEFAULT_BRANCH="${DEFAULT_BRANCH:-beta}"
+DOTFILES_BRANCH="${DOTFILES_BRANCH:-}"
 
 # 颜色定义
 export RED='\033[0;31m'
@@ -23,10 +26,6 @@ export NC='\033[0m'
 USE_SUDO="${USE_SUDO:-false}"
 SKIP_VSCODE="${SKIP_VSCODE:-false}"
 DOTFILES_ONLY="${DOTFILES_ONLY:-false}"
-
-# ⚠️ 重要：此值应与当前文件所在的 Git 分支保持一致
-# 合并到 master 时需要改为 "master"
-DOTFILES_BRANCH="${DOTFILES_BRANCH:-beta}"
 
 # 日志文件
 LOG_FILE="${LOG_FILE:-/tmp/dotfiles-install-$(whoami).log}"
@@ -46,6 +45,20 @@ print_warn() { print_msg "$1" "$YELLOW"; }
 print_error() { print_msg "$1" "$RED"; }
 print_header() { print_msg "$1" "$BLUE"; }
 
+# 解析需要克隆的 Git 分支
+resolve_branch() {
+	if [[ -n "$DOTFILES_BRANCH" ]]; then
+		return
+	fi
+
+	if [[ -n "$GITHUB_REF_NAME" ]]; then
+		DOTFILES_BRANCH="$GITHUB_REF_NAME"
+		return
+	fi
+
+	DOTFILES_BRANCH="$DEFAULT_BRANCH"
+}
+
 # 显示帮助
 show_help() {
 	cat <<HELP_EOF
@@ -57,7 +70,7 @@ Dotfiles 安装脚本 v${DOTFILES_VERSION}
     --use-sudo          使用 sudo 安装（Linux 系统级 Nix）
     --skip-vscode       跳过 VSCode 插件安装
     --dotfiles-only     仅安装 dotfiles 配置，不安装工具
-    --branch BRANCH     指定 Git 分支（默认: beta）
+    --branch BRANCH     指定 Git 分支（默认: \$DOTFILES_BRANCH 或 ${DEFAULT_BRANCH}）
     --help, -h          显示帮助信息
 
 环境变量:
@@ -152,8 +165,20 @@ clone_dotfiles() {
 	# 清理之前的运行
 	[[ -d "$tmp_dir" ]] && rm -rf "$tmp_dir"
 
-	print_header "克隆 Dotfiles 仓库 (分支: $DOTFILES_BRANCH)..."
-	git clone --depth=1 --branch "$DOTFILES_BRANCH" https://github.com/Learner-Geek-Perfectionist/Dotfiles.git "$tmp_dir"
+	resolve_branch
+
+	local branch_label="${DOTFILES_BRANCH:-default}"
+	print_header "克隆 Dotfiles 仓库 (分支: ${branch_label})..."
+
+	local clone_args=(--depth=1)
+	if [[ -n "$DOTFILES_BRANCH" ]]; then
+		clone_args+=(--branch "$DOTFILES_BRANCH" --single-branch)
+	fi
+
+	if ! git clone "${clone_args[@]}" "$DOTFILES_REPO_URL" "$tmp_dir"; then
+		print_error "克隆仓库失败（分支: ${branch_label}）"
+		exit 1
+	fi
 
 	echo "$tmp_dir"
 }

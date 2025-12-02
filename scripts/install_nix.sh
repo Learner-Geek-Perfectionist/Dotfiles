@@ -384,13 +384,8 @@ main() {
 	if [[ "$USE_SUDO" != "true" ]]; then
 		print_info ""
 		print_info "下一步："
-		print_info "1. 运行 'nix-enter' 进入 Nix 环境"
-		print_info "2. 或者在 shell 配置中添加以下内容自动激活："
-		print_info ""
-		print_info '   # 自动进入 Nix 环境'
-		print_info '   if [[ -x "$HOME/.local/bin/nix-user-chroot" ]]; then'
-		print_info '       export NIX_USER_CHROOT_ENV=1'
-		print_info '   fi'
+		print_info "1. 安装 Devbox 后，直接运行 'devbox shell' 进入开发环境"
+		print_info "2. 或运行 'nix-enter' 进入 Nix 交互环境"
 		print_info ""
 	fi
 }

@@ -58,41 +58,93 @@ get_os() {
 	esac
 }
 
+# 检测 Linux 发行版
+detect_distro() {
+	if [[ -f /etc/os-release ]]; then
+		. /etc/os-release
+		echo "$ID"
+	elif command -v lsb_release >/dev/null 2>&1; then
+		lsb_release -si | tr '[:upper:]' '[:lower:]'
+	else
+		echo "unknown"
+	fi
+}
+
+# 安装基础依赖
+install_base_dependencies() {
+	local distro
+	distro=$(detect_distro)
+
+	print_info "检测到发行版: $distro"
+	print_info "安装基础依赖 (git, curl, xz, tar)..."
+
+	case "$distro" in
+	ubuntu | debian | linuxmint | pop)
+		sudo apt-get update && sudo apt-get install -y git curl xz-utils tar
+		;;
+	centos | rhel | rocky | almalinux)
+		sudo yum install -y git curl xz tar
+		;;
+	fedora)
+		sudo dnf install -y git curl xz tar
+		;;
+	arch | manjaro)
+		sudo pacman -Sy --noconfirm git curl xz tar
+		;;
+	alpine)
+		sudo apk add git curl xz tar
+		;;
+	opensuse* | sles)
+		sudo zypper install -y git curl xz tar
+		;;
+	*)
+		print_error "未知发行版: $distro"
+		return 1
+		;;
+	esac
+
+	print_success "✓ 基础依赖安装完成"
+	return 0
+}
+
 # 检查必要的依赖工具
 check_dependencies() {
 	print_info "检查必要依赖..."
 
 	local missing=()
 
-	# 检查 xz（解压 Nix tarball 必需）
-	if ! command -v xz >/dev/null 2>&1; then
-		missing+=("xz")
+	# 检查必要工具
+	command -v git >/dev/null 2>&1 || missing+=("git")
+	command -v curl >/dev/null 2>&1 || missing+=("curl")
+	command -v tar >/dev/null 2>&1 || missing+=("tar")
+	command -v xz >/dev/null 2>&1 || missing+=("xz")
+
+	if [[ ${#missing[@]} -eq 0 ]]; then
+		print_success "✓ 所有依赖已满足"
+		return 0
 	fi
 
-	# 检查 tar
-	if ! command -v tar >/dev/null 2>&1; then
-		missing+=("tar")
+	print_warn "缺少依赖: ${missing[*]}"
+
+	# 检查是否有 sudo 权限，尝试自动安装
+	if command -v sudo >/dev/null 2>&1; then
+		print_info "尝试自动安装依赖..."
+		if install_base_dependencies; then
+			return 0
+		fi
 	fi
 
-	# 检查 curl
-	if ! command -v curl >/dev/null 2>&1; then
-		missing+=("curl")
-	fi
-
-	if [[ ${#missing[@]} -gt 0 ]]; then
-		print_error "✗ 缺少必要的依赖工具: ${missing[*]}"
-		print_info ""
-		print_info "请先安装这些工具："
-		print_info "  Ubuntu/Debian: sudo apt install ${missing[*]}"
-		print_info "  CentOS/RHEL:   sudo yum install ${missing[*]}"
-		print_info "  Fedora:        sudo dnf install ${missing[*]}"
-		print_info "  Alpine:        sudo apk add ${missing[*]}"
-		print_info ""
-		return 1
-	fi
-
-	print_success "✓ 依赖检查通过"
-	return 0
+	# 无法自动安装，提示用户手动安装
+	print_error "✗ 缺少必要的依赖工具: ${missing[*]}"
+	print_info ""
+	print_info "请先安装这些工具："
+	print_info "  Ubuntu/Debian: sudo apt install git curl xz-utils tar"
+	print_info "  CentOS/RHEL:   sudo yum install git curl xz tar"
+	print_info "  Fedora:        sudo dnf install git curl xz tar"
+	print_info "  Arch:          sudo pacman -S git curl xz tar"
+	print_info "  Alpine:        sudo apk add git curl xz tar"
+	print_info ""
+	return 1
 }
 
 # 检测是否支持用户命名空间

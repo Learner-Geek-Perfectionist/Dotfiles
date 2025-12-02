@@ -167,7 +167,7 @@ clone_dotfiles() {
 
 	# 硬编码使用 beta 分支
 	local branch="beta"
-	
+
 	print_header "克隆 Dotfiles 仓库 (分支: ${branch})..." >&2
 
 	if ! git clone --depth=1 --branch "$branch" --single-branch "$DOTFILES_REPO_URL" "$tmp_dir"; then
@@ -308,25 +308,34 @@ install_vscode_extensions() {
 }
 
 # ========================================
-# 初始化 Devbox 环境
+# 初始化 Devbox 全局环境
 # ========================================
 initialize_devbox() {
 	local dotfiles_dir="$1"
 
 	if [[ -f "$dotfiles_dir/devbox.json" ]]; then
-		print_info "初始化 Devbox 环境..."
+		print_info "初始化 Devbox 全局环境..."
 
-		# 复制整个仓库到 ~/.dotfiles（devbox.json 中的 scripts 需要这些文件）
-		if [[ -d "$HOME/.dotfiles" ]]; then
-			rm -rf "$HOME/.dotfiles"
+		# 从 devbox.json 读取包列表并全局安装
+		# 使用 devbox global 让工具在普通 shell 中直接可用
+		local packages
+		packages=$(grep -oP '"[^"]+@[^"]+"' "$dotfiles_dir/devbox.json" | tr -d '"' | tr '\n' ' ')
+
+		if [[ -n "$packages" ]]; then
+			print_info "全局安装 Devbox 包..."
+			print_info "包列表: $packages"
+
+			# 使用 devbox 包装脚本执行全局安装
+			for pkg in $packages; do
+				print_info "  安装: $pkg"
+				devbox global add "$pkg" 2>/dev/null || true
+			done
+
+			print_success "✓ Devbox 全局包安装完成"
+			print_info ""
+			print_info "工具已全局安装，可直接使用（无需 devbox shell）"
+			print_info "查看已安装的包: devbox global list"
 		fi
-		cp -r "$dotfiles_dir" "$HOME/.dotfiles"
-
-		# 清理不需要的文件
-		rm -rf "$HOME/.dotfiles/.git" 2>/dev/null || true
-
-		print_info "Dotfiles 已复制到 ~/.dotfiles/"
-		print_info "运行 'cd ~/.dotfiles && devbox shell' 进入开发环境"
 	fi
 }
 

@@ -248,9 +248,9 @@ install_macos_homebrew() {
 }
 
 # ========================================
-# Linux: 安装 Pixi
+# Linux: 安装 Pixi 二进制
 # ========================================
-install_pixi() {
+install_pixi_binary() {
 	local dotfiles_dir="$1"
 	local step_num="$2"
 
@@ -258,8 +258,9 @@ install_pixi() {
 	print_step "步骤 ${step_num}: 安装 Pixi (包管理器)"
 	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
+	# 仅安装 Pixi 二进制，不安装工具包
 	if [[ -f "$dotfiles_dir/scripts/install_pixi.sh" ]]; then
-		bash "$dotfiles_dir/scripts/install_pixi.sh"
+		bash "$dotfiles_dir/scripts/install_pixi.sh" --install-only
 	else
 		print_error "未找到 Pixi 安装脚本"
 		exit 1
@@ -269,6 +270,54 @@ install_pixi() {
 	export PATH="$HOME/.pixi/bin:$PATH"
 
 	print_success "✓ Pixi 安装完成"
+}
+
+# ========================================
+# Linux: 同步 Pixi 工具包
+# ========================================
+sync_pixi_tools() {
+	local step_num="$1"
+
+	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	print_step "步骤 ${step_num}: 同步 Pixi 工具包"
+	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+	export PATH="$HOME/.pixi/bin:$PATH"
+
+	if ! command -v pixi &>/dev/null; then
+		print_error "Pixi 未安装"
+		return 1
+	fi
+
+	local manifest="$HOME/.pixi/manifests/pixi-global.toml"
+
+	if [[ -f "$manifest" ]]; then
+		print_info "同步工具包（这可能需要几分钟）..."
+		print_info "所有包都是预编译的，无需本地编译"
+		echo ""
+
+		if pixi global sync; then
+			print_success "✓ 工具包同步完成"
+		else
+			print_warn "部分工具同步失败"
+			print_info "可以稍后运行: pixi global sync"
+		fi
+
+		# 验证关键工具
+		echo ""
+		print_info "验证安装..."
+		local tools=("python" "node" "go" "rg" "fd" "bat" "nvim" "gcc" "make")
+		for tool in "${tools[@]}"; do
+			if command -v "$tool" &>/dev/null; then
+				echo "  ✓ $tool"
+			else
+				echo "  ✗ $tool (未安装)"
+			fi
+		done
+	else
+		print_warn "未找到 Pixi 配置文件: $manifest"
+		print_info "请确保 Chezmoi 已正确部署配置"
+	fi
 }
 
 # ========================================
@@ -428,22 +477,25 @@ setup_ssh() {
 install_linux() {
 	local dotfiles_dir="$1"
 
-	# 步骤 1: 安装 Pixi
-	install_pixi "$dotfiles_dir" "1/4"
+	# 步骤 1: 安装 Pixi（仅二进制，不安装工具包）
+	install_pixi_binary "$dotfiles_dir" "1/5"
 
 	if [[ "$PIXI_ONLY" == "true" ]]; then
 		print_success "✓ Pixi 安装完成（仅 Pixi 模式）"
 		return 0
 	fi
 
-	# 步骤 2: 安装 Chezmoi（通过 Pixi 已安装）
-	setup_chezmoi_linux "$dotfiles_dir" "2/4"
+	# 步骤 2: 配置 Chezmoi（部署配置文件，包括 pixi manifest）
+	setup_chezmoi_linux "$dotfiles_dir" "2/5"
 
-	# 步骤 3: VSCode 插件
-	install_vscode "$dotfiles_dir" "3/4"
+	# 步骤 3: 同步 Pixi 工具包（使用 chezmoi 部署的 manifest）
+	sync_pixi_tools "3/5"
 
-	# 步骤 4: SSH 配置
-	setup_ssh "$dotfiles_dir" "4/4"
+	# 步骤 4: VSCode 插件
+	install_vscode "$dotfiles_dir" "4/5"
+
+	# 步骤 5: SSH 配置
+	setup_ssh "$dotfiles_dir" "5/5"
 }
 
 # ========================================

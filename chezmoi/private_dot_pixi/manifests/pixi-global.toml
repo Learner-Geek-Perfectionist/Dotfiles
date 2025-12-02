@@ -14,36 +14,56 @@ version = 1
 channels = ["conda-forge"]
 [envs.python.dependencies]
 python = "*"
+[envs.python.exposed]
+python = "python"
+pip = "pip"
 
 [envs.node]
 channels = ["conda-forge"]
 [envs.node.dependencies]
 nodejs = "*"
+[envs.node.exposed]
+node = "node"
+npm = "npm"
+npx = "npx"
 
 [envs.go]
 channels = ["conda-forge"]
 [envs.go.dependencies]
 go = "*"
+[envs.go.exposed]
+go = "go"
 
 [envs.ruby]
 channels = ["conda-forge"]
 [envs.ruby.dependencies]
 ruby = "*"
+[envs.ruby.exposed]
+ruby = "ruby"
+gem = "gem"
 
 [envs.lua]
 channels = ["conda-forge"]
 [envs.lua.dependencies]
 lua = "*"
+[envs.lua.exposed]
+lua = "lua"
 
 [envs.rust]
 channels = ["conda-forge"]
 [envs.rust.dependencies]
 rust = "*"
+[envs.rust.exposed]
+cargo = "cargo"
+rustc = "rustc"
 
 [envs.java]
 channels = ["conda-forge"]
 [envs.java.dependencies]
 openjdk = "*"
+[envs.java.exposed]
+java = "java"
+javac = "javac"
 
 # ============================================
 # 终端增强工具
@@ -67,31 +87,43 @@ fd = "fd"
 channels = ["conda-forge"]
 [envs.bat.dependencies]
 bat = "*"
+[envs.bat.exposed]
+bat = "bat"
 
 [envs.eza]
 channels = ["conda-forge"]
 [envs.eza.dependencies]
 eza = "*"
+[envs.eza.exposed]
+eza = "eza"
 
 [envs.fzf]
 channels = ["conda-forge"]
 [envs.fzf.dependencies]
 fzf = "*"
+[envs.fzf.exposed]
+fzf = "fzf"
 
 [envs.dust]
 channels = ["conda-forge"]
 [envs.dust.dependencies]
 dust = "*"
+[envs.dust.exposed]
+dust = "dust"
 
 [envs.hyperfine]
 channels = ["conda-forge"]
 [envs.hyperfine.dependencies]
 hyperfine = "*"
+[envs.hyperfine.exposed]
+hyperfine = "hyperfine"
 
 [envs.fastfetch]
 channels = ["conda-forge"]
 [envs.fastfetch.dependencies]
 fastfetch = "*"
+[envs.fastfetch.exposed]
+fastfetch = "fastfetch"
 
 # ============================================
 # 开发工具
@@ -108,11 +140,15 @@ nvim = "nvim"
 channels = ["conda-forge"]
 [envs.jq.dependencies]
 jq = "*"
+[envs.jq.exposed]
+jq = "jq"
 
 [envs.yq]
 channels = ["conda-forge"]
 [envs.yq.dependencies]
 yq = "*"
+[envs.yq.exposed]
+yq = "yq"
 
 # ============================================
 # 代码格式化
@@ -122,11 +158,15 @@ yq = "*"
 channels = ["conda-forge"]
 [envs.shfmt.dependencies]
 shfmt = "*"
+[envs.shfmt.exposed]
+shfmt = "shfmt"
 
 [envs.ruff]
 channels = ["conda-forge"]
 [envs.ruff.dependencies]
 ruff = "*"
+[envs.ruff.exposed]
+ruff = "ruff"
 
 # ============================================
 # 其他工具
@@ -136,16 +176,22 @@ ruff = "*"
 channels = ["conda-forge"]
 [envs.starship.dependencies]
 starship = "*"
+[envs.starship.exposed]
+starship = "starship"
 
 [envs.glow]
 channels = ["conda-forge"]
 [envs.glow.dependencies]
 glow = "*"
+[envs.glow.exposed]
+glow = "glow"
 
 [envs.chezmoi]
 channels = ["conda-forge"]
 [envs.chezmoi.dependencies]
 chezmoi = "*"
+[envs.chezmoi.exposed]
+chezmoi = "chezmoi"
 
 # ============================================
 # 构建工具 (完全 Rootless!)

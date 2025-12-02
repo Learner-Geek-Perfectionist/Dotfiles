@@ -114,6 +114,94 @@ detect_arch() {
 	esac
 }
 
+# 检测 Linux 发行版
+detect_distro() {
+	[[ -f /etc/os-release ]] && . /etc/os-release && echo "$ID" && return
+	command -v lsb_release >/dev/null 2>&1 && lsb_release -si | tr '[:upper:]' '[:lower:]' && return
+	echo "unknown"
+}
+
+# 检查并安装依赖（Linux）
+check_and_install_dependencies() {
+	print_info "检查基础依赖..."
+
+	local -a deps=(git curl tar xz) missing=()
+	for dep in "${deps[@]}"; do
+		command -v "$dep" >/dev/null 2>&1 || missing+=("$dep")
+	done
+
+	if ((${#missing[@]} == 0)); then
+		print_success "✓ 基础依赖已满足"
+		return 0
+	fi
+
+	local missing_str="${missing[*]}"
+	print_warn "缺少依赖: $missing_str"
+
+	# 检查 sudo 权限
+	local -a sudo_cmd=()
+	if [[ $EUID -ne 0 ]]; then
+		command -v sudo >/dev/null 2>&1 || {
+			print_error "无法自动安装：没有 root 权限且未安装 sudo"
+			print_info "请手动安装: $missing_str"
+			exit 1
+		}
+		sudo_cmd=(sudo)
+	fi
+
+	local distro
+	distro=$(detect_distro)
+	print_info "检测到发行版: $distro，开始安装..."
+
+	local -a packages=("${missing[@]}")
+	local -a install_cmd=()
+	local -a update_cmd=()
+
+	case "$distro" in
+	ubuntu | debian | linuxmint | pop)
+		# Debian/Ubuntu 系的 xz 包名是 xz-utils
+		packages=("${packages[@]/xz/xz-utils}")
+		update_cmd=(apt-get update)
+		install_cmd=(apt-get install -y)
+		;;
+	centos | rhel | rocky | almalinux)
+		install_cmd=(yum install -y)
+		;;
+	fedora)
+		install_cmd=(dnf install -y)
+		;;
+	arch | manjaro)
+		install_cmd=(pacman -Sy --noconfirm)
+		;;
+	alpine)
+		install_cmd=(apk add)
+		;;
+	opensuse* | sles)
+		install_cmd=(zypper install -y)
+		;;
+	*)
+		print_error "未知发行版: $distro，请手动安装: $missing_str"
+		exit 1
+		;;
+	esac
+
+	local fail_msg="依赖安装失败，请手动安装: $missing_str"
+
+	if [[ ${#update_cmd[@]} -gt 0 ]]; then
+		"${sudo_cmd[@]}" "${update_cmd[@]}" || {
+			print_error "$fail_msg"
+			exit 1
+		}
+	fi
+
+	if "${sudo_cmd[@]}" "${install_cmd[@]}" "${packages[@]}"; then
+		print_success "✓ 依赖安装完成"
+	else
+		print_error "$fail_msg"
+		exit 1
+	fi
+}
+
 # ========================================
 # 日志设置
 # ========================================
@@ -165,8 +253,9 @@ clone_dotfiles() {
 	# 清理之前的运行
 	[[ -d "$tmp_dir" ]] && rm -rf "$tmp_dir"
 
-	# 硬编码使用 beta 分支
-	local branch="beta"
+	# 解析需要使用的分支
+	resolve_branch
+	local branch="${DOTFILES_BRANCH:-$DEFAULT_BRANCH}"
 
 	print_header "克隆 Dotfiles 仓库 (分支: ${branch})..." >&2
 
@@ -389,16 +478,15 @@ main() {
 	print_info "=========================================="
 	echo ""
 
-	# 检查 git
-	if ! command -v git &>/dev/null && [[ "$os" != "macos" ]]; then
-		print_error "需要 git，请先安装"
-		exit 1
-	fi
-
-	# 检查 curl
-	if ! command -v curl &>/dev/null; then
-		print_error "需要 curl，请先安装"
-		exit 1
+	# 检查并安装基础依赖
+	if [[ "$os" == "linux" ]]; then
+		check_and_install_dependencies
+	elif [[ "$os" == "macos" ]]; then
+		# macOS 检查 curl（git 会在后面通过 Xcode CLI 安装）
+		if ! command -v curl &>/dev/null; then
+			print_error "需要 curl，请先安装"
+			exit 1
+		fi
 	fi
 
 	# 克隆仓库

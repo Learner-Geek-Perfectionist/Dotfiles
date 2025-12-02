@@ -24,6 +24,10 @@ USE_SUDO="${USE_SUDO:-false}"
 SKIP_VSCODE="${SKIP_VSCODE:-false}"
 DOTFILES_ONLY="${DOTFILES_ONLY:-false}"
 
+# ⚠️ 重要：此值应与当前文件所在的 Git 分支保持一致
+# 合并到 master 时需要改为 "master"
+DOTFILES_BRANCH="${DOTFILES_BRANCH:-beta}"
+
 # 日志文件
 LOG_FILE="${LOG_FILE:-/tmp/dotfiles-install-$(whoami).log}"
 
@@ -53,12 +57,14 @@ Dotfiles 安装脚本 v${DOTFILES_VERSION}
     --use-sudo          使用 sudo 安装（Linux 系统级 Nix）
     --skip-vscode       跳过 VSCode 插件安装
     --dotfiles-only     仅安装 dotfiles 配置，不安装工具
+    --branch BRANCH     指定 Git 分支（默认: beta）
     --help, -h          显示帮助信息
 
 环境变量:
     USE_SUDO            设为 "true" 使用 sudo 安装
     SKIP_VSCODE         设为 "true" 跳过 VSCode 插件
     DOTFILES_ONLY       设为 "true" 仅安装配置文件
+    DOTFILES_BRANCH     指定 Git 分支
 
 示例:
     # 默认安装（无需 sudo，适合服务器环境）
@@ -146,8 +152,8 @@ clone_dotfiles() {
 	# 清理之前的运行
 	[[ -d "$tmp_dir" ]] && rm -rf "$tmp_dir"
 
-	print_header "克隆 Dotfiles 仓库 (v$DOTFILES_VERSION)..."
-	git clone --depth=1 https://github.com/Learner-Geek-Perfectionist/Dotfiles.git "$tmp_dir"
+	print_header "克隆 Dotfiles 仓库 (分支: $DOTFILES_BRANCH)..."
+	git clone --depth=1 --branch "$DOTFILES_BRANCH" https://github.com/Learner-Geek-Perfectionist/Dotfiles.git "$tmp_dir"
 
 	echo "$tmp_dir"
 }
@@ -322,6 +328,10 @@ main() {
 		--dotfiles-only)
 			DOTFILES_ONLY="true"
 			shift
+			;;
+		--branch)
+			DOTFILES_BRANCH="$2"
+			shift 2
 			;;
 		--help | -h)
 			show_help

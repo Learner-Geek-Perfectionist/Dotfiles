@@ -20,32 +20,32 @@
 
 ```bash
 # 默认安装
-bash <(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/master/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/beta/install.sh)
 
 # 使用 sudo 安装（Linux 系统级 Nix）
-bash <(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/master/install.sh) --use-sudo
+bash <(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/beta/install.sh) --use-sudo
 
 # 仅安装 dotfiles 配置
-bash <(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/master/install.sh) --dotfiles-only
+bash <(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/beta/install.sh) --dotfiles-only
 
 # 跳过 VSCode 插件安装
-bash <(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/master/install.sh) --skip-vscode
+bash <(curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/beta/install.sh) --skip-vscode
 ```
 
 ### Gitee（国内加速）
 
 ```bash
 # 默认安装
-bash <(curl -fsSL https://gitee.com/oyzxin/Dotfiles/raw/master/install.sh)
+bash <(curl -fsSL https://gitee.com/oyzxin/Dotfiles/raw/beta/install.sh)
 
 # 使用 sudo 安装（Linux 系统级 Nix）
-bash <(curl -fsSL https://gitee.com/oyzxin/Dotfiles/raw/master/install.sh) --use-sudo
+bash <(curl -fsSL https://gitee.com/oyzxin/Dotfiles/raw/beta/install.sh) --use-sudo
 
 # 仅安装 dotfiles 配置
-bash <(curl -fsSL https://gitee.com/oyzxin/Dotfiles/raw/master/install.sh) --dotfiles-only
+bash <(curl -fsSL https://gitee.com/oyzxin/Dotfiles/raw/beta/install.sh) --dotfiles-only
 
 # 跳过 VSCode 插件安装
-bash <(curl -fsSL https://gitee.com/oyzxin/Dotfiles/raw/master/install.sh) --skip-vscode
+bash <(curl -fsSL https://gitee.com/oyzxin/Dotfiles/raw/beta/install.sh) --skip-vscode
 ```
 
 ### 安装选项说明

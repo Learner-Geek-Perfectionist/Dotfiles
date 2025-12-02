@@ -7,25 +7,25 @@ Host *
   ServerAliveInterval 60
   ForwardAgent yes
 
-# 连接到Mac的配置
-Host mac
-  HostName MacBook-Pro.local
-  Port 22
-  User ouyangzhaoxin
+# # 连接到Mac的配置
+# Host mac
+#   HostName MacBook-Pro.local
+#   Port 22
+#   User ouyangzhaoxin
 
-# 连接OrbStack的Ubuntu
-Host ubuntu
-  HostName 127.0.0.1
-  Port 32222
-  User ubuntu
-  ProxyJump mac
+# # 连接OrbStack的Ubuntu
+# Host ubuntu
+#   HostName 127.0.0.1
+#   Port 32222
+#   User ubuntu
+#   ProxyJump mac
 
-# 连接OrbStack的Fedora
-Host fedora
-  HostName 127.0.0.1
-  Port 32222  
-  User fedora
-  ProxyJump mac
+# # 连接OrbStack的Fedora
+# Host fedora
+#   HostName 127.0.0.1
+#   Port 32222  
+#   User fedora
+#   ProxyJump mac
 
 Host github.com
     Hostname ssh.github.com

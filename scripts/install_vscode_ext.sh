@@ -29,10 +29,10 @@ extensions=(
 	"golang.go" # Go 官方扩展
 
 	# ==================== Python ====================
-	"ms-python.python"          # Python 官方扩展
-	"ms-python.vscode-pylance"  # Pylance
-	"ms-python.black-formatter" # Black 格式化
-	"ms-python.debugpy"         # Python 调试器
+	"ms-python.python"         # Python 官方扩展
+	"ms-python.vscode-pylance" # Pylance
+	"charliermarsh.ruff"       # Ruff (Linter + Formatter，替代 Black/flake8)
+	"ms-python.debugpy"        # Python 调试器
 
 	# ==================== JavaScript/TypeScript ====================
 	"dbaeumer.vscode-eslint" # ESLint
@@ -155,7 +155,7 @@ install_all_extensions() {
 		local ext_lower
 		ext_lower=$(echo "$ext" | tr '[:upper:]' '[:lower:]')
 
-        # 检查是否已安装
+		# 检查是否已安装
 		if echo "$installed_list" | grep -Fxq "$ext_lower"; then
 			print_warn "  ⊘ $ext (已安装)"
 			((skipped_count++))
@@ -238,7 +238,7 @@ main() {
 			code_cmd="$2"
 			shift 2
 			;;
-            --help|-h)
+		--help | -h)
 			show_help
 			exit 0
 			;;

@@ -114,8 +114,15 @@
     },
     // ======================= Python 设置 ======================= 
     "[python]": {
-        "editor.defaultFormatter": "ms-python.black-formatter"
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit",
+            "source.organizeImports": "explicit"
+        }
     },
+    // Ruff 配置
+    "ruff.enable": true,
+    "ruff.lint.enable": true,
+    "ruff.format.enable": true,
     "git.ignoreRebaseWarning": true
 }
-

@@ -220,12 +220,13 @@ ruff = "ruff"
 # 其他工具
 # ============================================
 
-[envs.starship]
-channels = ["conda-forge"]
-[envs.starship.dependencies]
-starship = "*"
-[envs.starship.exposed]
-starship = "starship"
+# [envs.starship]
+# channels = ["conda-forge"]
+# [envs.starship.dependencies]
+# starship = "*"
+# [envs.starship.exposed]
+# starship = "starship"
+# 注意：已使用 Powerlevel10k (p10k) 作为 zsh 主题，无需 starship
 
 [envs.chezmoi]
 channels = ["conda-forge"]

@@ -133,7 +133,7 @@ fastfetch = "fastfetch"
 [envs.neovim]
 channels = ["conda-forge"]
 [envs.neovim.dependencies]
-neovim = "*"
+nvim = "*"
 [envs.neovim.exposed]
 nvim = "nvim"
 

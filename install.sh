@@ -141,6 +141,12 @@ setup_logging() {
 # ========================================
 # 依赖检查和安装
 # ========================================
+# 注意: 这里检查的是"引导依赖"（bootstrap dependencies）
+# 虽然 pixi 会安装 git/curl，但第一次运行时 pixi 还没装：
+#   1. 需要 curl 下载 pixi 安装脚本
+#   2. 需要 git 克隆 dotfiles 仓库
+# 所以必须确保系统已有这些基础工具
+#
 # apt 缓存标记，避免重复 update
 _APT_UPDATED=false
 

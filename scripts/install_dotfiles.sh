@@ -58,6 +58,15 @@ main() {
 	[[ -d "$HOME/.ssh" ]] && chmod 700 "$HOME/.ssh" && chmod 600 "$HOME/.ssh"/* 2>/dev/null || true
 	[[ -f "$HOME/.config/zsh/fzf/fzf-preview.sh" ]] && chmod +x "$HOME/.config/zsh/fzf/fzf-preview.sh"
 
+	# 安装 zinit 插件
+	print_header "🔌 安装 Zinit 插件"
+	if command -v zsh &>/dev/null; then
+		# 使用 zsh 执行插件安装脚本
+		zsh "$HOME/.config/zsh/plugins/zinit-plugin.zsh" && print_success "✓ Zinit 插件安装完成"
+	else
+		print_warn "⚠️ 未找到 zsh，跳过 zinit 插件安装"
+	fi
+
 	print_success "✅ 安装完成！请运行: source ~/.zshrc"
 }
 

@@ -87,11 +87,11 @@ alias clear='clear && printf '\''\e[3J'\'''
 # python3 映射到 python
 alias python=python3
 
-# bat 映射到 cat
-alias cat=bat
+# bat 映射到 cat（检查命令是否存在）
+command -v bat >/dev/null 2>&1 && alias cat=bat
 
-# tldr 替代 man（更简洁的命令手册）
-alias man='tldr'
+# tldr 替代 man（更简洁的命令手册，检查命令是否存在）
+command -v tldr >/dev/null 2>&1 && alias man='tldr'
 
 # reload 映射到重启 .zshrc
 alias reload="source ~/.zshenv;source ~/.zprofile;source ~/.zshrc"

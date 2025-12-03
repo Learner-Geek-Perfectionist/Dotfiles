@@ -14,17 +14,17 @@
 
 | 平台 | 包管理 | 配置管理 |
 |------|--------|----------|
-| **macOS** | Homebrew | Chezmoi |
-| **Linux** | Pixi (conda-forge) | Chezmoi |
+| **macOS** | Homebrew | 直接复制 |
+| **Linux** | Pixi (conda-forge) | 直接复制 |
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
 │                     Dotfiles 架构                        │
 ├─────────────────────────────────────────────────────────┤
 │                                                         │
 │  ┌─────────────┐     ┌─────────────┐     ┌───────────┐ │
-│  │  Homebrew   │     │    Pixi     │     │  Chezmoi  │ │
-│  │  (macOS)    │     │  包管理器    │     │  配置管理  │ │
+│  │  Homebrew   │     │    Pixi     │     │  配置文件  │ │
+│  │  (macOS)    │     │  (Linux)    │     │  直接复制  │ │
 │  └──────┬──────┘     └──────┬──────┘     └─────┬─────┘ │
 │         │                   │                  │       │
 │         ▼                   ▼                  ▼       │
@@ -61,12 +61,13 @@
 | bat | 带语法高亮的 cat |
 | eza | 现代化 ls |
 | dust | 现代化 du |
+| tree | 目录树显示 |
 | neovim | 编辑器 |
-| starship | Shell 提示符 |
 | jq / yq | JSON/YAML 处理 |
-| shfmt / ruff | 代码格式化 |
+| tldr | 简洁的命令手册 |
+| fastfetch | 系统信息 |
 
-### 构建工具 (Pixi) - 完全 Rootless!
+### 构建工具 (Pixi) - 完全 Rootless
 
 | 工具 | 说明 |
 |------|------|
@@ -77,9 +78,13 @@
 | pkg-config | 库配置工具 |
 | openssl / zlib | 开发库 |
 
-### macOS 应用 (Homebrew)
+### VSCode/Cursor 插件
 
-通过 `lib/packages.sh` 定义的 GUI 应用和 CLI 工具。
+自动检测编辑器类型，安装对应插件：
+
+- 通用插件：Rust、Go、Python、C/C++、Markdown 等
+- VSCode 专属：ms-vscode.cpptools、remote-ssh 等
+- Cursor 专属：anysphere.cpptools、anysphere.remote-ssh 等
 
 ## 🚀 快速开始
 
@@ -100,6 +105,9 @@ curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles
 
 # 跳过 VSCode 插件
 ./install.sh --skip-vscode
+
+# 跳过 Dotfiles 配置
+./install.sh --skip-dotfiles
 ```
 
 ### 卸载
@@ -117,25 +125,32 @@ curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles
 
 ## 📁 目录结构
 
-```
+```text
 Dotfiles/
 ├── install.sh                    # 主安装脚本
-├── chezmoi/                      # Chezmoi 配置源
-│   ├── .chezmoi.toml.tmpl        # Chezmoi 配置
-│   ├── dot_zshrc                 # Zsh 配置
-│   ├── dot_gitconfig.tmpl        # Git 配置
-│   ├── .pixi/                    # Pixi 配置
-│   │   └── manifests/
-│   │       └── pixi-global.toml  # 全局工具定义
-│   └── private_dot_config/       # XDG 配置
+├── uninstall.sh                  # 卸载脚本
+├── .zshrc                        # Zsh 主配置
+├── .zprofile                     # Zsh 登录配置
+├── .zshenv                       # Zsh 环境变量
+├── .config/
+│   ├── zsh/                      # Zsh 插件和工具
+│   │   ├── plugins/
+│   │   │   ├── zinit.zsh         # Zinit 插件管理
+│   │   │   └── platform.zsh      # 平台特定配置
+│   │   └── fzf/                  # fzf 配置
+│   ├── kitty/                    # Kitty 终端配置
+│   ├── Code/User/                # VSCode 设置
+│   └── Cursor/User/              # Cursor 设置
+├── .pixi/manifests/
+│   └── pixi-global.toml          # Pixi 全局工具定义
 ├── scripts/
-│   ├── install_pixi.sh           # Pixi 安装
-│   ├── install_vscode_ext.sh     # VSCode 扩展
+│   ├── install_pixi.sh           # Pixi 安装脚本
+│   ├── install_dotfiles.sh       # Dotfiles 部署脚本
+│   ├── install_vscode_ext.sh     # VSCode/Cursor 插件安装
 │   └── macos_install.sh          # macOS Homebrew 安装
-├── lib/
-│   ├── packages.sh               # Homebrew 包定义
-│   └── utils.sh                  # 工具函数
-└── config                        # SSH 配置
+└── lib/
+    ├── packages.sh               # Homebrew 包定义
+    └── utils.sh                  # 工具函数
 ```
 
 ## 🔧 常用命令
@@ -147,16 +162,7 @@ pixi global list              # 列出已安装的工具
 pixi global install <pkg>     # 安装工具
 pixi global upgrade           # 升级所有工具
 pixi global remove <pkg>      # 移除工具
-```
-
-### Chezmoi (配置管理)
-
-```bash
-chezmoi cd            # 进入配置源目录
-chezmoi edit ~/.zshrc # 编辑配置
-chezmoi diff          # 查看变更
-chezmoi apply         # 应用配置
-chezmoi update        # 从远程更新
+pixi global sync              # 同步 pixi-global.toml 配置
 ```
 
 ### Homebrew (macOS)
@@ -165,6 +171,13 @@ chezmoi update        # 从远程更新
 brew update           # 更新索引
 brew upgrade          # 升级所有包
 brew cleanup          # 清理缓存
+```
+
+### Zsh 配置
+
+```bash
+reload                # 重新加载配置 (alias)
+upgrade               # 更新 Dotfiles 配置
 ```
 
 ## ⚙️ 自定义
@@ -178,16 +191,11 @@ brew cleanup          # 清理缓存
 channels = ["conda-forge"]
 [envs.deno.dependencies]
 deno = "*"
+[envs.deno.exposed]
+deno = "deno"
 ```
 
 然后运行 `pixi global sync`。
-
-### 修改配置 (Chezmoi)
-
-```bash
-chezmoi edit ~/.zshrc
-chezmoi apply
-```
 
 ### 本地配置（不受版本控制）
 

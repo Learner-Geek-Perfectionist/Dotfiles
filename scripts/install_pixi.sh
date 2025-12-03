@@ -249,13 +249,17 @@ main() {
 		;;
 	esac
 
+	# 检测 shell 配置文件
+	local rc_file="~/.bashrc"
+	[[ "$SHELL" == *zsh ]] && rc_file="~/.zshrc"
+
 	echo ""
 	print_success "=========================================="
 	print_success "✅ Pixi 设置完成！"
 	print_success "=========================================="
 	echo ""
 	print_info "下一步:"
-	print_info "  1. 重新打开终端，或运行: source ~/.zshrc"
+	print_info "  1. 重新打开终端，或运行: source $rc_file"
 	print_info "  2. 验证安装: pixi global list"
 	echo ""
 	print_info "常用命令:"

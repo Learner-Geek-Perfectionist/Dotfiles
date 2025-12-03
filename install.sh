@@ -404,11 +404,11 @@ install_linux() {
 		return 0
 	fi
 
-	# 步骤 2: 安装 Dotfiles 配置
-	setup_dotfiles "$dotfiles_dir" "2/4"
+	# 步骤 2: 同步 Pixi 工具包
+	sync_pixi_tools "$dotfiles_dir" "2/4"
 
-	# 步骤 3: 同步 Pixi 工具包
-	sync_pixi_tools "$dotfiles_dir" "3/4"
+	# 步骤 3: 安装 Dotfiles 配置
+	setup_dotfiles "$dotfiles_dir" "3/4"
 
 	# 步骤 4: VSCode 插件
 	install_vscode "$dotfiles_dir" "4/4"

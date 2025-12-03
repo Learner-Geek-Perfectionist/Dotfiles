@@ -14,6 +14,7 @@ version = 1
 channels = ["conda-forge"]
 [envs.python.dependencies]
 python = "*"
+pip = "*"
 [envs.python.exposed]
 python = "python"
 pip = "pip"
@@ -154,12 +155,12 @@ yq = "yq"
 # 代码格式化
 # ============================================
 
-[envs.shfmt]
-channels = ["conda-forge"]
-[envs.shfmt.dependencies]
-shfmt = "*"
-[envs.shfmt.exposed]
-shfmt = "shfmt"
+# [envs.shfmt]
+# channels = ["conda-forge"]
+# [envs.shfmt.dependencies]
+# shfmt = "*"
+# [envs.shfmt.exposed]
+# shfmt = "shfmt"
 
 [envs.ruff]
 channels = ["conda-forge"]
@@ -178,13 +179,6 @@ channels = ["conda-forge"]
 starship = "*"
 [envs.starship.exposed]
 starship = "starship"
-
-[envs.glow]
-channels = ["conda-forge"]
-[envs.glow.dependencies]
-glow = "*"
-[envs.glow.exposed]
-glow = "glow"
 
 [envs.chezmoi]
 channels = ["conda-forge"]
@@ -217,7 +211,7 @@ readline = "*"
 zlib = "*"
 ncurses = "*"
 libffi = "*"
-libyaml = "*"
+# libyaml = "*"
 
 [envs.build-tools.exposed]
 gcc = "gcc"

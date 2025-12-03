@@ -46,6 +46,9 @@ for entry in "${editors[@]}"; do
 	type="${entry%%:*}" cmd="${entry#*:}"
 	print_header ">>> $type"
 
+	# 获取已安装的插件（转小写比较）
+	installed=$("$cmd" --list-extensions 2>/dev/null | tr '[:upper:]' '[:lower:]')
+
 	# 收集要安装的插件：ext|tag (tag: common/vscode/cursor)
 	all_exts=()
 	for ext in "${EXTENSIONS[@]}"; do
@@ -56,27 +59,45 @@ for entry in "${editors[@]}"; do
 		[[ "$t" == "$type" ]] && all_exts+=("$e|$t")
 	done
 
-	# 安装并记录结果
-	success=() failed=()
-	total=${#all_exts[@]}
-	count=0
-
+	# 分类：已安装、待安装
+	skipped=() to_install=()
 	for item in "${all_exts[@]}"; do
 		ext="${item%%|*}"
-		tag="${item#*|}"
-		((++count))
-		printf "\r${CYAN}[%d/%d]${NC} 安装中: ${YELLOW}%s${NC}%-20s" "$count" "$total" "$ext" ""
-		if "$cmd" --install-extension "$ext" --force &>/dev/null; then
-			success+=("$ext")
+		ext_lower=$(echo "$ext" | tr '[:upper:]' '[:lower:]')
+		if echo "$installed" | grep -Fxq "$ext_lower"; then
+			skipped+=("$ext")
 		else
-			failed+=("$ext|$tag")
+			to_install+=("$item")
 		fi
 	done
-	echo ""
+
+	# 安装并记录结果
+	success=() failed=()
+	total=${#to_install[@]}
+	count=0
+
+	if [[ $total -gt 0 ]]; then
+		for item in "${to_install[@]}"; do
+			ext="${item%%|*}"
+			tag="${item#*|}"
+			((++count))
+			printf "\r${CYAN}[%d/%d]${NC} 安装中: ${YELLOW}%s${NC}%-20s" "$count" "$total" "$ext" ""
+			if "$cmd" --install-extension "$ext" --force &>/dev/null; then
+				success+=("$ext")
+			else
+				failed+=("$ext|$tag")
+			fi
+		done
+		echo ""
+	fi
 
 	# 打印结果
+	if [[ ${#skipped[@]} -gt 0 ]]; then
+		print_warn "⊘ 已安装 (${#skipped[@]}):"
+		for ext in "${skipped[@]}"; do echo -e "  ${YELLOW}⊘ $ext${NC}"; done
+	fi
 	if [[ ${#success[@]} -gt 0 ]]; then
-		print_success "✓ 成功 (${#success[@]}):"
+		print_success "✓ 新安装 (${#success[@]}):"
 		for ext in "${success[@]}"; do echo -e "  ${GREEN}✓ $ext${NC}"; done
 	fi
 	if [[ ${#failed[@]} -gt 0 ]]; then

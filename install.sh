@@ -13,7 +13,7 @@ set -e
 # ========================================
 DOTFILES_VERSION="5.0.0"
 DOTFILES_REPO_URL="${DOTFILES_REPO_URL:-https://github.com/Learner-Geek-Perfectionist/Dotfiles.git}"
-DEFAULT_BRANCH="${DEFAULT_BRANCH:-beta}"
+DEFAULT_BRANCH="${DEFAULT_BRANCH:-linux_brew}"
 
 # 颜色定义
 export RED='\033[0;31m'

@@ -9,7 +9,7 @@ EXTENSIONS=(
 	"ms-vscode.cmake-tools" "twxs.cmake" "xaver.clang-format" "vadimcn.vscode-lldb"
 	"rust-lang.rust-analyzer" "serayuzgur.crates" "tamasfe.even-better-toml"
 	"golang.go"
-	"ms-python.python" "ms-python.vscode-pylance" "charliermarsh.ruff" "ms-python.debugpy"
+	"ms-python.python" "charliermarsh.ruff" "ms-python.debugpy"
 	"vscjava.vscode-java-pack" "fwcd.kotlin"
 	"sumneko.lua"
 	"mkhl.shfmt"
@@ -20,20 +20,42 @@ EXTENSIONS=(
 
 # 专属插件 (vscode:ext 或 cursor:ext)
 SPECIFIC=(
+	# VSCode 专属
+	"vscode:ms-python.vscode-pylance"
 	"vscode:ms-vscode.cpptools"
 	"vscode:ms-vscode.cpptools-extension-pack"
 	"vscode:ms-vscode-remote.remote-ssh"
 	"vscode:ms-vscode-remote.remote-ssh-edit"
 	"vscode:ms-vscode.remote-explorer"
 	"vscode:ms-vscode-remote.remote-containers"
+	# Cursor 专属
 	"cursor:anysphere.cpptools"
-	"cursor:jeanp413.open-remote-ssh"
+	"cursor:anysphere.remote-ssh"
+	"cursor:anysphere.remote-containers"
 )
+
+# 检测真实的编辑器类型（code 命令可能实际是 Cursor）
+detect_real_type() {
+	local cmd="$1"
+	if "$cmd" --help 2>&1 | head -5 | grep -qi "cursor"; then
+		echo "cursor"
+	else
+		echo "vscode"
+	fi
+}
 
 # 检测编辑器
 editors=()
-command -v code &>/dev/null && editors+=("vscode:code")
-command -v cursor &>/dev/null && editors+=("cursor:cursor")
+if command -v code &>/dev/null; then
+	real_type=$(detect_real_type "code")
+	editors+=("$real_type:code")
+fi
+if command -v cursor &>/dev/null; then
+	# 避免重复（如果 code 已经是 cursor）
+	if [[ ! " ${editors[*]} " =~ "cursor:" ]]; then
+		editors+=("cursor:cursor")
+	fi
+fi
 
 if [[ ${#editors[@]} -eq 0 ]]; then
 	print_error "未找到 VSCode 或 Cursor"
@@ -44,7 +66,7 @@ print_info "检测到 ${#editors[@]} 个编辑器"
 
 for entry in "${editors[@]}"; do
 	type="${entry%%:*}" cmd="${entry#*:}"
-	print_header ">>> $type"
+	print_header ">>> $type (命令: $cmd)"
 
 	# 获取已安装的插件（转小写比较）
 	installed=$("$cmd" --list-extensions 2>/dev/null | tr '[:upper:]' '[:lower:]')
@@ -82,7 +104,12 @@ for entry in "${editors[@]}"; do
 			tag="${item#*|}"
 			((++count))
 			printf "\r${CYAN}[%d/%d]${NC} 安装中: ${YELLOW}%s${NC}%-20s" "$count" "$total" "$ext" ""
-			if "$cmd" --install-extension "$ext" --force &>/dev/null; then
+			# 尝试安装
+			"$cmd" --install-extension "$ext" --force &>/dev/null || true
+			# 验证是否真的安装成功（重新检查）
+			new_installed=$("$cmd" --list-extensions 2>/dev/null | tr '[:upper:]' '[:lower:]')
+			ext_lower=$(echo "$ext" | tr '[:upper:]' '[:lower:]')
+			if echo "$new_installed" | grep -Fxq "$ext_lower"; then
 				success+=("$ext")
 			else
 				failed+=("$ext|$tag")
@@ -106,9 +133,9 @@ for entry in "${editors[@]}"; do
 			ext="${item%%|*}"
 			tag="${item#*|}"
 			if [[ "$tag" == "vscode" ]]; then
-				echo -e "  ${RED}✗ $ext${NC} ${YELLOW}(VSCode 专属，Cursor 不支持)${NC}"
+				echo -e "  ${RED}✗ $ext${NC} ${YELLOW}(VSCode 专属)${NC}"
 			elif [[ "$tag" == "cursor" ]]; then
-				echo -e "  ${RED}✗ $ext${NC} ${YELLOW}(Cursor 专属，VSCode 不支持)${NC}"
+				echo -e "  ${RED}✗ $ext${NC} ${YELLOW}(Cursor 专属)${NC}"
 			else
 				echo -e "  ${RED}✗ $ext${NC}"
 			fi

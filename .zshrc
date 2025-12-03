@@ -81,9 +81,16 @@ export FZF_DEFAULT_OPTS='--preview "${HOME}/.config/zsh/fzf/fzf-preview.sh {}" -
 
 export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --no-sort --tac"
 
-export FZF_DEFAULT_COMMAND='fd -g -HIia -E /System/Volumes/Data -E '.Trash''
+# fd 基础参数（排除垃圾桶和系统目录）
+_fd_opts='-g -HIia'
+if [[ "$(uname)" == "Darwin" ]]; then
+	_fd_opts+=' -E .Trash -E /System/Volumes/Data'
+else
+	_fd_opts+=' -E .local/share/Trash'
+fi
 
-alias fd='fd -g -HIia -E /System/Volumes/Data -E '.Trash''
+export FZF_DEFAULT_COMMAND="fd $_fd_opts"
+alias fd="fd $_fd_opts"
 
 alias getip="$HOME/sh-script/get-my-ip.sh"
 

@@ -13,13 +13,13 @@ ZINIT_HOME="${HOME}/.local/share/zinit/zinit.git"
 
 # 如果插件管理器 zinit 没有安装......
 if [[ ! -f "${ZINIT_HOME}/zinit.zsh" ]]; then
-    printf "\033[33m\033[220mInstalling ZDHARMA-CONTINUUM Initiative Plugin Manager...\033[0m\n"
-    if git clone --depth=1 https://github.com/zdharma-continuum/zinit "$ZINIT_HOME"; then
-        printf "\033[33m\033[34mInstallation successful.\033[0m\n"
-    else
-        printf "\033[160mThe clone has failed.\033[0m\n"
-        return
-    fi
+	printf "\033[33m\033[220mInstalling ZDHARMA-CONTINUUM Initiative Plugin Manager...\033[0m\n"
+	if git clone --depth=1 https://github.com/zdharma-continuum/zinit "$ZINIT_HOME"; then
+		printf "\033[33m\033[34mInstallation successful.\033[0m\n"
+	else
+		printf "\033[160mThe clone has failed.\033[0m\n"
+		return
+	fi
 fi
 
 # 执行 zinit.zsh，加载 zinit 插件管理器本身，将 zinit 命令引入 zsh 中。
@@ -27,15 +27,14 @@ source "${ZINIT_HOME}/zinit.zsh"
 
 # 1.Powerlevel10k 的 instant prompt 的缓存文件，用于加速启动
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-$USER.zsh" ]]; then
-    source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-$USER.zsh"
+	source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-$USER.zsh"
 fi
 
 # 2.加载 p10k 主题
 zinit light romkatv/powerlevel10k
 
 # 3.加载 p10k 主题的配置文件
-[[  -f ~/.config/zsh/.p10k.zsh ]] && source ~/.config/zsh/.p10k.zsh
-
+[[ -f ~/.config/zsh/.p10k.zsh ]] && source ~/.config/zsh/.p10k.zsh
 
 # OMZ 迁移和插件配置
 # clipboard
@@ -57,7 +56,7 @@ zinit snippet OMZL::directories.zsh
 zinit ice wait lucid depth=1 atload="unsetopt hist_ignore_all_dups hist_ignore_space"
 zinit snippet OMZL::history.zsh
 # theme
-zinit ice wait lucid depth=1 atload="alias ls &>/dev/null && unalias ls && alias ls='eza --icons -ha --time-style=iso -g'"
+zinit ice wait lucid depth=1 atload="alias ls &>/dev/null && unalias ls; command -v eza &>/dev/null && alias ls='eza --icons -ha --time-style=iso -g'"
 zinit snippet OMZL::theme-and-appearance.zsh
 # git
 zinit ice wait lucid depth=1
@@ -103,4 +102,3 @@ zinit light zsh-users/zsh-autosuggestions
 # 必须在 zdharma-continuum/fast-syntax-highlighting 之前加载 autosuggestions，否则「粘贴代码」太亮了。
 zinit ice wait lucid depth=1
 zinit light zdharma-continuum/fast-syntax-highlighting
-

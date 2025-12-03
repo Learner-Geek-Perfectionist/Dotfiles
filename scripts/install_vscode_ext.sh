@@ -59,7 +59,7 @@ for entry in "${editors[@]}"; do
 	count=0
 
 	for ext in "${all_exts[@]}"; do
-		((count++))
+		((++count))
 		printf "\r${CYAN}[%d/%d]${NC} 安装中: ${YELLOW}%s${NC}%-20s" "$count" "$total" "$ext" ""
 		if "$cmd" --install-extension "$ext" --force &>/dev/null; then
 			success+=("$ext")

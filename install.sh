@@ -320,6 +320,12 @@ sync_pixi_tools() {
 
 		if pixi global sync; then
 			print_success "✓ 工具包同步完成"
+
+			# 更新 tldr 缓存
+			if command -v tldr &>/dev/null; then
+				print_info "更新 tldr 缓存..."
+				tldr --update && print_success "✓ tldr 缓存更新完成"
+			fi
 		else
 			print_warn "部分工具同步失败"
 			print_info "可以稍后运行: pixi global sync"

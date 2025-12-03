@@ -6,7 +6,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/../lib/utils.sh"
 
 # 通用插件
 EXTENSIONS=(
-	"ms-vscode.cmake-tools" "twxs.cmake" "xaver.clang-format"
+	"ms-vscode.cmake-tools" "twxs.cmake" "xaver.clang-format" "vadimcn.vscode-lldb"
 	"rust-lang.rust-analyzer" "serayuzgur.crates" "tamasfe.even-better-toml"
 	"golang.go"
 	"ms-python.python" "ms-python.vscode-pylance" "charliermarsh.ruff" "ms-python.debugpy"

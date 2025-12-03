@@ -46,11 +46,14 @@ for entry in "${editors[@]}"; do
 	type="${entry%%:*}" cmd="${entry#*:}"
 	print_header ">>> $type"
 
-	# 收集要安装的插件
-	all_exts=("${EXTENSIONS[@]}")
+	# 收集要安装的插件：ext|tag (tag: common/vscode/cursor)
+	all_exts=()
+	for ext in "${EXTENSIONS[@]}"; do
+		all_exts+=("$ext|common")
+	done
 	for item in "${SPECIFIC[@]}"; do
 		t="${item%%:*}" e="${item#*:}"
-		[[ "$t" == "$type" ]] && all_exts+=("$e")
+		[[ "$t" == "$type" ]] && all_exts+=("$e|$t")
 	done
 
 	# 安装并记录结果
@@ -58,13 +61,15 @@ for entry in "${editors[@]}"; do
 	total=${#all_exts[@]}
 	count=0
 
-	for ext in "${all_exts[@]}"; do
+	for item in "${all_exts[@]}"; do
+		ext="${item%%|*}"
+		tag="${item#*|}"
 		((++count))
 		printf "\r${CYAN}[%d/%d]${NC} 安装中: ${YELLOW}%s${NC}%-20s" "$count" "$total" "$ext" ""
 		if "$cmd" --install-extension "$ext" --force &>/dev/null; then
 			success+=("$ext")
 		else
-			failed+=("$ext")
+			failed+=("$ext|$tag")
 		fi
 	done
 	echo ""
@@ -76,7 +81,17 @@ for entry in "${editors[@]}"; do
 	fi
 	if [[ ${#failed[@]} -gt 0 ]]; then
 		print_error "✗ 失败 (${#failed[@]}):"
-		for ext in "${failed[@]}"; do echo -e "  ${RED}✗ $ext${NC}"; done
+		for item in "${failed[@]}"; do
+			ext="${item%%|*}"
+			tag="${item#*|}"
+			if [[ "$tag" == "vscode" ]]; then
+				echo -e "  ${RED}✗ $ext${NC} ${YELLOW}(VSCode 专属，Cursor 不支持)${NC}"
+			elif [[ "$tag" == "cursor" ]]; then
+				echo -e "  ${RED}✗ $ext${NC} ${YELLOW}(Cursor 专属，VSCode 不支持)${NC}"
+			else
+				echo -e "  ${RED}✗ $ext${NC}"
+			fi
+		done
 	fi
 	echo ""
 done

@@ -46,23 +46,39 @@ for entry in "${editors[@]}"; do
 	type="${entry%%:*}" cmd="${entry#*:}"
 	print_header ">>> $type"
 
-	# 构建参数：--install-extension ext1 --install-extension ext2 ...
-	args=()
-	for ext in "${EXTENSIONS[@]}"; do
-		args+=(--install-extension "$ext")
-	done
+	# 收集要安装的插件
+	all_exts=("${EXTENSIONS[@]}")
 	for item in "${SPECIFIC[@]}"; do
 		t="${item%%:*}" e="${item#*:}"
-		[[ "$t" == "$type" ]] && args+=(--install-extension "$e")
+		[[ "$t" == "$type" ]] && all_exts+=("$e")
 	done
 
-	# 一条命令安装所有插件
-	print_info "安装 $((${#args[@]} / 2)) 个插件..."
-	if "$cmd" "${args[@]}" --force; then
-		print_success "✓ 全部安装完成"
-	else
-		print_error "✗ 部分插件安装失败"
+	# 安装并记录结果
+	success=() failed=()
+	total=${#all_exts[@]}
+	count=0
+
+	for ext in "${all_exts[@]}"; do
+		((count++))
+		printf "\r${CYAN}[%d/%d]${NC} 安装中: ${YELLOW}%s${NC}%-20s" "$count" "$total" "$ext" ""
+		if "$cmd" --install-extension "$ext" --force &>/dev/null; then
+			success+=("$ext")
+		else
+			failed+=("$ext")
+		fi
+	done
+	echo ""
+
+	# 打印结果
+	if [[ ${#success[@]} -gt 0 ]]; then
+		print_success "✓ 成功 (${#success[@]}):"
+		for ext in "${success[@]}"; do echo -e "  ${GREEN}✓ $ext${NC}"; done
 	fi
+	if [[ ${#failed[@]} -gt 0 ]]; then
+		print_error "✗ 失败 (${#failed[@]}):"
+		for ext in "${failed[@]}"; do echo -e "  ${RED}✗ $ext${NC}"; done
+	fi
+	echo ""
 done
 
 print_success "=== 安装完成 ==="

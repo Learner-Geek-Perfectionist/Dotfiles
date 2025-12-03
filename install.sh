@@ -325,17 +325,10 @@ sync_pixi_tools() {
 			print_info "可以稍后运行: pixi global sync"
 		fi
 
-		# 验证关键工具
+		# 使用 pixi 原生验证
 		echo ""
-		print_info "验证安装..."
-		local tools=("python" "node" "go" "rg" "fd" "bat" "nvim" "gcc" "make")
-		for tool in "${tools[@]}"; do
-			if command -v "$tool" &>/dev/null; then
-				echo "  ✓ $tool"
-			else
-				echo "  ✗ $tool (未安装)"
-			fi
-		done
+		print_info "已安装的工具:"
+		pixi global list
 	else
 		print_warn "未找到 Pixi 配置文件: $manifest"
 		print_info "请确保 Chezmoi 已正确部署配置"

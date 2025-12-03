@@ -1,8 +1,8 @@
 #!/bin/bash
 # Dotfiles 统一安装入口
 #
-# Linux: Pixi (包管理) + Chezmoi (配置管理) - 完全 Rootless
-# macOS: Homebrew (包管理 + Chezmoi)
+# Linux: Pixi (包管理) + Dotfiles 配置 - 完全 Rootless
+# macOS: Homebrew (包管理) + Dotfiles 配置
 #
 # 支持: Linux (x86_64, aarch64) / macOS (x86_64, arm64)
 
@@ -11,10 +11,9 @@ set -e
 # ========================================
 # 版本和配置
 # ========================================
-DOTFILES_VERSION="4.0.0"
+DOTFILES_VERSION="5.0.0"
 DOTFILES_REPO_URL="${DOTFILES_REPO_URL:-https://github.com/Learner-Geek-Perfectionist/Dotfiles.git}"
 DEFAULT_BRANCH="${DEFAULT_BRANCH:-beta}"
-DOTFILES_BRANCH="${DOTFILES_BRANCH:-}"
 
 # 颜色定义
 export RED='\033[0;31m'
@@ -27,7 +26,7 @@ export NC='\033[0m'
 
 # 默认配置
 SKIP_VSCODE="${SKIP_VSCODE:-false}"
-SKIP_CHEZMOI="${SKIP_CHEZMOI:-false}"
+SKIP_DOTFILES="${SKIP_DOTFILES:-false}"
 PIXI_ONLY="${PIXI_ONLY:-false}"
 
 # 日志文件
@@ -48,20 +47,6 @@ print_warn() { print_msg "$1" "$YELLOW"; }
 print_error() { print_msg "$1" "$RED"; }
 print_header() { print_msg "$1" "$BLUE"; }
 print_step() { print_msg "$1" "$PURPLE"; }
-
-# 解析 Git 分支
-resolve_branch() {
-	if [[ -n "$DOTFILES_BRANCH" ]]; then
-		return
-	fi
-
-	if [[ -n "$GITHUB_REF_NAME" ]]; then
-		DOTFILES_BRANCH="$GITHUB_REF_NAME"
-		return
-	fi
-
-	DOTFILES_BRANCH="$DEFAULT_BRANCH"
-}
 
 # 检测操作系统
 detect_os() {
@@ -91,23 +76,21 @@ show_help() {
 Dotfiles 安装脚本 v${DOTFILES_VERSION}
 
 架构:
-    Linux: Pixi (包管理) + Chezmoi (配置管理) - 完全 Rootless
-    macOS: Homebrew (包管理 + Chezmoi)
+    Linux: Pixi (包管理) + Dotfiles 配置 - 完全 Rootless
+    macOS: Homebrew (包管理) + Dotfiles 配置
 
 用法: $0 [选项]
 
 选项:
     --pixi-only         仅安装 Pixi（仅 Linux）
-    --skip-chezmoi      跳过 Chezmoi 配置安装
+    --skip-dotfiles     跳过 Dotfiles 配置安装
     --skip-vscode       跳过 VSCode 插件安装
-    --branch BRANCH     指定 Git 分支（默认: ${DEFAULT_BRANCH}）
     --help, -h          显示帮助信息
 
 环境变量:
     PIXI_ONLY           设为 "true" 仅安装 Pixi（仅 Linux）
-    SKIP_CHEZMOI        设为 "true" 跳过 Chezmoi
+    SKIP_DOTFILES       设为 "true" 跳过 Dotfiles 配置
     SKIP_VSCODE         设为 "true" 跳过 VSCode 插件
-    DOTFILES_BRANCH     指定 Git 分支
 
 示例:
     # 完整安装
@@ -219,9 +202,7 @@ clone_dotfiles() {
 	# 清理之前的运行
 	[[ -d "$tmp_dir" ]] && rm -rf "$tmp_dir"
 
-	# 解析分支
-	resolve_branch
-	local branch="${DOTFILES_BRANCH:-$DEFAULT_BRANCH}"
+	local branch="$DEFAULT_BRANCH"
 
 	print_header "克隆 Dotfiles 仓库 (分支: ${branch})..." >&2
 
@@ -254,7 +235,7 @@ install_macos_homebrew() {
 }
 
 # ========================================
-# Linux: 安装 Pixi + Chezmoi
+# Linux: 安装 Pixi
 # ========================================
 install_pixi_binary() {
 	local dotfiles_dir="$1"
@@ -275,22 +256,6 @@ install_pixi_binary() {
 	# 确保 pixi 在 PATH 中
 	export PATH="$HOME/.pixi/bin:$PATH"
 
-	# 通过 pixi 单独安装 chezmoi（解决鸡生蛋问题）
-	if ! command -v chezmoi &>/dev/null; then
-		print_info "安装 Chezmoi..."
-		pixi global install chezmoi
-	fi
-
-	# 部署 pixi manifest（在 chezmoi apply 之前手动复制）
-	local manifest_src="$dotfiles_dir/chezmoi/private_dot_pixi/manifests/pixi-global.toml"
-	local manifest_dest="$HOME/.pixi/manifests/pixi-global.toml"
-
-	if [[ -f "$manifest_src" ]]; then
-		print_info "部署 Pixi 配置..."
-		mkdir -p "$(dirname "$manifest_dest")"
-		cp "$manifest_src" "$manifest_dest"
-	fi
-
 	print_success "✓ Pixi 安装完成"
 }
 
@@ -298,7 +263,8 @@ install_pixi_binary() {
 # Linux: 同步 Pixi 工具包
 # ========================================
 sync_pixi_tools() {
-	local step_num="$1"
+	local dotfiles_dir="$1"
+	local step_num="$2"
 
 	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 	print_step "步骤 ${step_num}: 同步 Pixi 工具包"
@@ -311,9 +277,17 @@ sync_pixi_tools() {
 		return 1
 	fi
 
-	local manifest="$HOME/.pixi/manifests/pixi-global.toml"
+	# 部署 pixi manifest
+	local manifest_src="$dotfiles_dir/.pixi/manifests/pixi-global.toml"
+	local manifest_dest="$HOME/.pixi/manifests/pixi-global.toml"
 
-	if [[ -f "$manifest" ]]; then
+	if [[ -f "$manifest_src" ]]; then
+		print_info "部署 Pixi 配置..."
+		mkdir -p "$(dirname "$manifest_dest")"
+		cp "$manifest_src" "$manifest_dest"
+	fi
+
+	if [[ -f "$manifest_dest" ]]; then
 		print_info "同步工具包（这可能需要几分钟）..."
 		print_info "所有包都是预编译的，无需本地编译"
 		echo ""
@@ -336,101 +310,33 @@ sync_pixi_tools() {
 		print_info "已安装的工具:"
 		pixi global list
 	else
-		print_warn "未找到 Pixi 配置文件: $manifest"
-		print_info "请确保 Chezmoi 已正确部署配置"
+		print_warn "未找到 Pixi 配置文件: $manifest_dest"
 	fi
 }
 
 # ========================================
-# Linux: 配置 Chezmoi（已通过 Pixi 安装）
+# 安装 Dotfiles 配置
 # ========================================
-setup_chezmoi_linux() {
+setup_dotfiles() {
 	local dotfiles_dir="$1"
 	local step_num="$2"
 
-	if [[ "$SKIP_CHEZMOI" == "true" ]]; then
-		print_warn "跳过 Chezmoi 配置"
+	if [[ "$SKIP_DOTFILES" == "true" ]]; then
+		print_warn "跳过 Dotfiles 配置"
 		return 0
 	fi
 
 	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	print_step "步骤 ${step_num}: 配置 Chezmoi"
+	print_step "步骤 ${step_num}: 安装 Dotfiles 配置"
 	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-	# chezmoi 已通过 pixi 安装
-	export PATH="$HOME/.pixi/bin:$PATH"
-
-	if ! command -v chezmoi &>/dev/null; then
-		print_warn "Chezmoi 未安装，跳过配置"
-		return 0
-	fi
-
-	local chezmoi_src="$dotfiles_dir/chezmoi"
-	local chezmoi_dest="$HOME/.local/share/chezmoi"
-
-	if [[ -d "$chezmoi_src" ]]; then
-		print_info "初始化 Chezmoi 源..."
-
-		# 清理旧的源目录
-		[[ -d "$chezmoi_dest" ]] && rm -rf "$chezmoi_dest"
-
-		# 创建并复制（使用 /. 确保复制隐藏文件如 .chezmoi.toml.tmpl）
-		mkdir -p "$chezmoi_dest"
-		cp -r "$chezmoi_src/." "$chezmoi_dest/"
-
-		# 应用配置（chezmoi 会自动处理 .chezmoi.toml.tmpl 生成配置）
-		print_info "应用 Chezmoi 配置..."
-		chezmoi init --apply --force
-
-		print_success "✓ Chezmoi 配置完成"
+	if [[ -f "$dotfiles_dir/scripts/install_dotfiles.sh" ]]; then
+		DOTFILES_DIR="$dotfiles_dir" bash "$dotfiles_dir/scripts/install_dotfiles.sh"
 	else
-		print_warn "未找到 Chezmoi 源目录，跳过"
-	fi
-}
-
-# ========================================
-# macOS: 配置 Chezmoi（已通过 brew 安装）
-# ========================================
-setup_chezmoi_macos() {
-	local dotfiles_dir="$1"
-	local step_num="$2"
-
-	if [[ "$SKIP_CHEZMOI" == "true" ]]; then
-		print_warn "跳过 Chezmoi 配置"
-		return 0
+		print_warn "未找到 Dotfiles 安装脚本，跳过"
 	fi
 
-	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	print_step "步骤 ${step_num}: 配置 Chezmoi"
-	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-	# chezmoi 已通过 brew 安装
-	if ! command -v chezmoi &>/dev/null; then
-		print_warn "Chezmoi 未安装，跳过配置"
-		return 0
-	fi
-
-	local chezmoi_src="$dotfiles_dir/chezmoi"
-	local chezmoi_dest="$HOME/.local/share/chezmoi"
-
-	if [[ -d "$chezmoi_src" ]]; then
-		print_info "初始化 Chezmoi 源..."
-
-		# 清理旧的源目录
-		[[ -d "$chezmoi_dest" ]] && rm -rf "$chezmoi_dest"
-
-		# 创建并复制（使用 /. 确保复制隐藏文件如 .chezmoi.toml.tmpl）
-		mkdir -p "$chezmoi_dest"
-		cp -r "$chezmoi_src/." "$chezmoi_dest/"
-
-		# 应用配置（chezmoi 会自动处理 .chezmoi.toml.tmpl 生成配置）
-		print_info "应用 Chezmoi 配置..."
-		chezmoi init --apply --force
-
-		print_success "✓ Chezmoi 配置完成"
-	else
-		print_warn "未找到 Chezmoi 源目录，跳过"
-	fi
+	print_success "✓ Dotfiles 配置完成"
 }
 
 # ========================================
@@ -490,25 +396,22 @@ setup_ssh() {
 install_linux() {
 	local dotfiles_dir="$1"
 
-	# 步骤 1: 安装 Pixi（仅二进制，不安装工具包）
-	install_pixi_binary "$dotfiles_dir" "1/5"
+	# 步骤 1: 安装 Pixi
+	install_pixi_binary "$dotfiles_dir" "1/4"
 
 	if [[ "$PIXI_ONLY" == "true" ]]; then
 		print_success "✓ Pixi 安装完成（仅 Pixi 模式）"
 		return 0
 	fi
 
-	# 步骤 2: 配置 Chezmoi（部署配置文件，包括 pixi manifest）
-	setup_chezmoi_linux "$dotfiles_dir" "2/5"
+	# 步骤 2: 安装 Dotfiles 配置
+	setup_dotfiles "$dotfiles_dir" "2/4"
 
-	# 步骤 3: 同步 Pixi 工具包（使用 chezmoi 部署的 manifest）
-	sync_pixi_tools "3/5"
+	# 步骤 3: 同步 Pixi 工具包
+	sync_pixi_tools "$dotfiles_dir" "3/4"
 
 	# 步骤 4: VSCode 插件
-	install_vscode "$dotfiles_dir" "4/5"
-
-	# 步骤 5: SSH 配置
-	setup_ssh "$dotfiles_dir" "5/5"
+	install_vscode "$dotfiles_dir" "4/4"
 }
 
 # ========================================
@@ -517,16 +420,16 @@ install_linux() {
 install_macos() {
 	local dotfiles_dir="$1"
 
-	# 步骤 1: 安装 Homebrew 包（包括 chezmoi）
+	# 步骤 1: 安装 Homebrew 包
 	install_macos_homebrew "$dotfiles_dir" "1/4"
 
-	# 步骤 2: 配置 Chezmoi
-	setup_chezmoi_macos "$dotfiles_dir" "2/4"
+	# 步骤 2: 安装 Dotfiles 配置
+	setup_dotfiles "$dotfiles_dir" "2/4"
 
 	# 步骤 3: VSCode 插件
 	install_vscode "$dotfiles_dir" "3/4"
 
-	# 步骤 4: SSH 配置
+	# 步骤 4: SSH 配置（额外的根目录 config 文件）
 	setup_ssh "$dotfiles_dir" "4/4"
 }
 
@@ -541,17 +444,13 @@ main() {
 			PIXI_ONLY="true"
 			shift
 			;;
-		--skip-chezmoi)
-			SKIP_CHEZMOI="true"
+		--skip-dotfiles)
+			SKIP_DOTFILES="true"
 			shift
 			;;
 		--skip-vscode)
 			SKIP_VSCODE="true"
 			shift
-			;;
-		--branch)
-			DOTFILES_BRANCH="$2"
-			shift 2
 			;;
 		--help | -h)
 			show_help
@@ -581,9 +480,9 @@ main() {
 	print_info "用户: $(whoami)"
 
 	if [[ "$os" == "macos" ]]; then
-		print_info "安装方式: Homebrew + Chezmoi"
+		print_info "安装方式: Homebrew + Dotfiles 配置"
 	else
-		print_info "安装方式: Pixi + Chezmoi (完全 Rootless)"
+		print_info "安装方式: Pixi + Dotfiles 配置 (完全 Rootless)"
 	fi
 	echo ""
 
@@ -633,8 +532,6 @@ main() {
 		print_info "  brew update && brew upgrade - 更新所有包"
 	fi
 
-	print_info "  chezmoi edit <file> - 编辑配置文件"
-	print_info "  chezmoi apply       - 应用配置变更"
 	echo ""
 }
 

@@ -79,3 +79,4 @@ else
   echo "No suitable method to preview the image."
   exit 1
 fi
+

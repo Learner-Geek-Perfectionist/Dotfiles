@@ -94,7 +94,7 @@
     },
     // 本机（macOS）默认用 zsh
     "terminal.integrated.defaultProfile.osx": "zsh",
-    // 远端（Linux）默认用“智能回退”，优先 zsh，缺失则 bash
+    // 远端（Linux）默认用"智能回退"，优先 zsh，缺失则 bash
     "terminal.integrated.defaultProfile.linux": "smart-shell",
     "terminal.integrated.profiles.linux": {
         "smart-shell": {
@@ -114,7 +114,15 @@
     },
     // ======================= Python 设置 ======================= 
     "[python]": {
-        "editor.defaultFormatter": "ms-python.black-formatter"
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit",
+            "source.organizeImports": "explicit"
+        }
     },
+    // Ruff 配置
+    "ruff.enable": true,
+    "ruff.lint.enable": true,
+    "ruff.format.enable": true,
     "git.ignoreRebaseWarning": true
 }

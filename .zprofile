@@ -8,15 +8,16 @@ zmodload zsh/zprof
 
 # 添加 homebrew 的环境变量
 if [[ -x "/opt/homebrew/bin/brew" ]]; then
-	eval $(/opt/homebrew/bin/brew shellenv)
+eval $(/opt/homebrew/bin/brew shellenv)
 fi
 
 # 添加 anaconda 的环境变量
 if [[ -x "/opt/homebrew/anaconda3/etc/profile.d/conda.sh" ]]; then
-	source /opt/homebrew/anaconda3/etc/profile.d/conda.sh
+source /opt/homebrew/anaconda3/etc/profile.d/conda.sh
 fi
 
 # 添加 orbstack 的环境变量
 if [[ -f "$HOME/.orbstack/shell/init.zsh" ]]; then
-	source $HOME/.orbstack/shell/init.zsh 2>/dev/null || :
+source $HOME/.orbstack/shell/init.zsh 2>/dev/null || :
 fi
+

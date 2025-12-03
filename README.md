@@ -100,9 +100,6 @@ curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles
 
 # 跳过 VSCode 插件
 ./install.sh --skip-vscode
-
-# 指定分支
-./install.sh --branch main
 ```
 
 ## 📁 目录结构
@@ -114,7 +111,7 @@ Dotfiles/
 │   ├── .chezmoi.toml.tmpl        # Chezmoi 配置
 │   ├── dot_zshrc                 # Zsh 配置
 │   ├── dot_gitconfig.tmpl        # Git 配置
-│   ├── private_dot_pixi/         # Pixi 配置
+│   ├── .pixi/                    # Pixi 配置
 │   │   └── manifests/
 │   │       └── pixi-global.toml  # 全局工具定义
 │   └── private_dot_config/       # XDG 配置

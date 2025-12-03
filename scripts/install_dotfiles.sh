@@ -1,0 +1,64 @@
+#!/bin/bash
+# Dotfiles 配置安装脚本
+# 只同步明确列出的文件/目录，避免覆盖用户的其它配置
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOTFILES_DIR="$(dirname "$SCRIPT_DIR")"
+
+source "$SCRIPT_DIR/../lib/utils.sh"
+
+copy_path() {
+	local src="$DOTFILES_DIR/$1"
+	local dest="$HOME/$2"
+
+	[[ ! -e "$src" ]] && return 0
+
+	if [[ -d "$src" ]]; then
+		mkdir -p "$dest"
+		cp -R "$src/." "$dest/"
+	else
+		mkdir -p "$(dirname "$dest")"
+		cp "$src" "$dest"
+	fi
+
+	print_success "  ✓ $2"
+}
+
+main() {
+	print_header "📁 Dotfiles 配置安装"
+	echo ""
+
+	# 点文件
+	copy_path ".zshrc" ".zshrc"
+	copy_path ".zprofile" ".zprofile"
+	copy_path ".zshenv" ".zshenv"
+
+	# .config 子目录
+	copy_path ".config/zsh" ".config/zsh"
+	copy_path ".config/kitty" ".config/kitty"
+	copy_path ".config/karabiner" ".config/karabiner"
+	copy_path ".config/Code/User" ".config/Code/User"
+	copy_path ".config/Cursor/User" ".config/Cursor/User"
+
+	# 其它目录
+	copy_path ".hammerspoon" ".hammerspoon"
+	copy_path ".ssh/config" ".ssh/config"
+	copy_path "local/bin" ".local/bin"
+	copy_path ".pixi/manifests" ".pixi/manifests"
+
+	# macOS 专属 (Library)
+	if [[ "$(uname)" == "Darwin" ]]; then
+		copy_path "Library/Application Support/Code/User" "Library/Application Support/Code/User"
+		copy_path "Library/Application Support/Cursor/User" "Library/Application Support/Cursor/User"
+	fi
+
+	# 权限
+	[[ -d "$HOME/.ssh" ]] && chmod 700 "$HOME/.ssh" && chmod 600 "$HOME/.ssh"/* 2>/dev/null || true
+	[[ -f "$HOME/.config/zsh/fzf/fzf-preview.sh" ]] && chmod +x "$HOME/.config/zsh/fzf/fzf-preview.sh"
+
+	print_success "✅ 安装完成！请运行: source ~/.zshrc"
+}
+
+main

@@ -21,3 +21,4 @@ elif [[ "$(uname -s)" == "Linux" ]]; then
 		export FPATH
 	fi
 fi
+

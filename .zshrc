@@ -6,11 +6,6 @@
 # 1. 基础设置
 # ============================================
 
-# 历史记录
-export HISTFILE="$HOME/.cache/zsh/.zsh_history"
-export HISTSIZE=10000000
-export HISTFILESIZE=10000000
-
 # Zsh 选项
 setopt interactive_comments # 注释行不报错
 setopt no_nomatch           # 通配符 * 匹配不到文件也不报错

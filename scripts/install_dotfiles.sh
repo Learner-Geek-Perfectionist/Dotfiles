@@ -9,19 +9,25 @@ DOTFILES_DIR="$(dirname "$SCRIPT_DIR")"
 
 source "$SCRIPT_DIR/../lib/utils.sh"
 
+COPY_SUMMARY=()
+
 copy_path() {
 	local src="$DOTFILES_DIR/$1"
 	local dest="$HOME/$2"
+	local summary_msg=""
 
 	[[ ! -e "$src" ]] && return 0
 
 	if [[ -d "$src" ]]; then
 		mkdir -p "$dest"
-		cp -R "$src/." "$dest/"
+		cp -Rf "$src/." "$dest/"
+		summary_msg="目录同步: $src -> $dest（覆盖同名文件）"
 	else
 		mkdir -p "$(dirname "$dest")"
-		cp "$src" "$dest"
+		cp -f "$src" "$dest"
+		summary_msg="文件复制: $src -> $dest（覆盖同名文件）"
 	fi
+	COPY_SUMMARY+=("$summary_msg")
 
 	print_success "  ✓ $2"
 }
@@ -45,13 +51,19 @@ main() {
 	# 其它目录
 	copy_path ".hammerspoon" ".hammerspoon"
 	copy_path ".ssh/config" ".ssh/config"
-	copy_path "local/bin" ".local/bin"
 	copy_path ".pixi/manifests" ".pixi/manifests"
 
 	# macOS 专属 (Library)
 	if [[ "$(uname)" == "Darwin" ]]; then
 		copy_path "Library/Application Support/Code/User" "Library/Application Support/Code/User"
 		copy_path "Library/Application Support/Cursor/User" "Library/Application Support/Cursor/User"
+	fi
+
+	if ((${#COPY_SUMMARY[@]} > 0)); then
+		print_header "🧾 文件复制详情"
+		for msg in "${COPY_SUMMARY[@]}"; do
+			print_info "  ➜ $msg"
+		done
 	fi
 
 	# 权限

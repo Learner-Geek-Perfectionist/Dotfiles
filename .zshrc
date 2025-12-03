@@ -63,12 +63,18 @@ setopt no_bang_hist         # 不对双引号当中的叹号做历史记录拓�
 setopt GLOB_DOTS            # 文件名展开（globbing）包括以点(dot)开始的文件
 setopt rm_star_silent       # 取消 zsh 的安全防护功能（默认对 rm -rf ./* 删除操作触发）
 
+# 加载 fzf 的环境变量
+command -v fzf >/dev/null 2>&1 && source <(fzf --zsh)
+
+# bat 映射到 cat（检查命令是否存在）
+command -v bat >/dev/null 2>&1 && alias cat=bat
+
+# tldr 替代 man（更简洁的命令手册，检查命令是否存在）
+command -v tldr >/dev/null 2>&1 && alias man='tldr'
+
 # 让 history 命令的最大容量为无限
 export HISTSIZE=10000000
 export HISTFILESIZE=10000000
-
-# 加载 fzf 的环境变量
-command -v fzf >/dev/null 2>&1 && source <(fzf --zsh)
 
 # 设置 fzf 的默认预览
 export FZF_DEFAULT_OPTS='--preview "${HOME}/.config/zsh/fzf/fzf-preview.sh {}" --bind "shift-left:preview-page-up,shift-right:preview-page-down"'
@@ -86,12 +92,6 @@ alias clear='clear && printf '\''\e[3J'\'''
 
 # python3 映射到 python
 alias python=python3
-
-# bat 映射到 cat（检查命令是否存在）
-command -v bat >/dev/null 2>&1 && alias cat=bat
-
-# tldr 替代 man（更简洁的命令手册，检查命令是否存在）
-command -v tldr >/dev/null 2>&1 && alias man='tldr'
 
 # reload 映射到重启 .zshrc
 alias reload="source ~/.zshenv;source ~/.zprofile;source ~/.zshrc"

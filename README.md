@@ -102,6 +102,19 @@ curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles
 ./install.sh --skip-vscode
 ```
 
+### 卸载
+
+```bash
+# 仅删除 Pixi 及其安装的工具
+./uninstall.sh --pixi
+
+# 仅删除已部署的 Dotfiles
+./uninstall.sh --dotfiles
+
+# 交互式选择（默认）
+./uninstall.sh
+```
+
 ## 📁 目录结构
 
 ```

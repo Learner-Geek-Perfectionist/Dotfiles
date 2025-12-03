@@ -4,8 +4,6 @@ zmodload zsh/zprof
 # 删除 Apple Terminal 的 .zsh_sessions 文件
 [[ -e "$HOME/.zsh_sessions" ]] && rm -rf "$HOME/.zsh_sessions" && echo "已成功删除 $HOME/.zsh_sessions。"
 
-# 注意：.zcompdump 路径已在 .zshenv 中通过 ZSH_COMPDUMP 变量锁定到 ~/.cache/zsh/
-
 # 添加 homebrew 的环境变量
 if [[ -x "/opt/homebrew/bin/brew" ]]; then
 	eval $(/opt/homebrew/bin/brew shellenv)

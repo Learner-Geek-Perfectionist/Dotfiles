@@ -1,8 +1,92 @@
 #!/bin/bash
-# Package definitions for macOS (Homebrew)
-# Linux 包管理已迁移到 devbox.json
+# Package definitions for Homebrew
+# macOS: brew_formulas + brew_casks
+# Linux: brew_formulas_linux (无 GUI 应用)
 
 set -e
+
+# ========================================
+# Linux Homebrew Formulas (CLI 工具)
+# 用于 Linuxbrew (无 sudo 安装)
+# ========================================
+brew_formulas_linux=(
+	# Shell
+	zsh
+	bash
+
+	# 核心工具
+	git
+	git-lfs
+	curl
+	wget
+	coreutils
+	findutils
+	grep
+	gnu-sed
+	gawk
+
+	# 编辑器
+	neovim
+	vim
+
+	# 终端增强
+	fzf
+	ripgrep
+	fd
+	eza
+	bat
+	htop
+	tree
+	less
+	tmux
+	dust
+	hyperfine
+
+	# 系统信息
+	fastfetch
+
+	# 开发工具
+	cmake
+	ninja
+	make
+	autoconf
+	automake
+	libtool
+	pkg-config
+
+	# 编译器
+	gcc
+
+	# 语言
+	python@3
+	node
+	go
+	rust
+	ruby
+	lua
+
+	# JSON/YAML 处理
+	jq
+	yq
+
+	# 代码格式化
+	shfmt
+	ruff
+
+	# Dotfiles 管理
+	chezmoi
+
+	# 其他
+	tldr
+	rsync
+
+	# 库
+	openssl@3
+	readline
+	zlib
+	ncurses
+	libffi
+)
 
 # ========================================
 # macOS Homebrew Casks (GUI 应用)

@@ -36,8 +36,10 @@ else
 		alias open='open -R'
 	fi
 
-	# Pixi 路径（Linux 包管理）
-	export PATH="$HOME/.pixi/bin:$PATH"
+	# Linuxbrew 路径（Linux 包管理，无需 sudo）
+	if [[ -d "$HOME/.linuxbrew" ]]; then
+		eval "$("$HOME/.linuxbrew/bin/brew" shellenv)"
+	fi
 fi
 
 # 加载平台配置插件

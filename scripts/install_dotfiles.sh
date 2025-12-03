@@ -51,7 +51,6 @@ main() {
 	# 其它目录
 	copy_path ".hammerspoon" ".hammerspoon"
 	copy_path ".ssh/config" ".ssh/config"
-	copy_path ".pixi/manifests" ".pixi/manifests"
 
 	# macOS 专属 (Library)
 	if [[ "$(uname)" == "Darwin" ]]; then

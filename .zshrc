@@ -1,3 +1,6 @@
+# Kitty 终端 SSH 时回退 TERM（远程服务器可能没有 xterm-kitty terminfo）
+[[ "$TERM" == "xterm-kitty" && ! -e "/usr/share/terminfo/x/xterm-kitty" ]] && export TERM="xterm-256color"
+
 # 获取操作系统信息并设置 PATH
 if [[ "$(uname)" == "Darwin" ]]; then
 	# macOS specific settings，设置 git 、clang++、ruby、make bash、VSCode、gre、less 等工具的环境变量

@@ -56,7 +56,7 @@ zinit snippet OMZL::directories.zsh
 zinit ice wait lucid depth=1 atload="unsetopt hist_ignore_all_dups hist_ignore_space"
 zinit snippet OMZL::history.zsh
 # theme
-zinit ice wait lucid depth=1 atload="alias ls &>/dev/null && unalias ls; command -v eza &>/dev/null && alias ls='eza --icons -ha --time-style=iso -g'"
+zinit ice wait lucid depth=1 atload="command -v eza &>/dev/null && { alias ls &>/dev/null && unalias ls; alias ls='eza --icons -ha --time-style=iso -g'; }"
 zinit snippet OMZL::theme-and-appearance.zsh
 # git
 zinit ice wait lucid depth=1

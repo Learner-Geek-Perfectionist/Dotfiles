@@ -43,10 +43,10 @@ else
 fi
 
 # 加载平台配置插件
-[[ -f "${HOME}/.config/zsh/plugins/platform.zsh" ]] && source "${HOME}/.config/zsh/plugins/platform.zsh" || echo "${RED}No ${HOME}/.config/zsh/plugins/platform.zsh${NC}"
+[[ -f "${HOME}/.config/zsh/plugins/platform.zsh" ]] && source "${HOME}/.config/zsh/plugins/platform.zsh" || echo "\033[0;31mNo ${HOME}/.config/zsh/plugins/platform.zsh\033[0m"
 
 # 加载 zinit 插件
-[[ -f "${HOME}/.config/zsh/plugins/zinit.zsh" ]] && source "${HOME}/.config/zsh/plugins/zinit.zsh" || echo "${RED}No ${HOME}/.config/zsh/plugins/zinit.zsh${NC}"
+[[ -f "${HOME}/.config/zsh/plugins/zinit.zsh" ]] && source "${HOME}/.config/zsh/plugins/zinit.zsh" || echo "\033[0;31mNo ${HOME}/.config/zsh/plugins/zinit.zsh\033[0m"
 
 # 自动启动 ssh-agent 并加载密钥
 if [[ -z "$SSH_AUTH_SOCK" ]]; then

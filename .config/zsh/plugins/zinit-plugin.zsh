@@ -12,7 +12,7 @@ if [[ ! -f "${ZINIT_HOME}/zinit.zsh" ]]; then
 		printf "\033[33m\033[34mInstallation successful.\033[0m\n"
 	else
 		printf "\033[160mThe clone has failed.\033[0m\n"
-		return
+		exit 1
 	fi
 fi
 

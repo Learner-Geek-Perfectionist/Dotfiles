@@ -25,8 +25,8 @@ if [[ "$(uname)" == "Darwin" ]]; then
 	export PATH="/opt/homebrew/opt/make/libexec/gnubin:$PATH"
 	export PATH="/opt/homebrew/opt/bash/bin:$PATH"
 	export PATH="/opt/homebrew/opt/grep/libexec/gnubin:$PATH"
-	export PATH="/Applications/Visual Studio Code.app/Contents/Resources/app/bin:$PATH"
 	export PATH="/Applications/Cursor.app/Contents/Resources/app/bin:$PATH"
+	export PATH="/Applications/Visual Studio Code.app/Contents/Resources/app/bin:$PATH"
 	export PATH="/Applications/CLion.app/Contents/MacOS:$PATH"
 	export PATH="/Applications/PyCharm.app/Contents/MacOS:$PATH"
 	export PATH="/Applications/IntelliJ IDEA.app/Contents/MacOS:$PATH"
@@ -122,3 +122,5 @@ alias cp='cp -r'
 alias show='kitty +kitten icat'
 
 alias reboot='sudo reboot'
+
+alias man='tldr'

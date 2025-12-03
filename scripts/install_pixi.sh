@@ -13,19 +13,6 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [[ -f "$SCRIPT_DIR/../lib/utils.sh" ]]; then
 	source "$SCRIPT_DIR/../lib/utils.sh"
-else
-	# 内置打印函数（独立运行时）
-	RED='\033[0;31m'
-	GREEN='\033[0;32m'
-	YELLOW='\033[1;33m'
-	BLUE='\033[0;34m'
-	CYAN='\033[0;36m'
-	NC='\033[0m'
-	print_info() { echo -e "${CYAN}$1${NC}"; }
-	print_success() { echo -e "${GREEN}$1${NC}"; }
-	print_warn() { echo -e "${YELLOW}$1${NC}"; }
-	print_error() { echo -e "${RED}$1${NC}"; }
-	print_header() { echo -e "${BLUE}$1${NC}"; }
 fi
 
 # ========================================
@@ -171,26 +158,10 @@ install_global_tools() {
 		exit 1
 	fi
 
-	# 验证关键工具
+	# 使用 pixi 原生验证
 	echo ""
-	print_info "验证安装..."
-	local key_tools=("python" "node" "go" "rg" "fd" "bat" "nvim" "gcc" "make")
-	local missing=()
-
-	for tool in "${key_tools[@]}"; do
-		if command -v "$tool" &>/dev/null; then
-			echo "  ✓ $tool"
-		else
-			echo "  ✗ $tool"
-			missing+=("$tool")
-		fi
-	done
-
-	if ((${#missing[@]} > 0)); then
-		echo ""
-		print_warn "部分工具未安装: ${missing[*]}"
-		print_info "可以稍后运行: pixi global sync"
-	fi
+	print_info "已安装的工具:"
+	pixi global list
 
 	print_success "✓ 工具包安装完成"
 }

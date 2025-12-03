@@ -1,230 +1,249 @@
 #!/bin/bash
-# VSCode 插件批量安装脚本
+# VSCode/Cursor 插件批量安装脚本
+# 如果两个编辑器都存在，会同时为两者安装插件
 
 set -e
 
-# ========================================
-# 加载工具函数
-# ========================================
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../lib/utils.sh"
 
 # ========================================
-# VSCode 插件列表
+# 通用插件（VSCode 和 Cursor 都支持）
 # ========================================
-extensions=(
-	# ==================== C/C++ 开发 ====================
-	"ms-vscode.cpptools"                # C/C++ IntelliSense
-	"ms-vscode.cpptools-extension-pack" # C/C++ 扩展包
-	"ms-vscode.cmake-tools"             # CMake 工具
-	"twxs.cmake"                        # CMake 语法高亮
-	"xaver.clang-format"                # Clang-Format
+COMMON_EXTENSIONS=(
+	# ==================== C/C++ ====================
+	"ms-vscode.cmake-tools"
+	"twxs.cmake"
+	"xaver.clang-format"
 
 	# ==================== Rust ====================
-	"rust-lang.rust-analyzer"  # Rust Analyzer
-	"serayuzgur.crates"        # Crates 依赖管理
-	"tamasfe.even-better-toml" # TOML 支持
+	"rust-lang.rust-analyzer"
+	"serayuzgur.crates"
+	"tamasfe.even-better-toml"
 
 	# ==================== Go ====================
-	"golang.go" # Go 官方扩展
+	"golang.go"
 
 	# ==================== Python ====================
-	"ms-python.python"         # Python 官方扩展
-	"ms-python.vscode-pylance" # Pylance
-	"charliermarsh.ruff"       # Ruff (Linter + Formatter，替代 Black/flake8)
-	"ms-python.debugpy"        # Python 调试器
+	"ms-python.python"
+	"ms-python.vscode-pylance"
+	"charliermarsh.ruff"
+	"ms-python.debugpy"
 
 	# ==================== JavaScript/TypeScript ====================
-	"dbaeumer.vscode-eslint" # ESLint
-	"esbenp.prettier-vscode" # Prettier
+	"dbaeumer.vscode-eslint"
+	"esbenp.prettier-vscode"
 
 	# ==================== Java/Kotlin ====================
-	"vscjava.vscode-java-pack" # Java 扩展包
-	"fwcd.kotlin"              # Kotlin 支持
+	"vscjava.vscode-java-pack"
+	"fwcd.kotlin"
 
 	# ==================== Lua ====================
-	"sumneko.lua" # Lua Language Server
+	"sumneko.lua"
 
 	# ==================== Shell/Bash ====================
-	"foxundermoon.shell-format" # Shell 格式化
+	"foxundermoon.shell-format"
 
 	# ==================== Markdown ====================
-	"yzhang.markdown-all-in-one"     # Markdown 增强
-	"bierner.markdown-mermaid"       # Mermaid 图表支持
-	"DavidAnson.vscode-markdownlint" # Markdown Lint
+	"yzhang.markdown-all-in-one"
+	"bierner.markdown-mermaid"
+	"DavidAnson.vscode-markdownlint"
 
 	# ==================== Git ====================
-	"mhutchie.git-graph" # Git Graph
+	"mhutchie.git-graph"
 
-	# ==================== Docker/容器 ====================
-	"ms-azuretools.vscode-docker"        # Docker
-	"ms-vscode-remote.remote-containers" # Remote Containers
-
-	# ==================== 远程开发 ====================
-	"ms-vscode-remote.remote-ssh"      # Remote SSH
-	"ms-vscode-remote.remote-ssh-edit" # Remote SSH 编辑
-	"ms-vscode.remote-explorer"        # Remote Explorer
+	# ==================== Docker ====================
+	"ms-azuretools.vscode-docker"
 
 	# ==================== 工具类 ====================
-	"EditorConfig.EditorConfig"             # EditorConfig
-	"streetsidesoftware.code-spell-checker" # 拼写检查
-	"wayou.vscode-todo-highlight"           # TODO 高亮
-	"Gruntfuggly.todo-tree"                 # TODO Tree
-	"aaron-bond.better-comments"            # 更好的注释
-	"usernamehw.errorlens"                  # Error Lens
-	"christian-kohler.path-intellisense"    # 路径智能提示
+	"EditorConfig.EditorConfig"
+	"streetsidesoftware.code-spell-checker"
+	"wayou.vscode-todo-highlight"
+	"Gruntfuggly.todo-tree"
+	"aaron-bond.better-comments"
+	"usernamehw.errorlens"
+	"christian-kohler.path-intellisense"
 
 	# ==================== YAML/JSON ====================
-	"redhat.vscode-yaml" # YAML 支持
-	"ZainChen.json"      # JSON 支持
+	"redhat.vscode-yaml"
+	"ZainChen.json"
 )
 
 # ========================================
-# 检测 code 命令
+# VSCode 专属插件
 # ========================================
-detect_code_command() {
-	# 检查 code 命令
-	if command -v code >/dev/null 2>&1; then
-		echo "code"
-		return 0
-	fi
+VSCODE_ONLY=(
+	"ms-vscode.cpptools"
+	"ms-vscode.cpptools-extension-pack"
+	"ms-vscode-remote.remote-ssh"
+	"ms-vscode-remote.remote-ssh-edit"
+	"ms-vscode.remote-explorer"
+	"ms-vscode-remote.remote-containers"
+)
 
-	# 检查 code-insiders 命令
-	if command -v code-insiders >/dev/null 2>&1; then
-		echo "code-insiders"
-		return 0
-	fi
+# ========================================
+# Cursor 专属插件（替代 VSCode 专属的）
+# ========================================
+CURSOR_ONLY=(
+	"anysphere.cpptools"
+	"jeanp413.open-remote-ssh"
+)
 
-	# macOS 上的路径
-	if [[ -x "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code" ]]; then
-		echo "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code"
-		return 0
-	fi
+# ========================================
+# 检测所有可用的编辑器
+# 返回格式: type:command (每行一个)
+# ========================================
+detect_editors() {
+	local -A seen=()
 
-	# Cursor IDE
-	if command -v cursor >/dev/null 2>&1; then
-		echo "cursor"
-		return 0
-	fi
+	add_editor() {
+		local type="$1" cmd="$2"
+		[[ -z "$cmd" ]] && return
+		# 用 realpath 去重（避免同一个编辑器被检测多次）
+		local real_cmd
+		real_cmd=$(command -v "$cmd" 2>/dev/null || echo "$cmd")
+		[[ -n "${seen[$real_cmd]}" ]] && return
+		seen[$real_cmd]=1
+		echo "$type:$cmd"
+	}
 
-	return 1
+	# macOS GUI 安装路径
+	[[ -x "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code" ]] &&
+		add_editor "vscode" "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code"
+
+	[[ -x "/Applications/Cursor.app/Contents/Resources/app/bin/cursor" ]] &&
+		add_editor "cursor" "/Applications/Cursor.app/Contents/Resources/app/bin/cursor"
+
+	# PATH 中的命令
+	command -v code >/dev/null 2>&1 && add_editor "vscode" "code"
+	command -v code-insiders >/dev/null 2>&1 && add_editor "vscode" "code-insiders"
+	command -v cursor >/dev/null 2>&1 && add_editor "cursor" "cursor"
 }
 
 # ========================================
-# 获取已安装的插件列表
+# 安装插件
 # ========================================
-get_installed_extensions() {
-	local code_cmd="$1"
-	"$code_cmd" --list-extensions 2>/dev/null || true
-}
+install_extensions() {
+	local cmd="$1"
+	shift
+	local -a exts=("$@")
 
-# ========================================
-# 安装单个插件
-# ========================================
-install_extension() {
-	local code_cmd="$1"
-	local ext="$2"
+	local installed
+	installed=$("$cmd" --list-extensions 2>/dev/null | tr '[:upper:]' '[:lower:]')
 
-	if "$code_cmd" --install-extension "$ext" --force 2>/dev/null; then
-		print_success "  ✓ $ext"
-		return 0
-	else
-		print_error "  ✗ $ext"
-		return 1
-	fi
-}
+	local installed_count=0 skipped_count=0 failed_count=0
 
-# ========================================
-# 批量安装插件
-# ========================================
-install_all_extensions() {
-	local code_cmd="$1"
-	local installed_count=0
-	local failed_count=0
-	local skipped_count=0
-
-	# 获取已安装的插件
-	local installed_list
-	installed_list=$(get_installed_extensions "$code_cmd" | tr '[:upper:]' '[:lower:]')
-
-	print_info "开始安装 VSCode 插件..."
-	print_info "共 ${#extensions[@]} 个插件待处理"
-	print_info ""
-
-	for ext in "${extensions[@]}"; do
+	for ext in "${exts[@]}"; do
 		local ext_lower
 		ext_lower=$(echo "$ext" | tr '[:upper:]' '[:lower:]')
 
-		# 检查是否已安装
-		if echo "$installed_list" | grep -Fxq "$ext_lower"; then
+		if echo "$installed" | grep -Fxq "$ext_lower"; then
 			print_warn "  ⊘ $ext (已安装)"
 			((skipped_count++))
-			continue
-		fi
-
-		if install_extension "$code_cmd" "$ext"; then
+		elif "$cmd" --install-extension "$ext" --force >/dev/null 2>&1; then
+			print_success "  ✓ $ext"
 			((installed_count++))
 		else
+			print_error "  ✗ $ext"
 			((failed_count++))
 		fi
 	done
 
-	print_info ""
-	print_info "=========================================="
-	print_success "安装完成: $installed_count"
-	print_warn "已跳过: $skipped_count"
-	if [[ $failed_count -gt 0 ]]; then
-		print_error "失败: $failed_count"
-	fi
-	print_info "=========================================="
+	echo ""
+	print_info "新安装: $installed_count | 已跳过: $skipped_count | 失败: $failed_count"
 }
 
 # ========================================
-# 显示使用帮助
+# 为单个编辑器安装所有插件
 # ========================================
-show_help() {
-	cat <<HELP_EOF
-VSCode 插件批量安装脚本
+install_for_editor() {
+	local type="$1"
+	local cmd="$2"
 
-用法: $0 [选项]
+	print_info "=========================================="
+	print_info "编辑器: $type"
+	print_info "命令: $cmd"
+	print_info "=========================================="
 
-选项:
-    --list          列出所有将要安装的插件
-    --code CMD      指定 code 命令路径（默认自动检测）
-    --help          显示帮助信息
+	# 检查命令是否可用
+	if ! "$cmd" --version >/dev/null 2>&1; then
+		print_error "无法执行命令: $cmd，跳过"
+		return 1
+	fi
 
-示例:
-    # 自动检测 VSCode 并安装
-    $0
+	# 通用插件
+	print_info ""
+	print_info ">> 安装通用插件 (${#COMMON_EXTENSIONS[@]} 个)"
+	install_extensions "$cmd" "${COMMON_EXTENSIONS[@]}"
 
-    # 指定 code 命令
-    $0 --code /usr/bin/code
+	# 专属插件
+	if [[ "$type" == "vscode" ]]; then
+		print_info ""
+		print_info ">> 安装 VSCode 专属插件 (${#VSCODE_ONLY[@]} 个)"
+		install_extensions "$cmd" "${VSCODE_ONLY[@]}"
+	else
+		print_info ""
+		print_info ">> 安装 Cursor 专属插件 (${#CURSOR_ONLY[@]} 个)"
+		install_extensions "$cmd" "${CURSOR_ONLY[@]}"
+	fi
 
-    # 列出插件
-    $0 --list
-HELP_EOF
+	print_info ""
 }
 
 # ========================================
 # 列出所有插件
 # ========================================
 list_extensions() {
-	print_info "将要安装的插件列表:"
-	print_info ""
-
-	for ext in "${extensions[@]}"; do
+	print_info "通用插件 (${#COMMON_EXTENSIONS[@]} 个):"
+	for ext in "${COMMON_EXTENSIONS[@]}"; do
 		echo "  - $ext"
 	done
 
 	print_info ""
-	print_info "共 ${#extensions[@]} 个插件"
+	print_info "VSCode 专属插件 (${#VSCODE_ONLY[@]} 个):"
+	for ext in "${VSCODE_ONLY[@]}"; do
+		echo "  - $ext"
+	done
+
+	print_info ""
+	print_info "Cursor 专属插件 (${#CURSOR_ONLY[@]} 个):"
+	for ext in "${CURSOR_ONLY[@]}"; do
+		echo "  - $ext"
+	done
+}
+
+# ========================================
+# 显示帮助
+# ========================================
+show_help() {
+	cat <<EOF
+VSCode/Cursor 插件批量安装脚本
+
+用法: $0 [选项]
+
+选项:
+    --list          列出所有将要安装的插件
+    --code CMD      指定编辑器命令（可多次使用）
+    --help          显示帮助信息
+
+说明:
+    - 自动检测系统中的 VSCode 和 Cursor
+    - 如果两个编辑器都存在，会同时为两者安装插件
+    - 通用插件会安装到所有编辑器
+    - 专属插件只安装到对应的编辑器
+
+示例:
+    $0                    # 自动检测并安装
+    $0 --list             # 列出所有插件
+    $0 --code cursor      # 只为 cursor 安装
+EOF
 }
 
 # ========================================
 # 主函数
 # ========================================
 main() {
-	local code_cmd=""
+	local -a manual_cmds=()
 	local action="install"
 
 	# 解析参数
@@ -235,7 +254,7 @@ main() {
 			shift
 			;;
 		--code)
-			code_cmd="$2"
+			manual_cmds+=("$2")
 			shift 2
 			;;
 		--help | -h)
@@ -256,30 +275,40 @@ main() {
 		exit 0
 	fi
 
-	# 检测 code 命令
-	if [[ -z "$code_cmd" ]]; then
-		if ! code_cmd=$(detect_code_command); then
-			print_error "未找到 VSCode/Cursor，请确保已安装并在 PATH 中"
-			print_info "或使用 --code 参数指定路径"
-			exit 1
-		fi
+	# 检测或使用手动指定的编辑器
+	local -a editors=()
+	if [[ ${#manual_cmds[@]} -gt 0 ]]; then
+		for cmd in "${manual_cmds[@]}"; do
+			# 根据命令名判断类型
+			if [[ "$cmd" == *cursor* ]]; then
+				editors+=("cursor:$cmd")
+			else
+				editors+=("vscode:$cmd")
+			fi
+		done
+	else
+		mapfile -t editors < <(detect_editors)
 	fi
 
-	print_info "=========================================="
-	print_info "VSCode 插件安装脚本"
-	print_info "=========================================="
-	print_info "使用命令: $code_cmd"
-	print_info "=========================================="
-	print_info ""
-
-	# 验证 code 命令
-	if ! "$code_cmd" --version >/dev/null 2>&1; then
-		print_error "无法执行 code 命令: $code_cmd"
+	if [[ ${#editors[@]} -eq 0 ]]; then
+		print_error "未找到 VSCode 或 Cursor"
+		print_info "请确保已安装，或使用 --code 参数指定路径"
 		exit 1
 	fi
 
-	# 安装插件
-	install_all_extensions "$code_cmd"
+	print_info "检测到 ${#editors[@]} 个编辑器，将依次安装插件"
+	print_info ""
+
+	# 为每个编辑器安装插件
+	for entry in "${editors[@]}"; do
+		local type="${entry%%:*}"
+		local cmd="${entry#*:}"
+		install_for_editor "$type" "$cmd"
+	done
+
+	print_success "=========================================="
+	print_success "所有编辑器的插件安装完成！"
+	print_success "=========================================="
 }
 
 main "$@"

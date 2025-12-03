@@ -6,34 +6,16 @@ source "$(dirname "${BASH_SOURCE[0]}")/../lib/utils.sh"
 
 # 通用插件
 EXTENSIONS=(
-	# C/C++
 	"ms-vscode.cmake-tools" "twxs.cmake" "xaver.clang-format"
-	# Rust
 	"rust-lang.rust-analyzer" "serayuzgur.crates" "tamasfe.even-better-toml"
-	# Go
 	"golang.go"
-	# Python
 	"ms-python.python" "ms-python.vscode-pylance" "charliermarsh.ruff" "ms-python.debugpy"
-	# JavaScript/TypeScript
-	"dbaeumer.vscode-eslint" "esbenp.prettier-vscode"
-	# Java/Kotlin
 	"vscjava.vscode-java-pack" "fwcd.kotlin"
-	# Lua
 	"sumneko.lua"
-	# Shell
 	"foxundermoon.shell-format"
-	# Markdown
 	"yzhang.markdown-all-in-one" "bierner.markdown-mermaid" "DavidAnson.vscode-markdownlint"
-	# Git
 	"mhutchie.git-graph"
-	# Docker
 	"ms-azuretools.vscode-docker"
-	# 工具
-	"EditorConfig.EditorConfig" "streetsidesoftware.code-spell-checker"
-	"wayou.vscode-todo-highlight" "Gruntfuggly.todo-tree" "aaron-bond.better-comments"
-	"usernamehw.errorlens" "christian-kohler.path-intellisense"
-	# YAML/JSON
-	"redhat.vscode-yaml" "ZainChen.json"
 )
 
 # 专属插件 (vscode:ext 或 cursor:ext)
@@ -64,26 +46,23 @@ for entry in "${editors[@]}"; do
 	type="${entry%%:*}" cmd="${entry#*:}"
 	print_header ">>> $type"
 
-	# 通用插件
+	# 构建参数：--install-extension ext1 --install-extension ext2 ...
+	args=()
 	for ext in "${EXTENSIONS[@]}"; do
-		if "$cmd" --install-extension "$ext" --force &>/dev/null; then
-			print_success "  ✓ $ext"
-		else
-			print_error "  ✗ $ext"
-		fi
+		args+=(--install-extension "$ext")
 	done
-
-	# 专属插件
 	for item in "${SPECIFIC[@]}"; do
 		t="${item%%:*}" e="${item#*:}"
-		if [[ "$t" == "$type" ]]; then
-			if "$cmd" --install-extension "$e" --force &>/dev/null; then
-				print_success "  ✓ $e"
-			else
-				print_error "  ✗ $e"
-			fi
-		fi
+		[[ "$t" == "$type" ]] && args+=(--install-extension "$e")
 	done
+
+	# 一条命令安装所有插件
+	print_info "安装 $((${#args[@]} / 2)) 个插件..."
+	if "$cmd" "${args[@]}" --force; then
+		print_success "✓ 全部安装完成"
+	else
+		print_error "✗ 部分插件安装失败"
+	fi
 done
 
 print_success "=== 安装完成 ==="

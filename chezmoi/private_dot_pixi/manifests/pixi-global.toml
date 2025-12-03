@@ -233,6 +233,13 @@ chezmoi = "*"
 [envs.chezmoi.exposed]
 chezmoi = "chezmoi"
 
+[envs.tldr]
+channels = ["conda-forge"]
+[envs.tldr.dependencies]
+tldr = "*"
+[envs.tldr.exposed]
+tldr = "tldr"
+
 # ============================================
 # 构建工具 (完全 Rootless!)
 # ============================================

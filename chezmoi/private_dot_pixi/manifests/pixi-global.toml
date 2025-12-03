@@ -2,7 +2,7 @@
 # Pixi 全局配置
 # 完全 Rootless 的包管理器
 # ============================================
-# 文档: https://pixi.sh/latest/reference/pixi_global_configuration/
+# 文档: https://pixi.sh/latest/global_tools/introduction/
 
 version = 1
 

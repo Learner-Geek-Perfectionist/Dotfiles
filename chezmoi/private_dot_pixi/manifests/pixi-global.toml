@@ -62,6 +62,7 @@ channels = ["conda-forge"]
 python = "*"
 pip = "*"
 [envs.python.exposed]
+python3 = "python"   # python3 也指向 python
 python = "python"
 pip = "pip"
 
@@ -273,10 +274,3 @@ make = "make"
 cmake = "cmake"
 ninja = "ninja"
 "pkg-config" = "pkg-config"
-
-# ============================================
-# npm 全局工具 (通过 Node.js 环境)
-# ============================================
-# 使用 pixi 安装 node 后，可以用 npm install -g 安装
-# 或者在项目级别使用 pixi.toml 管理
-

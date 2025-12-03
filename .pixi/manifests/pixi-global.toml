@@ -10,12 +10,13 @@ version = 1
 # 基础系统工具 (Rootless 替代系统命令)
 # ============================================
 
-[envs.zsh]
-channels = ["conda-forge"]
-[envs.zsh.dependencies]
-zsh = "*"
-[envs.zsh.exposed]
-zsh = "zsh"
+# zsh 有 bug，没有 VERSION 信息
+# [envs.zsh]
+# channels = ["conda-forge"]
+# [envs.zsh.dependencies]
+# zsh = "*"
+# [envs.zsh.exposed]
+# zsh = "zsh"
 
 [envs.git]
 channels = ["conda-forge"]
@@ -62,7 +63,7 @@ channels = ["conda-forge"]
 python = "*"
 pip = "*"
 [envs.python.exposed]
-python3 = "python"   # python3 也指向 python
+python3 = "python" # python3 也指向 python
 python = "python"
 pip = "pip"
 
@@ -226,7 +227,7 @@ ruff = "ruff"
 # starship = "*"
 # [envs.starship.exposed]
 # starship = "starship"
-# 注意：已使用 Powerlevel10k (p10k) 作为 zsh 主题，无需 starship
+
 
 [envs.chezmoi]
 channels = ["conda-forge"]

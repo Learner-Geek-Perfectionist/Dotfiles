@@ -12,7 +12,7 @@ EXTENSIONS=(
 	"ms-python.python" "ms-python.vscode-pylance" "charliermarsh.ruff" "ms-python.debugpy"
 	"vscjava.vscode-java-pack" "fwcd.kotlin"
 	"sumneko.lua"
-	"foxundermoon.shell-format"
+	"mkhl.shfmt"
 	"yzhang.markdown-all-in-one" "bierner.markdown-mermaid" "DavidAnson.vscode-markdownlint"
 	"mhutchie.git-graph"
 	"ms-azuretools.vscode-docker"

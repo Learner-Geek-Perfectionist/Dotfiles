@@ -381,7 +381,7 @@ setup_chezmoi_linux() {
 
 		# 应用配置（chezmoi 会自动处理 .chezmoi.toml.tmpl 生成配置）
 		print_info "应用 Chezmoi 配置..."
-		chezmoi init --apply
+		chezmoi init --apply --force
 
 		print_success "✓ Chezmoi 配置完成"
 	else
@@ -426,7 +426,7 @@ setup_chezmoi_macos() {
 
 		# 应用配置（chezmoi 会自动处理 .chezmoi.toml.tmpl 生成配置）
 		print_info "应用 Chezmoi 配置..."
-		chezmoi init --apply
+		chezmoi init --apply --force
 
 		print_success "✓ Chezmoi 配置完成"
 	else

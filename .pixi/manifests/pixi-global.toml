@@ -153,6 +153,13 @@ fzf = "*"
 [envs.fzf.exposed]
 fzf = "fzf"
 
+[envs.tree]
+channels = ["conda-forge"]
+[envs.tree.dependencies]
+tree = "*"
+[envs.tree.exposed]
+tree = "tree"
+
 [envs.dust]
 channels = ["conda-forge"]
 [envs.dust.dependencies]

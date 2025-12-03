@@ -391,13 +391,57 @@ setup_ssh() {
 }
 
 # ========================================
+# 设置默认 shell 为 zsh
+# ========================================
+setup_default_shell() {
+	local step="$1"
+	print_step "步骤 $step: 设置默认 Shell"
+
+	# 已经是 zsh 就跳过
+	if [[ "$(basename "$SHELL")" == "zsh" ]]; then
+		print_warn "当前 shell 已经是 zsh，跳过"
+		return 0
+	fi
+
+	# 检测 zsh
+	if ! command -v zsh &>/dev/null; then
+		print_warn "未找到 zsh，请先安装: sudo apt install zsh"
+		return 0
+	fi
+
+	local zsh_path
+	zsh_path=$(command -v zsh)
+	print_info "检测到 zsh: $zsh_path"
+
+	# 检测 sudo
+	if ! command -v sudo &>/dev/null; then
+		print_warn "sudo 不可用，请手动运行: chsh -s $zsh_path"
+		return 0
+	fi
+
+	# 确保 zsh 在 /etc/shells 中
+	if ! grep -Fxq "$zsh_path" /etc/shells 2>/dev/null; then
+		print_info "添加 zsh 到 /etc/shells..."
+		echo "$zsh_path" | sudo tee -a /etc/shells >/dev/null
+	fi
+
+	# 设置默认 shell
+	print_info "设置默认 shell 为 zsh..."
+	if sudo chsh -s "$zsh_path" "$(whoami)"; then
+		print_success "✓ 默认 shell 已设置为 zsh"
+	else
+		print_warn "设置失败，请手动运行: sudo chsh -s $zsh_path $(whoami)"
+	fi
+}
+
+# ========================================
 # Linux 安装流程
 # ========================================
 install_linux() {
 	local dotfiles_dir="$1"
 
 	# 步骤 1: 安装 Pixi
-	install_pixi_binary "$dotfiles_dir" "1/4"
+	install_pixi_binary "$dotfiles_dir" "1/5"
 
 	if [[ "$PIXI_ONLY" == "true" ]]; then
 		print_success "✓ Pixi 安装完成（仅 Pixi 模式）"
@@ -405,13 +449,16 @@ install_linux() {
 	fi
 
 	# 步骤 2: 同步 Pixi 工具包
-	sync_pixi_tools "$dotfiles_dir" "2/4"
+	sync_pixi_tools "$dotfiles_dir" "2/5"
 
 	# 步骤 3: 安装 Dotfiles 配置
-	setup_dotfiles "$dotfiles_dir" "3/4"
+	setup_dotfiles "$dotfiles_dir" "3/5"
 
-	# 步骤 4: VSCode 插件
-	install_vscode "$dotfiles_dir" "4/4"
+	# 步骤 4: 设置默认 shell
+	setup_default_shell "4/5"
+
+	# 步骤 5: VSCode 插件
+	install_vscode "$dotfiles_dir" "5/5"
 }
 
 # ========================================

@@ -102,6 +102,10 @@ ensure_gum() {
 	command -v gum &>/dev/null && return 0
 
 	if command -v apt &>/dev/null; then
+		# Ensure gnupg is installed first (required for gpg --dearmor)
+		if ! command -v gpg &>/dev/null; then
+			sudo DEBIAN_FRONTEND=noninteractive apt install -y -qq gnupg >/dev/null 2>&1
+		fi
 		sudo mkdir -p /etc/apt/keyrings
 		curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg 2>/dev/null
 		echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list >/dev/null
@@ -124,6 +128,10 @@ print_msg() {
 
 	# Get terminal width using stty (most reliable, doesn't depend on TERM)
 	term_width=$(stty size </dev/tty 2>/dev/null | awk '{print $2}')
+	# Default to 80 columns if we can't detect terminal width (e.g., no TTY)
+	if [[ -z "$term_width" || "$term_width" -le 0 ]]; then
+		term_width=80
+	fi
 	term_width=$((term_width - 2))
 
 	ensure_gum

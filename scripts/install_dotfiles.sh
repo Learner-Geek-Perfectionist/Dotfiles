@@ -61,7 +61,7 @@ main() {
 		has_vscode && copy_path "Library/Application Support/Code/User" "Library/Application Support/Code/User"
 		has_cursor && copy_path "Library/Application Support/Cursor/User" "Library/Application Support/Cursor/User"
 		# macOS 专属
-	copy_path ".config/karabiner" ".config/karabiner"
+		copy_path ".config/karabiner" ".config/karabiner"
 		copy_path ".hammerspoon" ".hammerspoon"
 	else
 		# Linux: ~/.config/

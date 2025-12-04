@@ -85,6 +85,8 @@
     "git.ignoreRebaseWarning": true,
     // ======================= Remote SSH 自动安装插件 =======================
     "remote.SSH.defaultExtensions": [
+        // 中文语言包
+        "ms-ceintl.vscode-language-pack-zh-hans",
         // C/C++
         "ms-vscode.cmake-tools",
         "twxs.cmake",

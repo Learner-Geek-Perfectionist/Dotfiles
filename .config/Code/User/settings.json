@@ -1,11 +1,11 @@
 {
     // ======================= C/C++ 配置 =======================
-    // Cursor 使用 anysphere.cpptools
+    // VSCode 使用 ms-vscode.cpptools
     "[cpp]": {
-        "editor.defaultFormatter": "anysphere.cpptools"
+        "editor.defaultFormatter": "ms-vscode.cpptools"
     },
     "[c]": {
-        "editor.defaultFormatter": "anysphere.cpptools"
+        "editor.defaultFormatter": "ms-vscode.cpptools"
     },
     "C_Cpp.intelliSenseEngine": "default",
     "C_Cpp.errorSquiggles": "enabled",
@@ -85,12 +85,14 @@
     "git.ignoreRebaseWarning": true,
     // ======================= Remote SSH 自动安装插件 =======================
     "remote.SSH.defaultExtensions": [
+        // 中文语言包
+        "ms-ceintl.vscode-language-pack-zh-hans",
         // C/C++
         "ms-vscode.cmake-tools",
         "twxs.cmake",
         "xaver.clang-format",
         "vadimcn.vscode-lldb",
-        "anysphere.cpptools",
+        "ms-vscode.cpptools",
         // Rust
         "rust-lang.rust-analyzer",
         "serayuzgur.crates",
@@ -99,6 +101,7 @@
         "golang.go",
         // Python
         "ms-python.python",
+        "ms-python.vscode-pylance",
         "charliermarsh.ruff",
         "ms-python.debugpy",
         // Java/Kotlin

@@ -57,8 +57,8 @@ remove_dotfiles() {
 	else
 		# Linux: .config 路径
 		for p in ~/.config/{Code,Cursor}/User; do
-			rm_path "$p"
-		done
+		rm_path "$p"
+	done
 	fi
 }
 

@@ -283,3 +283,11 @@ make = "make"
 cmake = "cmake"
 ninja = "ninja"
 "pkg-config" = "pkg-config"
+
+
+[envs.go-shfmt]
+channels = ["conda-forge"]
+[envs.go-shfmt.dependencies]
+go-shfmt = "*"
+[envs.go-shfmt.exposed]
+shfmt = "shfmt"

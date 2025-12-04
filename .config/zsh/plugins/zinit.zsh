@@ -11,6 +11,12 @@ COMPLETION_WAITING_DOTS='true'
 # 插件管理器 zinit 安装的路径
 ZINIT_HOME="${HOME}/.local/share/zinit/zinit.git"
 
+# 设置 ZINIT 的 zcompdump 路径（必须在 source zinit.zsh 之前）
+# 注意：zinit 使用 ZINIT[ZCOMPDUMP_PATH]，不是 $ZSH_COMPDUMP
+[[ -d "$HOME/.cache/zsh" ]] || mkdir -p "$HOME/.cache/zsh"
+typeset -gA ZINIT
+ZINIT[ZCOMPDUMP_PATH]="$HOME/.cache/zsh/.zcompdump"
+
 # 如果插件管理器 zinit 没有安装......
 if [[ ! -f "${ZINIT_HOME}/zinit.zsh" ]]; then
 	printf "\033[33m\033[220mInstalling ZDHARMA-CONTINUUM Initiative Plugin Manager...\033[0m\n"
@@ -72,7 +78,8 @@ zinit snippet OMZ::plugins/colored-man-pages/colored-man-pages.plugin.zsh
 # 3.Completions should be configured before compinit, as stated in the zsh-completions manual installation guide.
 
 # 设置插件加载的选项，加载 fzf-tab 插件
-zinit ice atinit"autoload -Uz compinit; compinit -C -d \"$ZSH_COMPDUMP\"; zicdreplay" wait lucid depth=1
+# compinit 路径由 ZINIT[ZCOMPDUMP_PATH] 控制（已在文件开头设置）
+zinit ice atinit"autoload -Uz compinit; compinit -C; zicdreplay" wait lucid depth=1
 zinit light Aloxaf/fzf-tab
 
 # 配置 fzf-tab

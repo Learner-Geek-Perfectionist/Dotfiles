@@ -4,6 +4,31 @@ set -e
 
 source "$(dirname "${BASH_SOURCE[0]}")/../lib/utils.sh"
 
+# 检测是否在 VSCode/Cursor 远程服务器环境中
+is_remote_server() {
+	# 方法1: 检查 code 命令路径是否在 .vscode-server 或 .cursor-server 下
+	local code_path
+	code_path=$(command -v code 2>/dev/null)
+	if [[ "$code_path" == *".vscode-server"* ]] || [[ "$code_path" == *".cursor-server"* ]]; then
+		return 0
+	fi
+
+	# 方法2: 检查 VSCode 远程终端特有的环境变量
+	if [[ -n "$VSCODE_IPC_HOOK_CLI" ]]; then
+		return 0
+	fi
+
+	return 1
+}
+
+# 如果是远程服务器，跳过安装（通过 settings.json 的 remote.SSH.defaultExtensions 自动同步）
+if is_remote_server; then
+	print_info "检测到 VSCode/Cursor 远程服务器环境"
+	print_info "扩展将通过 settings.json 中的 remote.SSH.defaultExtensions 自动同步"
+	print_info "跳过手动安装脚本"
+	exit 0
+fi
+
 # 通用插件
 EXTENSIONS=(
 	"ms-vscode.cmake-tools" "twxs.cmake" "xaver.clang-format" "vadimcn.vscode-lldb"

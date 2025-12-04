@@ -82,6 +82,39 @@
     "ruff.enable": true,
     "ruff.lint.enable": true,
     "ruff.format.enable": true,
-    "git.ignoreRebaseWarning": true
+    "git.ignoreRebaseWarning": true,
+    // ======================= Remote SSH 自动安装插件 =======================
+    "remote.SSH.defaultExtensions": [
+        // C/C++
+        "ms-vscode.cmake-tools",
+        "twxs.cmake",
+        "xaver.clang-format",
+        "vadimcn.vscode-lldb",
+        "anysphere.cpptools",
+        // Rust
+        "rust-lang.rust-analyzer",
+        "serayuzgur.crates",
+        "tamasfe.even-better-toml",
+        // Go
+        "golang.go",
+        // Python
+        "ms-python.python",
+        "charliermarsh.ruff",
+        "ms-python.debugpy",
+        // Java/Kotlin
+        "vscjava.vscode-java-pack",
+        "fwcd.kotlin",
+        // Lua
+        "sumneko.lua",
+        // Shell
+        "mkhl.shfmt",
+        // Markdown
+        "yzhang.markdown-all-in-one",
+        "bierner.markdown-mermaid",
+        "DavidAnson.vscode-markdownlint",
+        // Git
+        "mhutchie.git-graph",
+        // Docker
+        "ms-azuretools.vscode-docker"
+    ]
 }
-

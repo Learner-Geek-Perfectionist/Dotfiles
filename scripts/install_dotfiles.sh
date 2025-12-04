@@ -48,6 +48,9 @@ main() {
 	copy_path ".config/Code/User" ".config/Code/User"
 	copy_path ".config/Cursor/User" ".config/Cursor/User"
 
+	# VSCode Remote SSH 打开 ~ 目录时的配置
+	copy_path ".vscode" ".vscode"
+
 	# 其它目录
 	copy_path ".hammerspoon" ".hammerspoon"
 	copy_path ".ssh/config" ".ssh/config"

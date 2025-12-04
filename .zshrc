@@ -28,11 +28,12 @@ if [[ "$(uname)" == "Darwin" ]]; then
 
 else
 	alias rg='rg -uuu -i --threads=$(nproc)'
-	# 加载 rust 的环境变量
-	export CARGO_HOME=/opt/rust/cargo
-	export RUSTUP_HOME=/opt/rust/rustup
-	# Cursor 编辑器
+
+	# Cursor 编辑器（Linux）- 先添加，确保 cursor 命令可用
 	[[ -d "/opt/Cursor/resources/app/bin" ]] && export PATH="/opt/Cursor/resources/app/bin:$PATH"
+
+	# VSCode 编辑器（Linux）- 后添加，确保 code 命令指向 VSCode 而非 Cursor
+	[[ -d "/opt/visual-studio-code/bin" ]] && export PATH="/opt/visual-studio-code/bin:$PATH"
 
 	# OrbStack Linux 支持 open 命令打开 macOS Finder
 	[[ -d "/opt/orbstack-guest" ]] && command -v open &>/dev/null && alias open='open -R'

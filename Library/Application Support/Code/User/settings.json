@@ -1,43 +1,11 @@
 {
     // ======================= C/C++ 配置 =======================
-    // 让 clang-format 负责 C/C++ 的格式化
-    // "[c]": {
-    //     "editor.defaultFormatter": "xaver.clang-format"
-    // },
-    // "[cpp]": {
-    //     "editor.defaultFormatter": "xaver.clang-format"
-    // },
-    // clangd/clang-format 路径
-    // "clangd.path": "clangd",
-    // "clang-format.executable": "clang-format",
-    // "shfmt.executablePath": "shfmt",
-    // "clang-format.style": "file",
-    // clangd 参数
-    // "clangd.arguments": [
-    //     "--background-index", // 后台建立索引
-    //     "--all-scopes-completion", // 所有作用域的补全
-    //     "--completion-style=detailed", // 详细的补全样式
-    //     "--j=32", // 并行任务数量
-    //     "--clang-tidy", // 启用clang-tidy检查
-    //     "--compile-commands-dir=build", // 编译命令目录
-    //     "--function-arg-placeholders=true", // 函数参数占位符
-    //     "--query-driver=/usr/bin/clang-*,/usr/bin/g++*,/usr/bin/gcc*", // 查询的编译器路径
-    //     "--header-insertion=iwyu", // 按iwyu规则插入头文件
-    //     "--header-insertion-decorators", // 头文件插入装饰
-    //     "--pch-storage=memory", // PCH存储方式
-    // ],
-    // "clangd.checkUpdates": true, // 检查clangd更新
-    // "Lua.workspace.useGitIgnore": true, // Lua 应用.gitignore
-    // "Lua.workspace.ignoreSubmodules": false, // Lua 解析子模块
-    // "Lua.workspace.checkThirdParty": false, // 忽略 HOME 目录
-    // "Lua.workspace.ignoreDir": [
-    //     "${env:HOME}"
-    // ],
+    // Cursor 使用 anysphere.cpptools
     "[cpp]": {
-        "editor.defaultFormatter": "ms-vscode.cpptools"
+        "editor.defaultFormatter": "anysphere.cpptools"
     },
     "[c]": {
-        "editor.defaultFormatter": "ms-vscode.cpptools"
+        "editor.defaultFormatter": "anysphere.cpptools"
     },
     "C_Cpp.intelliSenseEngine": "default",
     "C_Cpp.errorSquiggles": "enabled",
@@ -48,33 +16,27 @@
     "C_Cpp.default.cppStandard": "gnu++23",
     "C_Cpp.default.cStandard": "gnu17",
     "C_Cpp.codeAnalysis.clangTidy.enabled": true,
-    // 指定头文件包含路径，让 IntelliSense 找到 include 目录下的文件
+    // 指定头文件包含路径
     "C_Cpp.default.includePath": [
         "${workspaceFolder}/include",
         "${workspaceFolder}/**"
-        // "./**",
-        // "${workspaceFolder}/include/**",
-        // "/Users/ouyangzhaoxin/Desktop/clangd-header-repro/include/"
     ],
-    // 指定 compile_commands.json 路径，辅助 vscode 识别宏定义
-    "C_Cpp.default.compileCommands": [
-        // "${workspaceFolder}/SERES_TOOL/soa_dump/build/compile_commands.json"
-    ],
+    "C_Cpp.default.compileCommands": [],
     "shfmt.executablePath": "shfmt",
     // ======================= 编辑器设置 =======================
-    "editor.insertSpaces": true, // 强制用空格缩进
-    "editor.tabSize": 4, // 宽度为 4
-    "editor.detectIndentation": false, // 不随文件内容改变
-    "editor.useTabStops": false, // 光标在缩进区逐字符移动
-    "editor.formatOnSave": true, // 保存时自动格式化
-    "editor.inlayHints.enabled": "on", // 启用内嵌提示
-    "editor.renderControlCharacters": true, // 显示控制字符
-    "editor.guides.indentation": true, // 显示缩进引导线
+    "editor.insertSpaces": true,
+    "editor.tabSize": 4,
+    "editor.detectIndentation": false,
+    "editor.useTabStops": false,
+    "editor.formatOnSave": true,
+    "editor.inlayHints.enabled": "on",
+    "editor.renderControlCharacters": true,
+    "editor.guides.indentation": true,
     "editor.unicodeHighlight.nonBasicASCII": false,
     "editor.unicodeHighlight.allowedLocales": {
         "zh-hans": true
     },
-    "workbench.editor.enablePreview": false, // 禁用预览模式
+    "workbench.editor.enablePreview": false,
     "files.exclude": {
         "**/node_modules": true,
         "**/build": false,
@@ -84,17 +46,14 @@
         "**/.vscode-server": true
     },
     // ======================= 终端设置 =======================
-    "terminal.integrated.cursorStyle": "line", // 终端光标样式
-    "terminal.integrated.fontFamily": "Maple Mono NF CN ExtraLight", // 终端字体
-    "terminal.integrated.fontSize": 14, // 终端字体大小
-    "terminal.integrated.cursorWidth": 1, // 光标宽度（1为最细）
-    // 颜色自定义
+    "terminal.integrated.cursorStyle": "line",
+    "terminal.integrated.fontFamily": "Maple Mono NF CN ExtraLight",
+    "terminal.integrated.fontSize": 14,
+    "terminal.integrated.cursorWidth": 1,
     "workbench.colorCustomizations": {
-        "terminalCursor.foreground": "#4DEEEA" // 终端光标颜色
+        "terminalCursor.foreground": "#4DEEEA"
     },
-    // 本机（macOS）默认用 zsh
     "terminal.integrated.defaultProfile.osx": "zsh",
-    // 远端（Linux）默认用"智能回退"，优先 zsh，缺失则 bash
     "terminal.integrated.defaultProfile.linux": "smart-shell",
     "terminal.integrated.profiles.linux": {
         "smart-shell": {
@@ -106,7 +65,7 @@
             ]
         },
         "zsh": {
-            "path": "/usr/bin/zsh", // 不行就试试 "/bin/zsh"
+            "path": "/usr/bin/zsh",
             "args": [
                 "-l"
             ]
@@ -120,9 +79,42 @@
             "source.organizeImports": "explicit"
         }
     },
-    // Ruff 配置
     "ruff.enable": true,
     "ruff.lint.enable": true,
     "ruff.format.enable": true,
-    "git.ignoreRebaseWarning": true
+    "git.ignoreRebaseWarning": true,
+    // ======================= Remote SSH 自动安装插件 =======================
+    "remote.SSH.defaultExtensions": [
+        // C/C++
+        "ms-vscode.cmake-tools",
+        "twxs.cmake",
+        "xaver.clang-format",
+        "vadimcn.vscode-lldb",
+        "anysphere.cpptools",
+        // Rust
+        "rust-lang.rust-analyzer",
+        "serayuzgur.crates",
+        "tamasfe.even-better-toml",
+        // Go
+        "golang.go",
+        // Python
+        "ms-python.python",
+        "charliermarsh.ruff",
+        "ms-python.debugpy",
+        // Java/Kotlin
+        "vscjava.vscode-java-pack",
+        "fwcd.kotlin",
+        // Lua
+        "sumneko.lua",
+        // Shell
+        "mkhl.shfmt",
+        // Markdown
+        "yzhang.markdown-all-in-one",
+        "bierner.markdown-mermaid",
+        "DavidAnson.vscode-markdownlint",
+        // Git
+        "mhutchie.git-graph",
+        // Docker
+        "ms-azuretools.vscode-docker"
+    ]
 }

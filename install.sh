@@ -19,6 +19,7 @@ DEFAULT_BRANCH="${DEFAULT_BRANCH:-beta}"
 SKIP_VSCODE="${SKIP_VSCODE:-false}"
 SKIP_DOTFILES="${SKIP_DOTFILES:-false}"
 PIXI_ONLY="${PIXI_ONLY:-false}"
+DOTFILES_ONLY="${DOTFILES_ONLY:-false}"
 
 # 日志文件
 LOG_FILE="${LOG_FILE:-/tmp/dotfiles-install-$(whoami).log}"
@@ -53,6 +54,7 @@ Dotfiles 安装脚本 v${DOTFILES_VERSION}
 
 选项:
     --pixi-only      仅安装 Pixi（跳过 Dotfiles 和 VSCode）
+    --dotfiles-only  仅安装 Dotfiles 配置（跳过包管理和 VSCode）
     --skip-dotfiles  跳过 Dotfiles 配置
     --skip-vscode    跳过 VSCode 插件安装
     -h, --help       显示帮助
@@ -328,6 +330,12 @@ setup_default_shell() {
 install_linux() {
 	local dotfiles_dir="$1"
 
+	# 仅安装 Dotfiles 模式
+	if [[ "$DOTFILES_ONLY" == "true" ]]; then
+		setup_dotfiles "$dotfiles_dir" "1/1"
+		return 0
+	fi
+
 	# 步骤 1: 安装 Pixi
 	install_pixi_binary "$dotfiles_dir" "1/5"
 
@@ -355,6 +363,12 @@ install_linux() {
 install_macos() {
 	local dotfiles_dir="$1"
 
+	# 仅安装 Dotfiles 模式
+	if [[ "$DOTFILES_ONLY" == "true" ]]; then
+		setup_dotfiles "$dotfiles_dir" "1/1"
+		return 0
+	fi
+
 	# 步骤 1: 安装 Homebrew 包
 	install_macos_homebrew "$dotfiles_dir" "1/4"
 
@@ -377,6 +391,10 @@ main() {
 		case "$1" in
 		--pixi-only)
 			PIXI_ONLY="true"
+			shift
+			;;
+		--dotfiles-only)
+			DOTFILES_ONLY="true"
 			shift
 			;;
 		--skip-dotfiles)

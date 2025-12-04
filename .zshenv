@@ -8,3 +8,6 @@ export skip_global_compinit=1
 export ZSH_COMPDUMP="$HOME/.cache/zsh/.zcompdump"
 # 设置历史文件路径（覆盖 /etc/zshrc 中的设置）
 export HISTFILE="$HOME/.cache/zsh/.zsh_history"
+# 让 history 命令的最大容量为无限
+export HISTSIZE=10000000
+export HISTFILESIZE=10000000

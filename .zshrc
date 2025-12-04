@@ -35,9 +35,7 @@ else
 	[[ -d "/opt/Cursor/resources/app/bin" ]] && export PATH="/opt/Cursor/resources/app/bin:$PATH"
 
 	# OrbStack Linux 支持 open 命令打开 macOS Finder
-	if [[ -n "$ORBSTACK" ]] && command -v open >/dev/null 2>&1; then
-		alias open='open -R'
-	fi
+	[[ -d "/opt/orbstack-guest" ]] && command -v open &>/dev/null && alias open='open -R'
 
 	# Pixi 路径（Linux 包管理）
 	export PATH="$HOME/.pixi/bin:$PATH"
@@ -74,10 +72,6 @@ command -v bat >/dev/null 2>&1 && alias cat=bat
 
 # tldr 替代 man（更简洁的命令手册，检查命令是否存在）
 command -v tldr >/dev/null 2>&1 && alias man='tldr'
-
-# 让 history 命令的最大容量为无限
-export HISTSIZE=10000000
-export HISTFILESIZE=10000000
 
 # 设置 fzf 的默认预览
 export FZF_DEFAULT_OPTS='--preview "${HOME}/.config/zsh/fzf/fzf-preview.sh {}" --bind "shift-left:preview-page-up,shift-right:preview-page-down"'

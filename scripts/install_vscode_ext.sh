@@ -1,59 +1,42 @@
 #!/bin/bash
 # VSCode/Cursor 插件批量安装脚本
+# 远程服务器的插件通过 settings.json 的 remote.SSH.defaultExtensions 自动同步
 set -e
 
 source "$(dirname "${BASH_SOURCE[0]}")/../lib/utils.sh"
 
-# 检测是否在 VSCode/Cursor 远程服务器环境中
-is_remote_server() {
-	# 方法1: 检查 code 命令路径是否在 .vscode-server 或 .cursor-server 下
-	local code_path
-	code_path=$(command -v code 2>/dev/null)
-	if [[ "$code_path" == *".vscode-server"* ]] || [[ "$code_path" == *".cursor-server"* ]]; then
-		return 0
-	fi
-
-	# 方法2: 检查 VSCode 远程终端特有的环境变量
-	if [[ -n "$VSCODE_IPC_HOOK_CLI" ]]; then
-		return 0
-	fi
-
-	# 方法3: 检查 ~/.vscode-server 或 ~/.cursor-server 目录是否存在（说明曾被远程连接过）
-	if [[ -d "$HOME/.vscode-server" ]] || [[ -d "$HOME/.cursor-server" ]]; then
-		return 0
-	fi
-
-	return 1
-}
-
-# 如果是远程服务器，跳过安装（通过 settings.json 的 remote.SSH.defaultExtensions 自动同步）
-if is_remote_server; then
-	print_info "检测到 VSCode/Cursor 远程服务器环境"
-	print_info "扩展将通过 settings.json 中的 remote.SSH.defaultExtensions 自动同步"
-	print_info "跳过手动安装脚本"
-	exit 0
-fi
-
-# 通用插件
+# 通用插件（VSCode 和 Cursor 共用）
 EXTENSIONS=(
+	# 中文语言包
+	"ms-ceintl.vscode-language-pack-zh-hans"
+	# C/C++
 	"ms-vscode.cmake-tools" "twxs.cmake" "xaver.clang-format" "vadimcn.vscode-lldb"
+	# Rust
 	"rust-lang.rust-analyzer" "serayuzgur.crates" "tamasfe.even-better-toml"
+	# Go
 	"golang.go"
+	# Python
 	"ms-python.python" "charliermarsh.ruff" "ms-python.debugpy"
+	# Java/Kotlin
 	"vscjava.vscode-java-pack" "fwcd.kotlin"
+	# Lua
 	"sumneko.lua"
+	# Shell
 	"mkhl.shfmt"
+	# Markdown
 	"yzhang.markdown-all-in-one" "bierner.markdown-mermaid" "DavidAnson.vscode-markdownlint"
+	# Git
 	"mhutchie.git-graph"
+	# Docker
 	"ms-azuretools.vscode-docker"
 )
 
 # 专属插件 (vscode:ext 或 cursor:ext)
 SPECIFIC=(
 	# VSCode 专属
-	"vscode:ms-python.vscode-pylance"
 	"vscode:ms-vscode.cpptools"
 	"vscode:ms-vscode.cpptools-extension-pack"
+	"vscode:ms-python.vscode-pylance"
 	"vscode:ms-vscode-remote.remote-ssh"
 	"vscode:ms-vscode-remote.remote-ssh-edit"
 	"vscode:ms-vscode.remote-explorer"

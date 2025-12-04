@@ -93,6 +93,7 @@
         "xaver.clang-format",
         "vadimcn.vscode-lldb",
         "ms-vscode.cpptools",
+        "ms-vscode.cpptools-extension-pack",
         // Rust
         "rust-lang.rust-analyzer",
         "serayuzgur.crates",

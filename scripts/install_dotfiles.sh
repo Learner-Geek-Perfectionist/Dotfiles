@@ -11,6 +11,11 @@ source "$SCRIPT_DIR/../lib/utils.sh"
 
 COPY_SUMMARY=()
 
+# 检测是否在 VSCode/Cursor 远程服务器环境中
+is_remote_server() {
+	[[ -d "$HOME/.vscode-server" ]] || [[ -d "$HOME/.cursor-server" ]]
+}
+
 copy_path() {
 	local src="$DOTFILES_DIR/$1"
 	local dest="$HOME/$2"
@@ -53,8 +58,11 @@ main() {
 		# macOS 专属
 		copy_path ".config/karabiner" ".config/karabiner"
 		copy_path ".hammerspoon" ".hammerspoon"
+	elif is_remote_server; then
+		# 远程服务器环境：设置从本地同步，存放在 ~/.cursor-server/data/User/，无需复制
+		print_info "检测到远程服务器环境，跳过 VSCode/Cursor 设置（设置从本地自动同步）"
 	else
-		# Linux: ~/.config/
+		# Linux 本地环境: ~/.config/
 		copy_path ".config/Code/User" ".config/Code/User"
 		copy_path ".config/Cursor/User" ".config/Cursor/User"
 	fi

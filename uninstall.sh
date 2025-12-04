@@ -42,13 +42,24 @@ remove_pixi() {
 
 remove_dotfiles() {
 	print_header "🗑️ 删除 Dotfiles"
-	for p in ~/.zshrc ~/.zprofile ~/.zshenv ~/.config/{zsh,kitty,karabiner,Code/User,Cursor/User} \
-		~/.hammerspoon ~/.ssh/config; do
+
+	# 通用配置
+	for p in ~/.zshrc ~/.zprofile ~/.zshenv ~/.config/{zsh,kitty} ~/.vscode ~/.ssh/config ~/.pixi/manifests; do
 		rm_path "$p"
 	done
-	[[ "$(uname -s)" == "Darwin" ]] && for p in ~/"Library/Application Support"/{Code,Cursor}/User; do
-		rm_path "$p"
-	done
+
+	# 根据操作系统区分 VSCode/Cursor 配置路径
+	if [[ "$(uname -s)" == "Darwin" ]]; then
+		# macOS: Library 路径 + macOS 专属工具
+		for p in ~/"Library/Application Support"/{Code,Cursor}/User ~/.config/karabiner ~/.hammerspoon; do
+			rm_path "$p"
+		done
+	else
+		# Linux: .config 路径
+		for p in ~/.config/{Code,Cursor}/User; do
+			rm_path "$p"
+		done
+	fi
 }
 
 # 解析参数

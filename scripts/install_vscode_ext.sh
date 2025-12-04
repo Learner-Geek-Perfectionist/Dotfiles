@@ -18,6 +18,11 @@ is_remote_server() {
 		return 0
 	fi
 
+	# 方法3: 检查 ~/.vscode-server 或 ~/.cursor-server 目录是否存在（说明曾被远程连接过）
+	if [[ -d "$HOME/.vscode-server" ]] || [[ -d "$HOME/.cursor-server" ]]; then
+		return 0
+	fi
+
 	return 1
 }
 

@@ -24,10 +24,24 @@ PIXI_ONLY="${PIXI_ONLY:-false}"
 LOG_FILE="${LOG_FILE:-/tmp/dotfiles-install-$(whoami).log}"
 
 # ========================================
-# 复用工具函数
+# 工具函数（install.sh 需要自包含，因为 curl | bash 时还没 clone 仓库）
 # ========================================
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/lib/utils.sh"
+export RED='\033[0;31m' GREEN='\033[0;32m' YELLOW='\033[1;33m'
+export BLUE='\033[0;34m' CYAN='\033[0;36m' PURPLE='\033[0;35m' NC='\033[0m'
+
+print_info() { echo -e "${CYAN}$1${NC}"; }
+print_success() { echo -e "${GREEN}$1${NC}"; }
+print_warn() { echo -e "${YELLOW}$1${NC}"; }
+print_error() { echo -e "${RED}$1${NC}"; }
+print_header() { echo -e "${BLUE}$1${NC}"; }
+print_step() { echo -e "${PURPLE}$1${NC}"; }
+
+detect_os() {
+	case "$(uname -s)" in Darwin) echo "macos" ;; Linux) echo "linux" ;; *) echo "unknown" ;; esac
+}
+detect_arch() {
+	case "$(uname -m)" in x86_64) echo "x86_64" ;; aarch64 | arm64) echo "aarch64" ;; *) echo "$(uname -m)" ;; esac
+}
 
 # ========================================
 # 仓库克隆

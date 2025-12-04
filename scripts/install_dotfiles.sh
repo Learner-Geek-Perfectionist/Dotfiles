@@ -59,9 +59,6 @@ main() {
 		copy_path ".config/Cursor/User" ".config/Cursor/User"
 	fi
 
-	# VSCode Remote SSH 打开 ~ 目录时的配置
-	copy_path ".vscode" ".vscode"
-
 	# 其它目录
 	copy_path ".ssh/config" ".ssh/config"
 	copy_path ".pixi/manifests" ".pixi/manifests"

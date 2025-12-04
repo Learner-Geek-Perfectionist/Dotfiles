@@ -44,7 +44,7 @@ remove_dotfiles() {
 	print_header "🗑️ 删除 Dotfiles"
 
 	# 通用配置
-	for p in ~/.zshrc ~/.zprofile ~/.zshenv ~/.config/{zsh,kitty} ~/.vscode ~/.ssh/config ~/.pixi/manifests; do
+	for p in ~/.zshrc ~/.zprofile ~/.zshenv ~/.config/{zsh,kitty} ~/.ssh/config ~/.pixi/manifests; do
 		rm_path "$p"
 	done
 

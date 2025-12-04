@@ -11,9 +11,23 @@ source "$SCRIPT_DIR/../lib/utils.sh"
 
 COPY_SUMMARY=()
 
-# 检测是否在 VSCode/Cursor 远程服务器环境中
-is_remote_server() {
-	[[ -d "$HOME/.vscode-server" ]] || [[ -d "$HOME/.cursor-server" ]]
+# 检测远程服务器类型：cursor / vscode / 空（非远程）
+get_remote_server_type() {
+	if [[ -d "$HOME/.cursor-server" ]]; then
+		echo "cursor"
+	elif [[ -d "$HOME/.vscode-server" ]]; then
+		echo "vscode"
+	fi
+}
+
+# 检测是否安装了 VSCode（code --help 输出包含 code）
+has_vscode() {
+	code --help 2>&1 | head -1 | grep -qi "code"
+}
+
+# 检测是否安装了 Cursor（cursor --help 输出包含 cursor）
+has_cursor() {
+	cursor --help 2>&1 | head -1 | grep -qi "cursor"
 }
 
 copy_path() {
@@ -50,21 +64,41 @@ main() {
 	copy_path ".config/zsh" ".config/zsh"
 	copy_path ".config/kitty" ".config/kitty"
 
-	# VSCode/Cursor 配置（根据操作系统区分路径）
+	# VSCode/Cursor 配置（根据操作系统/环境区分路径）
+	local server_type
+	server_type="$(get_remote_server_type)"
+
 	if [[ "$(uname)" == "Darwin" ]]; then
 		# macOS: ~/Library/Application Support/
-		copy_path "Library/Application Support/Code/User" "Library/Application Support/Code/User"
-		copy_path "Library/Application Support/Cursor/User" "Library/Application Support/Cursor/User"
+		if has_vscode; then
+			copy_path "Library/Application Support/Code/User" "Library/Application Support/Code/User"
+		fi
+		if has_cursor; then
+			copy_path "Library/Application Support/Cursor/User" "Library/Application Support/Cursor/User"
+		fi
 		# macOS 专属
 		copy_path ".config/karabiner" ".config/karabiner"
 		copy_path ".hammerspoon" ".hammerspoon"
-	elif is_remote_server; then
-		# 远程服务器环境：设置从本地同步，存放在 ~/.cursor-server/data/User/，无需复制
-		print_info "检测到远程服务器环境，跳过 VSCode/Cursor 设置（设置从本地自动同步）"
+	elif [[ "$server_type" == "cursor" ]]; then
+		# Cursor 远程服务器环境
+		print_info "检测到 Cursor 远程服务器环境"
+		copy_path ".config/Cursor/User/settings.json" ".cursor-server/data/User/settings.json"
+		copy_path ".config/Cursor/User/keybindings.json" ".cursor-server/data/User/keybindings.json"
+		copy_path ".config/Cursor/User/settings.json" ".cursor/settings.json"
+	elif [[ "$server_type" == "vscode" ]]; then
+		# VSCode 远程服务器环境
+		print_info "检测到 VSCode 远程服务器环境"
+		copy_path ".config/Code/User/settings.json" ".vscode-server/data/User/settings.json"
+		copy_path ".config/Code/User/keybindings.json" ".vscode-server/data/User/keybindings.json"
+		copy_path ".config/Code/User/settings.json" ".vscode/settings.json"
 	else
 		# Linux 本地环境: ~/.config/
-		copy_path ".config/Code/User" ".config/Code/User"
-		copy_path ".config/Cursor/User" ".config/Cursor/User"
+		if has_vscode; then
+			copy_path ".config/Code/User" ".config/Code/User"
+		fi
+		if has_cursor; then
+			copy_path ".config/Cursor/User" ".config/Cursor/User"
+		fi
 	fi
 
 	# 其它目录

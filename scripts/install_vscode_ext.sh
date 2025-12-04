@@ -67,7 +67,7 @@ SPECIFIC=(
 # 检测真实的编辑器类型（code 命令可能实际是 Cursor）
 detect_real_type() {
 	local cmd="$1"
-	if "$cmd" --help 2>&1 | head -5 | grep -qi "cursor"; then
+	if "$cmd" --help 2>&1 | head -1 | grep -qi "cursor"; then
 		echo "cursor"
 	else
 		echo "vscode"

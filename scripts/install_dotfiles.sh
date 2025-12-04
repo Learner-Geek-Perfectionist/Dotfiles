@@ -41,26 +41,30 @@ main() {
 	copy_path ".zprofile" ".zprofile"
 	copy_path ".zshenv" ".zshenv"
 
-	# .config 子目录
+	# .config 子目录（通用）
 	copy_path ".config/zsh" ".config/zsh"
 	copy_path ".config/kitty" ".config/kitty"
-	copy_path ".config/karabiner" ".config/karabiner"
-	copy_path ".config/Code/User" ".config/Code/User"
-	copy_path ".config/Cursor/User" ".config/Cursor/User"
+
+	# VSCode/Cursor 配置（根据操作系统区分路径）
+	if [[ "$(uname)" == "Darwin" ]]; then
+		# macOS: ~/Library/Application Support/
+		copy_path "Library/Application Support/Code/User" "Library/Application Support/Code/User"
+		copy_path "Library/Application Support/Cursor/User" "Library/Application Support/Cursor/User"
+		# macOS 专属
+		copy_path ".config/karabiner" ".config/karabiner"
+		copy_path ".hammerspoon" ".hammerspoon"
+	else
+		# Linux: ~/.config/
+		copy_path ".config/Code/User" ".config/Code/User"
+		copy_path ".config/Cursor/User" ".config/Cursor/User"
+	fi
 
 	# VSCode Remote SSH 打开 ~ 目录时的配置
 	copy_path ".vscode" ".vscode"
 
 	# 其它目录
-	copy_path ".hammerspoon" ".hammerspoon"
 	copy_path ".ssh/config" ".ssh/config"
 	copy_path ".pixi/manifests" ".pixi/manifests"
-
-	# macOS 专属 (Library)
-	if [[ "$(uname)" == "Darwin" ]]; then
-		copy_path "Library/Application Support/Code/User" "Library/Application Support/Code/User"
-		copy_path "Library/Application Support/Cursor/User" "Library/Application Support/Cursor/User"
-	fi
 
 	if ((${#COPY_SUMMARY[@]} > 0)); then
 		print_header "🧾 文件复制详情"

@@ -43,6 +43,101 @@ detect_arch() {
 	case "$(uname -m)" in x86_64) echo "x86_64" ;; aarch64 | arm64) echo "aarch64" ;; *) echo "$(uname -m)" ;; esac
 }
 
+# 显示帮助
+show_help() {
+	cat <<EOF
+Dotfiles 安装脚本 v${DOTFILES_VERSION}
+
+用法: curl -fsSL <url> | bash
+      bash install.sh [选项]
+
+选项:
+    --pixi-only      仅安装 Pixi（跳过 Dotfiles 和 VSCode）
+    --skip-dotfiles  跳过 Dotfiles 配置
+    --skip-vscode    跳过 VSCode 插件安装
+    -h, --help       显示帮助
+EOF
+}
+
+# 设置日志
+setup_logging() {
+	mkdir -p "$(dirname "$LOG_FILE")"
+	echo "=== Dotfiles 安装日志 $(date) ===" >"$LOG_FILE"
+}
+
+# 尝试安装缺失的依赖
+try_install_dep() {
+	local cmd="$1"
+	local pkg="${2:-$1}"
+
+	# 检查是否有 sudo
+	if ! command -v sudo &>/dev/null; then
+		print_warn "无 sudo 权限，请手动安装 $pkg"
+		return 1
+	fi
+
+	local os=$(detect_os)
+	print_info "尝试安装 $pkg..."
+
+	if [[ "$os" == "macos" ]]; then
+		# macOS: 使用 xcode-select 安装 git，其他用 brew
+		if [[ "$cmd" == "git" ]]; then
+			xcode-select --install 2>/dev/null || true
+			print_info "请在弹窗中点击安装，完成后重新运行此脚本"
+			exit 0
+		fi
+	else
+		# Linux: 尝试常见包管理器
+		if command -v apt &>/dev/null; then
+			sudo apt update && sudo apt install -y "$pkg"
+		elif command -v yum &>/dev/null; then
+			sudo yum install -y "$pkg"
+		elif command -v dnf &>/dev/null; then
+			sudo dnf install -y "$pkg"
+		elif command -v pacman &>/dev/null; then
+			sudo pacman -S --noconfirm "$pkg"
+		elif command -v zypper &>/dev/null; then
+			sudo zypper install -y "$pkg"
+		else
+			print_warn "未识别的包管理器，请手动安装 $pkg"
+			return 1
+		fi
+	fi
+}
+
+# 检查依赖
+check_dependencies() {
+	local missing=()
+
+	# 检查 git
+	if ! command -v git &>/dev/null; then
+		print_warn "未找到 git"
+		if ! try_install_dep "git"; then
+			missing+=("git")
+		fi
+	fi
+
+	# 检查 curl
+	if ! command -v curl &>/dev/null; then
+		print_warn "未找到 curl"
+		if ! try_install_dep "curl"; then
+			missing+=("curl")
+		fi
+	fi
+
+	# 如果有缺失的依赖且无法自动安装
+	if [[ ${#missing[@]} -gt 0 ]]; then
+		print_error "缺少必要依赖: ${missing[*]}"
+		print_info "请手动安装后重试"
+		print_info "Ubuntu/Debian: sudo apt install ${missing[*]}"
+		print_info "CentOS/RHEL:   sudo yum install ${missing[*]}"
+		print_info "Arch Linux:    sudo pacman -S ${missing[*]}"
+		exit 1
+	fi
+
+	print_success "✓ 依赖检查通过"
+}
+
 # ========================================
 # 仓库克隆
 # ========================================

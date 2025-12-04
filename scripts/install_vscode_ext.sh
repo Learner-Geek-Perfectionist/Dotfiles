@@ -5,6 +5,18 @@ set -e
 
 source "$(dirname "${BASH_SOURCE[0]}")/../lib/utils.sh"
 
+# 检测是否在远程服务器环境中
+is_remote_server() {
+	[[ -d "$HOME/.vscode-server" ]] || [[ -d "$HOME/.cursor-server" ]]
+}
+
+# 如果是远程服务器，跳过安装
+if is_remote_server; then
+	print_info "检测到远程服务器环境，插件通过 settings.json 自动同步"
+	print_info "跳过手动安装"
+	exit 0
+fi
+
 # 通用插件（VSCode 和 Cursor 共用）
 EXTENSIONS=(
 	# 中文语言包

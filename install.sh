@@ -65,76 +65,25 @@ setup_logging() {
 	echo "=== Dotfiles 安装日志 $(date) ===" >"$LOG_FILE"
 }
 
-# 尝试安装缺失的依赖
-try_install_dep() {
-	local cmd="$1"
-	local pkg="${2:-$1}"
-
-	# 检查是否有 sudo
-	if ! command -v sudo &>/dev/null; then
-		print_warn "无 sudo 权限，请手动安装 $pkg"
-		return 1
-	fi
-
-	local os=$(detect_os)
-	print_info "尝试安装 $pkg..."
-
-	if [[ "$os" == "macos" ]]; then
-		# macOS: 使用 xcode-select 安装 git，其他用 brew
-		if [[ "$cmd" == "git" ]]; then
-			xcode-select --install 2>/dev/null || true
-			print_info "请在弹窗中点击安装，完成后重新运行此脚本"
-			exit 0
-		fi
-	else
-		# Linux: 尝试常见包管理器
-		if command -v apt &>/dev/null; then
-			sudo apt update && sudo apt install -y "$pkg"
-		elif command -v yum &>/dev/null; then
-			sudo yum install -y "$pkg"
-		elif command -v dnf &>/dev/null; then
-			sudo dnf install -y "$pkg"
-		elif command -v pacman &>/dev/null; then
-			sudo pacman -S --noconfirm "$pkg"
-		elif command -v zypper &>/dev/null; then
-			sudo zypper install -y "$pkg"
-		else
-			print_warn "未识别的包管理器，请手动安装 $pkg"
-			return 1
-		fi
-	fi
-}
-
-# 检查依赖
+# 检查并安装依赖
 check_dependencies() {
-	local missing=()
+	for cmd in git curl; do
+		command -v "$cmd" &>/dev/null && continue
+		print_warn "未找到 $cmd，尝试安装..."
 
-	# 检查 git
-	if ! command -v git &>/dev/null; then
-		print_warn "未找到 git"
-		if ! try_install_dep "git"; then
-			missing+=("git")
+		# 尝试自动安装
+		if command -v sudo &>/dev/null; then
+			if [[ "$(uname)" == "Darwin" && "$cmd" == "git" ]]; then
+				xcode-select --install 2>/dev/null || true
+				print_info "请在弹窗中点击安装，完成后重新运行"
+				exit 0
+			fi
+			for pm in "apt:apt install -y" "yum:yum install -y" "dnf:dnf install -y" "pacman:pacman -S --noconfirm" "zypper:zypper install -y"; do
+				command -v "${pm%%:*}" &>/dev/null && { sudo ${pm#*:} "$cmd" && break; }
+			done
 		fi
-	fi
 
-	# 检查 curl
-	if ! command -v curl &>/dev/null; then
-		print_warn "未找到 curl"
-		if ! try_install_dep "curl"; then
-			missing+=("curl")
-		fi
-	fi
-
-	# 如果有缺失的依赖且无法自动安装
-	if [[ ${#missing[@]} -gt 0 ]]; then
-		print_error "缺少必要依赖: ${missing[*]}"
-		print_info "请手动安装后重试"
-		print_info "Ubuntu/Debian: sudo apt install ${missing[*]}"
-		print_info "CentOS/RHEL:   sudo yum install ${missing[*]}"
-		print_info "Arch Linux:    sudo pacman -S ${missing[*]}"
-		exit 1
-	fi
-
+	done
 	print_success "✓ 依赖检查通过"
 }
 
@@ -459,6 +408,19 @@ main() {
 	# 设置日志
 	setup_logging
 
+	# 检查依赖（需要 git）
+	check_dependencies
+
+	# 克隆仓库（尽早执行，以便后续可以 source lib/utils.sh）
+	local dotfiles_dir
+	dotfiles_dir=$(clone_dotfiles)
+	export DOTFILES_DIR="$dotfiles_dir"
+
+	# 克隆后 source lib/utils.sh，复用工具函数
+	if [[ -f "$dotfiles_dir/lib/utils.sh" ]]; then
+		source "$dotfiles_dir/lib/utils.sh"
+	fi
+
 	local os arch
 	os=$(detect_os)
 	arch=$(detect_arch)
@@ -477,14 +439,6 @@ main() {
 		print_info "安装方式: Pixi + Dotfiles 配置 (完全 Rootless)"
 	fi
 	echo ""
-
-	# 检查依赖
-	check_dependencies
-
-	# 克隆仓库
-	local dotfiles_dir
-	dotfiles_dir=$(clone_dotfiles)
-	export DOTFILES_DIR="$dotfiles_dir"
 
 	# 根据操作系统执行安装
 	case "$os" in

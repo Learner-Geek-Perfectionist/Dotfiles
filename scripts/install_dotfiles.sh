@@ -21,6 +21,11 @@ has_cursor() {
 	command -v cursor &>/dev/null && cursor --help 2>&1 | head -1 | grep -qi "cursor"
 }
 
+# 检测是否在远程服务器环境
+is_remote_server() {
+	[[ -d "$HOME/.vscode-server" ]] || [[ -d "$HOME/.cursor-server" ]]
+}
+
 copy_path() {
 	local src="$DOTFILES_DIR/$1"
 	local dest="$HOME/$2"
@@ -65,8 +70,12 @@ main() {
 		copy_path ".hammerspoon" ".hammerspoon"
 	else
 		# Linux: ~/.config/
-		has_vscode && copy_path ".config/Code/User" ".config/Code/User"
-		has_cursor && copy_path ".config/Cursor/User" ".config/Cursor/User"
+		if is_remote_server; then
+			print_info "检测到远程服务器环境，跳过 VSCode/Cursor 设置（设置从本地自动同步）"
+		else
+			has_vscode && copy_path ".config/Code/User" ".config/Code/User"
+			has_cursor && copy_path ".config/Cursor/User" ".config/Cursor/User"
+		fi
 	fi
 
 	# 其它目录

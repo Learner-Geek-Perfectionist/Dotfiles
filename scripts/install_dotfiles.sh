@@ -36,11 +36,11 @@ copy_path() {
 	if [[ -d "$src" ]]; then
 		mkdir -p "$dest"
 		cp -rf "$src/." "$dest/"
-		summary_msg="目录同步: $src -> $dest（覆盖同名文件）"
+		summary_msg="目录同步: $src -> $dest (覆盖同名文件)"
 	else
 		mkdir -p "$(dirname "$dest")"
 		cp -f "$src" "$dest"
-		summary_msg="文件复制: $src -> $dest（覆盖）"
+		summary_msg="文件复制: $src -> $dest (覆盖)"
 	fi
 	COPY_SUMMARY+=("$summary_msg")
 
@@ -83,7 +83,7 @@ main() {
 	copy_path ".pixi/manifests" ".pixi/manifests"
 
 	if ((${#COPY_SUMMARY[@]} > 0)); then
-		print_header "📋 文件复制详情"
+		print_header "🧾 文件复制详情"
 		for msg in "${COPY_SUMMARY[@]}"; do
 			print_info "  ➜ $msg"
 		done

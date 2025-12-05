@@ -34,9 +34,7 @@ check_pixi_installed() {
 # 安装 Pixi
 # ========================================
 install_pixi() {
-	print_header "=========================================="
 	print_header "🦀 安装 Pixi (现代包管理器)"
-	print_header "=========================================="
 
 	print_info "安装目录: $PIXI_HOME"
 	echo ""
@@ -73,9 +71,7 @@ install_pixi() {
 # 配置 Shell 集成
 # ========================================
 setup_shell_integration() {
-	print_header "=========================================="
-	print_header "配置 Shell 集成"
-	print_header "=========================================="
+	print_header "🔧 配置 Shell 集成"
 
 	local shell_name
 	shell_name=$(basename "$SHELL")
@@ -126,9 +122,7 @@ setup_shell_integration() {
 # 安装全局工具包
 # ========================================
 install_global_tools() {
-	print_header "=========================================="
-	print_header "安装全局工具包"
-	print_header "=========================================="
+	print_header "📦 安装全局工具包"
 
 	export PATH="$PIXI_HOME/bin:$PATH"
 

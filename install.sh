@@ -25,6 +25,9 @@ VSCODE_ONLY="${VSCODE_ONLY:-false}"
 # 日志文件
 LOG_FILE="${LOG_FILE:-/tmp/dotfiles-install-$(whoami).log}"
 
+# 临时 gum 安装目录（用于解决鸡生蛋问题：脚本需要 gum，但 gum 通过 pixi 安装）
+TEMP_GUM_DIR=""
+
 # ========================================
 # 工具函数（install.sh 需要自包含，因为 curl | bash 时还没 clone 仓库）
 # ========================================
@@ -139,7 +142,7 @@ check_dependencies() {
 	local missing=()
 
 	# 检查所有依赖
-	for cmd in git curl zsh gum; do
+	for cmd in git curl zsh; do
 		command -v "$cmd" &>/dev/null || missing+=("$cmd")
 	done
 
@@ -181,6 +184,47 @@ check_dependencies() {
 	done
 
 	print_success "依赖检查通过"
+}
+
+# 临时安装 gum（静默，解决鸡生蛋问题）
+setup_temp_gum() {
+	# 如果 gum 已经可用，不需要临时安装
+	command -v gum &>/dev/null && return 0
+
+	local os arch gum_version="0.14.5"
+	os=$(uname -s)
+	arch=$(uname -m)
+
+	# 转换架构名称
+	case "$arch" in
+	x86_64) arch="x86_64" ;;
+	aarch64 | arm64) arch="arm64" ;;
+	*) return 0 ;;
+	esac
+
+	# 转换系统名称
+	case "$os" in
+	Darwin) os="Darwin" ;;
+	Linux) os="Linux" ;;
+	*) return 0 ;;
+	esac
+
+	# 创建临时目录并下载
+	TEMP_GUM_DIR="/tmp/gum-temp-$(whoami)"
+	mkdir -p "$TEMP_GUM_DIR"
+
+	local gum_url="https://github.com/charmbracelet/gum/releases/download/v${gum_version}/gum_${gum_version}_${os}_${arch}.tar.gz"
+
+	if curl -fsSL "$gum_url" 2>/dev/null | tar -xz -C "$TEMP_GUM_DIR" 2>/dev/null; then
+		export PATH="$TEMP_GUM_DIR:$PATH"
+	else
+		TEMP_GUM_DIR=""
+	fi
+}
+
+# 清理临时 gum（静默）
+cleanup_temp_gum() {
+	[[ -n "$TEMP_GUM_DIR" && -d "$TEMP_GUM_DIR" ]] && rm -rf "$TEMP_GUM_DIR"
 }
 
 # ========================================
@@ -518,8 +562,12 @@ main() {
 	# 设置日志
 	setup_logging
 
-	# 检查依赖（需要 git）
+	# 检查依赖（需要 git, curl, zsh）
 	check_dependencies
+
+	# 静默安装临时 gum，脚本结束时自动清理
+	setup_temp_gum
+	trap cleanup_temp_gum EXIT
 
 	# 克隆仓库（尽早执行，以便后续可以 source lib/utils.sh）
 	local dotfiles_dir

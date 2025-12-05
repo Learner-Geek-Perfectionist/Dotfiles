@@ -48,6 +48,8 @@ zstyle ':autocomplete:*' min-input 1  # 至少输入 1 个字符才显示补全
 zstyle ':autocomplete:*complete*:*' insert-unambiguous yes  # 先插入公共子串
 zstyle ':autocomplete:*history*:*' insert-unambiguous yes
 zstyle ':autocomplete:history-search-backward:*' list-lines 8  # 历史搜索显示行数
+# 默认只对命令加空格，改成所有补全都加
+zstyle ':autocomplete:*' add-space '*'
 
 zinit ice depth=1
 # 加载 zsh-autocomplete
@@ -100,9 +102,19 @@ zinit ice wait lucid depth=1
 zinit light zdharma-continuum/fast-syntax-highlighting
 
 # =============================================
-# ======== zsh-autocomplete 按键绑定自定义（可选）
+# ======== zsh-autocomplete 按键绑定自定义
 # =============================================
-# 如果需要自定义按键，可以在这里添加，例如：
-# bindkey '^I' menu-select  # Tab 直接进入菜单选择
-# bindkey -M menuselect '^I' menu-complete  # 在菜单中 Tab 移动选择
-# bindkey -M menuselect '\r' .accept-line  # Enter 直接提交命令
+# Tab 和 Shift+Tab 直接进入菜单选择模式（类似 fzf-tab）
+bindkey '^I' menu-select
+bindkey "$terminfo[kcbt]" menu-select
+
+# 在菜单中：Tab 向下移动，Shift+Tab 向上移动
+bindkey -M menuselect '^I' menu-complete
+bindkey -M menuselect "$terminfo[kcbt]" reverse-menu-complete
+
+# 在菜单中：Enter 直接执行命令（而不是只退出菜单）
+bindkey -M menuselect '\r' .accept-line
+
+# 在菜单中：← → 移动光标而不是选择（可选，取消注释启用）
+# bindkey -M menuselect '^[[D' .backward-char '^[OD' .backward-char
+# bindkey -M menuselect '^[[C' .forward-char '^[OC' .forward-char

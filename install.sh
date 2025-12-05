@@ -215,9 +215,15 @@ setup_temp_gum() {
 
 	local gum_url="https://github.com/charmbracelet/gum/releases/download/v${gum_version}/gum_${gum_version}_${os}_${arch}.tar.gz"
 
-	# --strip-components=1 跳过 tar 包中的顶层目录，直接解压 gum 二进制到 TEMP_GUM_DIR
-	if curl -fsSL "$gum_url" 2>/dev/null | tar -xz --strip-components=1 -C "$TEMP_GUM_DIR" 2>/dev/null; then
-		export PATH="$TEMP_GUM_DIR:$PATH"
+	if curl -fsSL "$gum_url" 2>/dev/null | tar -xz -C "$TEMP_GUM_DIR" 2>/dev/null; then
+		# 找到 gum 二进制（可能在顶层或子目录中）
+		local gum_bin
+		gum_bin=$(find "$TEMP_GUM_DIR" -name "gum" -type f 2>/dev/null | head -1)
+		if [[ -n "$gum_bin" && -x "$gum_bin" ]]; then
+			export PATH="$(dirname "$gum_bin"):$PATH"
+		else
+			TEMP_GUM_DIR=""
+		fi
 	else
 		TEMP_GUM_DIR=""
 	fi

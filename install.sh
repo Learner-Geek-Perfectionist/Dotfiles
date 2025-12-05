@@ -35,6 +35,9 @@ TEMP_GUM_DIR=""
 # 强制颜色输出（即使在重定向场景下）
 export CLICOLOR_FORCE=1
 
+# 确保 TERM 有值（tput 需要）
+export TERM="${TERM:-xterm}"
+
 # Fallback 颜色定义（当 gum 不可用时使用）
 export RED='\033[0;31m' GREEN='\033[0;32m' YELLOW='\033[1;33m'
 export BLUE='\033[0;34m' CYAN='\033[0;36m' PURPLE='\033[0;35m' NC='\033[0m'
@@ -90,7 +93,7 @@ print_section() {
 	local title="$1"
 	if _has_gum; then
 		local width
-		width=$(tput cols 2>/dev/null || echo 80)
+		width=$(tput cols)
 		
 		local line
 		printf -v line "%*s" "$width" ""
@@ -592,7 +595,7 @@ main() {
 
 	echo ""
 	if _has_gum; then
-		gum style --width "$(tput cols 2>/dev/null || echo 80)" --align center --background 99 --foreground 255 --bold " 🚀 Dotfiles 安装脚本 v${DOTFILES_VERSION} "
+		gum style --width "$(tput cols)" --align center --background 99 --foreground 255 --bold " 🚀 Dotfiles 安装脚本 v${DOTFILES_VERSION} "
 	else
 		print_header "=== 🚀 Dotfiles 安装脚本 v${DOTFILES_VERSION} ==="
 	fi
@@ -631,7 +634,7 @@ main() {
 	# 完成
 	echo ""
 	if _has_gum; then
-		gum style --width "$(tput cols 2>/dev/null || echo 80)" --align center --background 10 --foreground 0 --bold " ✅ 安装完成！ "
+		gum style --width "$(tput cols)" --align center --background 10 --foreground 0 --bold " ✅ 安装完成！ "
 	else
 		print_success "=== ✅ 安装完成！ ==="
 	fi

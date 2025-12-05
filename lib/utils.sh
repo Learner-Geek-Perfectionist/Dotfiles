@@ -7,6 +7,9 @@
 # ========================================
 export CLICOLOR_FORCE=1
 
+# 确保 TERM 有值（tput 需要）
+export TERM="${TERM:-xterm}"
+
 # Fallback 颜色定义（当 gum 不可用时使用）
 export RED='\033[0;31m'
 export GREEN='\033[0;32m'
@@ -86,7 +89,7 @@ print_section() {
 	local title="$1"
 	if _has_gum; then
 		local width
-		width=$(tput cols 2>/dev/null || echo 80)
+		width=$(tput cols)
 		
 		local line
 		printf -v line "%*s" "$width" ""

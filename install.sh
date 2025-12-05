@@ -167,7 +167,7 @@ check_dependencies() {
 		fi
 
 		# Linux: 尝试通过包管理器安装
-		if command -v sudo &>/dev/null; then
+		if has_sudo; then
 			for pm in "apt:apt install -y" "yum:yum install -y" "dnf:dnf install -y" "pacman:pacman -S --noconfirm" "zypper:zypper install -y"; do
 				if command -v "${pm%%:*}" &>/dev/null; then
 					print_info "尝试安装 $cmd..."
@@ -439,9 +439,9 @@ setup_default_shell() {
 	zsh_path=$(command -v zsh)
 	print_info "检测到 zsh: $zsh_path"
 
-	# 检测 sudo
-	if ! command -v sudo &>/dev/null; then
-		print_warn "sudo 不可用，请手动运行: chsh -s $zsh_path"
+	# 检测 sudo 权限
+	if ! has_sudo; then
+		print_warn "无 sudo 权限，请手动运行: chsh -s $zsh_path"
 		return 0
 	fi
 

@@ -20,6 +20,7 @@ SKIP_VSCODE="${SKIP_VSCODE:-false}"
 SKIP_DOTFILES="${SKIP_DOTFILES:-false}"
 PIXI_ONLY="${PIXI_ONLY:-false}"
 DOTFILES_ONLY="${DOTFILES_ONLY:-false}"
+VSCODE_ONLY="${VSCODE_ONLY:-false}"
 
 # 日志文件
 LOG_FILE="${LOG_FILE:-/tmp/dotfiles-install-$(whoami).log}"
@@ -55,6 +56,7 @@ Dotfiles 安装脚本 v${DOTFILES_VERSION}
 选项:
     --pixi-only      仅安装 Pixi（跳过 Dotfiles 和 VSCode）
     --dotfiles-only  仅安装 Dotfiles 配置（跳过包管理和 VSCode）
+    --vscode-only    仅安装 VSCode/Cursor 插件
     --skip-dotfiles  跳过 Dotfiles 配置
     --skip-vscode    跳过 VSCode 插件安装
     -h, --help       显示帮助
@@ -330,6 +332,12 @@ setup_default_shell() {
 install_linux() {
 	local dotfiles_dir="$1"
 
+	# 仅安装 VSCode 插件模式
+	if [[ "$VSCODE_ONLY" == "true" ]]; then
+		install_vscode "$dotfiles_dir" "1/1"
+		return 0
+	fi
+
 	# 仅安装 Dotfiles 模式
 	if [[ "$DOTFILES_ONLY" == "true" ]]; then
 		setup_dotfiles "$dotfiles_dir" "1/1"
@@ -363,6 +371,12 @@ install_linux() {
 install_macos() {
 	local dotfiles_dir="$1"
 
+	# 仅安装 VSCode 插件模式
+	if [[ "$VSCODE_ONLY" == "true" ]]; then
+		install_vscode "$dotfiles_dir" "1/1"
+		return 0
+	fi
+
 	# 仅安装 Dotfiles 模式
 	if [[ "$DOTFILES_ONLY" == "true" ]]; then
 		setup_dotfiles "$dotfiles_dir" "1/1"
@@ -395,6 +409,10 @@ main() {
 			;;
 		--dotfiles-only)
 			DOTFILES_ONLY="true"
+			shift
+			;;
+		--vscode-only)
+			VSCODE_ONLY="true"
 			shift
 			;;
 		--skip-dotfiles)

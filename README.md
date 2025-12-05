@@ -147,6 +147,9 @@ cd Dotfiles && ./install.sh
 # 仅安装 Dotfiles 配置（跳过包管理和 VSCode）
 ./install.sh --dotfiles-only
 
+# 仅安装 VSCode/Cursor 插件
+./install.sh --vscode-only
+
 # 跳过 VSCode 插件
 ./install.sh --skip-vscode
 

@@ -235,14 +235,6 @@ ruff = "ruff"
 # [envs.starship.exposed]
 # starship = "starship"
 
-
-[envs.chezmoi]
-channels = ["conda-forge"]
-[envs.chezmoi.dependencies]
-chezmoi = "*"
-[envs.chezmoi.exposed]
-chezmoi = "chezmoi"
-
 [envs.tldr]
 channels = ["conda-forge"]
 [envs.tldr.dependencies]

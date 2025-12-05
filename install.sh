@@ -215,7 +215,8 @@ setup_temp_gum() {
 
 	local gum_url="https://github.com/charmbracelet/gum/releases/download/v${gum_version}/gum_${gum_version}_${os}_${arch}.tar.gz"
 
-	if curl -fsSL "$gum_url" 2>/dev/null | tar -xz -C "$TEMP_GUM_DIR" 2>/dev/null; then
+	# --strip-components=1 跳过 tar 包中的顶层目录，直接解压 gum 二进制到 TEMP_GUM_DIR
+	if curl -fsSL "$gum_url" 2>/dev/null | tar -xz --strip-components=1 -C "$TEMP_GUM_DIR" 2>/dev/null; then
 		export PATH="$TEMP_GUM_DIR:$PATH"
 	else
 		TEMP_GUM_DIR=""

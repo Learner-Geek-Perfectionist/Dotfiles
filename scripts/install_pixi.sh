@@ -22,16 +22,10 @@ PIXI_HOME="${PIXI_HOME:-$HOME/.pixi}"
 PIXI_BIN="$PIXI_HOME/bin/pixi"
 
 # ========================================
-# 检查 Pixi 是否已安装
+# 检查 Pixi 是否已安装（静默检查）
 # ========================================
 check_pixi_installed() {
-	if command -v pixi &>/dev/null; then
-		local version
-		version=$(pixi --version 2>/dev/null)
-		print_info "Pixi 已安装: $version"
-		return 0
-	fi
-	return 1
+	command -v pixi &>/dev/null
 }
 
 # ========================================
@@ -47,7 +41,9 @@ install_pixi() {
 
 	# 检查是否已安装
 	if check_pixi_installed; then
-		print_warn "Pixi 已安装，跳过安装步骤"
+		local version
+		version=$(pixi --version 2>/dev/null)
+		print_warn "Pixi 已安装 ($version)，跳过安装"
 		return 0
 	fi
 

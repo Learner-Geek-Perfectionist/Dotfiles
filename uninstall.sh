@@ -48,6 +48,29 @@ remove_dotfiles() {
 		rm_path "$p"
 	done
 
+	# 删除 zinit 插件目录
+	rm_path ~/.local/share/zinit
+
+	# 删除 ~/.cache/zsh 目录（但保留 .zsh_history）
+	if [[ -d ~/.cache/zsh ]]; then
+		print_info "清理 ~/.cache/zsh（保留历史记录）..."
+		# 备份 history 文件
+		local history_file=~/.cache/zsh/.zsh_history
+		local history_backup=""
+		if [[ -f "$history_file" ]]; then
+			history_backup=$(mktemp)
+			cp "$history_file" "$history_backup"
+		fi
+		# 删除整个目录
+		rm -rf ~/.cache/zsh
+		# 恢复 history 文件
+		if [[ -n "$history_backup" && -f "$history_backup" ]]; then
+			mkdir -p ~/.cache/zsh
+			mv "$history_backup" "$history_file"
+			print_success "已保留: $history_file"
+		fi
+	fi
+
 	# 根据操作系统区分 VSCode/Cursor 配置路径
 	if [[ "$(uname -s)" == "Darwin" ]]; then
 		# macOS: Library 路径 + macOS 专属工具
@@ -57,8 +80,8 @@ remove_dotfiles() {
 	else
 		# Linux: .config 路径
 		for p in ~/.config/{Code,Cursor}/User; do
-		rm_path "$p"
-	done
+			rm_path "$p"
+		done
 	fi
 }
 

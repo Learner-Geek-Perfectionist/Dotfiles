@@ -10,4 +10,10 @@ export ZSH_COMPDUMP="$HOME/.cache/zsh/.zcompdump"
 export HISTFILE="$HOME/.cache/zsh/.zsh_history"
 # 让 history 命令的最大容量为无限
 export HISTSIZE=10000000
-export HISTFILESIZE=10000000
+export SAVEHIST=10000000
+
+# 记录命令执行时间戳
+setopt EXTENDED_HISTORY
+
+# history 命令显示时间格式（年-月-日 时:分:秒）
+export HIST_STAMPS="%Y-%m-%d %H:%M:%S"

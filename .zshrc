@@ -46,10 +46,10 @@ else
 fi
 
 # 加载平台配置插件
-[[ -f "${HOME}/.config/zsh/plugins/platform.zsh" ]] && source "${HOME}/.config/zsh/plugins/platform.zsh" || echo "\033[0;31m✗ 未找到 platform.zsh\033[0m"
+[[ -f "${HOME}/.config/zsh/plugins/platform.zsh" ]] && source "${HOME}/.config/zsh/plugins/platform.zsh"
 
 # 加载 zinit 插件
-[[ -f "${HOME}/.config/zsh/plugins/zinit.zsh" ]] && source "${HOME}/.config/zsh/plugins/zinit.zsh" || echo "\033[0;31m✗ 未找到 zinit.zsh\033[0m"
+[[ -f "${HOME}/.config/zsh/plugins/zinit.zsh" ]] && source "${HOME}/.config/zsh/plugins/zinit.zsh"
 
 # 自动启动 ssh-agent 并加载密钥
 if [[ -z "$SSH_AUTH_SOCK" ]]; then

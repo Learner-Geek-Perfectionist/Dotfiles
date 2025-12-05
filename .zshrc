@@ -13,6 +13,9 @@ if [[ "$(uname)" == "Darwin" ]]; then
 	export PATH="/opt/homebrew/opt/grep/libexec/gnubin:$PATH"
 	export PATH="/Applications/Cursor.app/Contents/Resources/app/bin:$PATH"
 	export PATH="/Applications/Visual Studio Code.app/Contents/Resources/app/bin:$PATH"
+	# 明确区分 code 和 cursor 命令（Cursor 也提供 code 命令会冲突）
+	alias code='/Applications/Visual\ Studio\ Code.app/Contents/Resources/app/bin/code'
+	alias cursor='/Applications/Cursor.app/Contents/Resources/app/bin/cursor'
 	export PATH="/Applications/CLion.app/Contents/MacOS:$PATH"
 	export PATH="/Applications/PyCharm.app/Contents/MacOS:$PATH"
 	export PATH="/Applications/IntelliJ IDEA.app/Contents/MacOS:$PATH"

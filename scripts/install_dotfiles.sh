@@ -83,7 +83,7 @@ main() {
 	copy_path ".pixi/manifests" ".pixi/manifests"
 
 	if ((${#COPY_SUMMARY[@]} > 0)); then
-		print_header "🧾 文件复制详情"
+		print_header "📋 文件复制详情"
 		for msg in "${COPY_SUMMARY[@]}"; do
 			print_info "  ➜ $msg"
 		done

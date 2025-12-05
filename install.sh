@@ -90,7 +90,7 @@ print_section() {
 	local title="$1"
 	if _has_gum; then
 		local width
-		width=$(tput cols)
+		width=$(tput cols 2>/dev/null || echo 80)
 		
 		local line
 		printf -v line "%*s" "$width" ""
@@ -592,7 +592,7 @@ main() {
 
 	echo ""
 	if _has_gum; then
-		gum style --width $(tput cols) --align center --background 99 --foreground 255 --bold " 🚀 Dotfiles 安装脚本 v${DOTFILES_VERSION} "
+		gum style --width "$(tput cols 2>/dev/null || echo 80)" --align center --background 99 --foreground 255 --bold " 🚀 Dotfiles 安装脚本 v${DOTFILES_VERSION} "
 	else
 		print_header "=== 🚀 Dotfiles 安装脚本 v${DOTFILES_VERSION} ==="
 	fi
@@ -631,7 +631,7 @@ main() {
 	# 完成
 	echo ""
 	if _has_gum; then
-		gum style --width $(tput cols) --align center --background 10 --foreground 0 --bold " ✅ 安装完成！ "
+		gum style --width "$(tput cols 2>/dev/null || echo 80)" --align center --background 10 --foreground 0 --bold " ✅ 安装完成！ "
 	else
 		print_success "=== ✅ 安装完成！ ==="
 	fi

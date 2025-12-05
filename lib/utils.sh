@@ -86,7 +86,7 @@ print_section() {
 	local title="$1"
 	if _has_gum; then
 		local width
-		width=$(tput cols)
+		width=$(tput cols 2>/dev/null || echo 80)
 		
 		local line
 		printf -v line "%*s" "$width" ""

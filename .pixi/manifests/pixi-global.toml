@@ -243,6 +243,14 @@ tldr = "*"
 [envs.tldr.exposed]
 tldr = "tldr"
 
+
+[envs.go-gum]
+channels = ["conda-forge"]
+[envs.go-gum.dependencies]
+go-gum = "*"
+[envs.go-gum.exposed]
+gum = "gum"
+
 # ============================================
 # 构建工具 (完全 Rootless!)
 # ============================================

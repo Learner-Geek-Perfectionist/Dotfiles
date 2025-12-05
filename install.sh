@@ -508,9 +508,12 @@ main() {
 	os=$(detect_os)
 	arch=$(detect_arch)
 
-	print_header "╔══════════════════════════════════════════╗"
-	print_header "║  🚀 Dotfiles 安装脚本 v${DOTFILES_VERSION}          ║"
-	print_header "╚══════════════════════════════════════════╝"
+	echo ""
+	if _has_gum; then
+		gum style --width $(tput cols) --align center --background 99 --foreground 255 --bold " 🚀 Dotfiles 安装脚本 v${DOTFILES_VERSION} "
+	else
+		print_header "=== 🚀 Dotfiles 安装脚本 v${DOTFILES_VERSION} ==="
+	fi
 	echo ""
 	print_info "操作系统: $os"
 	print_info "架构: $arch"
@@ -546,11 +549,9 @@ main() {
 	# 完成
 	echo ""
 	if _has_gum; then
-		gum style --border double --padding "0 2" --foreground 10 "✅ 安装完成！"
+		gum style --width $(tput cols) --align center --background 10 --foreground 0 --bold " ✅ 安装完成！ "
 	else
-		echo -e "${GREEN}╔══════════════════════════════════════════╗${NC}"
-		echo -e "${GREEN}║  ✅ 安装完成！                           ║${NC}"
-		echo -e "${GREEN}╚══════════════════════════════════════════╝${NC}"
+		print_success "=== ✅ 安装完成！ ==="
 	fi
 	echo ""
 	print_info "📝 安装日志: $LOG_FILE"

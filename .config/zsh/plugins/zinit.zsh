@@ -64,8 +64,8 @@ zinit snippet OMZL::clipboard.zsh
 zinit ice wait lucid depth=1
 zinit snippet OMZL::grep.zsh
 # key-bindings
-zinit ice wait lucid depth=1
-zinit snippet OMZL::key-bindings.zsh
+# zinit ice wait lucid depth=1
+# zinit snippet OMZL::key-bindings.zsh
 # directories
 zinit ice wait lucid depth=1
 zinit snippet OMZL::directories.zsh

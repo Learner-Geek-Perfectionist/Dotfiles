@@ -58,14 +58,36 @@ zinit light marlonrichert/zsh-autocomplete
 # =============================================
 # ======== 补全系统颜色配置（必须在 zsh-autocomplete 之后）
 # =============================================
-# 分组标题颜色（如 directory、filename）
-builtin zstyle ':completion:*:descriptions' format '%F{cyan}%B-- %d --%b%f'
+
+# 设置 LS_COLORS（文件类型颜色，补全列表使用）
+# 注意：不使用加粗(1;)，只用普通颜色，让分组标题的加粗更突出
+# md=38;5;117(浅蓝) json=33(黄) 区分开
+export LS_COLORS='di=34:ln=36:so=35:pi=33:ex=32:bd=33;40:cd=33;40:su=37;41:sg=30;43:tw=30;42:ow=34;42:*.tar=31:*.tgz=31:*.gz=31:*.zip=31:*.7z=31:*.rar=31:*.bz2=31:*.xz=31:*.jpg=35:*.jpeg=35:*.png=35:*.gif=35:*.webp=35:*.svg=35:*.mp3=36:*.mp4=36:*.mkv=36:*.avi=36:*.mov=36:*.pdf=38;5;208:*.doc=38;5;27:*.docx=38;5;27:*.xls=38;5;22:*.xlsx=38;5;22:*.ppt=38;5;166:*.pptx=38;5;166:*.md=38;5;117:*.txt=37:*.json=38;5;220:*.yaml=38;5;178:*.yml=38;5;178:*.toml=38;5;178:*.xml=33:*.html=38;5;166:*.css=38;5;39:*.js=38;5;220:*.ts=38;5;39:*.py=32:*.sh=32:*.zsh=32:*.bash=32:*.c=32:*.cpp=32:*.h=32:*.rs=38;5;208:*.go=38;5;39:*.java=38;5;136'
+
+# 不同分组标题使用不同颜色（加粗 + 前面换行增加间距）
+# 使用 %{...%} 包裹 ANSI 序列，告诉 zsh 这是非打印字符
+# 38;5;N = 前景色 256色, 1 = 加粗, 0 = 重置
+zstyle ':completion:*:*:*:*:directories' format $'\n%{\e[1;38;5;213m%}-- %d --%{\e[0m%}'
+zstyle ':completion:*:*:*:*:files' format $'\n%{\e[1;38;5;114m%}-- %d --%{\e[0m%}'
+zstyle ':completion:*:*:*:*:commands' format $'\n%{\e[1;38;5;220m%}-- %d --%{\e[0m%}'
+zstyle ':completion:*:*:*:*:aliases' format $'\n%{\e[1;38;5;177m%}-- %d --%{\e[0m%}'
+zstyle ':completion:*:*:*:*:functions' format $'\n%{\e[1;38;5;87m%}-- %d --%{\e[0m%}'
+zstyle ':completion:*:*:*:*:parameters' format $'\n%{\e[1;38;5;87m%}-- %d --%{\e[0m%}'
+zstyle ':completion:*:*:*:*:options' format $'\n%{\e[1;38;5;252m%}-- %d --%{\e[0m%}'
+# 其他分组的默认颜色
+zstyle ':completion:*:descriptions' format $'\n%{\e[1;38;5;75m%}-- %d --%{\e[0m%}'
+
 # 无匹配时的提示颜色
-builtin zstyle ':completion:*:warnings' format '%F{red}%B-- no matches found --%b%f'
+zstyle ':completion:*:warnings' format '%F{red}%B-- no matches found --%b%f'
 # 消息提示颜色
-builtin zstyle ':completion:*:messages' format '%F{yellow}%B-- %d --%b%f'
-# 补全列表文件颜色（跟随 LS_COLORS）
-builtin zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
+zstyle ':completion:*:messages' format '%F{yellow}%B-- %d --%b%f'
+
+# 补全列表文件颜色（使用 LS_COLORS）
+zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
+
+# 目录优先显示
+zstyle ':completion:*' list-dirs-first true
+
 
 # =============================================
 # ======== OMZ 迁移和插件配置

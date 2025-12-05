@@ -129,7 +129,7 @@ curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles
 
 ```bash
 # 浅克隆仓库（只获取最新提交，速度更快）
-git clone --depth=1 https://github.com/Learner-Geek-Perfectionist/Dotfiles.git
+git clone --depth=1 -b beta https://github.com/Learner-Geek-Perfectionist/Dotfiles.git
 
 # 进入目录并安装
 cd Dotfiles && ./install.sh

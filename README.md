@@ -125,14 +125,27 @@ graph TB
 curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/beta/install.sh | bash
 ```
 
+### 浅克隆安装（推荐）
+
+```bash
+# 浅克隆仓库（只获取最新提交，速度更快）
+git clone --depth=1 https://github.com/Learner-Geek-Perfectionist/Dotfiles.git
+
+# 进入目录并安装
+cd Dotfiles && ./install.sh
+```
+
 ### 安装选项
 
 ```bash
 # 完整安装
 ./install.sh
 
-# 仅安装 Pixi（包管理）
+# 仅安装 Pixi（包管理，跳过 Dotfiles 和 VSCode）
 ./install.sh --pixi-only
+
+# 仅安装 Dotfiles 配置（跳过包管理和 VSCode）
+./install.sh --dotfiles-only
 
 # 跳过 VSCode 插件
 ./install.sh --skip-vscode

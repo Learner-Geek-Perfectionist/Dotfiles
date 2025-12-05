@@ -46,8 +46,8 @@ zinit light romkatv/powerlevel10k
 # 文档：https://github.com/marlonrichert/zsh-autocomplete
 
 # zsh-autocomplete 配置（在加载前设置）
-zstyle ':autocomplete:*' delay 0.1  # 输入停止后 0.1 秒显示补全
-zstyle ':autocomplete:*' min-input 1  # 至少输入 1 个字符才显示补全
+zstyle ':autocomplete:*' delay 1 # 输入停止后 1 秒显示补全
+zstyle ':autocomplete:*' min-input 1  # 至少输入 2 个字符才显示补全
 zstyle ':autocomplete:*complete*:*' insert-unambiguous yes  # 先插入公共子串
 zstyle ':autocomplete:*history*:*' insert-unambiguous yes
 zstyle ':autocomplete:history-search-backward:*' list-lines 8  # 历史搜索显示行数
@@ -112,7 +112,7 @@ zinit snippet OMZL::directories.zsh
 zinit ice wait lucid depth=1 atload="unsetopt hist_ignore_all_dups hist_ignore_space"
 zinit snippet OMZL::history.zsh
 # theme
-zinit ice wait lucid depth=1 atload="alias ls &>/dev/null && unalias ls; (( \$+commands[eza] )) && alias ls='eza --icons -ha --time-style=iso -g'"
+zinit ice wait lucid depth=1 atload="alias ls &>/dev/null && unalias ls && alias ls='eza --icons -ha --time-style=iso -g'"
 zinit snippet OMZL::theme-and-appearance.zsh
 # git
 zinit ice wait lucid depth=1

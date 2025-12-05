@@ -51,14 +51,6 @@ main() {
 	print_header "📁 Dotfiles 配置安装："
 	echo ""
 
-	# 备份重要文件（如 zsh history）
-	local zsh_history="$HOME/.cache/zsh/.zsh_history"
-	local zsh_history_backup=""
-	if [[ -f "$zsh_history" ]]; then
-		zsh_history_backup="/tmp/.zsh_history.backup.$$"
-		cp -f "$zsh_history" "$zsh_history_backup"
-	fi
-
 	# 点文件
 	copy_path ".zshrc" ".zshrc"
 	copy_path ".zprofile" ".zprofile"
@@ -102,13 +94,6 @@ main() {
 	# 权限
 	[[ -d "$HOME/.ssh" ]] && chmod 700 "$HOME/.ssh" && chmod 600 "$HOME/.ssh"/* 2>/dev/null || true
 	[[ -f "$HOME/.config/zsh/fzf/fzf-preview.sh" ]] && chmod +x "$HOME/.config/zsh/fzf/fzf-preview.sh"
-
-	# 恢复 zsh history（确保不被覆盖）
-	if [[ -n "$zsh_history_backup" && -f "$zsh_history_backup" ]]; then
-		mkdir -p "$(dirname "$zsh_history")"
-		cp -f "$zsh_history_backup" "$zsh_history"
-		rm -f "$zsh_history_backup"
-	fi
 
 	# 安装 zinit 插件
 	echo ""

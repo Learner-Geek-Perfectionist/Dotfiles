@@ -22,7 +22,7 @@ EXTENSIONS=(
 	# 中文语言包
 	"ms-ceintl.vscode-language-pack-zh-hans"
 	# C/C++
-	"ms-vscode.cmake-tools" "twxs.cmake" "xaver.clang-format" "vadimcn.vscode-lldb"
+	"ms-vscode.cmake-tools" "xaver.clang-format" "vadimcn.vscode-lldb"
 	# Rust
 	"rust-lang.rust-analyzer" "serayuzgur.crates" "tamasfe.even-better-toml"
 	# Go

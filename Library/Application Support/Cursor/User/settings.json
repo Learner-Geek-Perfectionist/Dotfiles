@@ -89,7 +89,6 @@
         "ms-ceintl.vscode-language-pack-zh-hans",
         // C/C++
         "ms-vscode.cmake-tools",
-        "twxs.cmake",
         "xaver.clang-format",
         "vadimcn.vscode-lldb",
         "anysphere.cpptools",

@@ -210,12 +210,13 @@ yq = "yq"
 # 代码格式化
 # ============================================
 
-# [envs.shfmt]
-# channels = ["conda-forge"]
-# [envs.shfmt.dependencies]
-# shfmt = "*"
-# [envs.shfmt.exposed]
-# shfmt = "shfmt"
+[envs.go-shfmt]
+channels = ["conda-forge"]
+[envs.go-shfmt.dependencies]
+go-shfmt = "*"
+[envs.go-shfmt.exposed]
+shfmt = "shfmt"
+
 
 [envs.ruff]
 channels = ["conda-forge"]
@@ -275,11 +276,3 @@ make = "make"
 cmake = "cmake"
 ninja = "ninja"
 "pkg-config" = "pkg-config"
-
-
-[envs.go-shfmt]
-channels = ["conda-forge"]
-[envs.go-shfmt.dependencies]
-go-shfmt = "*"
-[envs.go-shfmt.exposed]
-shfmt = "shfmt"

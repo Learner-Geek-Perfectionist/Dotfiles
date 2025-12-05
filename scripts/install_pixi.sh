@@ -25,6 +25,8 @@ PIXI_BIN="$PIXI_HOME/bin/pixi"
 # 检查 Pixi 是否已安装（静默检查）
 # ========================================
 check_pixi_installed() {
+	# 先尝试添加 pixi 到 PATH（非交互式 shell 可能没有）
+	[[ -d "$HOME/.pixi/bin" ]] && export PATH="$HOME/.pixi/bin:$PATH"
 	command -v pixi &>/dev/null
 }
 

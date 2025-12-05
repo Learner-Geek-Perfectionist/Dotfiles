@@ -112,8 +112,8 @@ bindkey "$terminfo[kcbt]" menu-select
 bindkey -M menuselect '^I' menu-complete
 bindkey -M menuselect "$terminfo[kcbt]" reverse-menu-complete
 
-# 在菜单中：Enter 直接执行命令（而不是只退出菜单）
-bindkey -M menuselect '\r' .accept-line
+# 在菜单中：Enter 只确认选择（插入补全），不执行命令
+bindkey -M menuselect '\r' accept-search
 
 # 在菜单中：← → 移动光标而不是选择（可选，取消注释启用）
 # bindkey -M menuselect '^[[D' .backward-char '^[OD' .backward-char

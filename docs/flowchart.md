@@ -200,6 +200,80 @@ graph TB
     style Pixi fill:#2d4059,stroke:#16213e,color:#f07b3f
 ```
 
+## Zsh 配置加载流程
+
+```mermaid
+flowchart TB
+    subgraph ZshEnv[".zshenv (最先加载)"]
+        E1[跳过系统 compinit] --> E2[创建缓存目录]
+        E2 --> E3[设置 ZSH_COMPDUMP 路径]
+        E3 --> E4[设置 HISTFILE 路径]
+        E4 --> E5[配置历史记录大小]
+    end
+
+    subgraph ZshRC[".zshrc (交互式 Shell)"]
+        R1[设置 PATH] --> R2[加载 platform.zsh]
+        R2 --> R3[加载 zinit.zsh]
+        R3 --> R4[设置 setopt 选项]
+        R4 --> R5[加载 fzf 集成]
+        R5 --> R6[设置别名]
+    end
+
+    subgraph Zinit["zinit.zsh (插件管理)"]
+        Z1[安装/加载 Zinit] --> Z2[设置 ZINIT ZCOMPDUMP_PATH]
+        Z2 --> Z3[加载 Powerlevel10k]
+        Z3 --> Z4[配置 zsh-autocomplete]
+        Z4 --> Z5[加载 zsh-autocomplete]
+        Z5 --> Z6[配置补全颜色]
+        Z6 --> Z7[加载 OMZ 片段]
+        Z7 --> Z8[加载 zsh-completions]
+        Z8 --> Z9[加载 autosuggestions]
+        Z9 --> Z10[加载 syntax-highlighting]
+        Z10 --> Z11[配置按键绑定]
+    end
+
+    ZshEnv --> ZshRC
+    R3 --> Zinit
+
+    style ZshEnv fill:#1a1a2e,stroke:#16213e,color:#e94560
+    style ZshRC fill:#2d4059,stroke:#16213e,color:#f07b3f
+    style Zinit fill:#00adb5,stroke:#16213e,color:#222831
+```
+
+## 补全系统架构
+
+```mermaid
+graph TB
+    subgraph Completion["补全系统"]
+        A[用户输入] --> B{zsh-autocomplete}
+        B --> C[实时补全菜单]
+        B --> D[历史搜索]
+        
+        C --> E[彩色文件列表]
+        C --> F[分组标题高亮]
+        C --> G[目录优先显示]
+        
+        H[zsh-completions] --> B
+        I[fzf 补全] --> B
+    end
+
+    subgraph Cache["缓存管理"]
+        J[~/.cache/zsh/]
+        J --> K[.zcompdump]
+        J --> L[.zsh_history]
+    end
+
+    subgraph Config["配置"]
+        M[ZINIT ZCOMPDUMP_PATH] --> K
+        N[ZSH_COMPDUMP] --> K
+        O[HISTFILE] --> L
+    end
+
+    style Completion fill:#2d4059,stroke:#16213e,color:#f07b3f
+    style Cache fill:#00adb5,stroke:#16213e,color:#222831
+    style Config fill:#393e46,stroke:#16213e,color:#00adb5
+```
+
 ## 架构优势
 
 | 特性 | 说明 |
@@ -210,3 +284,6 @@ graph TB
 | **跳过已安装** | 检测已安装的插件，只安装缺失的 |
 | **验证安装** | 安装后验证是否真正成功，避免假阳性 |
 | **彩色输出** | 清晰的颜色区分：成功/跳过/失败 |
+| **缓存整理** | 补全缓存和历史文件统一存放在 `~/.cache/zsh/` |
+| **智能补全** | zsh-autocomplete 实时补全 + 彩色分组显示 |
+| **历史增强** | 带时间戳的无限容量命令历史 |

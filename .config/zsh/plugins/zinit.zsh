@@ -13,13 +13,13 @@ ZINIT_HOME="${HOME}/.local/share/zinit/zinit.git"
 
 # 如果插件管理器 zinit 没有安装......
 if [[ ! -f "${ZINIT_HOME}/zinit.zsh" ]]; then
-    printf "\033[33m\033[220mInstalling ZDHARMA-CONTINUUM Initiative Plugin Manager...\033[0m\n"
-    if git clone --depth=1 https://github.com/zdharma-continuum/zinit "$ZINIT_HOME"; then
-        printf "\033[33m\033[34mInstallation successful.\033[0m\n"
-    else
-        printf "\033[160mThe clone has failed.\033[0m\n"
-        return
-    fi
+	printf "\033[33m\033[220mInstalling ZDHARMA-CONTINUUM Initiative Plugin Manager...\033[0m\n"
+	if git clone --depth=1 https://github.com/zdharma-continuum/zinit "$ZINIT_HOME"; then
+		printf "\033[33m\033[34mInstallation successful.\033[0m\n"
+	else
+		printf "\033[160mThe clone has failed.\033[0m\n"
+		return
+	fi
 fi
 
 # 执行 zinit.zsh，加载 zinit 插件管理器本身，将 zinit 命令引入 zsh 中。
@@ -27,23 +27,39 @@ source "${ZINIT_HOME}/zinit.zsh"
 
 # 1.Powerlevel10k 的 instant prompt 的缓存文件，用于加速启动
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-$USER.zsh" ]]; then
-    source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-$USER.zsh"
+	source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-$USER.zsh"
 fi
 
 # 2.加载 p10k 主题
 zinit light romkatv/powerlevel10k
 
 # 3.加载 p10k 主题的配置文件
-[[  -f ~/.config/zsh/.p10k.zsh ]] && source ~/.config/zsh/.p10k.zsh
+[[ -f ~/.config/zsh/.p10k.zsh ]] && source ~/.config/zsh/.p10k.zsh
 
+# =============================================
+# ======== zsh-autocomplete 配置
+# =============================================
+# 必须在 compinit 和其他补全插件之前加载
+# 文档：https://github.com/marlonrichert/zsh-autocomplete
 
-# OMZ 迁移和插件配置
+# zsh-autocomplete 配置（在加载前设置）
+zstyle ':autocomplete:*' delay 0.1  # 输入停止后 0.1 秒显示补全
+zstyle ':autocomplete:*' min-input 1  # 至少输入 1 个字符才显示补全
+zstyle ':autocomplete:*complete*:*' insert-unambiguous yes  # 先插入公共子串
+zstyle ':autocomplete:*history*:*' insert-unambiguous yes
+zstyle ':autocomplete:history-search-backward:*' list-lines 8  # 历史搜索显示行数
+
+zinit ice depth=1
+# 加载 zsh-autocomplete
+zinit light marlonrichert/zsh-autocomplete
+
+# =============================================
+# ======== OMZ 迁移和插件配置
+# =============================================
 # clipboard
 zinit ice wait lucid depth=1
 zinit snippet OMZL::clipboard.zsh
-# completion
-zinit ice wait lucid depth=1
-zinit snippet OMZL::completion.zsh
+# 注意：移除了 OMZL::completion.zsh，由 zsh-autocomplete 接管补全系统
 # grep
 zinit ice wait lucid depth=1
 zinit snippet OMZL::grep.zsh
@@ -68,68 +84,25 @@ zinit snippet OMZP::git/git.plugin.zsh
 zinit ice wait lucid depth=1
 zinit snippet OMZ::plugins/colored-man-pages/colored-man-pages.plugin.zsh
 
-# 1.make sure fzf is installed
-# 2.fzf-tab needs to be loaded 「after」 compinit, but 「before」 plugins which will wrap widgets, such as zsh-autosuggestions or fast-syntax-highlighting
-# 3.Completions should be configured before compinit, as stated in the zsh-completions manual installation guide.
-
-# 设置插件加载的选项，加载 fzf-tab 插件
-zinit ice atinit"autoload -Uz compinit; compinit -C -d \"$ZSH_COMPDUMP\"; zicdreplay" wait lucid depth=1
-zinit light Aloxaf/fzf-tab
-
-# 配置 fzf-tab
-zstyle ':fzf-tab:complete:_zlua:*' query-string input
-zstyle ':fzf-tab:complete:kill:argument-rest' fzf-preview 'ps --pid=$word -o cmd --no-headers -w'
-zstyle ':fzf-tab:complete:kill:argument-rest' fzf-flags '--preview-window=down:15:wrap'
-zstyle ':fzf-tab:complete:kill:*' popup-pad 0 3
-zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --color=always $realpath'
-zstyle ':fzf-tab:complete:cd:*' popup-pad 30 0
-zstyle ':fzf-tab:complete:code:*' fzf-preview 'eza -1 --color=always $realpath'
-zstyle ':fzf-tab:complete:code:*' popup-pad 30 0
-zstyle ":fzf-tab:*" fzf-flags --color=bg+:23
-zstyle ':fzf-tab:*' fzf-command ftb-tmux-popup
-zstyle ':fzf-tab:*' switch-group '<' '>'
-
-# 添加 _fzf 补全函数
+# 添加 _fzf 补全函数（fzf 命令行工具的补全，与 fzf-tab 无关）
 zinit ice as"completion"
-zinit snippet https://github.com/Learner-Geek-Perfectionist/Dotfiles/blob/master/.config/zsh/fzf/_fzf
+zinit snippet https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/master/.config/zsh/fzf/_fzf
 
 # zsh-completions 提供大量的补全定义
 zinit ice wait blockf lucid depth=1
 zinit light zsh-users/zsh-completions
 
-# autosuggestions，atload 用于保障启动 autosuggest 功能。
+# autosuggestions，atload 用于保障启动 autosuggest 功能
 zinit ice wait lucid depth=1 atload='!_zsh_autosuggest_start'
 zinit light zsh-users/zsh-autosuggestions
-# 必须在 zdharma-continuum/fast-syntax-highlighting 之前加载 autosuggestions，否则「粘贴代码」太亮了。
+# 必须在 zdharma-continuum/fast-syntax-highlighting 之前加载 autosuggestions，否则「粘贴代码」太亮了
 zinit ice wait lucid depth=1
 zinit light zdharma-continuum/fast-syntax-highlighting
 
-# 你提供的这些 zstyle 命令是用来配置 Zsh 的样式和行为，特别是与 fzf-tab 插件和其他一些补全相关的设置相结合。fzf-tab 插件是一个用于在 Zsh 中使用 fzf（一种命令行模糊查找器）增强标签补全功能的工具。这些命令定制了如何显示和处理不同命令的补全结果。下面是对每一行设置的解释：
-# 	1.	zstyle ‘:fzf-tab:complete:_zlua:*’ query-string input
-# 	•	这条命令为 _zlua （可能是一个命令或函数）设置补全时的查询字符串为用户的输入。
-# 	2.	zstyle ‘:fzf-tab:complete:kill:argument-rest’ fzf-preview ‘ps –pid=$word -o cmd –no-headers -w -w’
-# 	•	对于 kill 命令的补全，设置一个预览窗口来显示每个进程 ID 的命令行详情。$word 是当前选定的候选词。
-# 	3.	zstyle ‘:fzf-tab:complete:kill:argument-rest’ fzf-flags ‘–preview-window=down:3:wrap’
-# 	•	设置 kill 命令的 fzf 预览窗口的样式，使其显示在下方、高度为 3 行，并允许文本换行。
-# 	4.	zstyle ‘:fzf-tab:complete:kill:*’ popup-pad 0 3
-# 	•	设置 kill 命令的弹出补全菜单的内边距为上下 0 行、左右 3 字符。
-# 	5.	zstyle ‘:fzf-tab:complete:cd:*’ fzf-preview ‘eza -1 –color=always $realpath’
-# 	•	对于 cd 命令的补全，设置一个预览窗口来显示 eza 命令（一个现代化的 ls 替代品）的输出，其中 $realpath 是补全候选的实际路径。
-# 	6.	zstyle ‘:fzf-tab:complete:cd:*’ popup-pad 30 0
-# 	•	设置 cd 命令的弹出补全菜单的内边距为上下 30 行、左右 0 字符。
-# 	7.	zstyle “:fzf-tab:*” fzf-flags –color=bg+:23
-# 	•	为所有 fzf-tab 的 fzf 调用设置背景颜色。
-# 	8.	zstyle ‘:fzf-tab:*’ fzf-command ftb-tmux-popup
-# 	•	为 fzf-tab 设置一个定制的 fzf 命令，这里指定为 ftb-tmux-popup，可能是一个脚本或函数来在 tmux 中显示 fzf。
-# 	9.	zstyle ‘:fzf-tab:*’ switch-group ‘,’ ‘.’
-# 	•	设置在 fzf-tab 补全中切换候选组的键为 , 和 .。
-# 	10.	zstyle “:completion::git-checkout:” sort false
-# 	•	禁用对 git checkout 命令的补全结果排序。
-# 	11.	zstyle ‘:completion:*’ file-sort modification
-# 	•	设置文件补全的排序方式为按修改时间。
-# 	12.	zstyle ‘:completion:*:eza’ sort false
-# 	•	禁用对 eza 命令的补全结果排序。
-# 	13.	zstyle ‘:completion:files’ sort false
-# 	•	禁用对文件补全结果的排序。
-
-# 这些配置帮助提高 Zsh 使用效率，使得命令行界面更加强大和灵活。
+# =============================================
+# ======== zsh-autocomplete 按键绑定自定义（可选）
+# =============================================
+# 如果需要自定义按键，可以在这里添加，例如：
+# bindkey '^I' menu-select  # Tab 直接进入菜单选择
+# bindkey -M menuselect '^I' menu-complete  # 在菜单中 Tab 移动选择
+# bindkey -M menuselect '\r' .accept-line  # Enter 直接提交命令

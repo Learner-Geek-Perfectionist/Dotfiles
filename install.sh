@@ -83,29 +83,24 @@ print_step() {
 	fi
 }
 
-
-# 打印动态宽度分隔线
-print_separator() {
-	local width
-	width=tput cols 2>/dev/null
-	local line=""
-	for ((i = 0; i < width; i++)); do
-		line+="━"
-	done
-	if _has_gum; then
-		gum style --foreground 13 "$line" 2>&1 | tee -a "$LOG_FILE"
-	else
-		echo -e "${PURPLE}${line}${NC}" | tee -a "$LOG_FILE"
-	fi
-}
-
-# 打印带分隔线的章节标题
 print_section() {
 	local title="$1"
-	echo ""
-	print_separator
-	print_step "$title"
-	print_separator
+	if _has_gum; then
+		local width
+		width=$(tput cols)
+		
+		local line
+		printf -v line "%*s" "$width" ""
+		line="${line// /━}"
+		
+		gum style --foreground 13 "$line" 2>&1 | tee -a "$LOG_FILE"
+		gum style --width "$width" --align center --foreground 13 "$title" 2>&1 | tee -a "$LOG_FILE"
+		gum style --foreground 13 "$line" 2>&1 | tee -a "$LOG_FILE"
+	else
+		print_step "========================================"
+		print_step "$title"
+		print_step "========================================"
+	fi
 }
 
 detect_os() {
@@ -532,14 +527,14 @@ main() {
 	case "$os" in
 	macos)
 		install_macos "$dotfiles_dir"
-		;;
+	;;
 	linux)
 		install_linux "$dotfiles_dir"
-		;;
+	;;
 	*)
 		print_error "不支持的操作系统: $os"
 		exit 1
-		;;
+	;;
 	esac
 
 	# 更新 tldr 缓存（macOS 和 Linux 通用）

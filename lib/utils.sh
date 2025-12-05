@@ -82,6 +82,26 @@ print_step() {
 	fi
 }
 
+print_section() {
+	local title="$1"
+	if _has_gum; then
+		local width
+		width=$(tput cols)
+		
+		local line
+		printf -v line "%*s" "$width" ""
+		line="${line// /━}"
+		
+		gum style --foreground 13 "$line" 2>&1 | tee -a "$DOTFILES_LOG"
+		gum style --width "$width" --align center --foreground 13 "$title" 2>&1 | tee -a "$DOTFILES_LOG"
+		gum style --foreground 13 "$line" 2>&1 | tee -a "$DOTFILES_LOG"
+	else
+		print_step "========================================"
+		print_step "$title"
+		print_step "========================================"
+	fi
+}
+
 # 带边框的消息
 print_msg() {
 	local msg="$1"

@@ -149,7 +149,7 @@ for entry in "${editors[@]}"; do
 		for ext in "${skipped[@]}"; do echo -e "  ${YELLOW}⊘ $ext${NC}"; done
 	fi
 	if [[ ${#success[@]} -gt 0 ]]; then
-		print_success "✓ 新安装 (${#success[@]}):"
+		print_success "新安装 (${#success[@]}):"
 		for ext in "${success[@]}"; do echo -e "  ${GREEN}✓ $ext${NC}"; done
 	fi
 	if [[ ${#failed[@]} -gt 0 ]]; then

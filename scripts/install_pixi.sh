@@ -55,7 +55,7 @@ install_pixi() {
 	print_info "下载并安装 Pixi..."
 
 	if curl -fsSL https://pixi.sh/install.sh | bash; then
-		print_success "✓ Pixi 安装成功"
+		print_success "Pixi 安装成功"
 	else
 		print_error "Pixi 安装失败"
 		exit 1
@@ -64,7 +64,7 @@ install_pixi() {
 	# 验证安装
 	export PATH="$PIXI_HOME/bin:$PATH"
 	if command -v pixi &>/dev/null; then
-		print_success "✓ Pixi 已可用: $(pixi --version)"
+		print_success "Pixi 已可用: $(pixi --version)"
 	else
 		print_error "Pixi 安装验证失败"
 		exit 1
@@ -95,7 +95,7 @@ setup_shell_integration() {
 			echo "" >>"$zshrc"
 			echo "# Pixi: 添加到 PATH" >>"$zshrc"
 			echo "$path_export" >>"$zshrc"
-			print_success "✓ 已添加 Pixi PATH 到 .zshrc"
+			print_success "已添加 Pixi PATH 到 .zshrc"
 		else
 			print_warn "Pixi PATH 已存在于 .zshrc"
 		fi
@@ -108,7 +108,7 @@ setup_shell_integration() {
 			echo "" >>"$bashrc"
 			echo "# Pixi: 添加到 PATH" >>"$bashrc"
 			echo "$path_export" >>"$bashrc"
-			print_success "✓ 已添加 Pixi PATH 到 .bashrc"
+			print_success "已添加 Pixi PATH 到 .bashrc"
 		else
 			print_warn "Pixi PATH 已存在于 .bashrc"
 		fi
@@ -154,7 +154,7 @@ install_global_tools() {
 	echo ""
 
 	if pixi global sync; then
-		print_success "✓ 工具包同步完成"
+		print_success "工具包同步完成"
 	else
 		print_error "Pixi 工具包同步失败"
 		print_info "请检查网络或 manifest 配置，随后重新运行: pixi global sync"
@@ -166,7 +166,7 @@ install_global_tools() {
 	print_info "已安装的工具:"
 	pixi global list
 
-	print_success "✓ 工具包安装完成"
+	print_success "工具包安装完成"
 }
 
 # ========================================

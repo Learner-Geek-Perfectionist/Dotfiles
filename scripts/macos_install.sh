@@ -32,7 +32,7 @@ if ! xcode-select --version &>/dev/null; then
 	exit 1
 fi
 
-print_success "✓ Xcode Command Line Tools 已安装"
+print_success "Xcode Command Line Tools 已安装"
 
 # 重置 Xcode 路径
 sudo xcode-select --reset 2>/dev/null || true
@@ -41,7 +41,7 @@ sudo xcode-select --reset 2>/dev/null || true
 print_info "检查 Homebrew..."
 
 if command -v brew >/dev/null 2>&1; then
-	print_success "✓ Homebrew 已安装"
+	print_success "Homebrew 已安装"
 else
 	print_info "安装 Homebrew..."
 
@@ -55,7 +55,7 @@ else
 		eval "$(/usr/local/bin/brew shellenv)"
 	fi
 
-	print_success "✓ Homebrew 安装完成"
+	print_success "Homebrew 安装完成"
 fi
 
 echo ""
@@ -65,7 +65,7 @@ echo ""
 # 3. 安装 CLI 工具
 print_info "安装 CLI 工具..."
 brew install "${brew_formulas[@]}" 2>/dev/null || true
-print_success "✓ CLI 工具安装完成"
+print_success "CLI 工具安装完成"
 
 # 4. 安装 GUI 应用
 print_info "安装 GUI 应用..."
@@ -74,7 +74,7 @@ print_info "安装 GUI 应用..."
 brew tap mihomo-party-org/mihomo-party 2>/dev/null || true
 
 brew install --cask "${brew_casks[@]}" 2>/dev/null || true
-print_success "✓ GUI 应用安装完成"
+print_success "GUI 应用安装完成"
 
 # 5. 清理 Homebrew 缓存
 print_info "清理 Homebrew 缓存..."
@@ -87,9 +87,9 @@ if dscl . -read /Groups/access_bpf &>/dev/null; then
 	if ! dscl . -read /Groups/access_bpf GroupMembership 2>/dev/null | grep -qw "$(whoami)"; then
 		print_info "添加用户到 access_bpf 组..."
 		sudo dseditgroup -o edit -a "$(whoami)" -t user access_bpf
-		print_success "✓ 网络工具权限配置完成（重启后生效）"
+		print_success "网络工具权限配置完成（重启后生效）"
 	else
-		print_success "✓ 用户已在 access_bpf 组"
+		print_success "用户已在 access_bpf 组"
 	fi
 else
 	print_warn "access_bpf 组不存在，请先安装 Wireshark"

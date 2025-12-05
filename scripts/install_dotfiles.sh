@@ -36,20 +36,28 @@ copy_path() {
 	if [[ -d "$src" ]]; then
 		mkdir -p "$dest"
 		cp -rf "$src/." "$dest/"
-		summary_msg="目录同步: $src -> $dest (覆盖同名文件)"
+		summary_msg="目录: $1 → ~/$2"
 	else
 		mkdir -p "$(dirname "$dest")"
-		cp -f "$src" "$dest"
-		summary_msg="文件复制: $src -> $dest (覆盖)"
+		cp -f "$src" "$dest"  
+		summary_msg="文件: $1 → ~/$2"
 	fi
 	COPY_SUMMARY+=("$summary_msg")
 
-	print_success "  ✓ $2"
+	print_success "$2"
 }
 
 main() {
-	print_header "📁 Dotfiles 配置安装"
+	print_header "📁 Dotfiles 配置安装："
 	echo ""
+
+	# 备份重要文件（如 zsh history）
+	local zsh_history="$HOME/.cache/zsh/.zsh_history"
+	local zsh_history_backup=""
+	if [[ -f "$zsh_history" ]]; then
+		zsh_history_backup="/tmp/.zsh_history.backup.$$"
+		cp -f "$zsh_history" "$zsh_history_backup"
+	fi
 
 	# 点文件
 	copy_path ".zshrc" ".zshrc"
@@ -83,9 +91,11 @@ main() {
 	copy_path ".pixi/manifests" ".pixi/manifests"
 
 	if ((${#COPY_SUMMARY[@]} > 0)); then
-		print_header "🧾 文件复制详情"
+		echo ""
+		print_header "🧾 文件复制详情："
+        echo ""
 		for msg in "${COPY_SUMMARY[@]}"; do
-			print_info "  ➜ $msg"
+			print_info "➜ $msg"
 		done
 	fi
 
@@ -93,15 +103,24 @@ main() {
 	[[ -d "$HOME/.ssh" ]] && chmod 700 "$HOME/.ssh" && chmod 600 "$HOME/.ssh"/* 2>/dev/null || true
 	[[ -f "$HOME/.config/zsh/fzf/fzf-preview.sh" ]] && chmod +x "$HOME/.config/zsh/fzf/fzf-preview.sh"
 
+	# 恢复 zsh history（确保不被覆盖）
+	if [[ -n "$zsh_history_backup" && -f "$zsh_history_backup" ]]; then
+		mkdir -p "$(dirname "$zsh_history")"
+		cp -f "$zsh_history_backup" "$zsh_history"
+		rm -f "$zsh_history_backup"
+	fi
+
 	# 安装 zinit 插件
-	print_header "🔌 安装 Zinit 插件"
+	echo ""
+	print_header "🔌 安装 Zinit 插件："
+    echo ""
 	if command -v zsh &>/dev/null; then
 		# 使用 zsh 执行插件安装脚本
-		zsh "$HOME/.config/zsh/plugins/zinit.zsh" && print_success "✓ Zinit 插件安装完成"
-		print_success "✓ 安装完成！请运行: source ~/.zshrc"
+		zsh "$HOME/.config/zsh/plugins/zinit.zsh" && print_success "Zinit 插件安装完成"
+		print_success "安装完成！请运行: source ~/.zshrc"
 	else
-		print_warn "⚠️ 未找到 zsh，跳过 zinit 插件安装"
-		print_success "✓ 安装完成！请先安装 zsh 后运行: source ~/.zshrc"
+		print_warn "未找到 zsh，跳过 zinit 插件安装"
+		print_success "安装完成！请先安装 zsh 后运行: source ~/.zshrc"
 	fi
 }
 

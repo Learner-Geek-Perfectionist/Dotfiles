@@ -28,15 +28,60 @@ LOG_FILE="${LOG_FILE:-/tmp/dotfiles-install-$(whoami).log}"
 # ========================================
 # 工具函数（install.sh 需要自包含，因为 curl | bash 时还没 clone 仓库）
 # ========================================
+
+# 强制颜色输出（即使在重定向场景下）
+export CLICOLOR_FORCE=1
+
+# Fallback 颜色定义（当 gum 不可用时使用）
 export RED='\033[0;31m' GREEN='\033[0;32m' YELLOW='\033[1;33m'
 export BLUE='\033[0;34m' CYAN='\033[0;36m' PURPLE='\033[0;35m' NC='\033[0m'
 
-print_info() { echo -e "${CYAN}$1${NC}"; }
-print_success() { echo -e "${GREEN}$1${NC}"; }
-print_warn() { echo -e "${YELLOW}$1${NC}"; }
-print_error() { echo -e "${RED}$1${NC}"; }
-print_header() { echo -e "${BLUE}$1${NC}"; }
-print_step() { echo -e "${PURPLE}$1${NC}"; }
+# 检测 gum 是否可用
+_has_gum() { command -v gum &>/dev/null; }
+
+# 打印函数（自动选择 gum 或 fallback，同时写日志）
+print_info() {
+	if _has_gum; then
+		gum log --level info --level.foreground 14 --message.foreground 14 "$1" 2>&1 | tee -a "$LOG_FILE"
+	else
+		echo -e "${CYAN}$1${NC}" | tee -a "$LOG_FILE"
+	fi
+}
+print_success() {
+	if _has_gum; then
+		gum log --level info --prefix "✓" --level.foreground 10 --prefix.foreground 10 --message.foreground 10 "$1" 2>&1 | tee -a "$LOG_FILE"
+	else
+		echo -e "${GREEN}✓ $1${NC}" | tee -a "$LOG_FILE"
+	fi
+}
+print_warn() {
+	if _has_gum; then
+		gum log --level warn --level.foreground 11 --message.foreground 11 "$1" 2>&1 | tee -a "$LOG_FILE"
+	else
+		echo -e "${YELLOW}⚠ $1${NC}" | tee -a "$LOG_FILE"
+	fi
+}
+print_error() {
+	if _has_gum; then
+		gum log --level error --level.foreground 9 --message.foreground 9 "$1" 2>&1 | tee -a "$LOG_FILE"
+	else
+		echo -e "${RED}✗ $1${NC}" | tee -a "$LOG_FILE"
+	fi
+}
+print_header() {
+	if _has_gum; then
+		gum style --bold --foreground 212 "$1" 2>&1 | tee -a "$LOG_FILE"
+	else
+		echo -e "${BLUE}$1${NC}" | tee -a "$LOG_FILE"
+	fi
+}
+print_step() {
+	if _has_gum; then
+		gum log --level debug --prefix "→" --level.foreground 13 --prefix.foreground 13 --message.foreground 13 "$1" 2>&1 | tee -a "$LOG_FILE"
+	else
+		echo -e "${PURPLE}→ $1${NC}" | tee -a "$LOG_FILE"
+	fi
+}
 
 detect_os() {
 	case "$(uname -s)" in Darwin) echo "macos" ;; Linux) echo "linux" ;; *) echo "unknown" ;; esac
@@ -88,7 +133,7 @@ check_dependencies() {
 		fi
 
 	done
-	print_success "✓ 依赖检查通过"
+	print_success "依赖检查通过"
 }
 
 # ========================================
@@ -129,7 +174,7 @@ install_macos_homebrew() {
 		print_warn "未找到 macOS 安装脚本，跳过 Homebrew 包安装"
 	fi
 
-	print_success "✓ Homebrew 包安装完成"
+	print_success "Homebrew 包安装完成"
 }
 
 # ========================================
@@ -154,7 +199,7 @@ install_pixi_binary() {
 	# 确保 pixi 在 PATH 中
 	export PATH="$HOME/.pixi/bin:$PATH"
 
-	print_success "✓ Pixi 安装完成"
+	print_success "Pixi 安装完成"
 }
 
 # ========================================
@@ -191,7 +236,7 @@ sync_pixi_tools() {
 		echo ""
 
 		if pixi global sync; then
-			print_success "✓ 工具包同步完成"
+			print_success "工具包同步完成"
 		else
 			print_warn "部分工具同步失败"
 			print_info "可以稍后运行: pixi global sync"
@@ -228,7 +273,7 @@ setup_dotfiles() {
 		print_warn "未找到 Dotfiles 安装脚本，跳过"
 	fi
 
-	print_success "✓ Dotfiles 配置完成"
+	print_success "Dotfiles 配置完成"
 }
 
 # ========================================
@@ -276,7 +321,7 @@ setup_ssh() {
 
 		cp "$dotfiles_dir/config" "$HOME/.ssh/config"
 		chmod 600 "$HOME/.ssh/config"
-		print_success "✓ SSH 配置完成"
+		print_success "SSH 配置完成"
 	else
 		print_warn "未找到 SSH 配置文件，跳过"
 	fi
@@ -320,7 +365,7 @@ setup_default_shell() {
 	# 设置默认 shell
 	print_info "设置默认 shell 为 zsh..."
 	if sudo chsh -s "$zsh_path" "$(whoami)"; then
-		print_success "✓ 默认 shell 已设置为 zsh"
+		print_success "默认 shell 已设置为 zsh"
 	else
 		print_warn "设置失败，请手动运行: sudo chsh -s $zsh_path $(whoami)"
 	fi
@@ -348,7 +393,7 @@ install_linux() {
 	install_pixi_binary "$dotfiles_dir" "1/5"
 
 	if [[ "$PIXI_ONLY" == "true" ]]; then
-		print_success "✓ Pixi 安装完成（仅 Pixi 模式）"
+		print_success "Pixi 安装完成（仅 Pixi 模式）"
 		return 0
 	fi
 
@@ -487,14 +532,18 @@ main() {
 	# 更新 tldr 缓存（macOS 和 Linux 通用）
 	if command -v tldr &>/dev/null; then
 		print_info "更新 tldr 缓存..."
-		tldr --update &>/dev/null && print_success "✓ tldr 缓存更新完成"
+		tldr --update &>/dev/null && print_success "tldr 缓存更新完成"
 	fi
 
 	# 完成
 	echo ""
-	print_success "╔══════════════════════════════════════════╗"
-	print_success "║  ✅ 安装完成！                           ║"
-	print_success "╚══════════════════════════════════════════╝"
+	if _has_gum; then
+		gum style --border double --padding "0 2" --foreground 10 "✅ 安装完成！"
+	else
+		echo -e "${GREEN}╔══════════════════════════════════════════╗${NC}"
+		echo -e "${GREEN}║  ✅ 安装完成！                           ║${NC}"
+		echo -e "${GREEN}╚══════════════════════════════════════════╝${NC}"
+	fi
 	echo ""
 	print_info "📝 安装日志: $LOG_FILE"
 	echo ""

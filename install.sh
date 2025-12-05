@@ -136,23 +136,50 @@ setup_logging() {
 
 # 检查并安装依赖
 check_dependencies() {
-	for cmd in git curl; do
-		command -v "$cmd" &>/dev/null && continue
-		print_warn "未找到 $cmd，尝试安装..."
+	local missing=()
 
-		# 尝试自动安装
-		if command -v sudo &>/dev/null; then
-			if [[ "$(uname)" == "Darwin" && "$cmd" == "git" ]]; then
-				xcode-select --install 2>/dev/null || true
-				print_info "请在弹窗中点击安装，完成后重新运行"
-				exit 0
-			fi
-			for pm in "apt:apt install -y" "yum:yum install -y" "dnf:dnf install -y" "pacman:pacman -S --noconfirm" "zypper:zypper install -y"; do
-				command -v "${pm%%:*}" &>/dev/null && { sudo ${pm#*:} "$cmd" && break; }
-			done
+	# 检查所有依赖
+	for cmd in git curl zsh gum; do
+		command -v "$cmd" &>/dev/null || missing+=("$cmd")
+	done
+
+	# 如果没有缺失的依赖，直接返回
+	if [[ ${#missing[@]} -eq 0 ]]; then
+		print_success "依赖检查通过"
+		return 0
+	fi
+
+	print_warn "缺少依赖: ${missing[*]}"
+
+	# 尝试安装缺失的依赖
+	for cmd in "${missing[@]}"; do
+		# macOS: git 通过 xcode-select 安装
+		if [[ "$(uname)" == "Darwin" && "$cmd" == "git" ]]; then
+			xcode-select --install 2>/dev/null || true
+			print_info "请在弹窗中点击安装，完成后重新运行"
+			exit 0
 		fi
 
+		# Linux: 尝试通过包管理器安装
+		if command -v sudo &>/dev/null; then
+			for pm in "apt:apt install -y" "yum:yum install -y" "dnf:dnf install -y" "pacman:pacman -S --noconfirm" "zypper:zypper install -y"; do
+				if command -v "${pm%%:*}" &>/dev/null; then
+					print_info "尝试安装 $cmd..."
+					sudo ${pm#*:} "$cmd" && break
+				fi
+			done
+		fi
 	done
+
+	# 重新检查所有依赖
+	for cmd in "${missing[@]}"; do
+		if ! command -v "$cmd" &>/dev/null; then
+			print_error "无法安装依赖: $cmd"
+			print_info "请手动安装后重新运行"
+			exit 1
+		fi
+	done
+
 	print_success "依赖检查通过"
 }
 

@@ -51,21 +51,21 @@ zstyle ':autocomplete:history-search-backward:*' list-lines 8  # 历史搜索显
 # 默认只对命令加空格，改成所有补全都加
 zstyle ':autocomplete:*' add-space '*'
 
-# =============================================
-# ======== 补全系统颜色配置
-# =============================================
-# 分组标题颜色（如 directory、filename）
-zstyle ':completion:*:descriptions' format '%F{cyan}%B-- %d --%b%f'
-# 无匹配时的提示颜色
-zstyle ':completion:*:warnings' format '%F{red}%B-- no matches found --%b%f'
-# 消息提示颜色
-zstyle ':completion:*:messages' format '%F{yellow}%B-- %d --%b%f'
-# 补全列表文件颜色（跟随 LS_COLORS / EZA_COLORS）
-zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
-
 zinit ice depth=1
 # 加载 zsh-autocomplete
 zinit light marlonrichert/zsh-autocomplete
+
+# =============================================
+# ======== 补全系统颜色配置（必须在 zsh-autocomplete 之后）
+# =============================================
+# 分组标题颜色（如 directory、filename）
+builtin zstyle ':completion:*:descriptions' format '%F{cyan}%B-- %d --%b%f'
+# 无匹配时的提示颜色
+builtin zstyle ':completion:*:warnings' format '%F{red}%B-- no matches found --%b%f'
+# 消息提示颜色
+builtin zstyle ':completion:*:messages' format '%F{yellow}%B-- %d --%b%f'
+# 补全列表文件颜色（跟随 LS_COLORS）
+builtin zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
 
 # =============================================
 # ======== OMZ 迁移和插件配置

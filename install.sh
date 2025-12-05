@@ -83,6 +83,31 @@ print_step() {
 	fi
 }
 
+
+# 打印动态宽度分隔线
+print_separator() {
+	local width
+	width=tput cols 2>/dev/null
+	local line=""
+	for ((i = 0; i < width; i++)); do
+		line+="━"
+	done
+	if _has_gum; then
+		gum style --foreground 13 "$line" 2>&1 | tee -a "$LOG_FILE"
+	else
+		echo -e "${PURPLE}${line}${NC}" | tee -a "$LOG_FILE"
+	fi
+}
+
+# 打印带分隔线的章节标题
+print_section() {
+	local title="$1"
+	echo ""
+	print_separator
+	print_step "$title"
+	print_separator
+}
+
 detect_os() {
 	case "$(uname -s)" in Darwin) echo "macos" ;; Linux) echo "linux" ;; *) echo "unknown" ;; esac
 }
@@ -164,9 +189,7 @@ install_macos_homebrew() {
 	local dotfiles_dir="$1"
 	local step_num="$2"
 
-	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	print_step "步骤 ${step_num}: 安装 Homebrew 包"
-	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	print_section "步骤 ${step_num}: 安装 Homebrew 包"
 
 	if [[ -f "$dotfiles_dir/scripts/macos_install.sh" ]]; then
 		bash "$dotfiles_dir/scripts/macos_install.sh"
@@ -184,9 +207,7 @@ install_pixi_binary() {
 	local dotfiles_dir="$1"
 	local step_num="$2"
 
-	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	print_step "步骤 ${step_num}: 安装 Pixi (包管理器)"
-	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	print_section "步骤 ${step_num}: 安装 Pixi (包管理器)"
 
 	# 安装 Pixi 二进制
 	if [[ -f "$dotfiles_dir/scripts/install_pixi.sh" ]]; then
@@ -209,9 +230,7 @@ sync_pixi_tools() {
 	local dotfiles_dir="$1"
 	local step_num="$2"
 
-	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	print_step "步骤 ${step_num}: 同步 Pixi 工具包"
-	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	print_section "步骤 ${step_num}: 同步 Pixi 工具包"
 
 	export PATH="$HOME/.pixi/bin:$PATH"
 
@@ -263,9 +282,7 @@ setup_dotfiles() {
 		return 0
 	fi
 
-	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	print_step "步骤 ${step_num}: 安装 Dotfiles 配置"
-	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	print_section "步骤 ${step_num}: 安装 Dotfiles 配置"
 
 	if [[ -f "$dotfiles_dir/scripts/install_dotfiles.sh" ]]; then
 		DOTFILES_DIR="$dotfiles_dir" bash "$dotfiles_dir/scripts/install_dotfiles.sh"
@@ -288,9 +305,7 @@ install_vscode() {
 		return 0
 	fi
 
-	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	print_step "步骤 ${step_num}: 安装 VSCode 插件"
-	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	print_section "步骤 ${step_num}: 安装 VSCode 插件"
 
 	if [[ -f "$dotfiles_dir/scripts/install_vscode_ext.sh" ]]; then
 		bash "$dotfiles_dir/scripts/install_vscode_ext.sh" || {
@@ -306,9 +321,7 @@ setup_ssh() {
 	local dotfiles_dir="$1"
 	local step_num="$2"
 
-	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	print_step "步骤 ${step_num}: 配置 SSH"
-	print_step "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	print_section "步骤 ${step_num}: 配置 SSH"
 
 	if [[ -f "$dotfiles_dir/config" ]]; then
 		mkdir -p "$HOME/.ssh"
@@ -332,7 +345,7 @@ setup_ssh() {
 # ========================================
 setup_default_shell() {
 	local step="$1"
-	print_step "步骤 $step: 设置默认 Shell"
+	print_section "步骤 $step: 设置默认 Shell"
 
 	# 已经是 zsh 就跳过
 	if [[ "$(basename "$SHELL")" == "zsh" ]]; then

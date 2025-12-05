@@ -46,6 +46,7 @@
         "**/.vscode-server": true
     },
     // ======================= 终端设置 =======================
+    "terminal.integrated.copyOnSelection": true,
     "terminal.integrated.cursorStyle": "line",
     "terminal.integrated.fontFamily": "Maple Mono NF CN ExtraLight",
     "terminal.integrated.fontSize": 14,

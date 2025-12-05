@@ -53,8 +53,8 @@ fi
 
 # 自动启动 ssh-agent 并加载密钥
 if [[ -z "$SSH_AUTH_SOCK" ]]; then
-	# 检查是否已有 ssh-agent 进程
-	eval $(ssh-agent -s >/dev/null 2>&1)
+	# 启动 ssh-agent
+	eval "$(ssh-agent -s)" >/dev/null 2>&1
 	# 加载默认私钥（替换为你的密钥路径，如 ~/.ssh/id_rsa）
 	ssh-add ~/.ssh/id_rsa 2>/dev/null
 fi

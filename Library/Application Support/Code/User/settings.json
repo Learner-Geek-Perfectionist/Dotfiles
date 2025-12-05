@@ -96,7 +96,7 @@
         "ms-vscode.cpptools-extension-pack",
         // Rust
         "rust-lang.rust-analyzer",
-        "serayuzgur.crates",
+        "fill-labs.dependi",
         "tamasfe.even-better-toml",
         // Go
         "golang.go",

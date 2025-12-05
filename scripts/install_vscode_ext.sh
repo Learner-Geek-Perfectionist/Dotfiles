@@ -24,7 +24,7 @@ EXTENSIONS=(
 	# C/C++
 	"ms-vscode.cmake-tools" "xaver.clang-format" "vadimcn.vscode-lldb"
 	# Rust
-	"rust-lang.rust-analyzer" "serayuzgur.crates" "tamasfe.even-better-toml"
+	"rust-lang.rust-analyzer" "fill-labs.dependi" "tamasfe.even-better-toml"
 	# Go
 	"golang.go"
 	# Python

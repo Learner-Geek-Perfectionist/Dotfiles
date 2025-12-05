@@ -119,6 +119,9 @@ setup_shell_integration() {
 		print_info "  $path_export"
 		;;
 	esac
+
+	# 让当前 shell 立即生效
+	export PATH="$HOME/.pixi/bin:$PATH"
 }
 
 # ========================================

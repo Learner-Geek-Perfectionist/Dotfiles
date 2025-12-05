@@ -45,6 +45,13 @@ export BLUE='\033[0;34m' CYAN='\033[0;36m' PURPLE='\033[0;35m' NC='\033[0m'
 # 检测 gum 是否可用
 _has_gum() { command -v gum &>/dev/null; }
 
+# 检测是否有 sudo 权限（而非 sudo 命令是否存在）
+has_sudo() {
+	[[ $EUID -eq 0 ]] && return 0                  # root 用户
+	command -v sudo &>/dev/null || return 1        # sudo 命令不存在
+	sudo -n true 2>/dev/null                       # 测试是否有权限
+}
+
 # 打印函数（自动选择 gum 或 fallback，同时写日志）
 print_info() {
 	if _has_gum; then

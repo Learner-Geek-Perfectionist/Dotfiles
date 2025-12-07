@@ -13,9 +13,6 @@ if [[ "$(uname)" == "Darwin" ]]; then
 	export PATH="/opt/homebrew/opt/grep/libexec/gnubin:$PATH"
 	export PATH="/Applications/Cursor.app/Contents/Resources/app/bin:$PATH"
 	export PATH="/Applications/Visual Studio Code.app/Contents/Resources/app/bin:$PATH"
-	# 明确区分 code 和 cursor 命令（Cursor 也提供 code 命令会冲突）
-	alias code='/Applications/Visual\ Studio\ Code.app/Contents/Resources/app/bin/code'
-	alias cursor='/Applications/Cursor.app/Contents/Resources/app/bin/cursor'
 	export PATH="/Applications/CLion.app/Contents/MacOS:$PATH"
 	export PATH="/Applications/PyCharm.app/Contents/MacOS:$PATH"
 	export PATH="/Applications/IntelliJ IDEA.app/Contents/MacOS:$PATH"
@@ -67,7 +64,6 @@ setopt no_beep              # 关闭终端提示音
 setopt no_bang_hist         # 不对双引号当中的叹号做历史记录拓展 "!"
 setopt GLOB_DOTS            # 文件名展开（globbing）包括以点(dot)开始的文件
 setopt rm_star_silent       # 取消 zsh 的安全防护功能（默认对 rm -rf ./* 删除操作触发）
-LISTMAX=0                   # 补全候选项多时不询问，直接显示
 
 # 加载 fzf 的环境变量
 command -v fzf >/dev/null 2>&1 && source <(fzf --zsh)
@@ -92,7 +88,15 @@ else
 fi
 
 export FZF_DEFAULT_COMMAND="fd $_fd_opts"
-alias fd="fd $_fd_opts"
+
+# fd 智能函数：有 sudo 权限就用 sudo，否则回退普通模式
+fd() {
+	if sudo -v 2>/dev/null; then
+		sudo command fd ${=_fd_opts} "$@" 2>/dev/null
+	else
+		command fd ${=_fd_opts} "$@" 2>/dev/null
+	fi
+}
 
 alias getip="$HOME/sh-script/get-my-ip.sh"
 

@@ -60,11 +60,11 @@ main() {
 	copy_path ".config/zsh" ".config/zsh"
 	copy_path ".config/kitty" ".config/kitty"
 
-	# VSCode/Cursor 配置（只区分操作系统，User 级设置会从本地同步到远程）
+	# VSCode/Cursor 配置（只复制 settings.json，避免覆盖用户的其它配置）
 	if [[ "$(uname)" == "Darwin" ]]; then
 		# macOS: ~/Library/Application Support/
-		has_vscode && copy_path "Library/Application Support/Code/User" "Library/Application Support/Code/User"
-		has_cursor && copy_path "Library/Application Support/Cursor/User" "Library/Application Support/Cursor/User"
+		has_vscode && copy_path "Library/Application Support/Code/User/settings.json" "Library/Application Support/Code/User/settings.json"
+		has_cursor && copy_path "Library/Application Support/Cursor/User/settings.json" "Library/Application Support/Cursor/User/settings.json"
 		# macOS 专属
 		copy_path ".config/karabiner" ".config/karabiner"
 		copy_path ".hammerspoon" ".hammerspoon"
@@ -73,8 +73,8 @@ main() {
 		if is_remote_server; then
 			print_info "检测到远程服务器环境，跳过 VSCode/Cursor 设置（设置从本地自动同步）"
 		else
-			has_vscode && copy_path ".config/Code/User" ".config/Code/User"
-			has_cursor && copy_path ".config/Cursor/User" ".config/Cursor/User"
+			has_vscode && copy_path ".config/Code/User/settings.json" ".config/Code/User/settings.json"
+			has_cursor && copy_path ".config/Cursor/User/settings.json" ".config/Cursor/User/settings.json"
 		fi
 	fi
 

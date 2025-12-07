@@ -217,6 +217,12 @@ go-shfmt = "*"
 [envs.go-shfmt.exposed]
 shfmt = "shfmt"
 
+[envs.clang-format]
+channels = ["conda-forge"]
+[envs.clang-format.dependencies]
+clang-format = "*"
+[envs.clang-format.exposed]
+clang-format = "clang-format"
 
 [envs.ruff]
 channels = ["conda-forge"]

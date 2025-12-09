@@ -4,9 +4,21 @@
 set -euo pipefail
 
 # ========================================
+# 日志配置
+# ========================================
+export DOTFILES_LOG_DIR="/tmp/dotfiles-logs/uninstall"
+export DOTFILES_LOG="${DOTFILES_LOG:-$DOTFILES_LOG_DIR/dotfiles-uninstall-$(whoami)-$(date '+%Y%m%d-%H%M%S').log}"
+
+# ========================================
 # 内嵌工具函数（避免路径依赖）
 # ========================================
 _SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# 设置日志
+setup_logging() {
+	mkdir -p "$DOTFILES_LOG_DIR"
+	echo "=== Dotfiles 卸载日志 $(date) ===" >"$DOTFILES_LOG"
+}
 
 # 尝试加载 lib/utils.sh，如果失败则使用内嵌函数
 if [[ -f "$_SCRIPT_DIR/lib/utils.sh" ]]; then
@@ -16,11 +28,11 @@ else
 	export RED='\033[0;31m' GREEN='\033[0;32m' YELLOW='\033[1;33m'
 	export BLUE='\033[0;34m' CYAN='\033[0;36m' NC='\033[0m'
 
-	print_info() { echo -e "${CYAN}$1${NC}"; }
-	print_success() { echo -e "${GREEN}✓ $1${NC}"; }
-	print_warn() { echo -e "${YELLOW}⚠ $1${NC}"; }
-	print_error() { echo -e "${RED}✗ $1${NC}"; }
-	print_header() { echo -e "${BLUE}$1${NC}"; }
+	print_info() { echo -e "${CYAN}$1${NC}" | tee -a "$DOTFILES_LOG"; }
+	print_success() { echo -e "${GREEN}✓ $1${NC}" | tee -a "$DOTFILES_LOG"; }
+	print_warn() { echo -e "${YELLOW}⚠ $1${NC}" | tee -a "$DOTFILES_LOG"; }
+	print_error() { echo -e "${RED}✗ $1${NC}" | tee -a "$DOTFILES_LOG"; }
+	print_header() { echo -e "${BLUE}$1${NC}" | tee -a "$DOTFILES_LOG"; }
 fi
 
 REMOVE_PIXI=false
@@ -134,6 +146,9 @@ while (($#)); do
 	shift
 done
 
+# 初始化日志
+setup_logging
+
 # 交互菜单
 if [[ "$REMOVE_PIXI" == "false" && "$REMOVE_DOTFILES" == "false" ]]; then
 	echo -e "\n请选择:\n  1) Pixi\n  2) Dotfiles\n  3) 全部\n  4) 退出"
@@ -154,3 +169,4 @@ fi
 [[ "$REMOVE_DOTFILES" == "true" ]] && confirm "确认删除 Dotfiles?" && remove_dotfiles
 
 print_success "✅ 完成"
+print_info "📝 卸载日志: $DOTFILES_LOG"

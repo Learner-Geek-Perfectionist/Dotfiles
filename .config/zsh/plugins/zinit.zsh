@@ -57,7 +57,8 @@ zinit snippet OMZL::directories.zsh
 zinit ice wait lucid depth=1
 zinit snippet OMZL::history.zsh
 # theme
-zinit ice wait lucid depth=1 atload="alias ls &>/dev/null && unalias ls && alias ls='eza --icons -ha --time-style=iso'"
+# eza 智能回退：有 eza 用 eza，没有则保持 OMZ 的带颜色 ls
+zinit ice wait lucid depth=1 atload="command -v eza &>/dev/null && alias ls='eza --icons -ha --time-style=iso'"
 zinit snippet OMZL::theme-and-appearance.zsh
 # git
 zinit ice wait lucid depth=1

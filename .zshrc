@@ -28,11 +28,11 @@ if [[ "$(uname)" == "Darwin" ]]; then
 	alias cl=clion
 	# pycharm 映射到 py
 	alias py=pycharm
-	alias rg='rg -uuu -i --threads=$(sysctl -n hw.ncpu)'
+	alias rg='rg -uuu -i --threads=$(sysctl -n hw.ncpu) 2>/dev/null'
 	alias open='open -R'
 
 else
-	alias rg='rg -uuu -i --threads=$(nproc)'
+	alias rg='rg -uuu -i --threads=$(nproc) 2>/dev/null'
 
 	# Cursor 编辑器（Linux）- 先添加，确保 cursor 命令可用
 	path_prepend "/opt/Cursor/resources/app/bin"

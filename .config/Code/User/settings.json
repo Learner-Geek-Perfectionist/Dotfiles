@@ -77,6 +77,8 @@
             "source.organizeImports": "explicit"
         }
     },
+    // 禁用终端自动激活 Python 环境（避免服务器没有 conda 时报错）
+    "python.terminal.activateEnvironment": false,
     "ruff.enable": true,
     "ruff.lint.enable": true,
     "ruff.format.enable": true,

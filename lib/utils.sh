@@ -117,52 +117,6 @@ print_section() {
 	fi
 }
 
-# 带边框的消息
-print_msg() {
-	local msg="$1"
-	if _has_gum; then
-		gum style --border double --margin "1" --padding "1 2" "$msg" 2>&1 | tee -a "$DOTFILES_LOG"
-	else
-		local color="${2:-$CYAN}"
-		local width=60
-		local border=$(printf '=%.0s' $(seq 1 $width))
-		echo -e "${color}${border}${NC}" | tee -a "$DOTFILES_LOG"
-		echo -e "${color}  ${msg}${NC}" | tee -a "$DOTFILES_LOG"
-		echo -e "${color}${border}${NC}" | tee -a "$DOTFILES_LOG"
-	fi
-}
-
-# ========================================
-# 日志函数（同时输出到终端和文件，保留颜色）
-# ========================================
-log_msg() {
-	local msg="$1"
-	local show_stdout="${2:-true}"
-	local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-
-	echo -e "[$timestamp] $msg" >>"$DOTFILES_LOG"
-
-	if [[ "$show_stdout" == "true" ]]; then
-		echo -e "$msg"
-	fi
-}
-
-log_error() {
-	if _has_gum; then
-		gum log --level error "$1" 2>&1 | tee -a "$DOTFILES_LOG"
-	else
-		log_msg "${RED}ERROR: $1${NC}"
-	fi
-}
-
-log_success() {
-	if _has_gum; then
-		gum log --level info --prefix "✓" "$1" 2>&1 | tee -a "$DOTFILES_LOG"
-	else
-		log_msg "${GREEN}$1${NC}"
-	fi
-}
-
 # ========================================
 # 检测函数
 # ========================================

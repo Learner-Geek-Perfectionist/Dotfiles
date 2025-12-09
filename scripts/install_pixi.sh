@@ -131,12 +131,12 @@ install_global_tools() {
 		return 1
 	fi
 
-	# 检查是否有 manifest 文件（由 chezmoi 部署）
+	# 检查是否有 manifest 文件
 	local manifest="$HOME/.pixi/manifests/pixi-global.toml"
 
 	if [[ ! -f "$manifest" ]]; then
 		print_error "未找到 Pixi 配置文件: $manifest"
-		print_info "请先通过 Chezmoi 部署或手动复制 manifest 后再运行此脚本。"
+		print_info "请先运行 install.sh 部署配置文件"
 		exit 1
 	fi
 

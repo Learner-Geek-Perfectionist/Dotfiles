@@ -47,9 +47,10 @@ _has_gum() { command -v gum &>/dev/null; }
 
 # 检测是否有 sudo 权限（而非 sudo 命令是否存在）
 has_sudo() {
-	[[ $EUID -eq 0 ]] && return 0           # root 用户
-	command -v sudo &>/dev/null || return 1 # sudo 命令不存在
-	sudo -n true 2>/dev/null                # 测试是否有权限
+	command -v sudo &>/dev/null || return 1 # 先检查有没有 sudo 命令
+	[[ $EUID -eq 0 ]] && return 0           # root 用户，无需 sudo
+	sudo -n true 2>/dev/null && return 0    # 有免密 sudo 权限
+	return 1
 }
 
 # 打印函数（自动选择 gum 或 fallback，同时写日志）
@@ -447,24 +448,28 @@ setup_default_shell() {
 	zsh_path=$(command -v zsh)
 	print_info "检测到 zsh: $zsh_path"
 
-	# 检测 sudo 权限
+	# 检测权限
 	if ! has_sudo; then
 		print_warn "无 sudo 权限，请手动运行: chsh -s $zsh_path"
 		return 0
 	fi
 
+	# 根据是否 root 决定命令前缀
+	local SUDO=""
+	[[ $EUID -ne 0 ]] && SUDO="sudo"
+
 	# 确保 zsh 在 /etc/shells 中
 	if ! grep -Fxq "$zsh_path" /etc/shells 2>/dev/null; then
 		print_info "添加 zsh 到 /etc/shells..."
-		echo "$zsh_path" | sudo tee -a /etc/shells >/dev/null
+		echo "$zsh_path" | $SUDO tee -a /etc/shells >/dev/null
 	fi
 
 	# 设置默认 shell
 	print_info "设置默认 shell 为 zsh..."
-	if sudo chsh -s "$zsh_path" "$(whoami)"; then
+	if $SUDO chsh -s "$zsh_path" "$(whoami)"; then
 		print_success "默认 shell 已设置为 zsh"
 	else
-		print_warn "设置失败，请手动运行: sudo chsh -s $zsh_path $(whoami)"
+		print_warn "设置失败，请手动运行: chsh -s $zsh_path $(whoami)"
 	fi
 }
 

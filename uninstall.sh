@@ -67,8 +67,15 @@ remove_dotfiles() {
 		rm_path "$p"
 	done
 
-	# 删除 zinit 插件目录
-	rm_path ~/.local/share/zinit
+	# 删除 zinit 相关目录（插件、补全、缓存等）
+	for p in ~/.local/share/zinit ~/.cache/zinit; do
+		rm_path "$p"
+	done
+
+	# 删除 p10k 缓存
+	for p in ~/.cache/p10k-instant-prompt-*.zsh; do
+		[[ -e "$p" ]] && rm -f "$p" && print_success "已删除: $p"
+	done
 
 	# 删除 ~/.cache/zsh 目录（但保留 .zsh_history）
 	if [[ -d ~/.cache/zsh ]]; then

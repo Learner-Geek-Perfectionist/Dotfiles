@@ -22,11 +22,14 @@ export ORANGE='\033[0;93m'
 export NC='\033[0m'
 
 # ========================================
-# 版本信息
+# 版本信息和日志配置
 # ========================================
 export DOTFILES_VERSION="${DOTFILES_VERSION:-5.0.0}"
 export DOTFILES_LOG_DIR="/tmp/dotfiles-logs"
 export DOTFILES_LOG="${DOTFILES_LOG:-$DOTFILES_LOG_DIR/dotfiles-$(whoami)-$(date '+%Y%m%d-%H%M%S').log}"
+
+# 确保日志目录存在（任何 source 此文件的脚本都会自动创建）
+mkdir -p "$DOTFILES_LOG_DIR"
 
 # ========================================
 # 检测 gum 是否可用

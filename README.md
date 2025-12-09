@@ -121,6 +121,20 @@ graph TB
 
 ### 一键安装
 
+**最小化系统**（如 Docker 容器）需要先安装 curl：
+
+```bash
+# 容器/root 用户
+apt update && apt install -y curl git zsh && \
+  curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/beta/install.sh | bash
+
+# 普通用户（需要 sudo）
+sudo apt update && sudo apt install -y curl git zsh && \
+  curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/beta/install.sh | bash
+```
+
+**已有 curl 的系统**可以直接运行：
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/beta/install.sh | bash
 ```

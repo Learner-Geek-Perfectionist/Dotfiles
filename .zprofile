@@ -5,7 +5,7 @@
 [[ -e "$HOME/.zsh_sessions" ]] && rm -rf "$HOME/.zsh_sessions"
 
 # 清理旧的 .zcompdump 文件（已迁移到 ~/.cache/zsh/）
-rm -rf "$HOME"/.zcompdump* 2>/dev/null
+rm -rf "$HOME"/.zcompdump*(N) 2>/dev/null
 
 # 添加 homebrew 的环境变量
 if [[ -x "/opt/homebrew/bin/brew" ]]; then

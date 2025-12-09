@@ -141,7 +141,7 @@ cd Dotfiles && ./install.sh
 # 完整安装
 ./install.sh
 
-# 仅安装 Pixi（包管理，跳过 Dotfiles 和 VSCode）
+# 仅安装 Pixi（仅限 Linux，跳过 Dotfiles 和 VSCode）
 ./install.sh --pixi-only
 
 # 仅安装 Dotfiles 配置（跳过包管理和 VSCode）

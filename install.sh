@@ -47,9 +47,9 @@ _has_gum() { command -v gum &>/dev/null; }
 
 # 检测是否有 sudo 权限（而非 sudo 命令是否存在）
 has_sudo() {
-	[[ $EUID -eq 0 ]] && return 0                  # root 用户
-	command -v sudo &>/dev/null || return 1        # sudo 命令不存在
-	sudo -n true 2>/dev/null                       # 测试是否有权限
+	[[ $EUID -eq 0 ]] && return 0           # root 用户
+	command -v sudo &>/dev/null || return 1 # sudo 命令不存在
+	sudo -n true 2>/dev/null                # 测试是否有权限
 }
 
 # 打印函数（自动选择 gum 或 fallback，同时写日志）
@@ -101,11 +101,11 @@ print_section() {
 	if _has_gum; then
 		local width
 		width=$(tput cols)
-		
+
 		local line
 		printf -v line "%*s" "$width" ""
 		line="${line// /━}"
-		
+
 		gum style --foreground 13 "$line" 2>&1 | tee -a "$LOG_FILE"
 		gum style --width "$width" --align center --foreground 13 "$title" 2>&1 | tee -a "$LOG_FILE"
 		gum style --foreground 13 "$line" 2>&1 | tee -a "$LOG_FILE"
@@ -406,7 +406,7 @@ setup_ssh() {
 
 	print_section "步骤 ${step_num}: 配置 SSH"
 
-	if [[ -f "$dotfiles_dir/config" ]]; then
+	if [[ -f "$dotfiles_dir/.ssh/config" ]]; then
 		mkdir -p "$HOME/.ssh"
 		chmod 700 "$HOME/.ssh"
 
@@ -415,7 +415,7 @@ setup_ssh() {
 			print_info "已备份旧的 SSH 配置"
 		fi
 
-		cp "$dotfiles_dir/config" "$HOME/.ssh/config"
+		cp "$dotfiles_dir/.ssh/config" "$HOME/.ssh/config"
 		chmod 600 "$HOME/.ssh/config"
 		print_success "SSH 配置完成"
 	else
@@ -622,14 +622,14 @@ main() {
 	case "$os" in
 	macos)
 		install_macos "$dotfiles_dir"
-	;;
+		;;
 	linux)
 		install_linux "$dotfiles_dir"
-	;;
+		;;
 	*)
 		print_error "不支持的操作系统: $os"
 		exit 1
-	;;
+		;;
 	esac
 
 	# 更新 tldr 缓存（macOS 和 Linux 通用）

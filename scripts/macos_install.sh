@@ -64,21 +64,21 @@ echo ""
 
 # 3. 安装 CLI 工具
 print_info "安装 CLI 工具..."
-brew install "${brew_formulas[@]}" 2>/dev/null
+brew install "${brew_formulas[@]}"
 print_success "CLI 工具安装完成"
 
 # 4. 安装 GUI 应用
 print_info "安装 GUI 应用..."
 
 # 添加第三方 tap
-brew tap mihomo-party-org/mihomo-party 2>/dev/null
+brew tap mihomo-party-org/mihomo-party
 
-brew install --cask "${brew_casks[@]}" 2>/dev/null
+brew install --cask "${brew_casks[@]}"
 print_success "GUI 应用安装完成"
 
 # 5. 清理 Homebrew 缓存
 print_info "清理 Homebrew 缓存..."
-brew cleanup --prune=all 2>/dev/null
+brew cleanup --prune=all
 
 # 6. 配置网络抓包工具权限
 print_info "配置网络工具权限..."

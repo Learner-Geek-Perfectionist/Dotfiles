@@ -7,13 +7,13 @@ ZINIT_HOME="${HOME}/.local/share/zinit/zinit.git"
 
 # 如果插件管理器 zinit 没有安装......
 if [[ ! -f "${ZINIT_HOME}/zinit.zsh" ]]; then
-    printf "\033[33m\033[220mInstalling ZDHARMA-CONTINUUM Initiative Plugin Manager...\033[0m\n"
-    if git clone --depth=1 https://github.com/zdharma-continuum/zinit "$ZINIT_HOME"; then
-        printf "\033[33m\033[34mInstallation successful.\033[0m\n"
-    else
-        printf "\033[160mThe clone has failed.\033[0m\n"
-        return
-    fi
+	printf "\033[33m\033[220mInstalling ZDHARMA-CONTINUUM Initiative Plugin Manager...\033[0m\n"
+	if git clone --depth=1 https://github.com/zdharma-continuum/zinit "$ZINIT_HOME"; then
+		printf "\033[33m\033[34mInstallation successful.\033[0m\n"
+	else
+		printf "\033[160mThe clone has failed.\033[0m\n"
+		return
+	fi
 fi
 
 # 执行 zinit.zsh，加载 zinit 插件管理器本身，将 zinit 命令引入 zsh 中。
@@ -24,7 +24,7 @@ ZINIT[ZCOMPDUMP_PATH]="${ZSH_COMPDUMP:-$HOME/.cache/zsh/.zcompdump}"
 
 # 1.Powerlevel10k 的 instant prompt 的缓存文件，用于加速启动
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-$USER.zsh" ]]; then
-    source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-$USER.zsh"
+	source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-$USER.zsh"
 fi
 
 # 2.加载 p10k 主题
@@ -86,7 +86,7 @@ zstyle ':fzf-tab:complete:cd:*' popup-pad 30 0
 zstyle ':fzf-tab:complete:code:*' fzf-preview 'eza -1 --color=always $realpath'
 zstyle ':fzf-tab:complete:code:*' popup-pad 30 0
 zstyle ":fzf-tab:*" fzf-flags --color=bg+:23
-zstyle ':fzf-tab:*' fzf-command ftb-tmux-popup
+zstyle ':fzf-tab:*' fzf-command
 zstyle ':fzf-tab:*' switch-group '<' '>'
 
 # 添加 _fzf 补全函数

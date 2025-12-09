@@ -25,7 +25,8 @@ export NC='\033[0m'
 # 版本信息
 # ========================================
 export DOTFILES_VERSION="${DOTFILES_VERSION:-5.0.0}"
-export DOTFILES_LOG="${DOTFILES_LOG:-/tmp/dotfiles-install-$(whoami).log}"
+export DOTFILES_LOG_DIR="/tmp/dotfiles-logs"
+export DOTFILES_LOG="${DOTFILES_LOG:-$DOTFILES_LOG_DIR/dotfiles-$(whoami)-$(date '+%Y%m%d-%H%M%S').log}"
 
 # ========================================
 # 检测 gum 是否可用

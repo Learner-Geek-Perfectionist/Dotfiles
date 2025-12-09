@@ -23,7 +23,8 @@ DOTFILES_ONLY="${DOTFILES_ONLY:-false}"
 VSCODE_ONLY="${VSCODE_ONLY:-false}"
 
 # 日志文件（与 lib/utils.sh 保持一致）
-DOTFILES_LOG="${DOTFILES_LOG:-/tmp/dotfiles-install-$(whoami).log}"
+DOTFILES_LOG_DIR="/tmp/dotfiles-logs"
+DOTFILES_LOG="${DOTFILES_LOG:-$DOTFILES_LOG_DIR/dotfiles-$(whoami)-$(date '+%Y%m%d-%H%M%S').log}"
 
 # 临时 gum 安装目录（用于解决鸡生蛋问题：脚本需要 gum，但 gum 通过 pixi 安装）
 TEMP_GUM_DIR=""
@@ -144,7 +145,7 @@ EOF
 
 # 设置日志
 setup_logging() {
-	mkdir -p "$(dirname "$DOTFILES_LOG")"
+	mkdir -p "$DOTFILES_LOG_DIR"
 	echo "=== Dotfiles 安装日志 $(date) ===" >"$DOTFILES_LOG"
 }
 

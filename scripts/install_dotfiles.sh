@@ -36,11 +36,11 @@ copy_path() {
 	if [[ -d "$src" ]]; then
 		mkdir -p "$dest"
 		cp -rf "$src/." "$dest/"
-		summary_msg="目录: $1 → ~/$2"
+		summary_msg="📁 $1 → ~/$2"
 	else
 		mkdir -p "$(dirname "$dest")"
 		cp -f "$src" "$dest"
-		summary_msg="文件: $1 → ~/$2"
+		summary_msg="📄 $1 → ~/$2"
 	fi
 	COPY_SUMMARY+=("$summary_msg")
 

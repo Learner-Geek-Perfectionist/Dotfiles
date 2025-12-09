@@ -154,9 +154,6 @@ brew_formulas=(
 	zstd
 	brotli
 
-	# Dotfiles 管理
-	chezmoi
-
 	# 其他
 	rsync
 	mas

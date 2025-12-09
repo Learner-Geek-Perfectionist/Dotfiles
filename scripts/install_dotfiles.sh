@@ -21,9 +21,9 @@ has_cursor() {
 	command -v cursor &>/dev/null && cursor --help 2>&1 | head -1 | grep -qi "cursor"
 }
 
-# 检测是否在远程服务器环境
+# 检测是否在远程服务器环境（VSCode/Cursor Remote SSH）
 is_remote_server() {
-	[[ -d "$HOME/.vscode-server" ]] || [[ -d "$HOME/.cursor-server" ]]
+	[[ -n "$VSCODE_IPC_HOOK_CLI" ]] && [[ -n "$SSH_CONNECTION" ]]
 }
 
 copy_path() {
@@ -39,7 +39,7 @@ copy_path() {
 		summary_msg="目录: $1 → ~/$2"
 	else
 		mkdir -p "$(dirname "$dest")"
-		cp -f "$src" "$dest"  
+		cp -f "$src" "$dest"
 		summary_msg="文件: $1 → ~/$2"
 	fi
 	COPY_SUMMARY+=("$summary_msg")
@@ -85,7 +85,7 @@ main() {
 	if ((${#COPY_SUMMARY[@]} > 0)); then
 		echo ""
 		print_header "🧾 文件复制详情："
-        echo ""
+		echo ""
 		for msg in "${COPY_SUMMARY[@]}"; do
 			print_info "➜ $msg"
 		done

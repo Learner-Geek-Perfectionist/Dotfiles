@@ -1,23 +1,28 @@
 # Kitty 终端 SSH 时回退 TERM（远程服务器可能没有 xterm-kitty terminfo）
 [[ "$TERM" == "xterm-kitty" && ! -e "/usr/share/terminfo/x/xterm-kitty" ]] && export TERM="xterm-256color"
 
+# PATH 添加函数（避免重复添加）
+path_prepend() {
+	[[ -d "$1" ]] && [[ ":$PATH:" != *":$1:"* ]] && export PATH="$1:$PATH"
+}
+
 # 获取操作系统信息并设置 PATH
 if [[ "$(uname)" == "Darwin" ]]; then
 	# macOS specific settings，设置 git 、clang++、ruby、make bash、VSCode、gre、less 等工具的环境变量
-	export PATH="/opt/homebrew/opt/llvm/bin:$PATH"
-	export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
-	export PATH="/opt/homebrew/opt/git/bin:$PATH"
-	export PATH="/opt/homebrew/opt/less/bin:$PATH"
-	export PATH="/opt/homebrew/opt/make/libexec/gnubin:$PATH"
-	export PATH="/opt/homebrew/opt/bash/bin:$PATH"
-	export PATH="/opt/homebrew/opt/grep/libexec/gnubin:$PATH"
-	export PATH="/Applications/Cursor.app/Contents/Resources/app/bin:$PATH"
-	export PATH="/Applications/Visual Studio Code.app/Contents/Resources/app/bin:$PATH"
-	export PATH="/Applications/CLion.app/Contents/MacOS:$PATH"
-	export PATH="/Applications/PyCharm.app/Contents/MacOS:$PATH"
-	export PATH="/Applications/IntelliJ IDEA.app/Contents/MacOS:$PATH"
-	export PATH="/opt/homebrew/anaconda3/bin:$PATH"
-	export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
+	path_prepend "/opt/homebrew/opt/llvm/bin"
+	path_prepend "/opt/homebrew/opt/ruby/bin"
+	path_prepend "/opt/homebrew/opt/git/bin"
+	path_prepend "/opt/homebrew/opt/less/bin"
+	path_prepend "/opt/homebrew/opt/make/libexec/gnubin"
+	path_prepend "/opt/homebrew/opt/bash/bin"
+	path_prepend "/opt/homebrew/opt/grep/libexec/gnubin"
+	path_prepend "/Applications/Cursor.app/Contents/Resources/app/bin"
+	path_prepend "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
+	path_prepend "/Applications/CLion.app/Contents/MacOS"
+	path_prepend "/Applications/PyCharm.app/Contents/MacOS"
+	path_prepend "/Applications/IntelliJ IDEA.app/Contents/MacOS"
+	path_prepend "/opt/homebrew/anaconda3/bin"
+	path_prepend "/opt/homebrew/opt/openjdk/bin"
 	export HOMEBREW_NO_ENV_HINTS=1
 	# clion 映射到 cl
 	alias cl=clion
@@ -30,16 +35,16 @@ else
 	alias rg='rg -uuu -i --threads=$(nproc)'
 
 	# Cursor 编辑器（Linux）- 先添加，确保 cursor 命令可用
-	[[ -d "/opt/Cursor/resources/app/bin" ]] && export PATH="/opt/Cursor/resources/app/bin:$PATH"
+	path_prepend "/opt/Cursor/resources/app/bin"
 
 	# VSCode 编辑器（Linux）- 后添加，确保 code 命令指向 VSCode 而非 Cursor
-	[[ -d "/opt/visual-studio-code/bin" ]] && export PATH="/opt/visual-studio-code/bin:$PATH"
+	path_prepend "/opt/visual-studio-code/bin"
 
 	# OrbStack Linux 支持 open 命令打开 macOS Finder
 	[[ -d "/opt/orbstack-guest" ]] && command -v open &>/dev/null && alias open='open -R'
 
 	# Pixi 路径（Linux 包管理）
-	export PATH="$HOME/.pixi/bin:$PATH"
+	path_prepend "$HOME/.pixi/bin"
 fi
 
 # 加载平台配置插件
@@ -48,13 +53,24 @@ fi
 # 加载 zinit 插件
 [[ -f "${HOME}/.config/zsh/plugins/zinit.zsh" ]] && source "${HOME}/.config/zsh/plugins/zinit.zsh"
 
-# 自动启动 ssh-agent 并加载密钥
-if [[ -z "$SSH_AUTH_SOCK" ]]; then
-	# 启动 ssh-agent
-	eval "$(ssh-agent -s)" >/dev/null 2>&1
-	# 加载默认私钥（替换为你的密钥路径，如 ~/.ssh/id_rsa）
-	ssh-add ~/.ssh/id_rsa 2>/dev/null
+# 自动启动 ssh-agent 并加载密钥（使用固定 socket 路径，避免重复启动）
+_ssh_agent_sock="$HOME/.ssh/agent.sock"
+if [[ -S "$_ssh_agent_sock" ]]; then
+	# 已有 socket，尝试复用
+	export SSH_AUTH_SOCK="$_ssh_agent_sock"
+	# 验证 agent 是否存活
+	if ! ssh-add -l &>/dev/null; then
+		# agent 已死，清理并重启
+		rm -f "$_ssh_agent_sock"
+		eval "$(ssh-agent -a "$_ssh_agent_sock" -s)" >/dev/null 2>&1
+		[[ -f ~/.ssh/id_rsa ]] && ssh-add ~/.ssh/id_rsa 2>/dev/null
+	fi
+elif [[ -z "$SSH_AUTH_SOCK" ]]; then
+	# 没有 socket 且没有 agent，启动新的
+	eval "$(ssh-agent -a "$_ssh_agent_sock" -s)" >/dev/null 2>&1
+	[[ -f ~/.ssh/id_rsa ]] && ssh-add ~/.ssh/id_rsa 2>/dev/null
 fi
+unset _ssh_agent_sock
 
 setopt interactive_comments # 注释行不报错
 setopt no_nomatch           # 通配符 * 匹配不到文件也不报错

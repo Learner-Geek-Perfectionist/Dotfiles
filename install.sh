@@ -22,8 +22,8 @@ PIXI_ONLY="${PIXI_ONLY:-false}"
 DOTFILES_ONLY="${DOTFILES_ONLY:-false}"
 VSCODE_ONLY="${VSCODE_ONLY:-false}"
 
-# 日志文件
-LOG_FILE="${LOG_FILE:-/tmp/dotfiles-install-$(whoami).log}"
+# 日志文件（与 lib/utils.sh 保持一致）
+DOTFILES_LOG="${DOTFILES_LOG:-/tmp/dotfiles-install-$(whoami).log}"
 
 # 临时 gum 安装目录（用于解决鸡生蛋问题：脚本需要 gum，但 gum 通过 pixi 安装）
 TEMP_GUM_DIR=""
@@ -55,44 +55,44 @@ has_sudo() {
 # 打印函数（自动选择 gum 或 fallback，同时写日志）
 print_info() {
 	if _has_gum; then
-		gum log --level info --level.foreground 14 --message.foreground 14 "$1" 2>&1 | tee -a "$LOG_FILE"
+		gum log --level info --level.foreground 14 --message.foreground 14 "$1" 2>&1 | tee -a "$DOTFILES_LOG"
 	else
-		echo -e "${CYAN}$1${NC}" | tee -a "$LOG_FILE"
+		echo -e "${CYAN}$1${NC}" | tee -a "$DOTFILES_LOG"
 	fi
 }
 print_success() {
 	if _has_gum; then
-		gum log --level info --prefix "✓" --level.foreground 10 --prefix.foreground 10 --message.foreground 10 "$1" 2>&1 | tee -a "$LOG_FILE"
+		gum log --level info --prefix "✓" --level.foreground 10 --prefix.foreground 10 --message.foreground 10 "$1" 2>&1 | tee -a "$DOTFILES_LOG"
 	else
-		echo -e "${GREEN}✓ $1${NC}" | tee -a "$LOG_FILE"
+		echo -e "${GREEN}✓ $1${NC}" | tee -a "$DOTFILES_LOG"
 	fi
 }
 print_warn() {
 	if _has_gum; then
-		gum log --level warn --level.foreground 11 --message.foreground 11 "$1" 2>&1 | tee -a "$LOG_FILE"
+		gum log --level warn --level.foreground 11 --message.foreground 11 "$1" 2>&1 | tee -a "$DOTFILES_LOG"
 	else
-		echo -e "${YELLOW}⚠ $1${NC}" | tee -a "$LOG_FILE"
+		echo -e "${YELLOW}⚠ $1${NC}" | tee -a "$DOTFILES_LOG"
 	fi
 }
 print_error() {
 	if _has_gum; then
-		gum log --level error --level.foreground 9 --message.foreground 9 "$1" 2>&1 | tee -a "$LOG_FILE"
+		gum log --level error --level.foreground 9 --message.foreground 9 "$1" 2>&1 | tee -a "$DOTFILES_LOG"
 	else
-		echo -e "${RED}✗ $1${NC}" | tee -a "$LOG_FILE"
+		echo -e "${RED}✗ $1${NC}" | tee -a "$DOTFILES_LOG"
 	fi
 }
 print_header() {
 	if _has_gum; then
-		gum style --bold --foreground 212 "$1" 2>&1 | tee -a "$LOG_FILE"
+		gum style --bold --foreground 212 "$1" 2>&1 | tee -a "$DOTFILES_LOG"
 	else
-		echo -e "${BLUE}$1${NC}" | tee -a "$LOG_FILE"
+		echo -e "${BLUE}$1${NC}" | tee -a "$DOTFILES_LOG"
 	fi
 }
 print_step() {
 	if _has_gum; then
-		gum log --level debug --prefix "→" --level.foreground 13 --prefix.foreground 13 --message.foreground 13 "$1" 2>&1 | tee -a "$LOG_FILE"
+		gum log --level debug --prefix "→" --level.foreground 13 --prefix.foreground 13 --message.foreground 13 "$1" 2>&1 | tee -a "$DOTFILES_LOG"
 	else
-		echo -e "${PURPLE}→ $1${NC}" | tee -a "$LOG_FILE"
+		echo -e "${PURPLE}→ $1${NC}" | tee -a "$DOTFILES_LOG"
 	fi
 }
 
@@ -106,9 +106,9 @@ print_section() {
 		printf -v line "%*s" "$width" ""
 		line="${line// /━}"
 
-		gum style --foreground 13 "$line" 2>&1 | tee -a "$LOG_FILE"
-		gum style --width "$width" --align center --foreground 13 "$title" 2>&1 | tee -a "$LOG_FILE"
-		gum style --foreground 13 "$line" 2>&1 | tee -a "$LOG_FILE"
+		gum style --foreground 13 "$line" 2>&1 | tee -a "$DOTFILES_LOG"
+		gum style --width "$width" --align center --foreground 13 "$title" 2>&1 | tee -a "$DOTFILES_LOG"
+		gum style --foreground 13 "$line" 2>&1 | tee -a "$DOTFILES_LOG"
 	else
 		print_step "========================================"
 		print_step "$title"
@@ -143,8 +143,8 @@ EOF
 
 # 设置日志
 setup_logging() {
-	mkdir -p "$(dirname "$LOG_FILE")"
-	echo "=== Dotfiles 安装日志 $(date) ===" >"$LOG_FILE"
+	mkdir -p "$(dirname "$DOTFILES_LOG")"
+	echo "=== Dotfiles 安装日志 $(date) ===" >"$DOTFILES_LOG"
 }
 
 # 检查并安装依赖
@@ -525,16 +525,13 @@ install_macos() {
 	fi
 
 	# 步骤 1: 安装 Homebrew 包
-	install_macos_homebrew "$dotfiles_dir" "1/4"
+	install_macos_homebrew "$dotfiles_dir" "1/3"
 
-	# 步骤 2: 安装 Dotfiles 配置
-	setup_dotfiles "$dotfiles_dir" "2/4"
+	# 步骤 2: 安装 Dotfiles 配置（已包含 SSH config）
+	setup_dotfiles "$dotfiles_dir" "2/3"
 
 	# 步骤 3: VSCode 插件
-	install_vscode "$dotfiles_dir" "3/4"
-
-	# 步骤 4: SSH 配置（额外的根目录 config 文件）
-	setup_ssh "$dotfiles_dir" "4/4"
+	install_vscode "$dotfiles_dir" "3/3"
 }
 
 # ========================================
@@ -646,7 +643,7 @@ main() {
 		print_success "=== ✅ 安装完成！ ==="
 	fi
 	echo ""
-	print_info "📝 安装日志: $LOG_FILE"
+	print_info "📝 安装日志: $DOTFILES_LOG"
 	echo ""
 	print_info "下一步:"
 	print_info "  1. 重新打开终端（或运行: source ~/.zshrc）"

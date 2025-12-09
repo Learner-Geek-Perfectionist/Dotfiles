@@ -86,7 +86,6 @@ zstyle ':fzf-tab:complete:cd:*' popup-pad 30 0
 zstyle ':fzf-tab:complete:code:*' fzf-preview 'eza -1 --color=always $realpath'
 zstyle ':fzf-tab:complete:code:*' popup-pad 30 0
 zstyle ":fzf-tab:*" fzf-flags --color=bg+:23
-zstyle ':fzf-tab:*' fzf-command
 zstyle ':fzf-tab:*' switch-group '<' '>'
 
 # 添加 _fzf 补全函数

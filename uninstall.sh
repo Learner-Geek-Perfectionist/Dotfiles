@@ -2,7 +2,26 @@
 # Dotfiles 卸载脚本
 
 set -euo pipefail
-source "$(dirname "${BASH_SOURCE[0]}")/lib/utils.sh"
+
+# ========================================
+# 内嵌工具函数（避免路径依赖）
+# ========================================
+_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# 尝试加载 lib/utils.sh，如果失败则使用内嵌函数
+if [[ -f "$_SCRIPT_DIR/lib/utils.sh" ]]; then
+	source "$_SCRIPT_DIR/lib/utils.sh"
+else
+	# Fallback: 内嵌必要的函数
+	export RED='\033[0;31m' GREEN='\033[0;32m' YELLOW='\033[1;33m'
+	export BLUE='\033[0;34m' CYAN='\033[0;36m' NC='\033[0m'
+
+	print_info() { echo -e "${CYAN}$1${NC}"; }
+	print_success() { echo -e "${GREEN}✓ $1${NC}"; }
+	print_warn() { echo -e "${YELLOW}⚠ $1${NC}"; }
+	print_error() { echo -e "${RED}✗ $1${NC}"; }
+	print_header() { echo -e "${BLUE}$1${NC}"; }
+fi
 
 REMOVE_PIXI=false
 REMOVE_DOTFILES=false

@@ -105,13 +105,13 @@ fi
 
 export FZF_DEFAULT_COMMAND="fd $_fd_opts"
 
-# fd 智能函数：有 sudo 权限就用 sudo，否则回退普通模式
+# fd 智能函数：有 sudo 权限就用 sudo，否则回退普通模式，完成后显示结果数量
 fd() {
 	if sudo -n true 2>/dev/null; then
-		sudo command fd ${=_fd_opts} "$@" 2>/dev/null
+		sudo command fd --color=always ${=_fd_opts} "$@" 2>/dev/null
 	else
-		command fd ${=_fd_opts} "$@" 2>/dev/null
-	fi
+		command fd --color=always ${=_fd_opts} "$@" 2>/dev/null
+	fi | tee >(wc -l | xargs printf "\n共 %d 个结果\n")
 }
 
 alias getip="$HOME/sh-script/get-my-ip.sh"

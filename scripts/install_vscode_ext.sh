@@ -32,7 +32,7 @@ EXTENSIONS=(
 	# Java/Kotlin
 	"vscjava.vscode-java-pack" "fwcd.kotlin"
 	# Lua
-	"LuaLS.lua-language-server"
+	"sumneko.lua"
 	# Shell
 	"mkhl.shfmt"
 	# Markdown

@@ -164,25 +164,26 @@ check_dependencies() {
 
 	print_warn "缺少依赖: ${missing[*]}"
 
-	# 尝试安装缺失的依赖
-	for cmd in "${missing[@]}"; do
-		# macOS: git 通过 xcode-select 安装
-		if [[ "$(uname)" == "Darwin" && "$cmd" == "git" ]]; then
-			xcode-select --install 2>/dev/null || true
-			print_info "请在弹窗中点击安装，完成后重新运行"
-			exit 0
-		fi
+	# macOS: git 通过 xcode-select 安装
+	if [[ "$(uname)" == "Darwin" ]]; then
+		for cmd in "${missing[@]}"; do
+			if [[ "$cmd" == "git" ]]; then
+				xcode-select --install 2>/dev/null || true
+				print_info "请在弹窗中点击安装，完成后重新运行"
+				exit 0
+			fi
+		done
+	fi
 
-		# Linux: 尝试通过包管理器安装
-		if has_sudo; then
-			for pm in "apt:apt install -y" "yum:yum install -y" "dnf:dnf install -y" "pacman:pacman -S --noconfirm" "zypper:zypper install -y"; do
-				if command -v "${pm%%:*}" &>/dev/null; then
-					print_info "尝试安装 $cmd..."
-					sudo ${pm#*:} "$cmd" && break
-				fi
-			done
-		fi
-	done
+	# Linux: 一次性安装所有缺失的依赖
+	if has_sudo; then
+		for pm in "apt:apt install -y" "yum:yum install -y" "dnf:dnf install -y" "pacman:pacman -S --noconfirm" "zypper:zypper install -y"; do
+			if command -v "${pm%%:*}" &>/dev/null; then
+				print_info "安装依赖: ${missing[*]}"
+				sudo ${pm#*:} "${missing[@]}" && break
+			fi
+		done
+	fi
 
 	# 重新检查所有依赖
 	for cmd in "${missing[@]}"; do

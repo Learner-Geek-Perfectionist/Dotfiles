@@ -5,9 +5,9 @@ set -e
 
 source "$(dirname "${BASH_SOURCE[0]}")/../lib/utils.sh"
 
-# 检测是否在远程服务器环境中
+# 检测是否在远程服务器环境中（VSCode/Cursor Remote SSH）
 is_remote_server() {
-	[[ -d "$HOME/.vscode-server" ]] || [[ -d "$HOME/.cursor-server" ]]
+	[[ -n "$VSCODE_IPC_HOOK_CLI" ]] && [[ -n "$SSH_CONNECTION" ]]
 }
 
 # 如果是远程服务器，跳过安装

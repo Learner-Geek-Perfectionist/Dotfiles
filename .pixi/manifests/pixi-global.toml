@@ -41,6 +41,30 @@ wget = "*"
 [envs.wget.exposed]
 wget = "wget"
 
+[envs.zip]
+channels = ["conda-forge"]
+[envs.zip.dependencies]
+zip = "*"
+unzip = "*"
+[envs.zip.exposed]
+zip = "zip"
+unzip = "unzip"
+
+[envs.xz]
+channels = ["conda-forge"]
+[envs.xz.dependencies]
+xz = "*"
+[envs.xz.exposed]
+xz = "xz"
+xzdec = "xzdec"
+
+[envs.rsync]
+channels = ["conda-forge"]
+[envs.rsync.dependencies]
+rsync = "*"
+[envs.rsync.exposed]
+rsync = "rsync"
+
 [envs.coreutils]
 channels = ["conda-forge"]
 [envs.coreutils.dependencies]
@@ -181,6 +205,13 @@ fastfetch = "*"
 [envs.fastfetch.exposed]
 fastfetch = "fastfetch"
 
+[envs.tmux]
+channels = ["conda-forge"]
+[envs.tmux.dependencies]
+tmux = "*"
+[envs.tmux.exposed]
+tmux = "tmux"
+
 # ============================================
 # 开发工具
 # ============================================
@@ -205,6 +236,21 @@ channels = ["conda-forge"]
 yq = "*"
 [envs.yq.exposed]
 yq = "yq"
+
+[envs.graphviz]
+channels = ["conda-forge"]
+[envs.graphviz.dependencies]
+graphviz = "*"
+[envs.graphviz.exposed]
+dot = "dot"
+neato = "neato"
+
+[envs.doxygen]
+channels = ["conda-forge"]
+[envs.doxygen.dependencies]
+doxygen = "*"
+[envs.doxygen.exposed]
+doxygen = "doxygen"
 
 # ============================================
 # 代码格式化
@@ -281,7 +327,10 @@ readline = "*"
 zlib = "*"
 ncurses = "*"
 libffi = "*"
-# libyaml = "*"
+# 测试框架
+gtest = "*"
+# Boost 库
+libboost-devel = "*"
 
 [envs.build-tools.exposed]
 gcc = "gcc"

@@ -107,7 +107,7 @@ export FZF_DEFAULT_COMMAND="fd $_fd_opts"
 
 # fd 智能函数：有 sudo 权限就用 sudo，否则回退普通模式
 fd() {
-	if sudo -v 2>/dev/null; then
+	if sudo -n true 2>/dev/null; then
 		sudo command fd ${=_fd_opts} "$@" 2>/dev/null
 	else
 		command fd ${=_fd_opts} "$@" 2>/dev/null

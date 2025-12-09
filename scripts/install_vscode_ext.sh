@@ -32,11 +32,11 @@ EXTENSIONS=(
 	# Java/Kotlin
 	"vscjava.vscode-java-pack" "fwcd.kotlin"
 	# Lua
-	"sumneko.lua"
+	"LuaLS.lua-language-server"
 	# Shell
 	"mkhl.shfmt"
 	# Markdown
-	"yzhang.markdown-all-in-one" "bierner.markdown-mermaid" "DavidAnson.vscode-markdownlint"
+	"bierner.markdown-mermaid" "DavidAnson.vscode-markdownlint"
 	# Git
 	"mhutchie.git-graph"
 	# Docker

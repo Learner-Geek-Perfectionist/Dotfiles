@@ -9,7 +9,7 @@
 - 🏗️ **跨平台** - 支持 Linux (x86_64, aarch64) 和 macOS (x86_64, arm64)
 - ⚡ **快速** - 所有工具预编译，秒装即用
 - 📦 **构建工具** - 包含 GCC/Make/CMake，无需系统级安装
-- 🎨 **智能补全** - zsh-autocomplete 自动补全 + 彩色分组显示
+- 🎨 **智能补全** - fzf-tab 模糊补全 + 彩色分组显示
 - 📝 **历史记录** - 带时间戳的命令历史，容量无限
 - 🧹 **整洁 Home** - 缓存文件统一存放在 `~/.cache/zsh/`
 
@@ -93,7 +93,7 @@ graph TB
 | 插件 | 说明 |
 |------|------|
 | powerlevel10k | 快速美观的主题 |
-| zsh-autocomplete | 实时自动补全菜单 |
+| fzf-tab | fzf 驱动的补全菜单 |
 | zsh-autosuggestions | 历史命令建议 |
 | fast-syntax-highlighting | 语法高亮 |
 | zsh-completions | 额外补全定义 |

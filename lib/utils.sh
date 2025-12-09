@@ -24,7 +24,7 @@ export NC='\033[0m'
 # ========================================
 # 版本信息
 # ========================================
-export DOTFILES_VERSION="${DOTFILES_VERSION:-4.0.0}"
+export DOTFILES_VERSION="${DOTFILES_VERSION:-5.0.0}"
 export DOTFILES_LOG="${DOTFILES_LOG:-/tmp/dotfiles-install-$(whoami).log}"
 
 # ========================================
@@ -102,11 +102,11 @@ print_section() {
 	if _has_gum; then
 		local width
 		width=$(tput cols)
-		
+
 		local line
 		printf -v line "%*s" "$width" ""
 		line="${line// /━}"
-		
+
 		gum style --foreground 13 "$line" 2>&1 | tee -a "$DOTFILES_LOG"
 		gum style --width "$width" --align center --foreground 13 "$title" 2>&1 | tee -a "$DOTFILES_LOG"
 		gum style --foreground 13 "$line" 2>&1 | tee -a "$DOTFILES_LOG"

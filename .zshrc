@@ -53,12 +53,14 @@ fi
 # 加载 zinit 插件
 [[ -f "${HOME}/.config/zsh/plugins/zinit.zsh" ]] && source "${HOME}/.config/zsh/plugins/zinit.zsh"
 
-# SSH Agent 配置（依赖 agent forwarding，不自行启动 agent）
+# SSH Agent 配置
 # ============================================
 # 适用场景：
 #   - macOS 系统自带 agent（launchd 管理）
 #   - OrbStack 自动转发
+#   - ssh -A 连接的服务器
 #   - Docker 容器挂载 socket
+#   - 无 agent 的 Linux 服务器（自动启动本地 agent）
 #
 # 测试 Agent Forwarding 是否生效：
 #   echo $SSH_AUTH_SOCK          # 查看 socket 路径
@@ -77,11 +79,32 @@ fi
 #   # 然后从 macOS(客户端): ssh root@<容器IP>
 #
 # ============================================
-if ! ssh-add -l &>/dev/null 2>&1 && [[ -n "$SSH_AUTH_SOCK" ]]; then
-	# 有 socket 但没密钥，加载本地密钥（仅客户端场景）
+if ssh-add -l &>/dev/null 2>&1; then
+	# 已有可用的 agent 且有密钥，不做任何事
+	:
+elif [[ -n "$SSH_AUTH_SOCK" ]]; then
+	# 有 socket 但没密钥，加载本地密钥
 	for key in ~/.ssh/id_{ed25519,rsa,ecdsa}; do
 		[[ -f "$key" ]] && ssh-add "$key" 2>/dev/null
 	done
+else
+	# 没有任何 agent（通常是无 agent 的 Linux 服务器），启动本地 agent
+	_ssh_agent_sock="$HOME/.ssh/agent.sock"
+	if [[ -S "$_ssh_agent_sock" ]]; then
+		export SSH_AUTH_SOCK="$_ssh_agent_sock"
+		# 验证 socket 对应的 agent 是否存活
+		if ! ssh-add -l &>/dev/null 2>&1; then
+			rm -f "$_ssh_agent_sock"
+			eval "$(ssh-agent -a "$_ssh_agent_sock" -s)" >/dev/null 2>&1
+		fi
+	else
+		eval "$(ssh-agent -a "$_ssh_agent_sock" -s)" >/dev/null 2>&1
+	fi
+	# 加载本地密钥
+	for key in ~/.ssh/id_{ed25519,rsa,ecdsa}; do
+		[[ -f "$key" ]] && ssh-add "$key" 2>/dev/null
+	done
+	unset _ssh_agent_sock
 fi
 
 setopt interactive_comments # 注释行不报错

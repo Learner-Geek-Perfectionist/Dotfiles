@@ -59,6 +59,14 @@ _strip_ansi() {
 	sed 's/\x1b\[[0-9;]*m//g'
 }
 
+# 运行命令并同时输出到终端和日志（日志去除颜色）
+_run_and_log() {
+	"$@" 2>&1 | while IFS= read -r line; do
+		echo "$line"
+		echo "$line" | _strip_ansi >>"$DOTFILES_LOG"
+	done
+}
+
 # 打印函数（终端保留颜色，日志去除颜色）
 print_info() {
 	local msg
@@ -68,7 +76,7 @@ print_info() {
 		msg=$(echo -e "${CYAN}$1${NC}")
 	fi
 	echo "$msg"
-	echo "$msg" | _strip_ansi >> "$DOTFILES_LOG"
+	echo "$msg" | _strip_ansi >>"$DOTFILES_LOG"
 }
 print_success() {
 	local msg
@@ -78,7 +86,7 @@ print_success() {
 		msg=$(echo -e "${GREEN}✓ $1${NC}")
 	fi
 	echo "$msg"
-	echo "$msg" | _strip_ansi >> "$DOTFILES_LOG"
+	echo "$msg" | _strip_ansi >>"$DOTFILES_LOG"
 }
 print_warn() {
 	local msg
@@ -88,7 +96,7 @@ print_warn() {
 		msg=$(echo -e "${YELLOW}⚠ $1${NC}")
 	fi
 	echo "$msg"
-	echo "$msg" | _strip_ansi >> "$DOTFILES_LOG"
+	echo "$msg" | _strip_ansi >>"$DOTFILES_LOG"
 }
 print_error() {
 	local msg
@@ -98,7 +106,7 @@ print_error() {
 		msg=$(echo -e "${RED}✗ $1${NC}")
 	fi
 	echo "$msg"
-	echo "$msg" | _strip_ansi >> "$DOTFILES_LOG"
+	echo "$msg" | _strip_ansi >>"$DOTFILES_LOG"
 }
 print_header() {
 	local msg
@@ -108,7 +116,7 @@ print_header() {
 		msg=$(echo -e "${BLUE}$1${NC}")
 	fi
 	echo "$msg"
-	echo "$msg" | _strip_ansi >> "$DOTFILES_LOG"
+	echo "$msg" | _strip_ansi >>"$DOTFILES_LOG"
 }
 print_step() {
 	local msg
@@ -118,7 +126,7 @@ print_step() {
 		msg=$(echo -e "${PURPLE}→ $1${NC}")
 	fi
 	echo "$msg"
-	echo "$msg" | _strip_ansi >> "$DOTFILES_LOG"
+	echo "$msg" | _strip_ansi >>"$DOTFILES_LOG"
 }
 
 print_section() {
@@ -134,13 +142,13 @@ print_section() {
 
 		msg=$(gum style --foreground 13 "$line" 2>&1)
 		echo "$msg"
-		echo "$msg" | _strip_ansi >> "$DOTFILES_LOG"
+		echo "$msg" | _strip_ansi >>"$DOTFILES_LOG"
 		msg=$(gum style --width "$width" --align center --foreground 13 "$title" 2>&1)
 		echo "$msg"
-		echo "$msg" | _strip_ansi >> "$DOTFILES_LOG"
+		echo "$msg" | _strip_ansi >>"$DOTFILES_LOG"
 		msg=$(gum style --foreground 13 "$line" 2>&1)
 		echo "$msg"
-		echo "$msg" | _strip_ansi >> "$DOTFILES_LOG"
+		echo "$msg" | _strip_ansi >>"$DOTFILES_LOG"
 	else
 		print_step "========================================"
 		print_step "$title"
@@ -380,7 +388,7 @@ sync_pixi_tools() {
 		# 使用 pixi 原生验证
 		echo ""
 		print_info "已安装的工具:"
-		pixi global list
+		_run_and_log pixi global list
 	else
 		print_warn "未找到 Pixi 配置文件: $manifest_dest"
 	fi
@@ -424,7 +432,7 @@ install_vscode() {
 	print_section "步骤 ${step_num}: 安装 VSCode 插件"
 
 	if [[ -f "$dotfiles_dir/scripts/install_vscode_ext.sh" ]]; then
-		bash "$dotfiles_dir/scripts/install_vscode_ext.sh" || {
+		_run_and_log bash "$dotfiles_dir/scripts/install_vscode_ext.sh" || {
 			print_warn "VSCode 插件安装跳过（可能未安装 VSCode）"
 		}
 	fi
@@ -639,8 +647,11 @@ main() {
 	arch=$(detect_arch)
 
 	echo ""
+	local msg
 	if _has_gum; then
-		gum style --width "$(tput cols)" --align center --background 99 --foreground 255 --bold " 🚀 Dotfiles 安装脚本 v${DOTFILES_VERSION} "
+		msg=$(gum style --width "$(tput cols)" --align center --background 99 --foreground 255 --bold " 🚀 Dotfiles 安装脚本 v${DOTFILES_VERSION} " 2>&1)
+		echo "$msg"
+		echo "$msg" | _strip_ansi >>"$DOTFILES_LOG"
 	else
 		print_header "=== 🚀 Dotfiles 安装脚本 v${DOTFILES_VERSION} ==="
 	fi
@@ -678,8 +689,11 @@ main() {
 
 	# 完成
 	echo ""
+	local msg
 	if _has_gum; then
-		gum style --width "$(tput cols)" --align center --background 10 --foreground 0 --bold " ✅ 安装完成！ "
+		msg=$(gum style --width "$(tput cols)" --align center --background 10 --foreground 0 --bold " ✅ 安装完成！ " 2>&1)
+		echo "$msg"
+		echo "$msg" | _strip_ansi >>"$DOTFILES_LOG"
 	else
 		print_success "=== ✅ 安装完成！ ==="
 	fi

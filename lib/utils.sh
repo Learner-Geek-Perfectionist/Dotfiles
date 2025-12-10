@@ -59,6 +59,16 @@ _strip_ansi() {
 }
 
 # ========================================
+# 运行命令并同时输出到终端和日志（日志去除颜色）
+# ========================================
+_run_and_log() {
+	"$@" 2>&1 | while IFS= read -r line; do
+		echo "$line"
+		echo "$line" | _strip_ansi >>"$DOTFILES_LOG"
+	done
+}
+
+# ========================================
 # 打印函数（终端保留颜色，日志去除颜色）
 # ========================================
 print_info() {
@@ -69,7 +79,7 @@ print_info() {
 		msg=$(echo -e "${CYAN}$1${NC}")
 	fi
 	echo "$msg"
-	echo "$msg" | _strip_ansi >> "$DOTFILES_LOG"
+	echo "$msg" | _strip_ansi >>"$DOTFILES_LOG"
 }
 
 print_success() {
@@ -80,7 +90,7 @@ print_success() {
 		msg=$(echo -e "${GREEN}✓ $1${NC}")
 	fi
 	echo "$msg"
-	echo "$msg" | _strip_ansi >> "$DOTFILES_LOG"
+	echo "$msg" | _strip_ansi >>"$DOTFILES_LOG"
 }
 
 print_warn() {
@@ -91,7 +101,7 @@ print_warn() {
 		msg=$(echo -e "${YELLOW}⚠ $1${NC}")
 	fi
 	echo "$msg"
-	echo "$msg" | _strip_ansi >> "$DOTFILES_LOG"
+	echo "$msg" | _strip_ansi >>"$DOTFILES_LOG"
 }
 
 print_error() {
@@ -102,7 +112,7 @@ print_error() {
 		msg=$(echo -e "${RED}✗ $1${NC}")
 	fi
 	echo "$msg"
-	echo "$msg" | _strip_ansi >> "$DOTFILES_LOG"
+	echo "$msg" | _strip_ansi >>"$DOTFILES_LOG"
 }
 
 print_header() {
@@ -113,7 +123,7 @@ print_header() {
 		msg=$(echo -e "${BLUE}$1${NC}")
 	fi
 	echo "$msg"
-	echo "$msg" | _strip_ansi >> "$DOTFILES_LOG"
+	echo "$msg" | _strip_ansi >>"$DOTFILES_LOG"
 }
 
 print_step() {
@@ -124,7 +134,7 @@ print_step() {
 		msg=$(echo -e "${PURPLE}→ $1${NC}")
 	fi
 	echo "$msg"
-	echo "$msg" | _strip_ansi >> "$DOTFILES_LOG"
+	echo "$msg" | _strip_ansi >>"$DOTFILES_LOG"
 }
 
 print_section() {
@@ -140,13 +150,13 @@ print_section() {
 
 		msg=$(gum style --foreground 13 "$line" 2>&1)
 		echo "$msg"
-		echo "$msg" | _strip_ansi >> "$DOTFILES_LOG"
+		echo "$msg" | _strip_ansi >>"$DOTFILES_LOG"
 		msg=$(gum style --width "$width" --align center --foreground 13 "$title" 2>&1)
 		echo "$msg"
-		echo "$msg" | _strip_ansi >> "$DOTFILES_LOG"
+		echo "$msg" | _strip_ansi >>"$DOTFILES_LOG"
 		msg=$(gum style --foreground 13 "$line" 2>&1)
 		echo "$msg"
-		echo "$msg" | _strip_ansi >> "$DOTFILES_LOG"
+		echo "$msg" | _strip_ansi >>"$DOTFILES_LOG"
 	else
 		print_step "========================================"
 		print_step "$title"

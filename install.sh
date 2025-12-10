@@ -67,6 +67,12 @@ _run_and_log() {
 	done
 }
 
+# 输出空行到终端和日志
+_echo_blank() {
+	echo ""
+	echo "" >>"$DOTFILES_LOG"
+}
+
 # 打印函数（终端保留颜色，日志去除颜色）
 print_info() {
 	local msg
@@ -298,10 +304,15 @@ clone_dotfiles() {
 
 	print_header "克隆 Dotfiles 仓库 (分支: ${branch})..." >&2
 
-	if ! git clone --depth=1 --branch "$branch" --single-branch "$DOTFILES_REPO_URL" "$tmp_dir"; then
+	# git clone 输出到 stderr，需要捕获并写入日志
+	local git_output
+	if ! git_output=$(git clone --depth=1 --branch "$branch" --single-branch "$DOTFILES_REPO_URL" "$tmp_dir" 2>&1); then
+		echo "$git_output" | _strip_ansi >>"$DOTFILES_LOG"
+		echo "$git_output" >&2
 		print_error "克隆仓库失败（分支: ${branch}）" >&2
 		exit 1
 	fi
+	echo "$git_output" | _strip_ansi >>"$DOTFILES_LOG"
 
 	echo "$tmp_dir"
 }
@@ -376,9 +387,9 @@ sync_pixi_tools() {
 	if [[ -f "$manifest_dest" ]]; then
 		print_info "同步工具包（这可能需要几分钟）..."
 		print_info "所有包都是预编译的，无需本地编译"
-		echo ""
+		_echo_blank
 
-		if pixi global sync; then
+		if _run_and_log pixi global sync; then
 			print_success "工具包同步完成"
 		else
 			print_warn "部分工具同步失败"
@@ -386,7 +397,7 @@ sync_pixi_tools() {
 		fi
 
 		# 使用 pixi 原生验证
-		echo ""
+		_echo_blank
 		print_info "已安装的工具:"
 		_run_and_log pixi global list
 	else
@@ -646,7 +657,7 @@ main() {
 	os=$(detect_os)
 	arch=$(detect_arch)
 
-	echo ""
+	_echo_blank
 	local msg
 	if _has_gum; then
 		msg=$(gum style --width "$(tput cols)" --align center --background 99 --foreground 255 --bold " 🚀 Dotfiles 安装脚本 v${DOTFILES_VERSION} " 2>&1)
@@ -655,7 +666,7 @@ main() {
 	else
 		print_header "=== 🚀 Dotfiles 安装脚本 v${DOTFILES_VERSION} ==="
 	fi
-	echo ""
+	_echo_blank
 	print_info "操作系统: $os"
 	print_info "架构: $arch"
 	print_info "用户: $(whoami)"
@@ -665,7 +676,7 @@ main() {
 	else
 		print_info "安装方式: Pixi + Dotfiles 配置 (完全 Rootless)"
 	fi
-	echo ""
+	_echo_blank
 
 	# 根据操作系统执行安装
 	case "$os" in
@@ -688,7 +699,7 @@ main() {
 	fi
 
 	# 完成
-	echo ""
+	_echo_blank
 	local msg
 	if _has_gum; then
 		msg=$(gum style --width "$(tput cols)" --align center --background 10 --foreground 0 --bold " ✅ 安装完成！ " 2>&1)
@@ -697,26 +708,26 @@ main() {
 	else
 		print_success "=== ✅ 安装完成！ ==="
 	fi
-	echo ""
+	_echo_blank
 	print_info "📝 安装日志: $DOTFILES_LOG"
-	echo ""
+	_echo_blank
 	print_info "下一步:"
 	print_info "  1. 重新打开终端（或运行: source ~/.zshrc）"
 
 	if [[ "$os" == "linux" ]]; then
 		print_info "  2. 查看已安装工具: pixi global list"
-		echo ""
+		_echo_blank
 		print_info "常用命令:"
 		print_info "  pixi global install <pkg>  - 安装包"
 		print_info "  pixi global upgrade        - 升级所有包"
 	else
 		print_info "  2. 验证安装: brew list"
-		echo ""
+		_echo_blank
 		print_info "常用命令:"
 		print_info "  brew update && brew upgrade - 更新所有包"
 	fi
 
-	echo ""
+	_echo_blank
 }
 
 main "$@"

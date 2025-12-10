@@ -77,6 +77,18 @@ gawk = "*"
 # GNU 版本，比系统自带更强大
 gawk = "gawk"
 
+[envs.openssh]
+channels = ["conda-forge"]
+[envs.openssh.dependencies]
+openssh = "*"
+[envs.openssh.exposed]
+ssh = "ssh"
+scp = "scp"
+sftp = "sftp"
+ssh-agent = "ssh-agent"
+ssh-add = "ssh-add"
+ssh-keygen = "ssh-keygen"
+
 # ============================================
 # 编程语言运行时
 # ============================================

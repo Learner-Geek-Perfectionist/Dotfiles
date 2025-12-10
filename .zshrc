@@ -70,7 +70,7 @@ fi
 #   docker run -v $SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent ...
 #
 #   # 方式 2：SSH 连接（需要容器安装 sshd）
-#   apt update && apt install -y openssh-server
+#   apt update && apt install -y openssh-server iproute2
 #   echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
 #   service ssh start
 #   passwd root  # 设置密码

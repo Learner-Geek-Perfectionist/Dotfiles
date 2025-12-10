@@ -82,12 +82,17 @@ channels = ["conda-forge"]
 [envs.openssh.dependencies]
 openssh = "*"
 [envs.openssh.exposed]
+# 客户端工具
 ssh = "ssh"
 scp = "scp"
 sftp = "sftp"
 ssh-agent = "ssh-agent"
 ssh-add = "ssh-add"
 ssh-keygen = "ssh-keygen"
+ssh-keyscan = "ssh-keyscan"
+ssh-copy-id = "ssh-copy-id"
+# 服务端
+sshd = "sshd"
 
 # ============================================
 # 编程语言运行时

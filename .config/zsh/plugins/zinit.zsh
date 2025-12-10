@@ -53,8 +53,8 @@ zinit snippet OMZL::key-bindings.zsh
 # directories
 zinit ice wait lucid depth=1
 zinit snippet OMZL::directories.zsh
-# history
-zinit ice wait lucid depth=1
+# history（禁用 hist_ignore_space，记录所有命令包括空格开头的）
+zinit ice wait lucid depth=1 atload="unsetopt hist_ignore_space"
 zinit snippet OMZL::history.zsh
 # theme
 # eza 智能回退：有 eza 用 eza，没有则保持 OMZ 的带颜色 ls

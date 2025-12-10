@@ -53,6 +53,11 @@ fi
 # 加载 zinit 插件
 [[ -f "${HOME}/.config/zsh/plugins/zinit.zsh" ]] && source "${HOME}/.config/zsh/plugins/zinit.zsh"
 
+# ============================================
+# SSH ControlPath 目录（用于连接复用）
+# ============================================
+[[ ! -d "$HOME/.ssh/sockets" ]] && mkdir -p "$HOME/.ssh/sockets" && chmod 700 "$HOME/.ssh/sockets"
+
 # SSH Agent 配置
 # ============================================
 # 适用场景：

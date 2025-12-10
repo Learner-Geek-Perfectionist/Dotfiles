@@ -70,11 +70,11 @@ fi
 #   docker run -v $SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent ...
 #
 #   # 方式 2：SSH 连接（需要容器安装 sshd）
-#   apt install -y openssh-server
+#   apt update && apt install -y openssh-server
 #   echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
 #   service ssh start
 #   passwd root  # 设置密码
-#   # 然后从 macOS: ssh root@<容器IP>
+#   # 然后从 macOS(客户端): ssh root@<容器IP>
 #
 # ============================================
 if ! ssh-add -l &>/dev/null 2>&1 && [[ -n "$SSH_AUTH_SOCK" ]]; then

@@ -420,7 +420,7 @@ setup_dotfiles() {
 	print_section "步骤 ${step_num}: 安装 Dotfiles 配置"
 
 	if [[ -f "$dotfiles_dir/scripts/install_dotfiles.sh" ]]; then
-		DOTFILES_DIR="$dotfiles_dir" bash "$dotfiles_dir/scripts/install_dotfiles.sh"
+		_run_and_log env DOTFILES_DIR="$dotfiles_dir" bash "$dotfiles_dir/scripts/install_dotfiles.sh"
 	else
 		print_warn "未找到 Dotfiles 安装脚本，跳过"
 	fi

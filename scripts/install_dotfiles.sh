@@ -103,7 +103,8 @@ main() {
 		# 使用交互式 zsh 执行，因为 zinit 的 'wait lucid' 延迟加载需要交互式 shell
 		# 等待几秒让异步插件有时间下载安装
 		print_info "正在安装 zinit 插件（需要几秒钟）..."
-		zsh -ic "source '$HOME/.zshrc'; sleep 5; exit" 2>/dev/null || true
+		# 不丢弃 stderr，让输出被上层捕获到日志
+		zsh -ic "source '$HOME/.zshrc'; sleep 5; exit" 2>&1 || true
 		print_success "Zinit 插件安装完成"
 		print_success "安装完成！请运行: source ~/.zshrc"
 	else

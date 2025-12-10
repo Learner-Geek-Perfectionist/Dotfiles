@@ -90,7 +90,6 @@ ssh-agent = "ssh-agent"
 ssh-add = "ssh-add"
 ssh-keygen = "ssh-keygen"
 ssh-keyscan = "ssh-keyscan"
-ssh-copy-id = "ssh-copy-id"
 # 服务端
 sshd = "sshd"
 
@@ -293,7 +292,7 @@ llvm-tools = "*"
 [envs.llvm.exposed]
 # Clang 编译器
 clang = "clang"
-"clang++" = "clang++"
+"clang++" = "clang++-21"
 # Clang 工具
 clangd = "clangd"
 clang-format = "clang-format"
@@ -318,7 +317,6 @@ llvm-size = "llvm-size"
 size = "llvm-size"
 llvm-readelf = "llvm-readelf"
 readelf = "llvm-readelf"
-llvm-config = "llvm-config"
 llvm-cov = "llvm-cov"
 llvm-profdata = "llvm-profdata"
 # 链接器别名

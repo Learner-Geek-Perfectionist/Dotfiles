@@ -413,6 +413,10 @@ setup_ssh() {
 		mkdir -p "$HOME/.ssh"
 		chmod 700 "$HOME/.ssh"
 
+		# 创建 ControlPath 所需的 sockets 目录（用于 SSH 连接复用）
+		mkdir -p "$HOME/.ssh/sockets"
+		chmod 700 "$HOME/.ssh/sockets"
+
 		if [[ -f "$HOME/.ssh/config" ]]; then
 			cp "$HOME/.ssh/config" "$HOME/.ssh/config.bak"
 			print_info "已备份旧的 SSH 配置"

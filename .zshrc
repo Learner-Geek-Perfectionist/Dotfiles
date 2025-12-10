@@ -79,33 +79,53 @@ fi
 #   # 然后从 macOS(客户端): ssh root@<容器IP>
 #
 # ============================================
-if ssh-add -l &>/dev/null 2>&1; then
-	# 已有可用的 agent 且有密钥，不做任何事
+# 1. 尝试连接当前环境中的 agent
+# ssh-add -l 返回 0 代表连接正常且有密钥；返回 1 代表连接正常但无密钥；返回 2 代表无法连接
+ssh-add -l &>/dev/null
+_agent_status=$?
+
+if [[ $_agent_status -eq 0 ]]; then
+	# [情况A] Agent 存活且已有密钥 -> 此时什么都不用做
 	:
-elif [[ -n "$SSH_AUTH_SOCK" ]]; then
-	# 有 socket 但没密钥，加载本地密钥
+elif [[ $_agent_status -eq 1 ]]; then
+	# [情况B] Agent 存活但没有密钥 -> 只需要加载密钥
 	for key in ~/.ssh/id_{ed25519,rsa,ecdsa}; do
-		[[ -f "$key" ]] && ssh-add "$key" 2>/dev/null
+		if [[ -f "$key" ]]; then
+			# macOS 用户建议加上 --apple-use-keychain
+			[[ "$(uname)" == "Darwin" ]] && OPTS="--apple-use-keychain" || OPTS=""
+			ssh-add $OPTS "$key" 2>/dev/null
+		fi
 	done
 else
-	# 没有任何 agent（通常是无 agent 的 Linux 服务器），启动本地 agent
+	# [情况C] 无法连接 Agent (状态码 2) 或者 SSH_AUTH_SOCK 为空 -> 启动/复用固定 Agent
 	_ssh_agent_sock="$HOME/.ssh/agent.sock"
+
+	# 如果 socket 文件存在，但连不上(上面已经测过了)，说明是死 socket，删掉
 	if [[ -S "$_ssh_agent_sock" ]]; then
 		export SSH_AUTH_SOCK="$_ssh_agent_sock"
-		# 验证 socket 对应的 agent 是否存活
-		if ! ssh-add -l &>/dev/null 2>&1; then
+		if ! ssh-add -l &>/dev/null; then
 			rm -f "$_ssh_agent_sock"
-			eval "$(ssh-agent -a "$_ssh_agent_sock" -s)" >/dev/null 2>&1
 		fi
-	else
-		eval "$(ssh-agent -a "$_ssh_agent_sock" -s)" >/dev/null 2>&1
 	fi
-	# 加载本地密钥
+
+	# 如果 socket 不存在（被删了或本来就没有），启动新的
+	if [[ ! -S "$_ssh_agent_sock" ]]; then
+		eval "$(ssh-agent -a "$_ssh_agent_sock" -s)" >/dev/null 2>&1
+	else
+		# 即使文件存在，也要 export 一下确保当前 shell 拿到变量
+		export SSH_AUTH_SOCK="$_ssh_agent_sock"
+	fi
+
+	# 启动完新 agent 后，加载密钥
 	for key in ~/.ssh/id_{ed25519,rsa,ecdsa}; do
-		[[ -f "$key" ]] && ssh-add "$key" 2>/dev/null
+		if [[ -f "$key" ]]; then
+			[[ "$(uname)" == "Darwin" ]] && OPTS="--apple-use-keychain" || OPTS=""
+			ssh-add $OPTS "$key" 2>/dev/null
+		fi
 	done
-	unset _ssh_agent_sock
 fi
+
+unset _agent_status _ssh_agent_sock
 
 setopt interactive_comments # 注释行不报错
 setopt no_nomatch           # 通配符 * 匹配不到文件也不报错

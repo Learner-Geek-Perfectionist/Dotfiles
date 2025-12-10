@@ -58,12 +58,11 @@ fi
 # 适用场景：
 #   - macOS 系统自带 agent（launchd 管理）
 #   - OrbStack 自动转发
-#   - ssh -A 连接的服务器
 #   - Docker 容器挂载 socket
 #
 # 测试 Agent Forwarding 是否生效：
 #   echo $SSH_AUTH_SOCK          # 查看 socket 路径
-#   ssh-add -l                   # 列出已加载的密钥
+#   ssh-add -l                   # 列出已加载的公钥指纹
 #   ssh -T git@github.com        # 测试 GitHub 认证
 #
 # Docker 容器使用 Agent Forwarding：
@@ -75,7 +74,7 @@ fi
 #   echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
 #   service ssh start
 #   passwd root  # 设置密码
-#   # 然后从 macOS: ssh -A root@<容器IP>
+#   # 然后从 macOS: ssh root@<容器IP>
 #
 # ============================================
 if ! ssh-add -l &>/dev/null 2>&1 && [[ -n "$SSH_AUTH_SOCK" ]]; then

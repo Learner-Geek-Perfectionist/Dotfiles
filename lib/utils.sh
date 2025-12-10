@@ -52,58 +52,84 @@ has_sudo() {
 }
 
 # ========================================
-# 打印函数（自动选择 gum 或 fallback）
+# 去除 ANSI 颜色代码（用于写入日志）
+# ========================================
+_strip_ansi() {
+	sed 's/\x1b\[[0-9;]*m//g'
+}
+
+# ========================================
+# 打印函数（终端保留颜色，日志去除颜色）
 # ========================================
 print_info() {
+	local msg
 	if _has_gum; then
-		gum log --level info --level.foreground 14 --message.foreground 14 "$1" 2>&1 | tee -a "$DOTFILES_LOG"
+		msg=$(gum log --level info --level.foreground 14 --message.foreground 14 "$1" 2>&1)
 	else
-		echo -e "${CYAN}$1${NC}" | tee -a "$DOTFILES_LOG"
+		msg=$(echo -e "${CYAN}$1${NC}")
 	fi
+	echo "$msg"
+	echo "$msg" | _strip_ansi >> "$DOTFILES_LOG"
 }
 
 print_success() {
+	local msg
 	if _has_gum; then
-		gum log --level info --prefix "✓" --level.foreground 10 --prefix.foreground 10 --message.foreground 10 "$1" 2>&1 | tee -a "$DOTFILES_LOG"
+		msg=$(gum log --level info --prefix "✓" --level.foreground 10 --prefix.foreground 10 --message.foreground 10 "$1" 2>&1)
 	else
-		echo -e "${GREEN}✓ $1${NC}" | tee -a "$DOTFILES_LOG"
+		msg=$(echo -e "${GREEN}✓ $1${NC}")
 	fi
+	echo "$msg"
+	echo "$msg" | _strip_ansi >> "$DOTFILES_LOG"
 }
 
 print_warn() {
+	local msg
 	if _has_gum; then
-		gum log --level warn --level.foreground 11 --message.foreground 11 "$1" 2>&1 | tee -a "$DOTFILES_LOG"
+		msg=$(gum log --level warn --level.foreground 11 --message.foreground 11 "$1" 2>&1)
 	else
-		echo -e "${YELLOW}⚠ $1${NC}" | tee -a "$DOTFILES_LOG"
+		msg=$(echo -e "${YELLOW}⚠ $1${NC}")
 	fi
+	echo "$msg"
+	echo "$msg" | _strip_ansi >> "$DOTFILES_LOG"
 }
 
 print_error() {
+	local msg
 	if _has_gum; then
-		gum log --level error --level.foreground 9 --message.foreground 9 "$1" 2>&1 | tee -a "$DOTFILES_LOG"
+		msg=$(gum log --level error --level.foreground 9 --message.foreground 9 "$1" 2>&1)
 	else
-		echo -e "${RED}✗ $1${NC}" | tee -a "$DOTFILES_LOG"
+		msg=$(echo -e "${RED}✗ $1${NC}")
 	fi
+	echo "$msg"
+	echo "$msg" | _strip_ansi >> "$DOTFILES_LOG"
 }
 
 print_header() {
+	local msg
 	if _has_gum; then
-		gum style --bold --foreground 212 "$1" 2>&1 | tee -a "$DOTFILES_LOG"
+		msg=$(gum style --bold --foreground 212 "$1" 2>&1)
 	else
-		echo -e "${BLUE}$1${NC}" | tee -a "$DOTFILES_LOG"
+		msg=$(echo -e "${BLUE}$1${NC}")
 	fi
+	echo "$msg"
+	echo "$msg" | _strip_ansi >> "$DOTFILES_LOG"
 }
 
 print_step() {
+	local msg
 	if _has_gum; then
-		gum log --level debug --prefix "→" --level.foreground 13 --prefix.foreground 13 --message.foreground 13 "$1" 2>&1 | tee -a "$DOTFILES_LOG"
+		msg=$(gum log --level debug --prefix "→" --level.foreground 13 --prefix.foreground 13 --message.foreground 13 "$1" 2>&1)
 	else
-		echo -e "${PURPLE}→ $1${NC}" | tee -a "$DOTFILES_LOG"
+		msg=$(echo -e "${PURPLE}→ $1${NC}")
 	fi
+	echo "$msg"
+	echo "$msg" | _strip_ansi >> "$DOTFILES_LOG"
 }
 
 print_section() {
 	local title="$1"
+	local msg
 	if _has_gum; then
 		local width
 		width=$(tput cols)
@@ -112,9 +138,15 @@ print_section() {
 		printf -v line "%*s" "$width" ""
 		line="${line// /━}"
 
-		gum style --foreground 13 "$line" 2>&1 | tee -a "$DOTFILES_LOG"
-		gum style --width "$width" --align center --foreground 13 "$title" 2>&1 | tee -a "$DOTFILES_LOG"
-		gum style --foreground 13 "$line" 2>&1 | tee -a "$DOTFILES_LOG"
+		msg=$(gum style --foreground 13 "$line" 2>&1)
+		echo "$msg"
+		echo "$msg" | _strip_ansi >> "$DOTFILES_LOG"
+		msg=$(gum style --width "$width" --align center --foreground 13 "$title" 2>&1)
+		echo "$msg"
+		echo "$msg" | _strip_ansi >> "$DOTFILES_LOG"
+		msg=$(gum style --foreground 13 "$line" 2>&1)
+		echo "$msg"
+		echo "$msg" | _strip_ansi >> "$DOTFILES_LOG"
 	else
 		print_step "========================================"
 		print_step "$title"

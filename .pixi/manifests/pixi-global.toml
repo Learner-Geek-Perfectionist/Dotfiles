@@ -286,17 +286,26 @@ lld = "lld"
 "ld.lld" = "ld.lld"
 # 调试器
 lldb = "lldb"
-# LLVM 工具
+# LLVM 工具（同时暴露为默认命令，替代 GNU binutils）
 llvm-ar = "llvm-ar"
+ar = "llvm-ar"
 llvm-nm = "llvm-nm"
+nm = "llvm-nm"
 llvm-objdump = "llvm-objdump"
+objdump = "llvm-objdump"
 llvm-objcopy = "llvm-objcopy"
+objcopy = "llvm-objcopy"
 llvm-strip = "llvm-strip"
+strip = "llvm-strip"
 llvm-size = "llvm-size"
+size = "llvm-size"
 llvm-readelf = "llvm-readelf"
+readelf = "llvm-readelf"
 llvm-config = "llvm-config"
 llvm-cov = "llvm-cov"
 llvm-profdata = "llvm-profdata"
+# 链接器别名
+ld = "lld"
 
 [envs.ruff]
 channels = ["conda-forge"]

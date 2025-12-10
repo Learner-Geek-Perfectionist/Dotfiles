@@ -129,6 +129,7 @@ rust = "*"
 [envs.rust.exposed]
 cargo = "cargo"
 rustc = "rustc"
+rustdoc = "rustdoc"
 
 [envs.java]
 channels = ["conda-forge"]
@@ -263,12 +264,39 @@ go-shfmt = "*"
 [envs.go-shfmt.exposed]
 shfmt = "shfmt"
 
-[envs.clang-format]
+# LLVM/Clang 完整工具链
+[envs.llvm]
 channels = ["conda-forge"]
-[envs.clang-format.dependencies]
-clang-format = "*"
-[envs.clang-format.exposed]
+[envs.llvm.dependencies]
+clang = "*"
+clang-tools = "*"
+lld = "*"
+lldb = "*"
+llvm-tools = "*"
+[envs.llvm.exposed]
+# Clang 编译器
+clang = "clang"
+"clang++" = "clang++"
+# Clang 工具
+clangd = "clangd"
 clang-format = "clang-format"
+clang-tidy = "clang-tidy"
+# 链接器
+lld = "lld"
+"ld.lld" = "ld.lld"
+# 调试器
+lldb = "lldb"
+# LLVM 工具
+llvm-ar = "llvm-ar"
+llvm-nm = "llvm-nm"
+llvm-objdump = "llvm-objdump"
+llvm-objcopy = "llvm-objcopy"
+llvm-strip = "llvm-strip"
+llvm-size = "llvm-size"
+llvm-readelf = "llvm-readelf"
+llvm-config = "llvm-config"
+llvm-cov = "llvm-cov"
+llvm-profdata = "llvm-profdata"
 
 [envs.ruff]
 channels = ["conda-forge"]

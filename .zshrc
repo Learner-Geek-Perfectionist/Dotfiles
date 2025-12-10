@@ -90,7 +90,21 @@ ssh-add -l &>/dev/null
 _agent_status=$?
 
 if [[ $_agent_status -eq 0 ]]; then
-	# [情况A] Agent 存活且已有密钥 -> 此时什么都不用做
+	# [情况A] Agent 存活且已有密钥 -> 检查是否只有我们需要的密钥
+	# 如果密钥数量超过预期，清空后重新加载（避免 Keychain 自动加载旧密钥）
+	_key_count=$(ssh-add -l 2>/dev/null | wc -l | tr -d ' ')
+	_expected_keys=0
+	for key in ~/.ssh/id_{ed25519,rsa,ecdsa}; do [[ -f "$key" ]] && ((_expected_keys++)); done
+	if [[ $_key_count -gt $_expected_keys ]]; then
+		ssh-add -D &>/dev/null  # 清空所有
+		for key in ~/.ssh/id_{ed25519,rsa,ecdsa}; do
+			if [[ -f "$key" ]]; then
+				[[ "$(uname)" == "Darwin" ]] && OPTS="--apple-use-keychain" || OPTS=""
+				ssh-add $OPTS "$key" 2>/dev/null
+			fi
+		done
+	fi
+	unset _key_count _expected_keys
 	:
 elif [[ $_agent_status -eq 1 ]]; then
 	# [情况B] Agent 存活但没有密钥 -> 只需要加载密钥

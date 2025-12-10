@@ -53,24 +53,14 @@ fi
 # 加载 zinit 插件
 [[ -f "${HOME}/.config/zsh/plugins/zinit.zsh" ]] && source "${HOME}/.config/zsh/plugins/zinit.zsh"
 
-# 自动启动 ssh-agent 并加载密钥（使用固定 socket 路径，避免重复启动）
-_ssh_agent_sock="$HOME/.ssh/agent.sock"
-if [[ -S "$_ssh_agent_sock" ]]; then
-	# 已有 socket，尝试复用
-	export SSH_AUTH_SOCK="$_ssh_agent_sock"
-	# 验证 agent 是否存活
-	if ! ssh-add -l &>/dev/null; then
-		# agent 已死，清理并重启
-		rm -f "$_ssh_agent_sock"
-		eval "$(ssh-agent -a "$_ssh_agent_sock" -s)" >/dev/null 2>&1
-		[[ -f ~/.ssh/id_rsa ]] && ssh-add ~/.ssh/id_rsa 2>/dev/null
-	fi
-elif [[ -z "$SSH_AUTH_SOCK" ]]; then
-	# 没有 socket 且没有 agent，启动新的
-	eval "$(ssh-agent -a "$_ssh_agent_sock" -s)" >/dev/null 2>&1
-	[[ -f ~/.ssh/id_rsa ]] && ssh-add ~/.ssh/id_rsa 2>/dev/null
+# SSH Agent 配置（依赖 agent forwarding，不自行启动 agent）
+# 场景：macOS 系统 agent / OrbStack 自动转发 / ssh -A / Docker 挂载 socket
+if ! ssh-add -l &>/dev/null 2>&1 && [[ -n "$SSH_AUTH_SOCK" ]]; then
+	# 有 socket 但没密钥，加载本地密钥（仅客户端场景）
+	for key in ~/.ssh/id_{ed25519,rsa,ecdsa}; do
+		[[ -f "$key" ]] && ssh-add "$key" 2>/dev/null
+	done
 fi
-unset _ssh_agent_sock
 
 setopt interactive_comments # 注释行不报错
 setopt no_nomatch           # 通配符 * 匹配不到文件也不报错

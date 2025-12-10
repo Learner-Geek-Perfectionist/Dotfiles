@@ -54,7 +54,30 @@ fi
 [[ -f "${HOME}/.config/zsh/plugins/zinit.zsh" ]] && source "${HOME}/.config/zsh/plugins/zinit.zsh"
 
 # SSH Agent 配置（依赖 agent forwarding，不自行启动 agent）
-# 场景：macOS 系统 agent / OrbStack 自动转发 / ssh -A / Docker 挂载 socket
+# ============================================
+# 适用场景：
+#   - macOS 系统自带 agent（launchd 管理）
+#   - OrbStack 自动转发
+#   - ssh -A 连接的服务器
+#   - Docker 容器挂载 socket
+#
+# 测试 Agent Forwarding 是否生效：
+#   echo $SSH_AUTH_SOCK          # 查看 socket 路径
+#   ssh-add -l                   # 列出已加载的密钥
+#   ssh -T git@github.com        # 测试 GitHub 认证
+#
+# Docker 容器使用 Agent Forwarding：
+#   # 方式 1：挂载 socket（推荐）
+#   docker run -v $SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent ...
+#
+#   # 方式 2：SSH 连接（需要容器安装 sshd）
+#   apt install -y openssh-server
+#   echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
+#   service ssh start
+#   passwd root  # 设置密码
+#   # 然后从 macOS: ssh -A root@<容器IP>
+#
+# ============================================
 if ! ssh-add -l &>/dev/null 2>&1 && [[ -n "$SSH_AUTH_SOCK" ]]; then
 	# 有 socket 但没密钥，加载本地密钥（仅客户端场景）
 	for key in ~/.ssh/id_{ed25519,rsa,ecdsa}; do

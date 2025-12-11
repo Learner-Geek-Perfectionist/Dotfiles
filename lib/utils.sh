@@ -60,10 +60,16 @@ _log() {
 }
 
 # ========================================
-# 运行命令并同时输出到终端和日志
+# 运行命令并同时输出到终端和日志（使用 script 伪造 TTY 保留进度条）
 # ========================================
 _run_and_log() {
-	"$@" 2>&1 | tee -a "$DOTFILES_LOG"
+	if [[ "$(uname)" == "Darwin" ]]; then
+		# macOS: script -q -a logfile command
+		script -q -a "$DOTFILES_LOG" "$@"
+	else
+		# Linux: script -q -c "command" -a logfile
+		script -q -a "$DOTFILES_LOG" -c "$*"
+	fi
 }
 
 # ========================================

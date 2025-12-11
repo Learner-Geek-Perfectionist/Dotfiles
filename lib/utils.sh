@@ -8,7 +8,7 @@
 export CLICOLOR_FORCE=1
 
 # 确保 TERM 有值（tput 需要）
-export TERM="${TERM:-xterm}"
+export TERM="${TERM:-xterm-256color}"
 
 # Fallback 颜色定义（当 gum 不可用时使用）
 export RED='\033[0;31m'
@@ -90,12 +90,12 @@ _echo_blank() {
 # ========================================
 # 打印函数（终端保留颜色，日志去除颜色）
 # ========================================
-print_info()    { _log "INFO"  ""  "$CYAN"   "$1"; }
-print_success() { _log "INFO"  "✓" "$GREEN"  "$1"; }
-print_warn()    { _log "WARN"  "⚠" "$YELLOW" "$1"; }
-print_error()   { _log "ERROR" "✗" "$RED"    "$1"; }
-print_header()  { _log "INFO"  ""  "$BLUE"   "$1"; }
-print_step()    { _log "DEBUG" "→" "$PURPLE" "$1"; }
+print_info() { _log "INFO" "" "$CYAN" "$1"; }
+print_success() { _log "INFO" "✓" "$GREEN" "$1"; }
+print_warn() { _log "WARN" "⚠" "$YELLOW" "$1"; }
+print_error() { _log "ERROR" "✗" "$RED" "$1"; }
+print_header() { _log "INFO" "" "$BLUE" "$1"; }
+print_step() { _log "DEBUG" "→" "$PURPLE" "$1"; }
 
 print_section() {
 	local title="$1"

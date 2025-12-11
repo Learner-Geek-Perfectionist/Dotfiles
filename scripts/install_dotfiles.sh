@@ -100,32 +100,9 @@ main() {
 	print_header "🔌 安装 Zinit 插件："
 	echo ""
 	if command -v zsh &>/dev/null; then
-		local zinit_dir="$HOME/.local/share/zinit"
-		local zsh_log="/tmp/zinit-install-$$.log"
-
-		# 检测所有核心插件是否都已安装（fast-syntax-highlighting 是最后一个异步插件）
-		local all_installed=true
-		for plugin in "powerlevel10k" "fzf-tab" "zsh-completions" "zsh-autosuggestions" "fast-syntax-highlighting"; do
-			if ! ls "$zinit_dir/plugins/"*"$plugin"* &>/dev/null; then
-				all_installed=false
-				break
-			fi
-		done
-
-		if [[ "$all_installed" == "true" ]]; then
-			print_info "Zinit 插件已完整安装，跳过"
-		else
-			# 有缺失插件：需要等待异步下载完成（zinit 使用 wait lucid 异步加载）
-			print_info "正在安装 zinit 插件（异步下载中，请稍候）..."
-			# TERM=xterm 确保 zinit 正常工作，10 秒等待异步插件下载完成
-			TERM=xterm zsh -ic "source '$HOME/.zshrc'; sleep 10; exit" >"$zsh_log" 2>&1 || true
-			# 输出到终端和日志
-			if [[ -f "$zsh_log" && -s "$zsh_log" ]]; then
-				cat "$zsh_log"
-				cat "$zsh_log" | _strip_ansi >>"$DOTFILES_LOG"
-				rm -f "$zsh_log"
-			fi
-		fi
+		print_info "正在安装 zinit 插件..."
+		# ZINIT_SYNC=1 同步加载，确保所有插件安装完成再退出
+		_run_and_log zsh -c "ZINIT_SYNC=1 source '$HOME/.zshrc'" || true
 		print_success "Zinit 插件安装完成"
 		print_success "安装完成！请运行: source ~/.zshrc"
 	else

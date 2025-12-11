@@ -39,6 +39,7 @@ export TERM="${TERM:-xterm-256color}"
 # 颜色定义
 export RED='\033[0;31m' GREEN='\033[0;32m' YELLOW='\033[1;33m'
 export BLUE='\033[0;34m' CYAN='\033[0;36m' PURPLE='\033[0;35m' NC='\033[0m'
+export DIM='\033[2m' BOLD='\033[1m' WHITE='\033[1;37m'
 
 # 检测是否有 sudo 权限（而非 sudo 命令是否存在）
 has_sudo() {
@@ -91,6 +92,22 @@ print_warn() { _log "WARN" "⚠" "$YELLOW" "$1"; }
 print_error() { _log "ERROR" "✗" "$RED" "$1"; }
 print_header() { _log "INFO" "" "$BLUE" "$1"; }
 
+# 次要信息（灰色，无前缀，带缩进）
+print_dim() {
+	local msg="$1"
+	local output="${DIM}   ${msg}${NC}"
+	echo -e "$output"
+	echo -e "$output" | _strip_ansi >>"$DOTFILES_LOG"
+}
+
+# 列表项（用于工具列表等）
+print_item() {
+	local msg="$1"
+	local output="${DIM}   • ${msg}${NC}"
+	echo -e "$output"
+	echo -e "$output" | _strip_ansi >>"$DOTFILES_LOG"
+}
+
 # 脚本标题横幅（背景色填充，文字居中）
 print_banner() {
 	local msg="$1"
@@ -106,24 +123,23 @@ print_banner() {
 	echo "${left_pad}${msg}${right_pad}" >>"$DOTFILES_LOG"
 }
 
-# 步骤分隔线（无 [INFO] 前缀）
+# 步骤标题（轻量箭头样式）
 print_section() {
 	local title="$1"
+	local output="${BOLD}${WHITE}▶ ${title}${NC}"
+	echo ""
+	echo -e "$output"
+	echo "" >>"$DOTFILES_LOG"
+	echo -e "$output" | _strip_ansi >>"$DOTFILES_LOG"
+}
+
+# 分隔线（仅用于重要分隔）
+print_divider() {
 	local width=$(tput cols)
 	local line
 	printf -v line "%*s" "$width" ""
-	line="${line// /━}"
-	# 计算显示宽度（wc -L 考虑宽字符）
-	local display_width=$(echo -n "$title" | wc -L | tr -d ' ')
-	local padding=$(((width - display_width) / 2))
-	local centered_title=$(printf "%${padding}s%s" "" "$title")
-	# 终端：带颜色
-	echo -e "${PURPLE}${line}${NC}"
-	echo -e "${PURPLE}${centered_title}${NC}"
-	echo -e "${PURPLE}${line}${NC}"
-	# 日志：纯文本
-	echo "$line" >>"$DOTFILES_LOG"
-	echo "$centered_title" >>"$DOTFILES_LOG"
+	line="${line// /─}"
+	echo -e "${DIM}${line}${NC}"
 	echo "$line" >>"$DOTFILES_LOG"
 }
 
@@ -241,7 +257,7 @@ install_macos_homebrew() {
 	local dotfiles_dir="$1"
 	local step_num="$2"
 
-	print_section "步骤 ${step_num}: 安装 Homebrew 包"
+	print_section "步骤 ${step_num}: 🍺 安装 Homebrew 包"
 
 	if [[ -f "$dotfiles_dir/scripts/macos_install.sh" ]]; then
 		bash "$dotfiles_dir/scripts/macos_install.sh"
@@ -259,7 +275,7 @@ install_pixi_binary() {
 	local dotfiles_dir="$1"
 	local step_num="$2"
 
-	print_section "步骤 ${step_num}: 安装 Pixi (包管理器)"
+	print_section "步骤 ${step_num}: 🦀 安装 Pixi"
 
 	# 安装 Pixi 二进制
 	if [[ -f "$dotfiles_dir/scripts/install_pixi.sh" ]]; then
@@ -282,7 +298,7 @@ sync_pixi_tools() {
 	local dotfiles_dir="$1"
 	local step_num="$2"
 
-	print_section "步骤 ${step_num}: 同步 Pixi 工具包"
+	print_section "步骤 ${step_num}: 📦 同步 Pixi 工具包"
 
 	export PATH="$HOME/.pixi/bin:$PATH"
 
@@ -296,27 +312,40 @@ sync_pixi_tools() {
 	local manifest_dest="$HOME/.pixi/manifests/pixi-global.toml"
 
 	if [[ -f "$manifest_src" ]]; then
-		print_info "部署 Pixi 配置..."
+		print_dim "部署配置: $manifest_dest"
 		mkdir -p "$(dirname "$manifest_dest")"
 		cp "$manifest_src" "$manifest_dest"
 	fi
 
 	if [[ -f "$manifest_dest" ]]; then
-		print_info "同步工具包（这可能需要几分钟）..."
-		print_info "所有包都是预编译的，无需本地编译"
-		_echo_blank
+		print_info "同步工具包（预编译，无需本地编译）..."
 
-		if _run_and_log pixi global sync; then
+		# 静默同步，只记录到日志
+		if pixi global sync >>"$DOTFILES_LOG" 2>&1; then
 			print_success "工具包同步完成"
 		else
-			print_warn "部分工具同步失败"
-			print_info "可以稍后运行: pixi global sync"
+			print_warn "部分工具同步失败，详见日志"
+			print_dim "可稍后运行: pixi global sync"
 		fi
 
-		# 使用 pixi 原生验证
+		# 显示简洁的工具列表（只显示工具名）
 		_echo_blank
 		print_info "已安装的工具:"
-		_run_and_log pixi global list
+		# 提取工具名列表并格式化显示
+		local tools
+		tools=$(pixi global list 2>/dev/null | grep -E '^\s*─ exposes:' | sed 's/.*exposes: //' | tr ',' '\n' | tr -d ' ' | sort -u)
+		if [[ -n "$tools" ]]; then
+			local tool_count
+			tool_count=$(echo "$tools" | wc -l | tr -d ' ')
+			local tool_line
+			tool_line=$(echo "$tools" | tr '\n' ' ' | sed 's/ $//')
+			print_dim "$tool_line"
+			print_dim "(共 ${tool_count} 个工具)"
+		else
+			# 备用：直接显示 pixi global list（记录到日志）
+			pixi global list >>"$DOTFILES_LOG" 2>&1
+			print_dim "详见日志文件"
+		fi
 	else
 		print_warn "未找到 Pixi 配置文件: $manifest_dest"
 	fi
@@ -334,7 +363,7 @@ setup_dotfiles() {
 		return 0
 	fi
 
-	print_section "步骤 ${step_num}: 安装 Dotfiles 配置"
+	print_section "步骤 ${step_num}: 📂 安装 Dotfiles 配置"
 
 	if [[ -f "$dotfiles_dir/scripts/install_dotfiles.sh" ]]; then
 		# 子脚本会 source lib/utils.sh，自己处理日志，不要用 _run_and_log
@@ -358,7 +387,7 @@ install_vscode() {
 		return 0
 	fi
 
-	print_section "步骤 ${step_num}: 安装 VSCode 插件"
+	print_section "步骤 ${step_num}: 💻 安装 VSCode 插件"
 
 	if [[ -f "$dotfiles_dir/scripts/install_vscode_ext.sh" ]]; then
 		# 子脚本会 source lib/utils.sh，自己处理日志
@@ -373,7 +402,7 @@ install_vscode() {
 # ========================================
 setup_default_shell() {
 	local step="$1"
-	print_section "步骤 $step: 设置默认 Shell"
+	print_section "步骤 $step: 🐚 设置默认 Shell"
 
 	# 已经是 zsh 就跳过
 	if [[ "$(basename "$SHELL")" == "zsh" ]]; then
@@ -547,14 +576,11 @@ main() {
 	os=$(detect_os)
 	arch=$(detect_arch)
 
-	print_info "操作系统: $os"
-	print_info "架构: $arch"
-	print_info "用户: $(whoami)"
-
+	print_dim "操作系统: $os | 架构: $arch | 用户: $(whoami)"
 	if [[ "$os" == "macos" ]]; then
-		print_info "安装方式: Homebrew + Dotfiles 配置"
+		print_dim "安装方式: Homebrew + Dotfiles"
 	else
-		print_info "安装方式: Pixi + Dotfiles 配置 (完全 Rootless)"
+		print_dim "安装方式: Pixi + Dotfiles (Rootless)"
 	fi
 	_echo_blank
 
@@ -580,26 +606,19 @@ main() {
 
 	# 完成提示
 	_echo_blank
-	print_info "📝 安装日志: $DOTFILES_LOG"
+	print_divider
+	print_success "安装完成！"
+	_echo_blank
+	print_dim "📝 日志: $DOTFILES_LOG"
 	_echo_blank
 	print_info "下一步:"
-	print_info "  1. 重新打开终端（或运行: source ~/.zshrc）"
+	print_dim "1. 重新打开终端（或 source ~/.zshrc）"
 
 	if [[ "$os" == "linux" ]]; then
-		print_info "  2. 查看已安装工具: pixi global list"
-		_echo_blank
-		print_info "常用命令:"
-		print_info "  pixi global install <pkg>  - 安装包"
-		print_info "  pixi global upgrade        - 升级所有包"
+		print_dim "2. 查看工具: pixi global list"
 	else
-		print_info "  2. 验证安装: brew list"
-		_echo_blank
-		print_info "常用命令:"
-		print_info "  brew update && brew upgrade - 更新所有包"
+		print_dim "2. 验证安装: brew list"
 	fi
-
-	_echo_blank
-	print_banner "✅ 安装完成！"
 	_echo_blank
 }
 

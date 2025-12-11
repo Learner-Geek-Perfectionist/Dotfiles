@@ -17,6 +17,9 @@ export YELLOW='\033[1;33m'
 export BLUE='\033[0;34m'
 export CYAN='\033[0;36m'
 export PURPLE='\033[0;35m'
+export DIM='\033[2m'
+export BOLD='\033[1m'
+export WHITE='\033[1;37m'
 export NC='\033[0m'
 
 # ========================================
@@ -94,6 +97,22 @@ print_warn() { _log "WARN" "⚠" "$YELLOW" "$1"; }
 print_error() { _log "ERROR" "✗" "$RED" "$1"; }
 print_header() { _log "INFO" "" "$BLUE" "$1"; }
 
+# 次要信息（灰色，无前缀，带缩进）
+print_dim() {
+	local msg="$1"
+	local output="${DIM}   ${msg}${NC}"
+	echo -e "$output"
+	echo -e "$output" | _strip_ansi >>"$DOTFILES_LOG"
+}
+
+# 列表项（用于工具列表等）
+print_item() {
+	local msg="$1"
+	local output="${DIM}   • ${msg}${NC}"
+	echo -e "$output"
+	echo -e "$output" | _strip_ansi >>"$DOTFILES_LOG"
+}
+
 # 脚本标题横幅（背景色填充，文字居中）
 print_banner() {
 	local msg="$1"
@@ -109,24 +128,23 @@ print_banner() {
 	echo "${left_pad}${msg}${right_pad}" >>"$DOTFILES_LOG"
 }
 
-# 步骤分隔线（无 [INFO] 前缀）
+# 步骤标题（轻量箭头样式）
 print_section() {
 	local title="$1"
+	local output="${BOLD}${WHITE}▶ ${title}${NC}"
+	echo ""
+	echo -e "$output"
+	echo "" >>"$DOTFILES_LOG"
+	echo -e "$output" | _strip_ansi >>"$DOTFILES_LOG"
+}
+
+# 分隔线（仅用于重要分隔）
+print_divider() {
 	local width=$(tput cols)
 	local line
 	printf -v line "%*s" "$width" ""
-	line="${line// /━}"
-	# 计算显示宽度（wc -L 考虑宽字符）
-	local display_width=$(echo -n "$title" | wc -L | tr -d ' ')
-	local padding=$(((width - display_width) / 2))
-	local centered_title=$(printf "%${padding}s%s" "" "$title")
-	# 终端：带颜色
-	echo -e "${PURPLE}${line}${NC}"
-	echo -e "${PURPLE}${centered_title}${NC}"
-	echo -e "${PURPLE}${line}${NC}"
-	# 日志：纯文本
-	echo "$line" >>"$DOTFILES_LOG"
-	echo "$centered_title" >>"$DOTFILES_LOG"
+	line="${line// /─}"
+	echo -e "${DIM}${line}${NC}"
 	echo "$line" >>"$DOTFILES_LOG"
 }
 

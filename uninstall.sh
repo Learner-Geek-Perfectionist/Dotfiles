@@ -26,13 +26,13 @@ if [[ -f "$_SCRIPT_DIR/lib/utils.sh" ]]; then
 else
 	# Fallback: 内嵌必要的函数
 	export RED='\033[0;31m' GREEN='\033[0;32m' YELLOW='\033[1;33m'
-	export BLUE='\033[0;34m' CYAN='\033[0;36m' NC='\033[0m'
+	export BLUE='\033[0;34m' CYAN='\033[0;36m' DIM='\033[2m' NC='\033[0m'
 
-	print_info() { echo -e "${CYAN}$1${NC}" | tee -a "$DOTFILES_LOG"; }
+	print_info() { echo -e "${CYAN}[INFO] $1${NC}" | tee -a "$DOTFILES_LOG"; }
 	print_success() { echo -e "${GREEN}✓ $1${NC}" | tee -a "$DOTFILES_LOG"; }
 	print_warn() { echo -e "${YELLOW}⚠ $1${NC}" | tee -a "$DOTFILES_LOG"; }
 	print_error() { echo -e "${RED}✗ $1${NC}" | tee -a "$DOTFILES_LOG"; }
-	print_header() { echo -e "${BLUE}$1${NC}" | tee -a "$DOTFILES_LOG"; }
+	print_dim() { echo -e "${DIM}   $1${NC}" | tee -a "$DOTFILES_LOG"; }
 fi
 
 REMOVE_PIXI=false
@@ -61,18 +61,20 @@ confirm() {
 rm_path() {
 	local p="$1"
 	[[ -z "$p" || "$p" == "/" ]] && return
-	[[ -e "$p" || -L "$p" ]] && rm -rf "$p" && print_success "已删除: $p" || print_info "跳过: $p"
+	if [[ -e "$p" || -L "$p" ]]; then
+		rm -rf "$p" && print_dim "✓ $p"
+	fi
 }
 
 remove_pixi() {
-	print_header "🧹 删除 Pixi"
+	print_info "🧹 删除 Pixi..."
 	for p in ~/.pixi ~/.cache/pixi ~/.local/share/pixi ~/.local/state/pixi; do
 		rm_path "$p"
 	done
 }
 
 remove_dotfiles() {
-	print_header "🗑️ 删除 Dotfiles"
+	print_info "🗑️ 删除 Dotfiles..."
 
 	# 通用配置
 	for p in ~/.zshrc ~/.zprofile ~/.zshenv ~/.config/{zsh,kitty} ~/.ssh/config ~/.pixi/manifests; do
@@ -91,7 +93,7 @@ remove_dotfiles() {
 
 	# 删除 ~/.cache/zsh 目录（但保留 .zsh_history）
 	if [[ -d ~/.cache/zsh ]]; then
-		print_info "清理 ~/.cache/zsh（保留历史记录）..."
+		print_dim "清理 ~/.cache/zsh（保留历史记录）"
 		# 备份 history 文件
 		local history_file=~/.cache/zsh/.zsh_history
 		local history_backup=""
@@ -105,7 +107,7 @@ remove_dotfiles() {
 		if [[ -n "$history_backup" && -f "$history_backup" ]]; then
 			mkdir -p ~/.cache/zsh
 			mv "$history_backup" "$history_file"
-			print_success "已保留: $history_file"
+			print_dim "✓ 已保留: $history_file"
 		fi
 	fi
 
@@ -168,5 +170,6 @@ fi
 [[ "$REMOVE_PIXI" == "true" ]] && confirm "确认删除 Pixi?" && remove_pixi
 [[ "$REMOVE_DOTFILES" == "true" ]] && confirm "确认删除 Dotfiles?" && remove_dotfiles
 
-print_success "✅ 完成"
-print_info "📝 卸载日志: $DOTFILES_LOG"
+echo ""
+print_success "卸载完成！"
+print_dim "📝 日志: $DOTFILES_LOG"

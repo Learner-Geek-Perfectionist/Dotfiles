@@ -34,10 +34,8 @@ check_pixi_installed() {
 # 安装 Pixi
 # ========================================
 install_pixi() {
-	print_header "🦀 安装 Pixi (现代包管理器)"
-
-	print_info "安装目录: $PIXI_HOME"
-	echo ""
+	print_info "🦀 安装 Pixi..."
+	print_dim "安装目录: $PIXI_HOME"
 
 	# 检查是否已安装
 	if check_pixi_installed; then
@@ -71,7 +69,7 @@ install_pixi() {
 # 配置 Shell 集成
 # ========================================
 setup_shell_integration() {
-	print_header "🔧 配置 Shell 集成"
+	print_info "🔧 配置 Shell 集成..."
 
 	local shell_name
 	shell_name=$(basename "$SHELL")
@@ -122,7 +120,7 @@ setup_shell_integration() {
 # 安装全局工具包
 # ========================================
 install_global_tools() {
-	print_header "📦 安装全局工具包"
+	print_info "📦 安装全局工具包..."
 
 	export PATH="$PIXI_HOME/bin:$PATH"
 
@@ -141,24 +139,21 @@ install_global_tools() {
 	fi
 
 	# 使用 pixi global sync 同步 manifest 中定义的所有 env
-	print_info "发现配置文件: $manifest"
-	print_info "同步所有工具包（这可能需要几分钟）..."
-	echo ""
+	print_dim "配置文件: $manifest"
+	print_info "同步工具包（预编译，无需本地编译）..."
 
 	if pixi global sync; then
 		print_success "工具包同步完成"
 	else
 		print_error "Pixi 工具包同步失败"
-		print_info "请检查网络或 manifest 配置，随后重新运行: pixi global sync"
+		print_dim "请检查网络，随后运行: pixi global sync"
 		exit 1
 	fi
 
-	# 使用 pixi 原生验证
+	# 显示简洁的工具列表
 	echo ""
 	print_info "已安装的工具:"
-	pixi global list
-
-	print_success "工具包安装完成"
+	pixi global list 2>/dev/null | grep -E '^\s*─ exposes:' | sed 's/.*exposes: /   /' || pixi global list
 }
 
 # ========================================
@@ -249,18 +244,10 @@ main() {
 	[[ "$SHELL" == *zsh ]] && rc_file="~/.zshrc"
 
 	echo ""
-	print_info "=========================================="
-	print_info "✅ Pixi 设置完成！"
-	print_info "=========================================="
+	print_success "Pixi 设置完成！"
 	echo ""
-	print_info "下一步:"
-	print_info "  1. 重新打开终端，或运行: source $rc_file"
-	print_info "  2. 验证安装: pixi global list"
-	echo ""
-	print_info "常用命令:"
-	print_info "  pixi global install <pkg>  - 安装包"
-	print_info "  pixi global list           - 列出已安装包"
-	print_info "  pixi global upgrade        - 升级所有包"
+	print_dim "下一步: source $rc_file 或重新打开终端"
+	print_dim "验证安装: pixi global list"
 	echo ""
 }
 

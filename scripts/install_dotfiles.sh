@@ -48,8 +48,7 @@ copy_path() {
 }
 
 main() {
-	print_header "📁 Dotfiles 配置安装："
-	echo ""
+	print_info "📁 Dotfiles 配置安装"
 
 	# 点文件
 	copy_path ".zshrc" ".zshrc"
@@ -86,10 +85,9 @@ main() {
 
 	if ((${#COPY_SUMMARY[@]} > 0)); then
 		echo ""
-		print_header "🧾 文件复制详情："
-		echo ""
+		print_info "🧾 文件复制详情:"
 		for msg in "${COPY_SUMMARY[@]}"; do
-			print_info "➜ $msg"
+			print_dim "➜ $msg"
 		done
 	fi
 
@@ -100,17 +98,15 @@ main() {
 
 	# 安装 zinit 插件
 	echo ""
-	print_header "🔌 安装 Zinit 插件："
-	echo ""
+	print_info "🔌 安装 Zinit 插件..."
 	if command -v zsh &>/dev/null; then
-		print_info "正在安装 zinit 插件..."
 		# ZINIT_SYNC=1 同步加载，确保所有插件安装完成再退出
-		_run_and_log zsh -c "ZINIT_SYNC=1 source '$HOME/.zshrc'"
-		print_success "Zinit 插件安装完成"
-		print_success "安装完成！请运行: source ~/.zshrc"
+		# zinit 输出到日志，终端静默
+		zsh -c "ZINIT_SYNC=1 source '$HOME/.zshrc'" >>"$DOTFILES_LOG" 2>&1 && \
+			print_success "Zinit 插件安装完成" || \
+			print_warn "Zinit 插件安装有警告，详见日志"
 	else
 		print_warn "未找到 zsh，跳过 zinit 插件安装"
-		print_success "安装完成！请先安装 zsh 后运行: source ~/.zshrc"
 	fi
 }
 

@@ -12,8 +12,7 @@ is_remote_server() {
 
 # 如果是远程服务器，跳过安装
 if is_remote_server; then
-	print_info "检测到远程服务器环境，插件通过 settings.json 自动同步"
-	print_info "跳过手动安装"
+	print_dim "远程服务器环境，插件通过 settings.json 自动同步"
 	exit 0
 fi
 
@@ -87,11 +86,11 @@ if [[ ${#editors[@]} -eq 0 ]]; then
 	exit 1
 fi
 
-print_info "检测到 ${#editors[@]} 个编辑器"
+print_dim "检测到 ${#editors[@]} 个编辑器"
 
 for entry in "${editors[@]}"; do
 	type="${entry%%:*}" cmd="${entry#*:}"
-	print_header ">>> $type (命令: $cmd)"
+	print_info ">>> $type ($cmd)"
 
 	# 获取已安装的插件（转小写比较）
 	installed=$("$cmd" --list-extensions 2>/dev/null | tr '[:upper:]' '[:lower:]')
@@ -143,30 +142,21 @@ for entry in "${editors[@]}"; do
 		echo ""
 	fi
 
-	# 打印结果
-	if [[ ${#skipped[@]} -gt 0 ]]; then
-		print_warn "⊘ 已安装 (${#skipped[@]}):"
-		for ext in "${skipped[@]}"; do echo -e "  ${YELLOW}⊘ $ext${NC}"; done
-	fi
+	# 打印简洁结果
+	echo ""
 	if [[ ${#success[@]} -gt 0 ]]; then
-		print_success "新安装 (${#success[@]}):"
-		for ext in "${success[@]}"; do echo -e "  ${GREEN}✓ $ext${NC}"; done
+		print_success "新安装 ${#success[@]} 个插件"
+	fi
+	if [[ ${#skipped[@]} -gt 0 ]]; then
+		print_dim "已安装 ${#skipped[@]} 个 (跳过)"
 	fi
 	if [[ ${#failed[@]} -gt 0 ]]; then
-		print_error "✗ 失败 (${#failed[@]}):"
+		print_error "失败 ${#failed[@]} 个"
 		for item in "${failed[@]}"; do
 			ext="${item%%|*}"
-			tag="${item#*|}"
-			if [[ "$tag" == "vscode" ]]; then
-				echo -e "  ${RED}✗ $ext${NC} ${YELLOW}(VSCode 专属)${NC}"
-			elif [[ "$tag" == "cursor" ]]; then
-				echo -e "  ${RED}✗ $ext${NC} ${YELLOW}(Cursor 专属)${NC}"
-			else
-				echo -e "  ${RED}✗ $ext${NC}"
-			fi
+			print_dim "  ✗ $ext"
 		done
 	fi
-	echo ""
 done
 
-print_success "=== 安装完成 ==="
+print_success "VSCode 插件安装完成"

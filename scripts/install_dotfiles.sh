@@ -103,8 +103,15 @@ main() {
 		# 使用交互式 zsh 执行，因为 zinit 的 'wait lucid' 延迟加载需要交互式 shell
 		# 等待几秒让异步插件有时间下载安装
 		print_info "正在安装 zinit 插件（需要几秒钟）..."
-		# 不丢弃 stderr，让输出被上层捕获到日志
-		zsh -ic "source '$HOME/.zshrc'; sleep 5; exit" 2>&1 || true
+		# 使用 script 命令捕获交互式 zsh 输出（管道无法捕获 pty 输出）
+		local zsh_log="/tmp/zinit-install-$$.log"
+		# script 命令：-q 静默，-c 命令，输出到文件
+		script -q "$zsh_log" -c "zsh -ic 'source $HOME/.zshrc; sleep 5; exit'" || true
+		# 写入日志（终端已经看到输出了，只需写日志）
+		if [[ -f "$zsh_log" ]]; then
+			cat "$zsh_log" | _strip_ansi >>"$DOTFILES_LOG"
+			rm -f "$zsh_log"
+		fi
 		print_success "Zinit 插件安装完成"
 		print_success "安装完成！请运行: source ~/.zshrc"
 	else

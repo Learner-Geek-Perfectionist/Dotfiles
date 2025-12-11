@@ -50,15 +50,9 @@ has_sudo() {
 	return 1
 }
 
-# 去除 ANSI 颜色代码（用于写入日志）
-_strip_ansi() {
-	sed 's/\x1b\[[0-9;]*m//g'
-}
-
 # ========================================
 # 统一日志输出函数
-# - stdout: 带颜色
-# - 日志文件: 无颜色
+# - stdout 和日志文件都保留 ANSI 颜色
 # ========================================
 _log() {
 	local level="$1" prefix="$2" color="$3" msg="$4"
@@ -69,7 +63,7 @@ _log() {
 		output="${color}[${level}] ${msg}${NC}"
 	fi
 	echo -e "$output"
-	echo -e "$output" | _strip_ansi >>"$DOTFILES_LOG"
+	echo -e "$output" >>"$DOTFILES_LOG"
 }
 
 # 输出空行到终端和日志
@@ -200,12 +194,12 @@ clone_dotfiles() {
 	# git clone 输出到 stderr，需要捕获并写入日志
 	local git_output
 	if ! git_output=$(git clone --depth=1 --branch "$branch" --single-branch "$DOTFILES_REPO_URL" "$tmp_dir" 2>&1); then
-		echo "$git_output" | _strip_ansi >>"$DOTFILES_LOG"
+		echo "$git_output" >>"$DOTFILES_LOG"
 		echo "$git_output" >&2
 		print_error "克隆仓库失败（分支: ${branch}）" >&2
 		exit 1
 	fi
-	echo "$git_output" | _strip_ansi >>"$DOTFILES_LOG"
+	echo "$git_output" >>"$DOTFILES_LOG"
 
 	echo "$tmp_dir"
 }

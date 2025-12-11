@@ -43,16 +43,8 @@ has_sudo() {
 }
 
 # ========================================
-# 去除 ANSI 颜色代码（用于写入日志）
-# ========================================
-_strip_ansi() {
-	sed 's/\x1b\[[0-9;]*m//g'
-}
-
-# ========================================
 # 统一日志输出函数
-# - stdout: 带颜色
-# - 日志文件: 无颜色
+# - stdout 和日志文件都保留 ANSI 颜色
 # ========================================
 _log() {
 	local level="$1" prefix="$2" color="$3" msg="$4"
@@ -64,17 +56,14 @@ _log() {
 		output="${color}[${level}] ${msg}${NC}"
 	fi
 	echo -e "$output"
-	echo -e "$output" | _strip_ansi >>"$DOTFILES_LOG"
+	echo -e "$output" >>"$DOTFILES_LOG"
 }
 
 # ========================================
-# 运行命令并同时输出到终端和日志（日志去除颜色）
+# 运行命令并同时输出到终端和日志
 # ========================================
 _run_and_log() {
-	"$@" 2>&1 | while IFS= read -r line; do
-		echo "$line"
-		echo "$line" | _strip_ansi >>"$DOTFILES_LOG"
-	done
+	"$@" 2>&1 | tee -a "$DOTFILES_LOG"
 }
 
 # ========================================
@@ -99,7 +88,7 @@ print_dim() {
 	local msg="$1"
 	local output="${DIM}   ${msg}${NC}"
 	echo -e "$output"
-	echo -e "$output" | _strip_ansi >>"$DOTFILES_LOG"
+	echo -e "$output" >>"$DOTFILES_LOG"
 }
 
 # 列表项（用于工具列表等）
@@ -107,7 +96,7 @@ print_item() {
 	local msg="$1"
 	local output="${DIM}   • ${msg}${NC}"
 	echo -e "$output"
-	echo -e "$output" | _strip_ansi >>"$DOTFILES_LOG"
+	echo -e "$output" >>"$DOTFILES_LOG"
 }
 
 # 计算字符串显示宽度（跨平台，考虑中文/emoji）
@@ -142,7 +131,7 @@ print_section() {
 	echo ""
 	echo -e "$output"
 	echo "" >>"$DOTFILES_LOG"
-	echo -e "$output" | _strip_ansi >>"$DOTFILES_LOG"
+	echo -e "$output" >>"$DOTFILES_LOG"
 }
 
 # 分隔线（仅用于重要分隔）

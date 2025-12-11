@@ -34,33 +34,26 @@ check_pixi_installed() {
 # 安装 Pixi
 # ========================================
 install_pixi() {
-	print_info "🦀 安装 Pixi..."
-	print_dim "安装目录: $PIXI_HOME"
-
-	# 检查是否已安装
-	if check_pixi_installed; then
-		local version
-		version=$(pixi --version 2>/dev/null)
-		print_warn "Pixi 已安装 ($version)，跳过安装"
-		return 0
+	# 被 install.sh 调用时，install.sh 已检查过，这里直接安装
+	# 独立运行时，需要检查
+	if [[ -z "$DOTFILES_DIR" ]]; then
+		print_info "🦀 安装 Pixi..."
+		print_dim "安装目录: $PIXI_HOME"
+		if check_pixi_installed; then
+			local version
+			version=$(pixi --version 2>/dev/null)
+			print_warn "Pixi 已安装 ($version)"
+			return 0
+		fi
 	fi
 
 	# 使用官方安装脚本
-	print_info "下载并安装 Pixi..."
-
+	print_dim "下载 Pixi..."
 	if curl -fsSL https://pixi.sh/install.sh | bash; then
-		print_success "Pixi 安装成功"
+		export PATH="$PIXI_HOME/bin:$PATH"
+		print_dim "Pixi 已可用: $(pixi --version 2>/dev/null)"
 	else
 		print_error "Pixi 安装失败"
-		exit 1
-	fi
-
-	# 验证安装
-	export PATH="$PIXI_HOME/bin:$PATH"
-	if command -v pixi &>/dev/null; then
-		print_success "Pixi 已可用: $(pixi --version)"
-	else
-		print_error "Pixi 安装验证失败"
 		exit 1
 	fi
 }

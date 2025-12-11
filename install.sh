@@ -277,18 +277,24 @@ install_pixi_binary() {
 
 	print_section "步骤 ${step_num}: 🦀 安装 Pixi"
 
-	# 安装 Pixi 二进制
-	if [[ -f "$dotfiles_dir/scripts/install_pixi.sh" ]]; then
-		bash "$dotfiles_dir/scripts/install_pixi.sh" --install-only
-	else
-		print_error "未找到 Pixi 安装脚本"
-		exit 1
-	fi
-
 	# 确保 pixi 在 PATH 中
 	export PATH="$HOME/.pixi/bin:$PATH"
 
-	print_success "Pixi 安装完成"
+	# 检查是否已安装
+	if command -v pixi &>/dev/null; then
+		local version
+		version=$(pixi --version 2>/dev/null)
+		print_warn "Pixi 已安装 ($version)"
+	else
+		# 安装 Pixi
+		if [[ -f "$dotfiles_dir/scripts/install_pixi.sh" ]]; then
+			bash "$dotfiles_dir/scripts/install_pixi.sh" --install-only
+		else
+			print_error "未找到 Pixi 安装脚本"
+			exit 1
+		fi
+		print_success "Pixi 安装完成"
+	fi
 }
 
 # ========================================

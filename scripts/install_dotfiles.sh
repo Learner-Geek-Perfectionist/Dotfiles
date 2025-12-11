@@ -78,7 +78,8 @@ main() {
 		fi
 	fi
 
-	# 其它目录
+	# 其它文件
+	copy_path ".gitconfig" ".gitconfig"
 	copy_path ".ssh/config" ".ssh/config"
 	copy_path ".pixi/manifests" ".pixi/manifests"
 

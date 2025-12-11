@@ -92,15 +92,36 @@ print_error() { _log "ERROR" "✗" "$RED" "$1"; }
 print_header() { _log "INFO" "" "$BLUE" "$1"; }
 print_step() { _log "DEBUG" "→" "$PURPLE" "$1"; }
 
+# 脚本标题横幅（背景色填充，文字居中）
+print_banner() {
+	local msg="$1"
+	local width=$(tput cols)
+	# 计算显示宽度（wc -L 考虑宽字符）
+	local display_width=$(echo -n "$msg" | wc -L | tr -d ' ')
+	local padding=$(((width - display_width) / 2))
+	local left_pad=$(printf "%${padding}s" "")
+	local right_pad=$(printf "%$((width - padding - display_width))s" "")
+	# 终端：带紫色背景
+	echo -e "\033[45m${left_pad}${msg}${right_pad}\033[0m"
+	# 日志：纯文本居中
+	echo "${left_pad}${msg}${right_pad}" >>"$DOTFILES_LOG"
+}
+
+# 步骤分隔线（无 [INFO] 前缀）
 print_section() {
 	local title="$1"
-	local width=80
+	local width=$(tput cols)
 	local line
 	printf -v line "%*s" "$width" ""
 	line="${line// /━}"
-	_log "INFO" "" "$PURPLE" "$line"
-	_log "INFO" "" "$PURPLE" "$(printf '%*s' $(((${#title} + width) / 2)) "$title")"
-	_log "INFO" "" "$PURPLE" "$line"
+	# 终端：带颜色
+	echo -e "${PURPLE}${line}${NC}"
+	echo -e "${PURPLE}$(printf '%*s' $(((${#title} + width) / 2)) "$title")${NC}"
+	echo -e "${PURPLE}${line}${NC}"
+	# 日志：纯文本
+	echo "$line" >>"$DOTFILES_LOG"
+	echo "$(printf '%*s' $(((${#title} + width) / 2)) "$title")" >>"$DOTFILES_LOG"
+	echo "$line" >>"$DOTFILES_LOG"
 }
 
 detect_os() {
@@ -527,6 +548,11 @@ main() {
 	# 设置日志
 	setup_logging
 
+	# 显示标题横幅
+	_echo_blank
+	print_banner "🚀 Dotfiles 安装脚本 v${DOTFILES_VERSION}"
+	_echo_blank
+
 	# 检查依赖（需要 git, curl, zsh）
 	check_dependencies
 
@@ -544,9 +570,6 @@ main() {
 	os=$(detect_os)
 	arch=$(detect_arch)
 
-	_echo_blank
-	print_banner "🚀 Dotfiles 安装脚本 v${DOTFILES_VERSION}"
-	_echo_blank
 	print_info "操作系统: $os"
 	print_info "架构: $arch"
 	print_info "用户: $(whoami)"
@@ -578,9 +601,7 @@ main() {
 		tldr --update &>/dev/null && print_success "tldr 缓存更新完成"
 	fi
 
-	# 完成
-	_echo_blank
-	print_success "=== ✅ 安装完成！ ==="
+	# 完成提示
 	_echo_blank
 	print_info "📝 安装日志: $DOTFILES_LOG"
 	_echo_blank
@@ -600,6 +621,8 @@ main() {
 		print_info "  brew update && brew upgrade - 更新所有包"
 	fi
 
+	_echo_blank
+	print_banner "✅ 安装完成！"
 	_echo_blank
 }
 

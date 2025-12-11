@@ -36,7 +36,7 @@ export CLICOLOR_FORCE=1
 # 确保 TERM 有值（tput 需要）
 export TERM="${TERM:-xterm-256color}"
 
-# Fallback 颜色定义（当 gum 不可用时使用）
+# 颜色定义
 export RED='\033[0;31m' GREEN='\033[0;32m' YELLOW='\033[1;33m'
 export BLUE='\033[0;34m' CYAN='\033[0;36m' PURPLE='\033[0;35m' NC='\033[0m'
 

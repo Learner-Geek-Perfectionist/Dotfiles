@@ -85,12 +85,12 @@ _echo_blank() {
 }
 
 # 打印函数（终端保留颜色，日志去除颜色）
-print_info()    { _log "INFO"  ""  "$CYAN"   "$1"; }
-print_success() { _log "INFO"  "✓" "$GREEN"  "$1"; }
-print_warn()    { _log "WARN"  "⚠" "$YELLOW" "$1"; }
-print_error()   { _log "ERROR" "✗" "$RED"    "$1"; }
-print_header()  { _log "INFO"  ""  "$BLUE"   "$1"; }
-print_step()    { _log "DEBUG" "→" "$PURPLE" "$1"; }
+print_info() { _log "INFO" "" "$CYAN" "$1"; }
+print_success() { _log "INFO" "✓" "$GREEN" "$1"; }
+print_warn() { _log "WARN" "⚠" "$YELLOW" "$1"; }
+print_error() { _log "ERROR" "✗" "$RED" "$1"; }
+print_header() { _log "INFO" "" "$BLUE" "$1"; }
+print_step() { _log "DEBUG" "→" "$PURPLE" "$1"; }
 
 print_section() {
 	local title="$1"
@@ -313,7 +313,8 @@ setup_dotfiles() {
 	print_section "步骤 ${step_num}: 安装 Dotfiles 配置"
 
 	if [[ -f "$dotfiles_dir/scripts/install_dotfiles.sh" ]]; then
-		_run_and_log env DOTFILES_DIR="$dotfiles_dir" bash "$dotfiles_dir/scripts/install_dotfiles.sh"
+		# 子脚本会 source lib/utils.sh，自己处理日志，不要用 _run_and_log
+		env DOTFILES_DIR="$dotfiles_dir" bash "$dotfiles_dir/scripts/install_dotfiles.sh"
 	else
 		print_warn "未找到 Dotfiles 安装脚本，跳过"
 	fi
@@ -336,7 +337,8 @@ install_vscode() {
 	print_section "步骤 ${step_num}: 安装 VSCode 插件"
 
 	if [[ -f "$dotfiles_dir/scripts/install_vscode_ext.sh" ]]; then
-		_run_and_log bash "$dotfiles_dir/scripts/install_vscode_ext.sh" || {
+		# 子脚本会 source lib/utils.sh，自己处理日志
+		bash "$dotfiles_dir/scripts/install_vscode_ext.sh" || {
 			print_warn "VSCode 插件安装跳过（可能未安装 VSCode）"
 		}
 	fi

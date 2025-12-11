@@ -38,7 +38,7 @@ copy_path() {
 		cp -f "$src" "$dest"
 	fi
 
-	print_success "$2"
+	print_success "~/$2"
 }
 
 main() {

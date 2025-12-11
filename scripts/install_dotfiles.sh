@@ -71,8 +71,11 @@ main() {
 		fi
 	fi
 
-	# 其它文件
+	# Git 配置
 	copy_path ".gitconfig" ".gitconfig"
+	copy_path ".gitignore" ".gitignore"
+
+	# 其它文件
 	copy_path ".ssh/config" ".ssh/config"
 	copy_path ".pixi/manifests" ".pixi/manifests"
 	copy_path "sh-script" "sh-script"

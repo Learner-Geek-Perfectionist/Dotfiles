@@ -117,7 +117,8 @@ main() {
 		else
 			# 有缺失插件：需要等待异步下载完成（zinit 使用 wait lucid 异步加载）
 			print_info "正在安装 zinit 插件（异步下载中，请稍候）..."
-			zsh -ic "source '$HOME/.zshrc'; sleep 5; exit" >"$zsh_log" 2>&1 || true
+			# 8 秒等待让所有异步插件有足够时间下载（包括 fast-syntax-highlighting）
+			zsh -ic "source '$HOME/.zshrc'; sleep 8; exit" >"$zsh_log" 2>&1 || true
 			# 输出到终端和日志
 			if [[ -f "$zsh_log" && -s "$zsh_log" ]]; then
 				cat "$zsh_log"

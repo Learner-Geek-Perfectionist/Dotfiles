@@ -26,9 +26,6 @@ VSCODE_ONLY="${VSCODE_ONLY:-false}"
 DOTFILES_LOG_DIR="/tmp/dotfiles-logs/install"
 DOTFILES_LOG="${DOTFILES_LOG:-$DOTFILES_LOG_DIR/dotfiles-install-$(whoami)-$(date '+%Y%m%d-%H%M%S').log}"
 
-# 临时 gum 安装目录（用于解决鸡生蛋问题：脚本需要 gum，但 gum 通过 pixi 安装）
-TEMP_GUM_DIR=""
-
 # ========================================
 # 工具函数（install.sh 需要自包含，因为 curl | bash 时还没 clone 仓库）
 # ========================================
@@ -43,9 +40,6 @@ export TERM="${TERM:-xterm}"
 export RED='\033[0;31m' GREEN='\033[0;32m' YELLOW='\033[1;33m'
 export BLUE='\033[0;34m' CYAN='\033[0;36m' PURPLE='\033[0;35m' NC='\033[0m'
 
-# 检测 gum 是否可用
-_has_gum() { command -v gum &>/dev/null; }
-
 # 检测是否有 sudo 权限（而非 sudo 命令是否存在）
 has_sudo() {
 	command -v sudo &>/dev/null || return 1 # 先检查有没有 sudo 命令
@@ -57,6 +51,23 @@ has_sudo() {
 # 去除 ANSI 颜色代码（用于写入日志）
 _strip_ansi() {
 	sed 's/\x1b\[[0-9;]*m//g'
+}
+
+# ========================================
+# 统一日志输出函数
+# - stdout: 带颜色
+# - 日志文件: 无颜色
+# ========================================
+_log() {
+	local level="$1" prefix="$2" color="$3" msg="$4"
+	local output
+	if [[ -n "$prefix" ]]; then
+		output="${color}${prefix} ${msg}${NC}"
+	else
+		output="${color}[${level}] ${msg}${NC}"
+	fi
+	echo -e "$output"
+	echo -e "$output" | _strip_ansi >>"$DOTFILES_LOG"
 }
 
 # 运行命令并同时输出到终端和日志（日志去除颜色）
@@ -74,92 +85,22 @@ _echo_blank() {
 }
 
 # 打印函数（终端保留颜色，日志去除颜色）
-print_info() {
-	local msg
-	if _has_gum; then
-		msg=$(gum log --level info --level.foreground 14 --message.foreground 14 "$1" 2>&1)
-	else
-		msg=$(echo -e "${CYAN}$1${NC}")
-	fi
-	echo "$msg"
-	echo "$msg" | _strip_ansi >>"$DOTFILES_LOG"
-}
-print_success() {
-	local msg
-	if _has_gum; then
-		msg=$(gum log --level info --prefix "✓" --level.foreground 10 --prefix.foreground 10 --message.foreground 10 "$1" 2>&1)
-	else
-		msg=$(echo -e "${GREEN}✓ $1${NC}")
-	fi
-	echo "$msg"
-	echo "$msg" | _strip_ansi >>"$DOTFILES_LOG"
-}
-print_warn() {
-	local msg
-	if _has_gum; then
-		msg=$(gum log --level warn --level.foreground 11 --message.foreground 11 "$1" 2>&1)
-	else
-		msg=$(echo -e "${YELLOW}⚠ $1${NC}")
-	fi
-	echo "$msg"
-	echo "$msg" | _strip_ansi >>"$DOTFILES_LOG"
-}
-print_error() {
-	local msg
-	if _has_gum; then
-		msg=$(gum log --level error --level.foreground 9 --message.foreground 9 "$1" 2>&1)
-	else
-		msg=$(echo -e "${RED}✗ $1${NC}")
-	fi
-	echo "$msg"
-	echo "$msg" | _strip_ansi >>"$DOTFILES_LOG"
-}
-print_header() {
-	local msg
-	if _has_gum; then
-		msg=$(gum style --bold --foreground 212 "$1" 2>&1)
-	else
-		msg=$(echo -e "${BLUE}$1${NC}")
-	fi
-	echo "$msg"
-	echo "$msg" | _strip_ansi >>"$DOTFILES_LOG"
-}
-print_step() {
-	local msg
-	if _has_gum; then
-		msg=$(gum log --level debug --prefix "→" --level.foreground 13 --prefix.foreground 13 --message.foreground 13 "$1" 2>&1)
-	else
-		msg=$(echo -e "${PURPLE}→ $1${NC}")
-	fi
-	echo "$msg"
-	echo "$msg" | _strip_ansi >>"$DOTFILES_LOG"
-}
+print_info()    { _log "INFO"  ""  "$CYAN"   "$1"; }
+print_success() { _log "INFO"  "✓" "$GREEN"  "$1"; }
+print_warn()    { _log "WARN"  "⚠" "$YELLOW" "$1"; }
+print_error()   { _log "ERROR" "✗" "$RED"    "$1"; }
+print_header()  { _log "INFO"  ""  "$BLUE"   "$1"; }
+print_step()    { _log "DEBUG" "→" "$PURPLE" "$1"; }
 
 print_section() {
 	local title="$1"
-	local msg
-	if _has_gum; then
-		local width
-		width=$(tput cols)
-
-		local line
-		printf -v line "%*s" "$width" ""
-		line="${line// /━}"
-
-		msg=$(gum style --foreground 13 "$line" 2>&1)
-		echo "$msg"
-		echo "$msg" | _strip_ansi >>"$DOTFILES_LOG"
-		msg=$(gum style --width "$width" --align center --foreground 13 "$title" 2>&1)
-		echo "$msg"
-		echo "$msg" | _strip_ansi >>"$DOTFILES_LOG"
-		msg=$(gum style --foreground 13 "$line" 2>&1)
-		echo "$msg"
-		echo "$msg" | _strip_ansi >>"$DOTFILES_LOG"
-	else
-		print_step "========================================"
-		print_step "$title"
-		print_step "========================================"
-	fi
+	local width=80
+	local line
+	printf -v line "%*s" "$width" ""
+	line="${line// /━}"
+	_log "INFO" "" "$PURPLE" "$line"
+	_log "INFO" "" "$PURPLE" "$(printf '%*s' $(((${#title} + width) / 2)) "$title")"
+	_log "INFO" "" "$PURPLE" "$line"
 }
 
 detect_os() {
@@ -241,54 +182,6 @@ check_dependencies() {
 	done
 
 	print_success "依赖检查通过"
-}
-
-# 临时安装 gum（静默，解决鸡生蛋问题）
-setup_temp_gum() {
-	# 如果 gum 已经可用，不需要临时安装
-	command -v gum &>/dev/null && return 0
-
-	local os arch gum_version="0.14.5"
-	os=$(uname -s)
-	arch=$(uname -m)
-
-	# 转换架构名称
-	case "$arch" in
-	x86_64) arch="x86_64" ;;
-	aarch64 | arm64) arch="arm64" ;;
-	*) return 0 ;;
-	esac
-
-	# 转换系统名称
-	case "$os" in
-	Darwin) os="Darwin" ;;
-	Linux) os="Linux" ;;
-	*) return 0 ;;
-	esac
-
-	# 创建临时目录并下载
-	TEMP_GUM_DIR="/tmp/gum-temp-$(whoami)"
-	mkdir -p "$TEMP_GUM_DIR"
-
-	local gum_url="https://github.com/charmbracelet/gum/releases/download/v${gum_version}/gum_${gum_version}_${os}_${arch}.tar.gz"
-
-	if curl -fsSL "$gum_url" 2>/dev/null | tar -xz -C "$TEMP_GUM_DIR" 2>/dev/null; then
-		# 找到 gum 二进制（可能在顶层或子目录中）
-		local gum_bin
-		gum_bin=$(find "$TEMP_GUM_DIR" -name "gum" -type f 2>/dev/null | head -1)
-		if [[ -n "$gum_bin" && -x "$gum_bin" ]]; then
-			export PATH="$(dirname "$gum_bin"):$PATH"
-		else
-			TEMP_GUM_DIR=""
-		fi
-	else
-		TEMP_GUM_DIR=""
-	fi
-}
-
-# 清理临时 gum（静默）
-cleanup_temp_gum() {
-	[[ -n "$TEMP_GUM_DIR" && -d "$TEMP_GUM_DIR" ]] && rm -rf "$TEMP_GUM_DIR"
 }
 
 # ========================================
@@ -635,10 +528,6 @@ main() {
 	# 检查依赖（需要 git, curl, zsh）
 	check_dependencies
 
-	# 静默安装临时 gum，脚本结束时自动清理
-	setup_temp_gum
-	trap cleanup_temp_gum EXIT
-
 	# 克隆仓库（尽早执行，以便后续可以 source lib/utils.sh）
 	local dotfiles_dir
 	dotfiles_dir=$(clone_dotfiles)
@@ -654,14 +543,7 @@ main() {
 	arch=$(detect_arch)
 
 	_echo_blank
-	local msg
-	if _has_gum; then
-		msg=$(gum style --width "$(tput cols)" --align center --background 99 --foreground 255 --bold " 🚀 Dotfiles 安装脚本 v${DOTFILES_VERSION} " 2>&1)
-		echo "$msg"
-		echo "$msg" | _strip_ansi >>"$DOTFILES_LOG"
-	else
-		print_header "=== 🚀 Dotfiles 安装脚本 v${DOTFILES_VERSION} ==="
-	fi
+	print_header "=== 🚀 Dotfiles 安装脚本 v${DOTFILES_VERSION} ==="
 	_echo_blank
 	print_info "操作系统: $os"
 	print_info "架构: $arch"
@@ -696,14 +578,7 @@ main() {
 
 	# 完成
 	_echo_blank
-	local msg
-	if _has_gum; then
-		msg=$(gum style --width "$(tput cols)" --align center --background 10 --foreground 0 --bold " ✅ 安装完成！ " 2>&1)
-		echo "$msg"
-		echo "$msg" | _strip_ansi >>"$DOTFILES_LOG"
-	else
-		print_success "=== ✅ 安装完成！ ==="
-	fi
+	print_success "=== ✅ 安装完成！ ==="
 	_echo_blank
 	print_info "📝 安装日志: $DOTFILES_LOG"
 	_echo_blank

@@ -97,15 +97,36 @@ print_error() { _log "ERROR" "✗" "$RED" "$1"; }
 print_header() { _log "INFO" "" "$BLUE" "$1"; }
 print_step() { _log "DEBUG" "→" "$PURPLE" "$1"; }
 
+# 脚本标题横幅（背景色填充，文字居中）
+print_banner() {
+	local msg="$1"
+	local width=$(tput cols)
+	# 计算显示宽度（wc -L 考虑宽字符）
+	local display_width=$(echo -n "$msg" | wc -L | tr -d ' ')
+	local padding=$(((width - display_width) / 2))
+	local left_pad=$(printf "%${padding}s" "")
+	local right_pad=$(printf "%$((width - padding - display_width))s" "")
+	# 终端：带紫色背景
+	echo -e "\033[45m${left_pad}${msg}${right_pad}\033[0m"
+	# 日志：纯文本居中
+	echo "${left_pad}${msg}${right_pad}" >>"$DOTFILES_LOG"
+}
+
+# 步骤分隔线（无 [INFO] 前缀）
 print_section() {
 	local title="$1"
-	local width=80
+	local width=$(tput cols)
 	local line
 	printf -v line "%*s" "$width" ""
 	line="${line// /━}"
-	_log "INFO" "" "$PURPLE" "$line"
-	_log "INFO" "" "$PURPLE" "$(printf '%*s' $(((${#title} + width) / 2)) "$title")"
-	_log "INFO" "" "$PURPLE" "$line"
+	# 终端：带颜色
+	echo -e "${PURPLE}${line}${NC}"
+	echo -e "${PURPLE}$(printf '%*s' $(((${#title} + width) / 2)) "$title")${NC}"
+	echo -e "${PURPLE}${line}${NC}"
+	# 日志：纯文本
+	echo "$line" >>"$DOTFILES_LOG"
+	echo "$(printf '%*s' $(((${#title} + width) / 2)) "$title")" >>"$DOTFILES_LOG"
+	echo "$line" >>"$DOTFILES_LOG"
 }
 
 # ========================================

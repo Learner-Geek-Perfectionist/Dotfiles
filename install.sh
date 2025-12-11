@@ -545,7 +545,7 @@ main() {
 	arch=$(detect_arch)
 
 	_echo_blank
-	print_header "=== 🚀 Dotfiles 安装脚本 v${DOTFILES_VERSION} ==="
+	print_banner "🚀 Dotfiles 安装脚本 v${DOTFILES_VERSION}"
 	_echo_blank
 	print_info "操作系统: $os"
 	print_info "架构: $arch"

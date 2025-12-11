@@ -67,10 +67,31 @@ rm_path() {
 }
 
 remove_pixi() {
-	print_info "🧹 删除 Pixi..."
-	for p in ~/.pixi ~/.cache/pixi ~/.local/share/pixi ~/.local/state/pixi; do
+	print_info "🧹 删除 Pixi 及其安装的所有工具..."
+
+	# 显示将要删除的包（如果 pixi 存在）
+	if command -v pixi &>/dev/null; then
+		print_dim "已安装的工具环境:"
+		pixi global list 2>/dev/null
+	fi
+
+	# 删除 pixi 主目录（包含 bin、envs、manifests）
+	# ~/.pixi/bin - pixi 本身和所有 exposed 的命令
+	# ~/.pixi/envs - 所有安装的环境和包
+	rm_path ~/.pixi
+
+	# 删除 pixi/rattler 缓存和数据目录（包下载缓存在这里）
+	for p in ~/.cache/pixi ~/.cache/rattler ~/.local/share/pixi ~/.local/state/pixi ~/.rattler; do
 		rm_path "$p"
 	done
+
+	# 如果设置了 XDG_CACHE_HOME，也检查那里
+	if [[ -n "${XDG_CACHE_HOME:-}" ]]; then
+		rm_path "$XDG_CACHE_HOME/rattler"
+		rm_path "$XDG_CACHE_HOME/pixi"
+	fi
+
+	print_success "Pixi 及所有工具已删除"
 }
 
 remove_dotfiles() {

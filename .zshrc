@@ -53,11 +53,6 @@ fi
 # 加载 zinit 插件
 [[ -f "${HOME}/.config/zsh/plugins/zinit.zsh" ]] && source "${HOME}/.config/zsh/plugins/zinit.zsh"
 
-# ============================================
-# SSH ControlPath 目录（用于连接复用）
-# ============================================
-[[ ! -d "$HOME/.ssh/sockets" ]] && mkdir -p "$HOME/.ssh/sockets" && chmod 700 "$HOME/.ssh/sockets"
-
 # SSH Agent 配置
 # ============================================
 # 适用场景：
@@ -159,10 +154,10 @@ setopt no_auto_cd           # 禁止输入目录名自动进入
 # 加载 fzf 的环境变量
 command -v fzf >/dev/null 2>&1 && source <(fzf --zsh)
 
-# bat 映射到 cat（检查命令是否存在）
+# bat 映射到 cat
 command -v bat >/dev/null 2>&1 && alias cat=bat
 
-# tldr 替代 man（更简洁的命令手册，检查命令是否存在）
+# tldr 替代 man（更简洁的命令手册）
 command -v tldr >/dev/null 2>&1 && alias man='tldr'
 
 # 设置 fzf 的默认预览

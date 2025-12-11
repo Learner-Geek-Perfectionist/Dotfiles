@@ -539,6 +539,8 @@ main() {
 	os=$(detect_os)
 	arch=$(detect_arch)
 
+	# 清除 git clone 进度条残留（进度条以 \r 结尾，可能覆盖后续输出）
+	echo ""
 	print_dim "操作系统: $os | 架构: $arch | 用户: $(whoami)"
 	if [[ "$os" == "macos" ]]; then
 		print_dim "安装方式: Homebrew + Dotfiles"

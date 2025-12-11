@@ -90,9 +90,13 @@ main() {
 	print_info "🔌 安装 Zinit 插件..."
 	if command -v zsh &>/dev/null; then
 		# ZINIT_SYNC=1 同步加载，确保所有插件安装完成再退出
-		# zinit 输出到日志，终端静默
-		zsh -c "ZINIT_SYNC=1 source '$HOME/.zshrc'" >>"$DOTFILES_LOG" 2>&1 &&
-			print_success "Zinit 插件安装完成"
+		# 终端显示进度，日志用 ansifilter 过滤 ANSI 码（无则用 sed 降级）
+		if command -v ansifilter &>/dev/null; then
+			zsh -c "ZINIT_SYNC=1 source '$HOME/.zshrc'" 2>&1 | tee >(ansifilter >>"$DOTFILES_LOG")
+		else
+			zsh -c "ZINIT_SYNC=1 source '$HOME/.zshrc'" 2>&1 | tee >(sed 's/\x1b\[[0-9;?]*[a-zA-Z]//g' >>"$DOTFILES_LOG")
+		fi
+		print_success "Zinit 插件安装完成"
 	else
 		print_warn "未找到 zsh，跳过 zinit 插件安装"
 	fi

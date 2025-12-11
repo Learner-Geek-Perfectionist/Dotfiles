@@ -324,13 +324,13 @@ sync_pixi_tools() {
 	fi
 
 	if [[ -f "$manifest_dest" ]]; then
-		print_info "同步工具包（预编译，无需本地编译）..."
+		print_info "同步工具包（首次安装需下载，请耐心等待）..."
 
-		# 静默同步，只记录到日志
-		if pixi global sync >>"$DOTFILES_LOG" 2>&1; then
+		# 显示同步进度，同时记录到日志
+		if _run_and_log pixi global sync; then
 			print_success "工具包同步完成"
 		else
-			print_warn "部分工具同步失败，详见日志"
+			print_warn "部分工具同步失败"
 			print_dim "可稍后运行: pixi global sync"
 		fi
 

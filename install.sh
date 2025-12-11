@@ -155,7 +155,7 @@ check_dependencies() {
 	if [[ "$(uname)" == "Darwin" ]]; then
 		for cmd in "${missing[@]}"; do
 			if [[ "$cmd" == "git" ]]; then
-				xcode-select --install 2>/dev/null || true
+				xcode-select --install 2>/dev/null
 				print_info "请在弹窗中点击安装，完成后重新运行"
 				exit 0
 			fi

@@ -27,7 +27,7 @@ print_info "检查 Xcode Command Line Tools..."
 if ! xcode-select --version &>/dev/null; then
 	print_warn "Xcode Command Line Tools 未安装"
 	print_info "正在安装..."
-	xcode-select --install 2>/dev/null || true
+	xcode-select --install 2>/dev/null
 	print_error "请在弹出的对话框中点击 '安装'，安装完成后重新运行此脚本"
 	exit 1
 fi
@@ -35,7 +35,7 @@ fi
 print_success "Xcode Command Line Tools 已安装"
 
 # 重置 Xcode 路径
-sudo xcode-select --reset 2>/dev/null || true
+sudo xcode-select --reset 2>/dev/null
 
 # 2. 检查/安装 Homebrew
 print_info "检查 Homebrew..."

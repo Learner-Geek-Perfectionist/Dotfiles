@@ -130,7 +130,7 @@ for entry in "${editors[@]}"; do
 			((++count))
 			printf "\r${CYAN}[%d/%d]${NC} 安装中: ${YELLOW}%s${NC}%-20s" "$count" "$total" "$ext" ""
 			# 尝试安装
-			"$cmd" --install-extension "$ext" --force &>/dev/null || true
+			"$cmd" --install-extension "$ext" --force &>/dev/null
 			# 验证是否真的安装成功（重新检查）
 			new_installed=$("$cmd" --list-extensions 2>/dev/null | tr '[:upper:]' '[:lower:]')
 			ext_lower=$(echo "$ext" | tr '[:upper:]' '[:lower:]')

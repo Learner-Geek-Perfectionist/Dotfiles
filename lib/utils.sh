@@ -37,12 +37,9 @@ mkdir -p "$DOTFILES_LOG_DIR"
 # 检测是否有 sudo 权限（而非 sudo 命令是否存在）
 # ========================================
 has_sudo() {
-	# 如果是 root 用户，不需要 sudo
-	[[ $EUID -eq 0 ]] && return 0
-	# 检查 sudo 命令是否存在
-	command -v sudo &>/dev/null || return 1
-	# 检查是否有 sudo 权限（非交互式测试）
-	sudo -n true 2>/dev/null
+	command -v sudo &>/dev/null || return 1 # 先检查有没有 sudo 命令
+	[[ $EUID -eq 0 ]] && return 0           # root 用户，无需 sudo
+	sudo -n true 2>/dev/null                # 有免密 sudo 权限
 }
 
 # ========================================

@@ -27,7 +27,8 @@ DOTFILES_LOG_DIR="/tmp/dotfiles-logs/install"
 DOTFILES_LOG="${DOTFILES_LOG:-$DOTFILES_LOG_DIR/dotfiles-install-$(whoami)-$(date '+%Y%m%d-%H%M%S').log}"
 
 # ========================================
-# 工具函数（install.sh 需要自包含，因为 curl | bash 时还没 clone 仓库）
+# 工具函数（clone 前必需的最小集合，支持 curl | bash）
+# clone 后会 source lib/utils.sh 获取完整函数
 # ========================================
 
 # 强制颜色输出（即使在重定向场景下）
@@ -71,14 +72,6 @@ _log() {
 	echo -e "$output" | _strip_ansi >>"$DOTFILES_LOG"
 }
 
-# 运行命令并同时输出到终端和日志（日志去除颜色）
-_run_and_log() {
-	"$@" 2>&1 | while IFS= read -r line; do
-		echo "$line"
-		echo "$line" | _strip_ansi >>"$DOTFILES_LOG"
-	done
-}
-
 # 输出空行到终端和日志
 _echo_blank() {
 	echo ""
@@ -91,22 +84,6 @@ print_success() { _log "INFO" "✓" "$GREEN" "$1"; }
 print_warn() { _log "WARN" "⚠" "$YELLOW" "$1"; }
 print_error() { _log "ERROR" "✗" "$RED" "$1"; }
 print_header() { _log "INFO" "" "$BLUE" "$1"; }
-
-# 次要信息（灰色，无前缀，带缩进）
-print_dim() {
-	local msg="$1"
-	local output="${DIM}   ${msg}${NC}"
-	echo -e "$output"
-	echo -e "$output" | _strip_ansi >>"$DOTFILES_LOG"
-}
-
-# 列表项（用于工具列表等）
-print_item() {
-	local msg="$1"
-	local output="${DIM}   • ${msg}${NC}"
-	echo -e "$output"
-	echo -e "$output" | _strip_ansi >>"$DOTFILES_LOG"
-}
 
 # 计算字符串显示宽度（跨平台，考虑中文/emoji）
 _display_width() {
@@ -131,33 +108,6 @@ print_banner() {
 	echo -e "\033[45m${left_pad}${msg}${right_pad}\033[0m"
 	# 日志：纯文本居中
 	echo "${left_pad}${msg}${right_pad}" >>"$DOTFILES_LOG"
-}
-
-# 步骤标题（轻量箭头样式）
-print_section() {
-	local title="$1"
-	local output="${BOLD}${WHITE}▶ ${title}${NC}"
-	echo ""
-	echo -e "$output"
-	echo "" >>"$DOTFILES_LOG"
-	echo -e "$output" | _strip_ansi >>"$DOTFILES_LOG"
-}
-
-# 分隔线（仅用于重要分隔）
-print_divider() {
-	local width=$(tput cols)
-	local line
-	printf -v line "%*s" "$width" ""
-	line="${line// /─}"
-	echo -e "${DIM}${line}${NC}"
-	echo "$line" >>"$DOTFILES_LOG"
-}
-
-detect_os() {
-	case "$(uname -s)" in Darwin) echo "macos" ;; Linux) echo "linux" ;; *) echo "unknown" ;; esac
-}
-detect_arch() {
-	case "$(uname -m)" in x86_64) echo "x86_64" ;; aarch64 | arm64) echo "aarch64" ;; *) echo "$(uname -m)" ;; esac
 }
 
 # 显示帮助
@@ -577,9 +527,12 @@ main() {
 	dotfiles_dir=$(clone_dotfiles)
 	export DOTFILES_DIR="$dotfiles_dir"
 
-	# 克隆后 source lib/utils.sh，复用工具函数
+	# 克隆后 source lib/utils.sh，获取完整工具函数（print_dim, print_section 等）
 	if [[ -f "$dotfiles_dir/lib/utils.sh" ]]; then
 		source "$dotfiles_dir/lib/utils.sh"
+	else
+		print_error "未找到 lib/utils.sh，仓库可能不完整"
+		exit 1
 	fi
 
 	local os arch

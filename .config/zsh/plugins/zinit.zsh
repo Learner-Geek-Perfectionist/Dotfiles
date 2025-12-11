@@ -5,12 +5,8 @@
 # 插件管理器 zinit 安装的路径
 ZINIT_HOME="${HOME}/.local/share/zinit/zinit.git"
 
-# 同步/异步加载控制：ZINIT_SYNC=1 时同步加载（安装时用），否则异步加载（日常使用）
-if [[ -n "$ZINIT_SYNC" ]]; then
-	_wait="" # 同步：不等待，立即加载
-else
-	_wait="wait lucid" # 异步：延迟加载，shell 启动更快
-fi
+# 同步加载所有插件（避免 turbo 模式的 lucid bug）
+_wait=""
 
 # 如果插件管理器 zinit 没有安装......
 if [[ ! -f "${ZINIT_HOME}/zinit.zsh" ]]; then

@@ -239,16 +239,16 @@ main() {
 		;;
 	esac
 
-	# 检测 shell 配置文件
-	local rc_file="~/.bashrc"
-	[[ "$SHELL" == *zsh ]] && rc_file="~/.zshrc"
-
-	echo ""
-	print_success "Pixi 设置完成！"
-	echo ""
-	print_dim "下一步: source $rc_file 或重新打开终端"
-	print_dim "验证安装: pixi global list"
-	echo ""
+	# 独立运行时显示提示，被 install.sh 调用时不显示（避免重复）
+	if [[ -z "$DOTFILES_DIR" ]]; then
+		local rc_file="~/.bashrc"
+		[[ "$SHELL" == *zsh ]] && rc_file="~/.zshrc"
+		echo ""
+		print_success "Pixi 设置完成！"
+		print_dim "下一步: source $rc_file 或重新打开终端"
+		print_dim "验证: pixi global list"
+		echo ""
+	fi
 }
 
 main "$@"

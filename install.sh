@@ -328,24 +328,18 @@ sync_pixi_tools() {
 			print_dim "可稍后运行: pixi global sync"
 		fi
 
-		# 显示简洁的工具列表（只显示工具名）
+		# 显示简洁的工具列表（统计环境数量）
 		_echo_blank
-		print_info "已安装的工具:"
-		# 提取工具名列表并格式化显示
-		local tools
-		tools=$(pixi global list 2>/dev/null | grep -E '^\s*─ exposes:' | sed 's/.*exposes: //' | tr ',' '\n' | tr -d ' ' | sort -u)
-		if [[ -n "$tools" ]]; then
-			local tool_count
-			tool_count=$(echo "$tools" | wc -l | tr -d ' ')
-			local tool_line
-			tool_line=$(echo "$tools" | tr '\n' ' ' | sed 's/ $//')
-			print_dim "$tool_line"
-			print_dim "(共 ${tool_count} 个工具)"
+		local env_count
+		env_count=$(pixi global list 2>/dev/null | grep -E '^[├└]──' | wc -l | tr -d ' ')
+		if [[ "$env_count" -gt 0 ]]; then
+			print_success "已安装 ${env_count} 个工具环境"
+			print_dim "查看详情: pixi global list"
 		else
-			# 备用：直接显示 pixi global list（记录到日志）
-			pixi global list >>"$DOTFILES_LOG" 2>&1
-			print_dim "详见日志文件"
+			print_dim "暂无工具，详见日志"
 		fi
+		# 完整列表记录到日志
+		pixi global list >>"$DOTFILES_LOG" 2>&1 || true
 	else
 		print_warn "未找到 Pixi 配置文件: $manifest_dest"
 	fi

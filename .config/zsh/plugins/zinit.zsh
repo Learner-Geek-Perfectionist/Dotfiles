@@ -5,6 +5,13 @@
 # 插件管理器 zinit 安装的路径
 ZINIT_HOME="${HOME}/.local/share/zinit/zinit.git"
 
+# 同步/异步加载控制：ZINIT_SYNC=1 时同步加载（安装时用），否则异步加载（日常使用）
+if [[ -n "$ZINIT_SYNC" ]]; then
+	_wait=""  # 同步：不等待，立即加载
+else
+	_wait="wait lucid"  # 异步：延迟加载，shell 启动更快
+fi
+
 # 如果插件管理器 zinit 没有安装......
 if [[ ! -f "${ZINIT_HOME}/zinit.zsh" ]]; then
 	printf "\033[33m\033[220mInstalling ZDHARMA-CONTINUUM Initiative Plugin Manager...\033[0m\n"
@@ -39,34 +46,34 @@ COMPLETION_WAITING_DOTS='true'
 
 # OMZ 迁移和插件配置
 # clipboard
-zinit ice wait lucid depth=1
+zinit ice $_wait depth=1
 zinit snippet OMZL::clipboard.zsh
 # completion
-zinit ice wait lucid depth=1
+zinit ice $_wait depth=1
 zinit snippet OMZL::completion.zsh
 # grep
-zinit ice wait lucid depth=1
+zinit ice $_wait depth=1
 zinit snippet OMZL::grep.zsh
 # key-bindings
-zinit ice wait lucid depth=1
+zinit ice $_wait depth=1
 zinit snippet OMZL::key-bindings.zsh
 # directories
-zinit ice wait lucid depth=1
+zinit ice $_wait depth=1
 zinit snippet OMZL::directories.zsh
 # history（禁用 hist_ignore_space，记录所有命令包括空格开头的）
-zinit ice wait lucid depth=1 atload="unsetopt hist_ignore_space"
+zinit ice $_wait depth=1 atload="unsetopt hist_ignore_space"
 zinit snippet OMZL::history.zsh
 # theme
 # eza 智能回退：有 eza 用 eza，没有则保持 OMZ 的带颜色 ls
-zinit ice wait lucid depth=1 atload="command -v eza &>/dev/null && alias ls='eza --icons -ha --time-style=iso'"
+zinit ice $_wait depth=1 atload="command -v eza &>/dev/null && alias ls='eza --icons -ha --time-style=iso'"
 zinit snippet OMZL::theme-and-appearance.zsh
 # git
-zinit ice wait lucid depth=1
+zinit ice $_wait depth=1
 zinit snippet OMZL::git.zsh
-zinit ice wait lucid depth=1
+zinit ice $_wait depth=1
 zinit snippet OMZP::git/git.plugin.zsh
 # man
-zinit ice wait lucid depth=1
+zinit ice $_wait depth=1
 zinit snippet OMZ::plugins/colored-man-pages/colored-man-pages.plugin.zsh
 
 # 1.make sure fzf is installed
@@ -74,7 +81,7 @@ zinit snippet OMZ::plugins/colored-man-pages/colored-man-pages.plugin.zsh
 # 3.Completions should be configured before compinit, as stated in the zsh-completions manual installation guide.
 
 # 设置插件加载的选项，加载 fzf-tab 插件
-zinit ice atinit"autoload -Uz compinit; compinit -C -d \"$ZSH_COMPDUMP\"; zicdreplay" wait lucid depth=1
+zinit ice atinit"autoload -Uz compinit; compinit -C -d \"$ZSH_COMPDUMP\"; zicdreplay" $_wait depth=1
 zinit light Aloxaf/fzf-tab
 
 # 配置 fzf-tab

@@ -102,7 +102,7 @@ main() {
 	if command -v zsh &>/dev/null; then
 		local zinit_dir="$HOME/.local/share/zinit"
 		local zsh_log="/tmp/zinit-install-$$.log"
-		
+
 		# 检测所有核心插件是否都已安装（fast-syntax-highlighting 是最后一个异步插件）
 		local all_installed=true
 		for plugin in "powerlevel10k" "fzf-tab" "zsh-completions" "zsh-autosuggestions" "fast-syntax-highlighting"; do
@@ -111,7 +111,7 @@ main() {
 				break
 			fi
 		done
-		
+
 		if [[ "$all_installed" == "true" ]]; then
 			print_info "Zinit 插件已完整安装，跳过"
 		else

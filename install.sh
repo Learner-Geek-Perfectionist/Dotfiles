@@ -98,10 +98,9 @@ print_banner() {
 	local left_pad=$(printf "%${padding}s" "")
 	local right_pad=$(printf "%$((width - padding - display_width))s" "")
 	[[ ${#right_pad} -lt 0 ]] && right_pad=""
-	# 终端：带紫色背景
-	echo -e "\033[45m${left_pad}${msg}${right_pad}\033[0m"
-	# 日志：纯文本居中
-	echo "${left_pad}${msg}${right_pad}" >>"$DOTFILES_LOG"
+	local output="\033[45m${left_pad}${msg}${right_pad}\033[0m"
+	echo -e "$output"
+	echo -e "$output" >>"$DOTFILES_LOG"
 }
 
 # 显示帮助

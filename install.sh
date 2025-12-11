@@ -90,7 +90,6 @@ print_success() { _log "INFO" "✓" "$GREEN" "$1"; }
 print_warn() { _log "WARN" "⚠" "$YELLOW" "$1"; }
 print_error() { _log "ERROR" "✗" "$RED" "$1"; }
 print_header() { _log "INFO" "" "$BLUE" "$1"; }
-print_step() { _log "DEBUG" "→" "$PURPLE" "$1"; }
 
 # 脚本标题横幅（背景色填充，文字居中）
 print_banner() {
@@ -362,32 +361,6 @@ install_vscode() {
 		bash "$dotfiles_dir/scripts/install_vscode_ext.sh" || {
 			print_warn "VSCode 插件安装跳过（可能未安装 VSCode）"
 		}
-	fi
-}
-
-# ========================================
-# 配置 SSH
-# ========================================
-setup_ssh() {
-	local dotfiles_dir="$1"
-	local step_num="$2"
-
-	print_section "步骤 ${step_num}: 配置 SSH"
-
-	if [[ -f "$dotfiles_dir/.ssh/config" ]]; then
-		mkdir -p "$HOME/.ssh"
-		chmod 700 "$HOME/.ssh"
-
-		if [[ -f "$HOME/.ssh/config" ]]; then
-			cp "$HOME/.ssh/config" "$HOME/.ssh/config.bak"
-			print_info "已备份旧的 SSH 配置"
-		fi
-
-		cp "$dotfiles_dir/.ssh/config" "$HOME/.ssh/config"
-		chmod 600 "$HOME/.ssh/config"
-		print_success "SSH 配置完成"
-	else
-		print_warn "未找到 SSH 配置文件，跳过"
 	fi
 }
 

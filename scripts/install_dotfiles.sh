@@ -82,6 +82,7 @@ main() {
 	copy_path ".gitconfig" ".gitconfig"
 	copy_path ".ssh/config" ".ssh/config"
 	copy_path ".pixi/manifests" ".pixi/manifests"
+	copy_path "sh-script" "sh-script"
 
 	if ((${#COPY_SUMMARY[@]} > 0)); then
 		echo ""
@@ -95,6 +96,7 @@ main() {
 	# 权限
 	[[ -d "$HOME/.ssh" ]] && chmod 700 "$HOME/.ssh" && chmod 600 "$HOME/.ssh"/* 2>/dev/null
 	[[ -f "$HOME/.config/zsh/fzf/fzf-preview.sh" ]] && chmod +x "$HOME/.config/zsh/fzf/fzf-preview.sh"
+	[[ -d "$HOME/sh-script" ]] && chmod +x "$HOME/sh-script"/*.sh 2>/dev/null
 
 	# 安装 zinit 插件
 	echo ""

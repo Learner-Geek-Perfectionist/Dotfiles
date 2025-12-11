@@ -17,8 +17,6 @@ export YELLOW='\033[1;33m'
 export BLUE='\033[0;34m'
 export CYAN='\033[0;36m'
 export PURPLE='\033[0;35m'
-export MAGENTA='\033[0;35m'
-export ORANGE='\033[0;93m'
 export NC='\033[0m'
 
 # ========================================
@@ -95,7 +93,6 @@ print_success() { _log "INFO" "✓" "$GREEN" "$1"; }
 print_warn() { _log "WARN" "⚠" "$YELLOW" "$1"; }
 print_error() { _log "ERROR" "✗" "$RED" "$1"; }
 print_header() { _log "INFO" "" "$BLUE" "$1"; }
-print_step() { _log "DEBUG" "→" "$PURPLE" "$1"; }
 
 # 脚本标题横幅（背景色填充，文字居中）
 print_banner() {

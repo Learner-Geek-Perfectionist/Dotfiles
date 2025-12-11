@@ -254,13 +254,6 @@ yq = "*"
 [envs.yq.exposed]
 yq = "yq"
 
-[envs.ansifilter]
-channels = ["conda-forge"]
-[envs.ansifilter.dependencies]
-ansifilter = "*"
-[envs.ansifilter.exposed]
-ansifilter = "ansifilter"
-
 [envs.graphviz]
 channels = ["conda-forge"]
 [envs.graphviz.dependencies]

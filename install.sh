@@ -108,15 +108,25 @@ print_item() {
 	echo -e "$output" | _strip_ansi >>"$DOTFILES_LOG"
 }
 
+# 计算字符串显示宽度（跨平台，考虑中文/emoji）
+_display_width() {
+	local str="$1"
+	local char_count=${#str}
+	local ascii_count
+	ascii_count=$(printf '%s' "$str" | LC_ALL=C tr -cd '\0-\177' | wc -c | tr -d ' ')
+	echo $((char_count + char_count - ascii_count))
+}
+
 # 脚本标题横幅（背景色填充，文字居中）
 print_banner() {
 	local msg="$1"
 	local width=$(tput cols)
-	# 计算显示宽度（wc -L 考虑宽字符）
-	local display_width=$(echo -n "$msg" | wc -L | tr -d ' ')
+	local display_width=$(_display_width "$msg")
 	local padding=$(((width - display_width) / 2))
+	[[ $padding -lt 0 ]] && padding=0
 	local left_pad=$(printf "%${padding}s" "")
 	local right_pad=$(printf "%$((width - padding - display_width))s" "")
+	[[ ${#right_pad} -lt 0 ]] && right_pad=""
 	# 终端：带紫色背景
 	echo -e "\033[45m${left_pad}${msg}${right_pad}\033[0m"
 	# 日志：纯文本居中

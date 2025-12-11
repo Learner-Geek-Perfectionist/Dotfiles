@@ -249,9 +249,9 @@ main() {
 	[[ "$SHELL" == *zsh ]] && rc_file="~/.zshrc"
 
 	echo ""
-	print_success "=========================================="
-	print_success "✅ Pixi 设置完成！"
-	print_success "=========================================="
+	print_info "=========================================="
+	print_info "✅ Pixi 设置完成！"
+	print_info "=========================================="
 	echo ""
 	print_info "下一步:"
 	print_info "  1. 重新打开终端，或运行: source $rc_file"

@@ -116,13 +116,17 @@ print_section() {
 	local line
 	printf -v line "%*s" "$width" ""
 	line="${line// /━}"
+	# 计算显示宽度（wc -L 考虑宽字符）
+	local display_width=$(echo -n "$title" | wc -L | tr -d ' ')
+	local padding=$(((width - display_width) / 2))
+	local centered_title=$(printf "%${padding}s%s" "" "$title")
 	# 终端：带颜色
 	echo -e "${PURPLE}${line}${NC}"
-	echo -e "${PURPLE}$(printf '%*s' $(((${#title} + width) / 2)) "$title")${NC}"
+	echo -e "${PURPLE}${centered_title}${NC}"
 	echo -e "${PURPLE}${line}${NC}"
 	# 日志：纯文本
 	echo "$line" >>"$DOTFILES_LOG"
-	echo "$(printf '%*s' $(((${#title} + width) / 2)) "$title")" >>"$DOTFILES_LOG"
+	echo "$centered_title" >>"$DOTFILES_LOG"
 	echo "$line" >>"$DOTFILES_LOG"
 }
 

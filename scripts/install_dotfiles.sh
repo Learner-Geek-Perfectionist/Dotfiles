@@ -9,8 +9,6 @@ DOTFILES_DIR="$(dirname "$SCRIPT_DIR")"
 
 source "$SCRIPT_DIR/../lib/utils.sh"
 
-COPY_SUMMARY=()
-
 # 检测是否安装了 VSCode
 has_vscode() {
 	command -v code &>/dev/null && code --help 2>&1 | head -1 | grep -qi "code"
@@ -29,20 +27,16 @@ is_remote_server() {
 copy_path() {
 	local src="$DOTFILES_DIR/$1"
 	local dest="$HOME/$2"
-	local summary_msg=""
 
 	[[ ! -e "$src" ]] && return 0
 
 	if [[ -d "$src" ]]; then
 		mkdir -p "$dest"
 		cp -rf "$src/." "$dest/"
-		summary_msg="📁 $1 → ~/$2"
 	else
 		mkdir -p "$(dirname "$dest")"
 		cp -f "$src" "$dest"
-		summary_msg="📄 $1 → ~/$2"
 	fi
-	COPY_SUMMARY+=("$summary_msg")
 
 	print_success "$2"
 }
@@ -83,14 +77,6 @@ main() {
 	copy_path ".pixi/manifests" ".pixi/manifests"
 	copy_path "sh-script" "sh-script"
 
-	if ((${#COPY_SUMMARY[@]} > 0)); then
-		echo ""
-		print_info "🧾 文件复制详情:"
-		for msg in "${COPY_SUMMARY[@]}"; do
-			print_dim "➜ $msg"
-		done
-	fi
-
 	# 权限
 	[[ -d "$HOME/.ssh" ]] && chmod 700 "$HOME/.ssh" && chmod 600 "$HOME/.ssh"/* 2>/dev/null
 	[[ -f "$HOME/.config/zsh/fzf/fzf-preview.sh" ]] && chmod +x "$HOME/.config/zsh/fzf/fzf-preview.sh"
@@ -102,8 +88,8 @@ main() {
 	if command -v zsh &>/dev/null; then
 		# ZINIT_SYNC=1 同步加载，确保所有插件安装完成再退出
 		# zinit 输出到日志，终端静默
-		zsh -c "ZINIT_SYNC=1 source '$HOME/.zshrc'" >>"$DOTFILES_LOG" 2>&1 && \
-			print_success "Zinit 插件安装完成" || \
+		zsh -c "ZINIT_SYNC=1 source '$HOME/.zshrc'" >>"$DOTFILES_LOG" 2>&1 &&
+			print_success "Zinit 插件安装完成" ||
 			print_warn "Zinit 插件安装有警告，详见日志"
 	else
 		print_warn "未找到 zsh，跳过 zinit 插件安装"

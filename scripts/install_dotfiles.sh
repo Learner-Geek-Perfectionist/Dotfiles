@@ -100,17 +100,22 @@ main() {
 	print_header "🔌 安装 Zinit 插件："
 	echo ""
 	if command -v zsh &>/dev/null; then
-		# 使用交互式 zsh 执行，因为 zinit 的 'wait lucid' 延迟加载需要交互式 shell
-		# 等待几秒让异步插件有时间下载安装
-		print_info "正在安装 zinit 插件（需要几秒钟）..."
-		# 捕获 zsh 输出：先写入临时文件，再输出和写日志
+		local zinit_dir="$HOME/.local/share/zinit"
 		local zsh_log="/tmp/zinit-install-$$.log"
-		zsh -ic "source '$HOME/.zshrc'; sleep 5; exit" >"$zsh_log" 2>&1 || true
-		# 输出到终端和日志
-		if [[ -f "$zsh_log" && -s "$zsh_log" ]]; then
-			cat "$zsh_log"
-			cat "$zsh_log" | _strip_ansi >>"$DOTFILES_LOG"
-			rm -f "$zsh_log"
+		
+		# 检测插件是否已安装
+		if [[ -d "$zinit_dir/plugins" ]] && [[ $(ls -A "$zinit_dir/plugins" 2>/dev/null | wc -l) -gt 0 ]]; then
+			print_info "Zinit 插件已安装，跳过下载"
+		else
+			# 首次安装：需要等待异步插件下载
+			print_info "正在安装 zinit 插件（首次安装需要下载）..."
+			zsh -ic "source '$HOME/.zshrc'; sleep 3; exit" >"$zsh_log" 2>&1 || true
+			# 输出到终端和日志
+			if [[ -f "$zsh_log" && -s "$zsh_log" ]]; then
+				cat "$zsh_log"
+				cat "$zsh_log" | _strip_ansi >>"$DOTFILES_LOG"
+				rm -f "$zsh_log"
+			fi
 		fi
 		print_success "Zinit 插件安装完成"
 		print_success "安装完成！请运行: source ~/.zshrc"

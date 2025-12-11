@@ -103,13 +103,21 @@ main() {
 		local zinit_dir="$HOME/.local/share/zinit"
 		local zsh_log="/tmp/zinit-install-$$.log"
 		
-		# 检测插件是否已安装
-		if [[ -d "$zinit_dir/plugins" ]] && [[ $(ls -A "$zinit_dir/plugins" 2>/dev/null | wc -l) -gt 0 ]]; then
-			print_info "Zinit 插件已安装，跳过下载"
+		# 检测所有核心插件是否都已安装（fast-syntax-highlighting 是最后一个异步插件）
+		local all_installed=true
+		for plugin in "powerlevel10k" "fzf-tab" "zsh-completions" "zsh-autosuggestions" "fast-syntax-highlighting"; do
+			if ! ls "$zinit_dir/plugins/"*"$plugin"* &>/dev/null; then
+				all_installed=false
+				break
+			fi
+		done
+		
+		if [[ "$all_installed" == "true" ]]; then
+			print_info "Zinit 插件已完整安装，跳过"
 		else
-			# 首次安装：需要等待异步插件下载
-			print_info "正在安装 zinit 插件（首次安装需要下载）..."
-			zsh -ic "source '$HOME/.zshrc'; sleep 3; exit" >"$zsh_log" 2>&1 || true
+			# 有缺失插件：需要等待异步下载完成（zinit 使用 wait lucid 异步加载）
+			print_info "正在安装 zinit 插件（异步下载中，请稍候）..."
+			zsh -ic "source '$HOME/.zshrc'; sleep 5; exit" >"$zsh_log" 2>&1 || true
 			# 输出到终端和日志
 			if [[ -f "$zsh_log" && -s "$zsh_log" ]]; then
 				cat "$zsh_log"

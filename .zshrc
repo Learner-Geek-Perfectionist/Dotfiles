@@ -43,8 +43,8 @@ else
 	# OrbStack Linux 支持 open 命令打开 macOS Finder
 	[[ -d "/opt/orbstack-guest" ]] && command -v open &>/dev/null && alias open='open -R'
 
-	# Pixi 路径（Linux 包管理）
-	path_prepend "$HOME/.pixi/bin"
+	# Pixi 自动环境切换（进入项目目录自动激活项目环境）
+	eval "$(pixi shell-hook --manifest-path /dev/null)"
 fi
 
 # 加载平台配置插件

@@ -77,7 +77,7 @@ main() {
 
 	# 其它文件
 	copy_path ".ssh/config" ".ssh/config"
-	copy_path ".pixi/manifests" ".pixi/manifests"
+	copy_path "pixi.toml" "pixi.toml"
 	copy_path "sh-script" "sh-script"
 
 	# 权限

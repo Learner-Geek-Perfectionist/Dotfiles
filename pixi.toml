@@ -1,0 +1,97 @@
+# ============================================
+# Pixi Home 项目配置
+# 作为 home 目录的默认工具链
+# ============================================
+# 文档: https://pixi.sh/latest/
+
+[project]
+name = "home"
+version = "0.1.0"
+channels = ["conda-forge"]
+platforms = ["linux-64", "linux-aarch64"]
+
+# ============================================
+# 依赖项
+# ============================================
+
+[dependencies]
+# 基础系统工具
+git = "*"
+git-lfs = "*"
+curl = "*"
+wget = "*"
+zip = "*"
+unzip = "*"
+xz = "*"
+rsync = "*"
+coreutils = "*"
+findutils = "*"
+grep = "*"
+sed = "*"
+gawk = "*"
+openssh = "*"
+
+# 编程语言运行时
+python = "*"
+pip = "*"
+nodejs = "*"
+go = "*"
+ruby = "*"
+lua = "*"
+rust = "*"
+openjdk = "*"
+
+# 终端增强工具
+ripgrep = "*"
+fd-find = "*"
+bat = "*"
+eza = "*"
+fzf = "*"
+tree = "*"
+dust = "*"
+hyperfine = "*"
+fastfetch = "*"
+tmux = "*"
+
+# 开发工具
+neovim = "*"
+jq = "*"
+yq = "*"
+graphviz = "*"
+doxygen = "*"
+
+# 代码格式化
+go-shfmt = "*"
+ruff = "*"
+
+# LLVM/Clang 工具链
+clang = "*"
+clang-tools = "*"
+lld = "*"
+lldb = "*"
+llvm-tools = "*"
+
+# 其他工具
+tldr = "*"
+
+# 构建工具
+cxx-compiler = "*"
+c-compiler = "*"
+make = "*"
+cmake = "*"
+ninja = "*"
+pkg-config = "*"
+autoconf = "*"
+automake = "*"
+libtool = "*"
+
+# 开发库
+openssl = "*"
+readline = "*"
+zlib = "*"
+ncurses = "*"
+libffi = "*"
+
+# 测试框架和库
+gtest = "*"
+libboost-devel = "*"

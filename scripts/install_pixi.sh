@@ -110,10 +110,10 @@ setup_shell_integration() {
 }
 
 # ========================================
-# 安装全局工具包
+# 安装 Home 项目工具包
 # ========================================
-install_global_tools() {
-	print_info "📦 安装全局工具包..."
+install_home_tools() {
+	print_info "📦 安装 Home 项目工具包..."
 
 	export PATH="$PIXI_HOME/bin:$PATH"
 
@@ -122,8 +122,8 @@ install_global_tools() {
 		return 1
 	fi
 
-	# 检查是否有 manifest 文件
-	local manifest="$HOME/.pixi/manifests/pixi-global.toml"
+	# 检查是否有 pixi.toml 文件
+	local manifest="$HOME/pixi.toml"
 
 	if [[ ! -f "$manifest" ]]; then
 		print_error "未找到 Pixi 配置文件: $manifest"
@@ -131,22 +131,22 @@ install_global_tools() {
 		exit 1
 	fi
 
-	# 使用 pixi global sync 同步 manifest 中定义的所有 env
+	# 在 home 目录执行 pixi install
 	print_dim "配置文件: $manifest"
-	print_info "同步工具包（预编译，无需本地编译）..."
+	print_info "安装工具包（预编译，无需本地编译）..."
 
-	if pixi global sync; then
-		print_success "工具包同步完成"
+	if (cd "$HOME" && pixi install); then
+		print_success "工具包安装完成"
 	else
-		print_error "Pixi 工具包同步失败"
-		print_dim "请检查网络，随后运行: pixi global sync"
+		print_error "Pixi 工具包安装失败"
+		print_dim "请检查网络，随后运行: cd ~ && pixi install"
 		exit 1
 	fi
 
-	# 显示简洁的工具列表
+	# 显示已安装的工具
 	echo ""
 	print_info "已安装的工具:"
-	pixi global list 2>/dev/null | grep -E '^\s*─ exposes:' | sed 's/.*exposes: /   /' || pixi global list
+	(cd "$HOME" && pixi list 2>/dev/null) || print_dim "运行 'cd ~ && pixi list' 查看"
 }
 
 # ========================================
@@ -175,10 +175,11 @@ Pixi 安装脚本
     $0 --install-only
 
 常用 pixi 命令:
-    pixi global install <pkg>  - 全局安装包
-    pixi global list           - 列出已安装的包
-    pixi global upgrade        - 升级所有包
-    pixi global remove <pkg>   - 移除包
+    pixi add <pkg>       - 添加包到 ~/pixi.toml
+    pixi remove <pkg>    - 从 ~/pixi.toml 移除包
+    pixi list            - 列出已安装的包
+    pixi update          - 升级所有包
+    pixi shell           - 进入 pixi 环境
 HELP_EOF
 }
 
@@ -218,14 +219,14 @@ main() {
 	full)
 		install_pixi
 		setup_shell_integration
-		install_global_tools
+		install_home_tools
 		;;
 	install)
 		install_pixi
 		setup_shell_integration
 		;;
 	tools)
-		install_global_tools
+		install_home_tools
 		;;
 	shell)
 		setup_shell_integration
@@ -239,7 +240,7 @@ main() {
 		echo ""
 		print_success "Pixi 设置完成！"
 		print_dim "下一步: source $rc_file 或重新打开终端"
-		print_dim "验证: pixi global list"
+		print_dim "验证: cd ~ && pixi list"
 		echo ""
 	fi
 }

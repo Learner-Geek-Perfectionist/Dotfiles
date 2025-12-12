@@ -1,6 +1,12 @@
 # Kitty 终端 SSH 时回退 TERM（远程服务器可能没有 xterm-kitty terminfo）
 [[ "$TERM" == "xterm-kitty" && ! -e "/usr/share/terminfo/x/xterm-kitty" ]] && export TERM="xterm-256color"
 
+# 让 p10k instant prompt / 补全尽早生效（platform.zsh 会影响 FPATH，zinit.zsh 会 init async）
+export ZSH_COMPDUMP="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/.zcompdump"
+command mkdir -p "${ZSH_COMPDUMP:h}" 2>/dev/null
+[[ -f "${HOME}/.config/zsh/plugins/platform.zsh" ]] && source "${HOME}/.config/zsh/plugins/platform.zsh"
+[[ -f "${HOME}/.config/zsh/plugins/zinit.zsh" ]] && source "${HOME}/.config/zsh/plugins/zinit.zsh"
+
 # PATH 添加函数（避免重复添加）
 path_prepend() {
 	[[ -d "$1" ]] && [[ ":$PATH:" != *":$1:"* ]] && export PATH="$1:$PATH"
@@ -40,58 +46,102 @@ else
 	# VSCode 编辑器（Linux）- 后添加，确保 code 命令指向 VSCode 而非 Cursor
 	path_prepend "/opt/visual-studio-code/bin"
 
-	# Pixi 用户级工具链
-	path_prepend "$HOME/.pixi/bin"
+	# Pixi（仅 Linux 使用）：快切 PATH + 异步补齐环境变量（依赖 zsh-async）
+	if [[ "$(uname -s)" == "Linux" ]]; then
+		path_prepend "$HOME/.pixi/bin"
+		typeset -g _PIXI_PROJECT_DIR="__UNINITIALIZED__"
+		typeset -g _PIXI_ASYNC_READY=0
 
-	# Pixi 自动环境切换（静默，无需 .envrc）
-	# 项目级工具链优先，home 级工具链作为回退
-	_pixi_auto_switch() {
-		# 清理现有的 pixi 环境路径（避免 PATH 累积）
-		PATH=$(echo "$PATH" | tr ':' '\n' | grep -v '\.pixi/envs' | tr '\n' ':' | sed 's/:$//')
+		_pixi_find_project() {
+			local dir="$PWD"
+			while [[ "$dir" != "/" && "$dir" != "$HOME" ]]; do
+				[[ -f "$dir/pixi.toml" ]] && { print -r -- "$dir"; return 0; }
+				dir="${dir:h}"
+			done
+			return 0
+		}
 
-		# 向上查找项目 pixi.toml
-		local project_dir=""
-		local dir="$PWD"
-		while [[ "$dir" != "/" && "$dir" != "$HOME" ]]; do
-			if [[ -f "$dir/pixi.toml" ]]; then
-				project_dir="$dir"
-				break
+		# 只负责 PATH（避免与 pixi shell-hook 的 PATH 改写打架）
+		_pixi_fast_path() {
+			local project_dir="$1"
+			# 清理旧的 pixi env PATH（避免串环境/重复）
+			local -a new_path=()
+			local p
+			for p in $path; do
+				[[ "$p" == */.pixi/envs/* ]] && continue
+				new_path+=("$p")
+			done
+			path=($new_path)
+			[[ -d "$HOME/.pixi/envs/default/bin" ]] && path=("$HOME/.pixi/envs/default/bin" $path)
+			[[ -n "$project_dir" && -d "$project_dir/.pixi/envs/default/bin" ]] && path=("$project_dir/.pixi/envs/default/bin" $path)
+
+			if [[ -n "$project_dir" ]]; then
+				export PIXI_PROJECT_NAME="$(grep -m1 '^name' "$project_dir/pixi.toml" 2>/dev/null | sed 's/.*\"\(.*\)\".*/\1/')"
+			else
+				export PIXI_PROJECT_NAME="home"
 			fi
-			dir="$(dirname "$dir")"
-		done
+			export CONDA_DEFAULT_ENV="${PIXI_PROJECT_NAME:-default}"
+		}
 
-		if [[ -n "$project_dir" ]]; then
-			# 在项目中：先激活 home（作为回退），再激活项目（优先）
-			[[ -f "$HOME/pixi.toml" ]] && eval "$(pixi shell-hook --manifest-path "$HOME" 2>/dev/null)" &>/dev/null
-			# 保存 home 环境的 bin 路径
-			local home_bin="$HOME/.pixi/envs/default/bin"
-			# 激活项目环境
-			eval "$(pixi shell-hook --manifest-path "$project_dir" 2>/dev/null)" &>/dev/null
-			# 把 home 的 bin 追加到项目环境之后（作为回退）
-			[[ -d "$home_bin" ]] && export PATH="$PATH:$home_bin"
-		else
-			# 不在项目中：只激活 home 环境
-			[[ -f "$HOME/pixi.toml" ]] && eval "$(pixi shell-hook --manifest-path "$HOME" 2>/dev/null)" &>/dev/null
-		fi
+		_pixi_async_init() {
+			(( _PIXI_ASYNC_READY )) && return 0
+			(( $+functions[async_start_worker] && $+functions[async_register_callback] )) || return 1
+			async_start_worker pixi_worker
+			async_register_callback pixi_worker _pixi_async_callback
+			_PIXI_ASYNC_READY=1
+		}
 
-		# 让 zsh 主题显示项目名而不是环境名
-		export CONDA_DEFAULT_ENV="${PIXI_PROJECT_NAME:-default}"
-	}
+		_pixi_async_callback() {
+			local job=$1 code=$2 output=$3
+			local header="${output%%$'\n'*}"
+			[[ "$header" == __PIXI_PROJECT__=* ]] || return 0
+			local project_dir="${header#__PIXI_PROJECT__=}"
+			# 防止旧任务回写：只应用“当前项目”的结果
+			[[ "$project_dir" == "$_PIXI_PROJECT_DIR" ]] || return 0
 
-	# 初始激活 + cd 时自动切换
-	_pixi_auto_switch
-	autoload -U add-zsh-hook
-	add-zsh-hook chpwd _pixi_auto_switch
+			local exports="${output#*$'\n'}"
+			[[ $code -eq 0 && -n "$exports" && "$exports" != "$output" ]] && eval "$exports"
+			return 0
+		}
+
+		_pixi_async_full_load() {
+			local project_dir="$1"
+			print -r -- "__PIXI_PROJECT__=$project_dir"
+			command -v pixi &>/dev/null || return 0
+
+			if [[ -n "$project_dir" ]]; then
+				[[ -f "$HOME/pixi.toml" ]] && eval "$(pixi shell-hook --manifest-path "$HOME" 2>/dev/null)" &>/dev/null
+				eval "$(pixi shell-hook --manifest-path "$project_dir" 2>/dev/null)" &>/dev/null
+			else
+				[[ -f "$HOME/pixi.toml" ]] && eval "$(pixi shell-hook --manifest-path "$HOME" 2>/dev/null)" &>/dev/null
+			fi
+
+			# 回传关键环境变量（不回传 PATH）
+			export -p | grep -E '^export (PIXI_|CONDA_|CC|CXX|CFLAGS|CXXFLAGS|LDFLAGS|JAVA_HOME|GOROOT|GEM_|CARGO_|RUST)='
+		}
+
+		_pixi_switch() {
+			local project_dir="$(_pixi_find_project)"
+			[[ "$project_dir" == "$_PIXI_PROJECT_DIR" ]] && return 0
+			typeset -g _PIXI_PROJECT_DIR="$project_dir"
+
+			_pixi_fast_path "$project_dir"
+
+			# async 可用就异步补齐；否则只保留 PATH（避免阻塞启动）
+			if (( $+functions[async_job] )); then
+				_pixi_async_init && async_job pixi_worker _pixi_async_full_load "$project_dir"
+			fi
+			return 0
+		}
+
+		_pixi_switch
+		autoload -U add-zsh-hook
+		add-zsh-hook chpwd _pixi_switch
+	fi
 
 	# OrbStack Linux 支持 open 命令打开 macOS Finder
 	[[ -d "/opt/orbstack-guest" ]] && command -v open &>/dev/null && alias open='open -R'
 fi
-
-# 加载平台配置插件
-[[ -f "${HOME}/.config/zsh/plugins/platform.zsh" ]] && source "${HOME}/.config/zsh/plugins/platform.zsh"
-
-# 加载 zinit 插件
-[[ -f "${HOME}/.config/zsh/plugins/zinit.zsh" ]] && source "${HOME}/.config/zsh/plugins/zinit.zsh"
 
 # SSH Agent 配置
 # ============================================

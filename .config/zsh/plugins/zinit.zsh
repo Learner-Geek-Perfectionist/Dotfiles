@@ -5,13 +5,15 @@
 # 插件管理器 zinit 安装的路径
 ZINIT_HOME="${HOME}/.local/share/zinit/zinit.git"
 
-# 异步加载控制
+# 异步加载控制函数
 # ZINIT_SYNC=1 时同步加载（安装脚本用），否则使用 turbo 模式
-if [[ -n "$ZINIT_SYNC" ]]; then
-	_turbo=0
-else
-	_turbo=1
-fi
+_ice() {
+	if [[ -n "$ZINIT_SYNC" ]]; then
+		zinit ice depth=1 "$@"
+	else
+		zinit ice wait lucid depth=1 "$@"
+	fi
+}
 
 # 如果插件管理器 zinit 没有安装......
 if [[ ! -f "${ZINIT_HOME}/zinit.zsh" ]]; then
@@ -46,35 +48,25 @@ HYPHEN_INSENSITIVE='true'
 COMPLETION_WAITING_DOTS='true'
 
 # OMZ 迁移和插件配置
-# clipboard
-((_turbo)) && zinit ice wait lucid depth=1 || zinit ice depth=1
+_ice
 zinit snippet OMZL::clipboard.zsh
-# completion
-((_turbo)) && zinit ice wait lucid depth=1 || zinit ice depth=1
+_ice
 zinit snippet OMZL::completion.zsh
-# grep
-((_turbo)) && zinit ice wait lucid depth=1 || zinit ice depth=1
+_ice
 zinit snippet OMZL::grep.zsh
-# key-bindings
-((_turbo)) && zinit ice wait lucid depth=1 || zinit ice depth=1
+_ice
 zinit snippet OMZL::key-bindings.zsh
-# directories
-((_turbo)) && zinit ice wait lucid depth=1 || zinit ice depth=1
+_ice
 zinit snippet OMZL::directories.zsh
-# history（禁用 hist_ignore_space，记录所有命令包括空格开头的）
-((_turbo)) && zinit ice wait lucid depth=1 atload'unsetopt hist_ignore_space' || zinit ice depth=1 atload'unsetopt hist_ignore_space'
+_ice atload'unsetopt hist_ignore_space'
 zinit snippet OMZL::history.zsh
-# theme
-# eza 智能回退：有 eza 用 eza，没有则保持 OMZ 的带颜色 ls
-((_turbo)) && zinit ice wait lucid depth=1 atload'command -v eza &>/dev/null && alias ls="eza --icons -ha --time-style=iso"' || zinit ice depth=1 atload'command -v eza &>/dev/null && alias ls="eza --icons -ha --time-style=iso"'
+_ice atload'command -v eza &>/dev/null && alias ls="eza --icons -ha --time-style=iso"'
 zinit snippet OMZL::theme-and-appearance.zsh
-# git
-((_turbo)) && zinit ice wait lucid depth=1 || zinit ice depth=1
+_ice
 zinit snippet OMZL::git.zsh
-((_turbo)) && zinit ice wait lucid depth=1 || zinit ice depth=1
+_ice
 zinit snippet OMZP::git/git.plugin.zsh
-# man
-((_turbo)) && zinit ice wait lucid depth=1 || zinit ice depth=1
+_ice
 zinit snippet OMZ::plugins/colored-man-pages/colored-man-pages.plugin.zsh
 
 # 1.make sure fzf is installed
@@ -82,7 +74,7 @@ zinit snippet OMZ::plugins/colored-man-pages/colored-man-pages.plugin.zsh
 # 3.Completions should be configured before compinit, as stated in the zsh-completions manual installation guide.
 
 # 设置插件加载的选项，加载 fzf-tab 插件
-((_turbo)) && zinit ice wait lucid depth=1 atinit'autoload -Uz compinit; compinit -C -d "$ZSH_COMPDUMP"; zicdreplay' || zinit ice depth=1 atinit'autoload -Uz compinit; compinit -C -d "$ZSH_COMPDUMP"; zicdreplay'
+_ice atinit'autoload -Uz compinit; compinit -C -d "$ZSH_COMPDUMP"; zicdreplay'
 zinit light Aloxaf/fzf-tab
 
 # 配置 fzf-tab
@@ -102,12 +94,13 @@ zinit ice as"completion"
 zinit snippet https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/master/.config/zsh/fzf/_fzf
 
 # zsh-completions 提供大量的补全定义
-((_turbo)) && zinit ice wait lucid blockf depth=1 || zinit ice blockf depth=1
+_ice blockf
 zinit light zsh-users/zsh-completions
 
 # autosuggestions，atload 用于保障启动 autosuggest 功能。
-((_turbo)) && zinit ice wait lucid depth=1 atload'!_zsh_autosuggest_start' || zinit ice depth=1 atload'!_zsh_autosuggest_start'
+_ice atload'!_zsh_autosuggest_start'
 zinit light zsh-users/zsh-autosuggestions
+
 # 必须在 zdharma-continuum/fast-syntax-highlighting 之前加载 autosuggestions，否则「粘贴代码」太亮了。
-((_turbo)) && zinit ice wait lucid depth=1 || zinit ice depth=1
+_ice
 zinit light zdharma-continuum/fast-syntax-highlighting

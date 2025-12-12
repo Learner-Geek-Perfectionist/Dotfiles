@@ -61,6 +61,7 @@ _log() {
 
 # ========================================
 # 运行命令并同时输出到终端和日志（使用 script 伪造 TTY 保留进度条）
+# 注意：此函数适用于简单命令（如 pixi global sync），不适用于带复杂引号的命令
 # ========================================
 _run_and_log() {
 	if [[ "$(uname)" == "Darwin" ]]; then
@@ -68,8 +69,7 @@ _run_and_log() {
 		script -q -a "$DOTFILES_LOG" "$@"
 	else
 		# Linux: script -q -c "command" -a logfile
-		# 使用 printf %q 正确引用参数，避免引号丢失
-		script -q -a "$DOTFILES_LOG" -c "$(printf '%q ' "$@")"
+		script -q -a "$DOTFILES_LOG" -c "$*"
 	fi
 }
 

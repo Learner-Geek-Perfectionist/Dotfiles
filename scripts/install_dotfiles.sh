@@ -90,8 +90,8 @@ main() {
 	print_info "🔌 安装 Zinit 插件..."
 	if command -v zsh &>/dev/null; then
 		# ZINIT_SYNC=1 同步加载，确保所有插件安装完成再退出
-		# 使用 _run_and_log 保留进度条并记录到日志
-		_run_and_log zsh -c "ZINIT_SYNC=1 source '$HOME/.zshrc'"
+		# zinit 会直接写到 /dev/tty，用 tee 可以正常显示并记录日志
+		zsh -c "ZINIT_SYNC=1 source '$HOME/.zshrc'" 2>&1 | tee -a "$DOTFILES_LOG"
 		print_success "Zinit 插件安装完成"
 	else
 		print_warn "未找到 zsh，跳过 zinit 插件安装"

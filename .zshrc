@@ -93,27 +93,38 @@ else
 
 		_pixi_async_callback() {
 			local job=$1 code=$2 output=$3
-			local header="${output%%$'\n'*}"
+			local header="${output%%$'
+'*}"
 			[[ "$header" == __PIXI_PROJECT__=* ]] || return 0
 			local project_dir="${header#__PIXI_PROJECT__=}"
-			# 防止旧任务回写：只应用“当前项目”的结果
+			# 防止旧任务回写：只应用当前项目的结果
 			[[ "$project_dir" == "$_PIXI_PROJECT_DIR" ]] || return 0
 
-			local exports="${output#*$'\n'}"
-			[[ $code -eq 0 && -n "$exports" && "$exports" != "$output" ]] && eval "$exports"
+			local exports="${output#*$'
+'}"
+			if [[ $code -eq 0 && -n "$exports" && "$exports" != "$output" ]]; then
+				# 保存当前 PATH，避免被覆盖
+				local saved_path="$PATH"
+				eval "$exports"
+				# 恢复 PATH（环境变量由异步设置，PATH 由 _pixi_fast_path 同步管理）
+				export PATH="$saved_path"
+			fi
 			return 0
 		}
 
 		_pixi_async_full_load() {
 			local project_dir="$1"
+			local pixi_bin="$HOME/.pixi/bin/pixi"
+			
 			print -r -- "__PIXI_PROJECT__=$project_dir"
-			command -v pixi &>/dev/null || return 0
+			[[ -x "$pixi_bin" ]] || return 0
 
+			# 执行 pixi shell-hook（使用绝对路径）
 			if [[ -n "$project_dir" ]]; then
-				[[ -f "$HOME/pixi.toml" ]] && eval "$(pixi shell-hook --manifest-path "$HOME" 2>/dev/null)" &>/dev/null
-				eval "$(pixi shell-hook --manifest-path "$project_dir" 2>/dev/null)" &>/dev/null
+				[[ -f "$HOME/pixi.toml" ]] && eval "$("$pixi_bin" shell-hook --manifest-path "$HOME" 2>/dev/null)" &>/dev/null
+				eval "$("$pixi_bin" shell-hook --manifest-path "$project_dir" 2>/dev/null)" &>/dev/null
 			else
-				[[ -f "$HOME/pixi.toml" ]] && eval "$(pixi shell-hook --manifest-path "$HOME" 2>/dev/null)" &>/dev/null
+				[[ -f "$HOME/pixi.toml" ]] && eval "$("$pixi_bin" shell-hook --manifest-path "$HOME" 2>/dev/null)" &>/dev/null
 			fi
 
 			# 回传关键环境变量（不回传 PATH）
@@ -134,9 +145,21 @@ else
 			return 0
 		}
 
+		# precmd hook：在每次显示提示符前处理异步结果
+		_pixi_precmd() {
+			if (( _PIXI_ASYNC_READY )); then
+				# 保存当前 PATH（防止被 async 输出污染）
+				local _saved_path="$PATH"
+				async_process_results pixi_worker &>/dev/null
+				# 恢复 PATH
+				export PATH="$_saved_path"
+			fi
+		}
+
 		_pixi_switch
 		autoload -U add-zsh-hook
 		add-zsh-hook chpwd _pixi_switch
+		add-zsh-hook precmd _pixi_precmd
 	fi
 
 	# OrbStack Linux 支持 open 命令打开 macOS Finder

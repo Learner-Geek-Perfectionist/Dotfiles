@@ -44,7 +44,7 @@ zinit light romkatv/powerlevel10k
 zinit light mafredri/zsh-async
 
 # 2.6 zsh-async 加载后，异步执行完整的 pixi 环境加载
-if (($ + functions[async_init])); then
+if (($+functions[async_init])); then
 	async_init
 fi
 

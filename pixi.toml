@@ -4,7 +4,7 @@
 # ============================================
 # 文档: https://pixi.sh/latest/
 
-[project]
+[workspace]
 name = "home"
 version = "0.1.0"
 channels = ["conda-forge"]
@@ -73,6 +73,7 @@ llvm-tools = "*"
 
 # 其他工具
 tldr = "*"
+direnv = "*"
 
 # 构建工具
 cxx-compiler = "*"

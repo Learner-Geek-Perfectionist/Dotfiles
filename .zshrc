@@ -40,11 +40,35 @@ else
 	# VSCode 编辑器（Linux）- 后添加，确保 code 命令指向 VSCode 而非 Cursor
 	path_prepend "/opt/visual-studio-code/bin"
 
+	# Pixi 用户级工具链
+	path_prepend "$HOME/.pixi/bin"
+
+	# Pixi 自动环境切换（静默，无需 .envrc）
+	_pixi_auto_switch() {
+		# 清理现有的 pixi 环境路径（避免 PATH 累积）
+		PATH=$(echo "$PATH" | tr ':' '\n' | grep -v '\.pixi/envs' | tr '\n' ':' | sed 's/:$//')
+
+		# 向上查找 pixi.toml
+		local dir="$PWD"
+		while [[ "$dir" != "/" ]]; do
+			if [[ -f "$dir/pixi.toml" ]]; then
+				eval "$(pixi shell-hook --manifest-path "$dir" 2>/dev/null)" &>/dev/null
+				return
+			fi
+			dir="$(dirname "$dir")"
+		done
+
+		# 没找到项目，回退到 home 环境
+		[[ -f "$HOME/pixi.toml" ]] && eval "$(pixi shell-hook --manifest-path "$HOME" 2>/dev/null)" &>/dev/null
+	}
+
+	# 初始激活 + cd 时自动切换
+	_pixi_auto_switch
+	autoload -U add-zsh-hook
+	add-zsh-hook chpwd _pixi_auto_switch
+
 	# OrbStack Linux 支持 open 命令打开 macOS Finder
 	[[ -d "/opt/orbstack-guest" ]] && command -v open &>/dev/null && alias open='open -R'
-
-	# Pixi 自动环境切换（进入项目目录自动激活项目环境）
-	eval "$(pixi shell-hook --manifest-path /dev/null)"
 fi
 
 # 加载平台配置插件

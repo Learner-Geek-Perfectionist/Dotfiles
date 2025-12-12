@@ -44,22 +44,35 @@ else
 	path_prepend "$HOME/.pixi/bin"
 
 	# Pixi 自动环境切换（静默，无需 .envrc）
+	# 项目级工具链优先，home 级工具链作为回退
 	_pixi_auto_switch() {
 		# 清理现有的 pixi 环境路径（避免 PATH 累积）
 		PATH=$(echo "$PATH" | tr ':' '\n' | grep -v '\.pixi/envs' | tr '\n' ':' | sed 's/:$//')
 
-		# 向上查找 pixi.toml
+		# 向上查找项目 pixi.toml
+		local project_dir=""
 		local dir="$PWD"
-		while [[ "$dir" != "/" ]]; do
+		while [[ "$dir" != "/" && "$dir" != "$HOME" ]]; do
 			if [[ -f "$dir/pixi.toml" ]]; then
-				eval "$(pixi shell-hook --manifest-path "$dir" 2>/dev/null)" &>/dev/null
-				return
+				project_dir="$dir"
+				break
 			fi
 			dir="$(dirname "$dir")"
 		done
 
-		# 没找到项目，回退到 home 环境
-		[[ -f "$HOME/pixi.toml" ]] && eval "$(pixi shell-hook --manifest-path "$HOME" 2>/dev/null)" &>/dev/null
+		if [[ -n "$project_dir" ]]; then
+			# 在项目中：先激活 home（作为回退），再激活项目（优先）
+			[[ -f "$HOME/pixi.toml" ]] && eval "$(pixi shell-hook --manifest-path "$HOME" 2>/dev/null)" &>/dev/null
+			# 保存 home 环境的 bin 路径
+			local home_bin="$HOME/.pixi/envs/default/bin"
+			# 激活项目环境
+			eval "$(pixi shell-hook --manifest-path "$project_dir" 2>/dev/null)" &>/dev/null
+			# 把 home 的 bin 追加到项目环境之后（作为回退）
+			[[ -d "$home_bin" ]] && export PATH="$PATH:$home_bin"
+		else
+			# 不在项目中：只激活 home 环境
+			[[ -f "$HOME/pixi.toml" ]] && eval "$(pixi shell-hook --manifest-path "$HOME" 2>/dev/null)" &>/dev/null
+		fi
 	}
 
 	# 初始激活 + cd 时自动切换

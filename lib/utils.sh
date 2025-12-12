@@ -68,7 +68,8 @@ _run_and_log() {
 		script -q -a "$DOTFILES_LOG" "$@"
 	else
 		# Linux: script -q -c "command" -a logfile
-		script -q -a "$DOTFILES_LOG" -c "$*"
+		# 使用 printf %q 正确引用参数，避免引号丢失
+		script -q -a "$DOTFILES_LOG" -c "$(printf '%q ' "$@")"
 	fi
 }
 

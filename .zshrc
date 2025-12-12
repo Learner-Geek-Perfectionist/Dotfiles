@@ -73,6 +73,9 @@ else
 			# 不在项目中：只激活 home 环境
 			[[ -f "$HOME/pixi.toml" ]] && eval "$(pixi shell-hook --manifest-path "$HOME" 2>/dev/null)" &>/dev/null
 		fi
+
+		# 让 zsh 主题显示项目名而不是环境名
+		export CONDA_DEFAULT_ENV="${PIXI_PROJECT_NAME:-default}"
 	}
 
 	# 初始激活 + cd 时自动切换

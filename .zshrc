@@ -127,15 +127,9 @@ else
 
 			_pixi_fast_path "$project_dir"
 
-			# async 可用就异步补齐
+			# async 可用就异步补齐；否则只保留 PATH（避免阻塞启动）
 			if (( $+functions[async_job] )); then
 				_pixi_async_init && async_job pixi_worker _pixi_async_full_load "$project_dir"
-				
-				# 非交互式（zle 不可用）时，等待并手动处理结果
-				if [[ ! -o zle ]]; then
-					async_flush_jobs pixi_worker 2>/dev/null
-					async_process_results pixi_worker 2>/dev/null
-				fi
 			fi
 			return 0
 		}

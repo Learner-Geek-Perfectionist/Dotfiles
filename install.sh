@@ -251,13 +251,13 @@ install_pixi_binary() {
 }
 
 # ========================================
-# Linux: 同步 Pixi 工具包
+# Linux: 安装 Pixi Home 项目工具包
 # ========================================
 sync_pixi_tools() {
 	local dotfiles_dir="$1"
 	local step_num="$2"
 
-	print_section "步骤 ${step_num}: 📦 同步 Pixi 工具包"
+	print_section "步骤 ${step_num}: 📦 安装 Pixi 工具包"
 
 	export PATH="$HOME/.pixi/bin:$PATH"
 
@@ -266,39 +266,38 @@ sync_pixi_tools() {
 		return 1
 	fi
 
-	# 部署 pixi manifest
-	local manifest_src="$dotfiles_dir/.pixi/manifests/pixi-global.toml"
-	local manifest_dest="$HOME/.pixi/manifests/pixi-global.toml"
+	# 部署 pixi.toml 到 home 目录
+	local manifest_src="$dotfiles_dir/pixi.toml"
+	local manifest_dest="$HOME/pixi.toml"
 
 	if [[ -f "$manifest_src" ]]; then
 		print_dim "部署配置: $manifest_dest"
-		mkdir -p "$(dirname "$manifest_dest")"
 		cp "$manifest_src" "$manifest_dest"
 	fi
 
 	if [[ -f "$manifest_dest" ]]; then
-		print_info "同步工具包（首次安装需下载，请耐心等待）..."
+		print_info "安装工具包（首次安装需下载，请耐心等待）..."
 
-		# 显示同步进度，同时记录到日志
-		if _run_and_log pixi global sync; then
-			print_success "工具包同步完成"
+		# 在 home 目录执行 pixi install
+		if (cd "$HOME" && _run_and_log pixi install); then
+			print_success "工具包安装完成"
 		else
-			print_warn "部分工具同步失败"
-			print_dim "可稍后运行: pixi global sync"
+			print_warn "部分工具安装失败"
+			print_dim "可稍后运行: cd ~ && pixi install"
 		fi
 
-		# 显示简洁的工具列表（统计环境数量）
+		# 显示简洁的工具列表
 		_echo_blank
-		local env_count
-		env_count=$(pixi global list 2>/dev/null | grep -E '^[├└]──' | wc -l | tr -d ' ')
-		if [[ "$env_count" -gt 0 ]]; then
-			print_success "已安装 ${env_count} 个工具环境"
-			print_dim "查看详情: pixi global list"
+		local pkg_count
+		pkg_count=$(cd "$HOME" && pixi list 2>/dev/null | grep -v '^Package' | grep -v '^─' | wc -l | tr -d ' ')
+		if [[ "$pkg_count" -gt 0 ]]; then
+			print_success "已安装 ${pkg_count} 个工具包"
+			print_dim "查看详情: cd ~ && pixi list"
 		else
 			print_dim "暂无工具，详见日志"
 		fi
 		# 完整列表记录到日志
-		pixi global list >>"$DOTFILES_LOG" 2>&1 || true
+		(cd "$HOME" && pixi list) >>"$DOTFILES_LOG" 2>&1 || true
 	else
 		print_warn "未找到 Pixi 配置文件: $manifest_dest"
 	fi
@@ -573,7 +572,7 @@ main() {
 	print_dim "1. 重新打开终端（或 source ~/.zshrc）"
 
 	if [[ "$os" == "linux" ]]; then
-		print_dim "2. 查看工具: pixi global list"
+		print_dim "2. 查看工具: cd ~ && pixi list"
 	else
 		print_dim "2. 验证安装: brew list"
 	fi

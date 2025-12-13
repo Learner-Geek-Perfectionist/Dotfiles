@@ -295,15 +295,18 @@ fd() {
 	emulate -L zsh
 
 	local -a cmd
+	local fd_bin
+	fd_bin=$(command -v fd)
+
 	if sudo -n true 2>/dev/null; then
-		cmd=( sudo fd )
+		cmd=( sudo "$fd_bin" )
 	else
-		cmd=( command fd )
+		cmd=( "$fd_bin" )
 	fi
 
 	# 这些选项直接透传，避免默认参数干扰
 	case "$1" in
-		--version|-V|--help|-h) "${cmd[@]}" "$@"; return $?;;
+		--version|-V|--help|-h) "${cmd[@]}" "$@"; return;;
 	esac
 
 	"${cmd[@]}" --color=always "${_fd_opts[@]}" "$@"

@@ -20,6 +20,10 @@
         "${workspaceFolder}/**"
     ],
     "shfmt.executablePath": "shfmt",
+    // zsh/shell 脚本禁用保存时格式化
+    "[shellscript]": {
+        "editor.formatOnSave": false
+    },
     // ======================= 编辑器设置 =======================
     "editor.insertSpaces": true,
     "editor.tabSize": 4,

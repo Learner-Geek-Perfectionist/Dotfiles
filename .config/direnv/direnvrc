@@ -1,8 +1,0 @@
-# Pixi 集成：自动激活项目级工具链
-use_pixi() {
-  # 确保 pixi 在 PATH 中
-  export PATH="$HOME/.pixi/bin:$PATH"
-  watch_file pixi.toml pixi.lock
-  eval "$(pixi shell-hook)"
-}
-

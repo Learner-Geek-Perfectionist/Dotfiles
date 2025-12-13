@@ -65,7 +65,7 @@ flowchart TB
     end
 
     subgraph Step2["步骤 2/5: 同步工具包"]
-        B1[复制 pixi-global.toml] --> B2[pixi global sync]
+        B1[复制 pixi.toml 到 ~/pixi.toml] --> B2[pixi install --manifest-path ~]
         B2 --> B3[安装所有预定义工具]
     end
 
@@ -120,7 +120,7 @@ graph LR
     subgraph 配置文件
         D1[.zshrc / .zprofile / .zshenv]
         D2[.config/zsh/]
-        D3[.pixi/manifests/pixi-global.toml]
+        D3[~/pixi.toml]
     end
 
     A -->|Linux| B1
@@ -177,6 +177,10 @@ flowchart TB
 
 ```mermaid
 graph TB
+    subgraph Home["~/"]
+        B[pixi.toml]
+    end
+
     subgraph Pixi["~/.pixi/"]
         A[bin/] --> A1[python]
         A --> A2[node]
@@ -186,17 +190,16 @@ graph TB
         A --> A6[fzf]
         A --> A7[...]
         
-        B[manifests/] --> B1[pixi-global.toml]
-        
         C[envs/] --> C1[python/]
         C --> C2[node/]
         C --> C3[build-tools/]
         C --> C4[...]
     end
 
-    B1 -->|pixi global sync| A
-    B1 -->|定义| C
+    B -->|pixi install --manifest-path ~| A
+    B -->|定义| C
 
+    style Home fill:#6bcb77,stroke:#16213e,color:#222831
     style Pixi fill:#2d4059,stroke:#16213e,color:#f07b3f
 ```
 

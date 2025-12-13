@@ -34,12 +34,29 @@ export DOTFILES_LOG="${DOTFILES_LOG:-$DOTFILES_LOG_DIR/dotfiles-$(whoami)-$(date
 mkdir -p "$DOTFILES_LOG_DIR"
 
 # ========================================
-# 检测是否有 sudo 权限（而非 sudo 命令是否存在）
+# 检测是否有 sudo 权限
+# 返回值:
+#   0 - 有 sudo 权限（root / 免密 sudo / 在 sudo 组中）
+#   1 - 无 sudo 权限或无 sudo 命令
+#
+# 使用场景:
+#   - has_sudo: 用于判断用户是否有 sudo 权限（可能需要密码输入）
+#   - has_sudo_nopasswd: 用于非交互式脚本，仅检查免密 sudo
 # ========================================
 has_sudo() {
-	command -v sudo &>/dev/null || return 1 # 先检查有没有 sudo 命令
-	[[ $EUID -eq 0 ]] && return 0           # root 用户，无需 sudo
-	sudo -n true 2>/dev/null                # 有免密 sudo 权限
+	[[ $EUID -eq 0 ]] && return 0                              # root 用户
+	command -v sudo &>/dev/null || return 1                    # 无 sudo 命令
+	sudo -n true 2>/dev/null && return 0                       # 免密 sudo
+	# 检查用户是否在 sudo/wheel/admin 组中（有 sudo 权限但需要密码）
+	groups 2>/dev/null | grep -qwE 'sudo|wheel|admin' && return 0
+	return 1
+}
+
+# 检测是否有免密 sudo 权限（适用于非交互式脚本，如 curl | bash）
+has_sudo_nopasswd() {
+	[[ $EUID -eq 0 ]] && return 0                              # root 用户
+	command -v sudo &>/dev/null || return 1                    # 无 sudo 命令
+	sudo -n true 2>/dev/null                                   # 免密 sudo
 }
 
 # ========================================

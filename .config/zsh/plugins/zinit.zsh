@@ -97,9 +97,9 @@ zstyle ':fzf-tab:complete:code:*' popup-pad 30 0
 zstyle ":fzf-tab:*" fzf-flags --color=bg+:23
 zstyle ':fzf-tab:*' switch-group '<' '>'
 
-# 添加 _fzf 补全函数
+# 添加 _fzf 补全函数（使用本地文件）
 zinit ice as"completion"
-zinit snippet https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/master/.config/zsh/fzf/_fzf
+zinit snippet "$HOME/.config/zsh/fzf/_fzf"
 
 # zsh-completions 提供大量的补全定义
 _ice blockf

@@ -81,7 +81,7 @@ main() {
 
 	# 其它文件
 	copy_path ".ssh/config" ".ssh/config"
-	copy_path "pixi.toml" "pixi.toml"
+	# pixi.toml 由 install.sh 的 sync_pixi_tools() 统一部署，避免重复
 	copy_path "sh-script" "sh-script"
 
 	# 权限

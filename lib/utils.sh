@@ -135,8 +135,9 @@ _display_width() {
 # 脚本标题横幅（背景色填充，文字居中）
 print_banner() {
 	local msg="$1"
-	# 多种方式获取终端宽度，确保准确性
-	local width="${COLUMNS:-$(tput cols 2>/dev/null || stty size 2>/dev/null </dev/tty | cut -d' ' -f2)}"
+	# 多种方式获取终端宽度：COLUMNS > 0 时使用，否则用 tput cols
+	local width
+	[[ "${COLUMNS:-0}" -gt 0 ]] && width="$COLUMNS" || width="$(tput cols 2>/dev/null)"
 	local display_width=$(_display_width "$msg")
 	local padding=$(((width - display_width) / 2))
 	[[ $padding -lt 0 ]] && padding=0
@@ -160,7 +161,8 @@ print_section() {
 
 # 分隔线（仅用于重要分隔）
 print_divider() {
-	local width="${COLUMNS:-$(tput cols 2>/dev/null || stty size 2>/dev/null </dev/tty | cut -d' ' -f2)}"
+	local width
+	[[ "${COLUMNS:-0}" -gt 0 ]] && width="$COLUMNS" || width="$(tput cols 2>/dev/null)"
 	local line
 	printf -v line "%*s" "$width" ""
 	line="${line// /─}"

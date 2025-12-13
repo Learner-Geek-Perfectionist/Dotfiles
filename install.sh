@@ -22,9 +22,8 @@ PIXI_ONLY="${PIXI_ONLY:-false}"
 DOTFILES_ONLY="${DOTFILES_ONLY:-false}"
 VSCODE_ONLY="${VSCODE_ONLY:-false}"
 
-# 日志文件（与 lib/utils.sh 保持一致）
+# 日志目录（日志文件名在参数解析后生成，包含安装模式）
 DOTFILES_LOG_DIR="/tmp/dotfiles-logs-$(whoami)/install"
-DOTFILES_LOG="${DOTFILES_LOG:-$DOTFILES_LOG_DIR/dotfiles-install-$(whoami)-$(date '+%Y%m%d-%H%M%S').log}"
 
 # ========================================
 # 工具函数（clone 前必需的最小集合，支持 curl | bash）
@@ -74,13 +73,14 @@ _log() {
 		output="${color}[${level}] ${msg}${NC}"
 	fi
 	echo -e "$output"
-	echo -e "$output" >>"$DOTFILES_LOG"
+	# 日志文件可能在参数解析后才设置，避免写入空路径
+	[[ -n "$DOTFILES_LOG" ]] && echo -e "$output" >>"$DOTFILES_LOG"
 }
 
 # 输出空行到终端和日志
 _echo_blank() {
 	echo ""
-	echo "" >>"$DOTFILES_LOG"
+	[[ -n "$DOTFILES_LOG" ]] && echo "" >>"$DOTFILES_LOG"
 }
 
 # 打印函数（终端保留颜色，日志去除颜色）
@@ -132,9 +132,29 @@ Dotfiles 安装脚本 v${DOTFILES_VERSION}
 EOF
 }
 
-# 设置日志
+# 设置日志（根据安装模式生成文件名）
 setup_logging() {
 	mkdir -p "$DOTFILES_LOG_DIR"
+
+	# 根据模式生成日志文件名后缀
+	local mode_suffix=""
+	if [[ "$PIXI_ONLY" == "true" ]]; then
+		mode_suffix="-pixi-only"
+	elif [[ "$DOTFILES_ONLY" == "true" ]]; then
+		mode_suffix="-dotfiles-only"
+	elif [[ "$VSCODE_ONLY" == "true" ]]; then
+		mode_suffix="-vscode-only"
+	elif [[ "$SKIP_DOTFILES" == "true" && "$SKIP_VSCODE" == "true" ]]; then
+		mode_suffix="-skip-dotfiles-vscode"
+	elif [[ "$SKIP_DOTFILES" == "true" ]]; then
+		mode_suffix="-skip-dotfiles"
+	elif [[ "$SKIP_VSCODE" == "true" ]]; then
+		mode_suffix="-skip-vscode"
+	fi
+
+	DOTFILES_LOG="$DOTFILES_LOG_DIR/dotfiles-install-$(whoami)${mode_suffix}-$(date '+%Y%m%d-%H%M%S').log"
+	export DOTFILES_LOG
+
 	echo "=== Dotfiles 安装日志 $(date) ===" >"$DOTFILES_LOG"
 }
 

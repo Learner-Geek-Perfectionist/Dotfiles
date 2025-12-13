@@ -34,8 +34,8 @@ DOTFILES_LOG="${DOTFILES_LOG:-$DOTFILES_LOG_DIR/dotfiles-install-$(whoami)-$(dat
 # 强制颜色输出（即使在重定向场景下）
 export CLICOLOR_FORCE=1
 
-# 确保 TERM 有值（tput 需要）
-export TERM="${TERM:-xterm-256color}"
+# 确保 TERM 有值且不是 dumb（tput 和进度条需要）
+[[ -z "$TERM" || "$TERM" == "dumb" ]] && export TERM="xterm-256color"
 
 # 颜色定义
 export RED='\033[0;31m' GREEN='\033[0;32m' YELLOW='\033[1;33m'

@@ -1,3 +1,6 @@
+# 确保 TERM 有值（空或 dumb 时设置默认值）
+[[ -z "$TERM" || "$TERM" == "dumb" ]] && export TERM="xterm-256color"
+
 # Kitty 终端 SSH 时回退 TERM（远程服务器可能没有 xterm-kitty terminfo）
 [[ "$TERM" == "xterm-kitty" && ! -e "/usr/share/terminfo/x/xterm-kitty" ]] && export TERM="xterm-256color"
 

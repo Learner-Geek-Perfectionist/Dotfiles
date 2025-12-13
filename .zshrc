@@ -270,7 +270,41 @@ setopt rm_star_silent       # 取消 zsh 的安全防护功能（默认对 rm -r
 command -v fzf >/dev/null 2>&1 && source <(fzf --zsh)
 
 # bat 映射到 cat
-command -v bat >/dev/null 2>&1 && alias cat=bat
+if command -v bat >/dev/null 2>&1; then
+	# cat：默认用 bat；若文件本身包含 ANSI 转义序列(ESC=0x1b)，则回退到系统 cat 以便终端渲染颜色
+	cat() {
+		emulate -L zsh
+		setopt local_options no_aliases
+
+		# 无参数/stdin：保持原生 cat 行为
+		if (( $# == 0 )); then
+			command cat
+			return $?
+		fi
+
+		# 对 cat 的参数/标准输入等情况，不做 bat 兼容，直接走系统 cat
+		local a
+		for a in "$@"; do
+			if [[ "$a" == "-" || "$a" == --* || "$a" == -* ]]; then
+				command cat "$@"
+				return $?
+			fi
+		done
+
+		# 若任一文件包含 ESC，则回退到系统 cat（让 ANSI 序列由终端解释渲染）
+		local f
+		for f in "$@"; do
+			[[ -f "$f" ]] || { command cat "$@"; return $?; }
+			if LC_ALL=C command grep -q $'\x1b' -- "$f" 2>/dev/null; then
+				command cat "$@"
+				return $?
+			fi
+		done
+
+		# 普通文本：继续用 bat
+		command bat -- "$@"
+	}
+fi
 
 # tldr 替代 man（更简洁的命令手册）
 command -v tldr >/dev/null 2>&1 && alias man='tldr'

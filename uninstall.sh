@@ -133,15 +133,15 @@ remove_dotfiles() {
 	fi
 
 	# 根据操作系统区分 VSCode/Cursor 配置路径
-	# 注意：只删除 settings.json 和 keybindings.json，不删除整个 User 目录（避免误删用户其他配置）
+	# 注意：只删除 settings.json，不删除整个 User 目录（避免误删用户其他配置）
 	if [[ "$(uname -s)" == "Darwin" ]]; then
 		# macOS: Library 路径 + macOS 专属工具
-		for p in ~/"Library/Application Support"/{Code,Cursor}/User/{settings,keybindings}.json ~/.config/karabiner ~/.hammerspoon; do
+		for p in ~/"Library/Application Support"/{Code,Cursor}/User/settings.json ~/.config/karabiner ~/.hammerspoon; do
 			rm_path "$p"
 		done
 	else
 		# Linux: .config 路径
-		for p in ~/.config/{Code,Cursor}/User/{settings,keybindings}.json; do
+		for p in ~/.config/{Code,Cursor}/User/settings.json; do
 			rm_path "$p"
 		done
 	fi

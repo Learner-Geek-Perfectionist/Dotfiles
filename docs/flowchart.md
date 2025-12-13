@@ -225,14 +225,12 @@ flowchart TB
     subgraph Zinit["zinit.zsh (插件管理)"]
         Z1[安装/加载 Zinit] --> Z2[设置 ZINIT ZCOMPDUMP_PATH]
         Z2 --> Z3[加载 Powerlevel10k]
-        Z3 --> Z4[配置 zsh-autocomplete]
-        Z4 --> Z5[加载 zsh-autocomplete]
-        Z5 --> Z6[配置补全颜色]
-        Z6 --> Z7[加载 OMZ 片段]
-        Z7 --> Z8[加载 zsh-completions]
-        Z8 --> Z9[加载 autosuggestions]
-        Z9 --> Z10[加载 syntax-highlighting]
-        Z10 --> Z11[配置按键绑定]
+        Z3 --> Z4[加载 OMZ 片段]
+        Z4 --> Z5[加载 fzf-tab]
+        Z5 --> Z6[配置 fzf-tab 样式]
+        Z6 --> Z7[加载 zsh-completions]
+        Z7 --> Z8[加载 autosuggestions]
+        Z8 --> Z9[加载 syntax-highlighting]
     end
 
     ZshEnv --> ZshRC
@@ -248,16 +246,16 @@ flowchart TB
 ```mermaid
 graph TB
     subgraph Completion["补全系统"]
-        A[用户输入] --> B{zsh-autocomplete}
-        B --> C[实时补全菜单]
-        B --> D[历史搜索]
+        A[用户输入] --> B{fzf-tab}
+        B --> C[模糊搜索补全菜单]
+        B --> D[实时预览]
         
         C --> E[彩色文件列表]
-        C --> F[分组标题高亮]
-        C --> G[目录优先显示]
+        C --> F[目录内容预览]
+        C --> G[进程信息预览]
         
         H[zsh-completions] --> B
-        I[fzf 补全] --> B
+        I[fzf] --> B
     end
 
     subgraph Cache["缓存管理"]
@@ -288,5 +286,5 @@ graph TB
 | **验证安装** | 安装后验证是否真正成功，避免假阳性 |
 | **彩色输出** | 清晰的颜色区分：成功/跳过/失败 |
 | **缓存整理** | 补全缓存和历史文件统一存放在 `~/.cache/zsh/` |
-| **智能补全** | zsh-autocomplete 实时补全 + 彩色分组显示 |
+| **智能补全** | fzf-tab 模糊搜索补全 + 实时预览 |
 | **历史增强** | 带时间戳的无限容量命令历史 |

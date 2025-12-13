@@ -61,15 +61,15 @@ _log() {
 
 # ========================================
 # 运行命令并同时输出到终端和日志（使用 script 伪造 TTY 保留进度条）
-# 注意：此函数适用于简单命令（如 pixi global sync），不适用于带复杂引号的命令
+# 支持复杂引号命令，如: _run_and_log zsh -c "ZINIT_SYNC=1 source '~/.zshrc'"
 # ========================================
 _run_and_log() {
 	if [[ "$(uname)" == "Darwin" ]]; then
-		# macOS: script -q -a logfile command
+		# macOS: script -q -a logfile command args...
 		script -q -a "$DOTFILES_LOG" "$@"
 	else
-		# Linux: script -q -c "command" -a logfile
-		script -q -a "$DOTFILES_LOG" -c "$*"
+		# Linux: 用 printf %q 正确转义每个参数，保留引号
+		script -q -a "$DOTFILES_LOG" -c "$(printf '%q ' "$@")"
 	fi
 }
 

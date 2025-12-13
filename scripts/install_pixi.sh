@@ -131,15 +131,15 @@ install_home_tools() {
 		exit 1
 	fi
 
-	# 在 home 目录执行 pixi install
+	# 执行 pixi install
 	print_dim "配置文件: $manifest"
 	print_info "安装工具包（预编译，无需本地编译）..."
 
-	if (cd "$HOME" && pixi install); then
+	if _run_and_log pixi install --manifest-path "$HOME"; then
 		print_success "工具包安装完成"
 	else
 		print_error "Pixi 工具包安装失败"
-		print_dim "请检查网络，随后运行: cd ~ && pixi install"
+		print_dim "请检查网络，随后运行: pixi install --manifest-path ~"
 		exit 1
 	fi
 

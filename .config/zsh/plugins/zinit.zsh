@@ -64,7 +64,7 @@ _ice
 zinit snippet OMZL::grep.zsh
 _ice
 zinit snippet OMZL::key-bindings.zsh
-_ice
+_ice atload'setopt no_auto_cd'
 zinit snippet OMZL::directories.zsh
 _ice atload'unsetopt hist_ignore_space'
 zinit snippet OMZL::history.zsh

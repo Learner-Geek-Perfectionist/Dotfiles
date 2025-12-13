@@ -110,10 +110,25 @@ remove_pixi() {
 remove_dotfiles() {
 	print_info "🗑️ 删除 Dotfiles..."
 
-	# 通用配置（注意：~/pixi.toml 和 ~/pixi.lock 在 remove_pixi 中处理）
-	for p in ~/.zshrc ~/.zprofile ~/.zshenv ~/.config/{zsh,kitty} ~/.ssh/config; do
+	# Zsh 配置
+	for p in ~/.zshrc ~/.zprofile ~/.zshenv; do
 		rm_path "$p"
 	done
+
+	# .config 目录下的配置
+	for p in ~/.config/{zsh,kitty}; do
+		rm_path "$p"
+	done
+
+	# Git 配置
+	rm_path ~/.gitconfig
+	rm_path ~/.gitignore
+
+	# SSH 配置
+	rm_path ~/.ssh/config
+
+	# 工具脚本
+	rm_path ~/sh-script
 
 	# 删除 zinit 相关目录（插件、补全、缓存等）
 	for p in ~/.local/share/zinit ~/.cache/zinit; do
@@ -146,15 +161,19 @@ remove_dotfiles() {
 	fi
 
 	# 根据操作系统区分 VSCode/Cursor 配置路径
-	# 注意：只删除 settings.json，不删除整个 User 目录（避免误删用户其他配置）
+	# 删除 settings.json 和 keybindings.json
 	if [[ "$(uname -s)" == "Darwin" ]]; then
 		# macOS: Library 路径 + macOS 专属工具
-		for p in ~/"Library/Application Support"/{Code,Cursor}/User/settings.json ~/.config/karabiner ~/.hammerspoon; do
+		for p in ~/"Library/Application Support"/{Code,Cursor}/User/{settings.json,keybindings.json}; do
+			rm_path "$p"
+		done
+		# macOS 专属工具
+		for p in ~/.config/karabiner ~/.hammerspoon; do
 			rm_path "$p"
 		done
 	else
 		# Linux: .config 路径
-		for p in ~/.config/{Code,Cursor}/User/settings.json; do
+		for p in ~/.config/{Code,Cursor}/User/{settings.json,keybindings.json}; do
 			rm_path "$p"
 		done
 	fi

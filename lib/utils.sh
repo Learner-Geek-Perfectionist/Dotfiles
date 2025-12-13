@@ -27,7 +27,7 @@ export NC='\033[0m'
 # ========================================
 export DOTFILES_VERSION="${DOTFILES_VERSION:-5.0.0}"
 # 日志目录和文件可以被外部脚本覆盖（install/uninstall 使用不同子目录）
-export DOTFILES_LOG_DIR="${DOTFILES_LOG_DIR:-/tmp/dotfiles-logs}"
+export DOTFILES_LOG_DIR="${DOTFILES_LOG_DIR:-/tmp/dotfiles-logs-$(whoami)}"
 export DOTFILES_LOG="${DOTFILES_LOG:-$DOTFILES_LOG_DIR/dotfiles-$(whoami)-$(date '+%Y%m%d-%H%M%S').log}"
 
 # 确保日志目录存在（任何 source 此文件的脚本都会自动创建）

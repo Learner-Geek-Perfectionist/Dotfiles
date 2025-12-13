@@ -6,7 +6,7 @@ set -euo pipefail
 # ========================================
 # 日志配置
 # ========================================
-export DOTFILES_LOG_DIR="/tmp/dotfiles-logs/uninstall"
+export DOTFILES_LOG_DIR="/tmp/dotfiles-logs-$(whoami)/uninstall"
 export DOTFILES_LOG="${DOTFILES_LOG:-$DOTFILES_LOG_DIR/dotfiles-uninstall-$(whoami)-$(date '+%Y%m%d-%H%M%S').log}"
 
 # ========================================
@@ -20,19 +20,12 @@ setup_logging() {
 	echo "=== Dotfiles 卸载日志 $(date) ===" >"$DOTFILES_LOG"
 }
 
-# 尝试加载 lib/utils.sh，如果失败则使用内嵌函数
+# 加载工具函数
 if [[ -f "$_SCRIPT_DIR/lib/utils.sh" ]]; then
 	source "$_SCRIPT_DIR/lib/utils.sh"
 else
-	# Fallback: 内嵌必要的函数
-	export RED='\033[0;31m' GREEN='\033[0;32m' YELLOW='\033[1;33m'
-	export BLUE='\033[0;34m' CYAN='\033[0;36m' DIM='\033[2m' NC='\033[0m'
-
-	print_info() { echo -e "${CYAN}[INFO] $1${NC}" | tee -a "$DOTFILES_LOG"; }
-	print_success() { echo -e "${GREEN}✓ $1${NC}" | tee -a "$DOTFILES_LOG"; }
-	print_warn() { echo -e "${YELLOW}⚠ $1${NC}" | tee -a "$DOTFILES_LOG"; }
-	print_error() { echo -e "${RED}✗ $1${NC}" | tee -a "$DOTFILES_LOG"; }
-	print_dim() { echo -e "${DIM}   $1${NC}" | tee -a "$DOTFILES_LOG"; }
+	echo "错误: 未找到 lib/utils.sh，请在 Dotfiles 目录下运行此脚本"
+	exit 1
 fi
 
 REMOVE_PIXI=false
@@ -72,7 +65,8 @@ remove_pixi() {
 	# 显示将要删除的包（如果 pixi 存在）
 	if command -v pixi &>/dev/null; then
 		print_dim "已安装的工具环境:"
-		pixi global list 2>/dev/null
+		# 使用 Home 项目模式查看已安装的工具
+		(cd "$HOME" && _run_and_log pixi list --explicit 2>/dev/null) || true
 	fi
 
 	# 删除 pixi 主目录（包含 bin、envs、manifests）
@@ -91,14 +85,33 @@ remove_pixi() {
 		rm_path "$XDG_CACHE_HOME/pixi"
 	fi
 
+	# 清理 shell 配置文件中的 Pixi PATH
+	for rc_file in ~/.zshrc ~/.bashrc; do
+		if [[ -f "$rc_file" ]] && grep -q '\.pixi/bin' "$rc_file" 2>/dev/null; then
+			# macOS 用 sed -i ''，Linux 用 sed -i
+			if [[ "$(uname -s)" == "Darwin" ]]; then
+				sed -i '' '/# Pixi: 添加到 PATH/d' "$rc_file"
+				sed -i '' '/\.pixi\/bin/d' "$rc_file"
+			else
+				sed -i '/# Pixi: 添加到 PATH/d' "$rc_file"
+				sed -i '/\.pixi\/bin/d' "$rc_file"
+			fi
+			print_dim "✓ 已清理 $rc_file 中的 Pixi PATH"
+		fi
+	done
+
+	# 删除 pixi 项目配置文件
+	rm_path ~/pixi.toml
+	rm_path ~/pixi.lock
+
 	print_success "Pixi 及所有工具已删除"
 }
 
 remove_dotfiles() {
 	print_info "🗑️ 删除 Dotfiles..."
 
-	# 通用配置
-	for p in ~/.zshrc ~/.zprofile ~/.zshenv ~/.config/{zsh,kitty} ~/.ssh/config ~/.pixi/manifests; do
+	# 通用配置（注意：~/pixi.toml 和 ~/pixi.lock 在 remove_pixi 中处理）
+	for p in ~/.zshrc ~/.zprofile ~/.zshenv ~/.config/{zsh,kitty} ~/.ssh/config; do
 		rm_path "$p"
 	done
 

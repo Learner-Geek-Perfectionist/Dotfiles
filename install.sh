@@ -23,7 +23,7 @@ DOTFILES_ONLY="${DOTFILES_ONLY:-false}"
 VSCODE_ONLY="${VSCODE_ONLY:-false}"
 
 # 日志文件（与 lib/utils.sh 保持一致）
-DOTFILES_LOG_DIR="/tmp/dotfiles-logs/install"
+DOTFILES_LOG_DIR="/tmp/dotfiles-logs-$(whoami)/install"
 DOTFILES_LOG="${DOTFILES_LOG:-$DOTFILES_LOG_DIR/dotfiles-install-$(whoami)-$(date '+%Y%m%d-%H%M%S').log}"
 
 # ========================================

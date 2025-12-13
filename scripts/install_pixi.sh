@@ -146,7 +146,7 @@ install_home_tools() {
 	# 显示已安装的顶层工具
 	echo ""
 	print_info "已安装的顶层工具:"
-	(cd "$HOME" && pixi list --explicit 2>/dev/null) || print_dim "运行 'pixi list --explicit --manifest-path ~' 查看"
+	(cd "$HOME" && _run_and_log pixi list --explicit 2>/dev/null) || print_dim "运行 'pixi list --explicit --manifest-path ~' 查看"
 }
 
 # ========================================

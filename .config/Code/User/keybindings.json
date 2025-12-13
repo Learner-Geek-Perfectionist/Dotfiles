@@ -1,0 +1,35 @@
+// 将键绑定放在此文件中以覆盖默认值
+[
+    // ======================= 历史导航 =======================
+    // macOS: Cmd+Option+左/右
+    {
+        "key": "alt+cmd+left",
+        "command": "workbench.action.navigateBack",
+        "when": "canNavigateBack"
+    },
+    {
+        "key": "alt+cmd+right",
+        "command": "workbench.action.navigateForward",
+        "when": "canNavigateForward"
+    },
+    // Windows/Linux: Alt+左/右
+    {
+        "key": "alt+left",
+        "command": "workbench.action.navigateBack",
+        "when": "canNavigateBack && !isMac"
+    },
+    {
+        "key": "alt+right",
+        "command": "workbench.action.navigateForward",
+        "when": "canNavigateForward && !isMac"
+    },
+    // 移除默认的历史导航快捷键
+    {
+        "key": "ctrl+-",
+        "command": "-workbench.action.navigateBack"
+    },
+    {
+        "key": "ctrl+shift+-",
+        "command": "-workbench.action.navigateForward"
+    }
+]

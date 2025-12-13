@@ -53,11 +53,13 @@ main() {
 	copy_path ".config/zsh" ".config/zsh"
 	copy_path ".config/kitty" ".config/kitty"
 
-	# VSCode/Cursor 配置（只复制 settings.json，避免覆盖用户的其它配置）
+	# VSCode/Cursor 配置（只复制 settings.json 和 keybindings.json，避免覆盖用户的其它配置）
 	if [[ "$(uname)" == "Darwin" ]]; then
 		# macOS: ~/Library/Application Support/
 		has_vscode && copy_path "Library/Application Support/Code/User/settings.json" "Library/Application Support/Code/User/settings.json"
+		has_vscode && copy_path "Library/Application Support/Code/User/keybindings.json" "Library/Application Support/Code/User/keybindings.json"
 		has_cursor && copy_path "Library/Application Support/Cursor/User/settings.json" "Library/Application Support/Cursor/User/settings.json"
+		has_cursor && copy_path "Library/Application Support/Cursor/User/keybindings.json" "Library/Application Support/Cursor/User/keybindings.json"
 		# macOS 专属
 		copy_path ".config/karabiner" ".config/karabiner"
 		copy_path ".hammerspoon" ".hammerspoon"
@@ -67,7 +69,9 @@ main() {
 			print_info "检测到远程服务器环境，跳过 VSCode/Cursor 设置（设置从本地自动同步）"
 		else
 			has_vscode && copy_path ".config/Code/User/settings.json" ".config/Code/User/settings.json"
+			has_vscode && copy_path ".config/Code/User/keybindings.json" ".config/Code/User/keybindings.json"
 			has_cursor && copy_path ".config/Cursor/User/settings.json" ".config/Cursor/User/settings.json"
+			has_cursor && copy_path ".config/Cursor/User/keybindings.json" ".config/Cursor/User/keybindings.json"
 		fi
 	fi
 

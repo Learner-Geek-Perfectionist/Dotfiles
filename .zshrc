@@ -279,22 +279,34 @@ export FZF_DEFAULT_OPTS='--preview "${HOME}/.config/zsh/fzf/fzf-preview.sh {}" -
 export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --no-sort --tac"
 
 # fd 基础参数（排除垃圾桶和系统目录）
-_fd_opts='-g -HIia'
+typeset -ga _fd_opts
+_fd_opts=( -g -H -I -i -a )
 if [[ "$(uname)" == "Darwin" ]]; then
-	_fd_opts+=' -E .Trash -E /System/Volumes/Data'
+	_fd_opts+=( -E .Trash -E /System/Volumes/Data )
 else
-	_fd_opts+=' -E .local/share/Trash'
+	_fd_opts+=( -E .local/share/Trash )
 fi
 
-export FZF_DEFAULT_COMMAND="fd $_fd_opts"
+# fzf 读取列表时不要走包装函数（避免任何额外输出）
+export FZF_DEFAULT_COMMAND="command fd --color=never ${(j: :)_fd_opts}"
 
-# fd 智能函数：有 sudo 权限就用 sudo，否则回退普通模式，完成后显示结果数量
+# fd 智能函数：有 sudo 权限就用 sudo，否则回退普通模式；默认排除目录等参数
 fd() {
+	emulate -L zsh
+
+	local -a cmd
 	if sudo -n true 2>/dev/null; then
-		sudo command fd --color=always ${=_fd_opts} "$@" 2>/dev/null
+		cmd=( sudo fd )
 	else
-		command fd --color=always ${=_fd_opts} "$@" 2>/dev/null
-	fi | tee >(wc -l | xargs printf "\n共 %d 个结果\n")
+		cmd=( command fd )
+	fi
+
+	# 这些选项直接透传，避免默认参数干扰
+	case "$1" in
+		--version|-V|--help|-h) "${cmd[@]}" "$@"; return $?;;
+	esac
+
+	"${cmd[@]}" --color=always "${_fd_opts[@]}" "$@"
 }
 
 alias getip="$HOME/sh-script/get-my-ip.sh"

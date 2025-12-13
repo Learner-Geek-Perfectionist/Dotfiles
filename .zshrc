@@ -298,6 +298,12 @@ fd() {
 	local fd_bin
 	fd_bin=$(whence -p fd)
 
+	# fd 未安装时直接返回错误
+	if [[ -z "$fd_bin" ]]; then
+		echo "fd: command not found (install via: pixi global install fd-find)" >&2
+		return 127
+	fi
+
 	if sudo -n true 2>/dev/null; then
 		cmd=( sudo "$fd_bin" )
 	else

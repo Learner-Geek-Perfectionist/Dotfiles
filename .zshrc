@@ -296,7 +296,7 @@ fd() {
 
 	local -a cmd
 	local fd_bin
-	fd_bin=$(command -v fd)
+	fd_bin=$(whence -p fd)
 
 	if sudo -n true 2>/dev/null; then
 		cmd=( sudo "$fd_bin" )

@@ -278,26 +278,29 @@ sync_pixi_tools() {
 	if [[ -f "$manifest_dest" ]]; then
 		print_info "安装工具包（首次安装需下载，请耐心等待）..."
 
-		# 在 home 目录执行 pixi install
-		if (cd "$HOME" && _run_and_log pixi install); then
+		# 直接运行 pixi install（终端显示实时进度，日志只记录结果）
+		if (cd "$HOME" && pixi install); then
 			print_success "工具包安装完成"
+			echo "[$(date '+%Y-%m-%d %H:%M:%S')] pixi install: 成功" >>"$DOTFILES_LOG"
 		else
 			print_warn "部分工具安装失败"
 			print_dim "可稍后运行: cd ~ && pixi install"
+			echo "[$(date '+%Y-%m-%d %H:%M:%S')] pixi install: 失败" >>"$DOTFILES_LOG"
 		fi
 
-		# 显示简洁的工具列表
+		# 显示简洁的工具列表（只统计顶层依赖）
 		_echo_blank
 		local pkg_count
-		pkg_count=$(cd "$HOME" && pixi list 2>/dev/null | grep -v '^Package' | grep -v '^─' | wc -l | tr -d ' ')
+		pkg_count=$(cd "$HOME" && pixi list --explicit 2>/dev/null | grep -v '^Package' | grep -v '^─' | wc -l | tr -d ' ')
 		if [[ "$pkg_count" -gt 0 ]]; then
-			print_success "已安装 ${pkg_count} 个工具包"
-			print_dim "查看详情: cd ~ && pixi list"
+			print_success "已安装 ${pkg_count} 个顶层工具包"
+			print_dim "查看详情: cd ~ && pixi list --explicit"
 		else
 			print_dim "暂无工具，详见日志"
 		fi
-		# 完整列表记录到日志
-		(cd "$HOME" && pixi list) >>"$DOTFILES_LOG" 2>&1 || true
+		# 顶层依赖列表记录到日志（干净整洁）
+		echo "=== 已安装的顶层工具包 ===" >>"$DOTFILES_LOG"
+		(cd "$HOME" && pixi list --explicit) >>"$DOTFILES_LOG" 2>&1 || true
 	else
 		print_warn "未找到 Pixi 配置文件: $manifest_dest"
 	fi

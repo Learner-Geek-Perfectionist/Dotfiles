@@ -135,13 +135,17 @@ _display_width() {
 # 脚本标题横幅（背景色填充，文字居中）
 print_banner() {
 	local msg="$1"
-	local width=$(tput cols)
+	# tput cols 可能失败（TERM 未设置或非交互式环境），使用默认值 80
+	local width
+	width=$(tput cols 2>/dev/null) || width=80
+	[[ -z "$width" || "$width" -lt 40 ]] && width=80
 	local display_width=$(_display_width "$msg")
 	local padding=$(((width - display_width) / 2))
 	[[ $padding -lt 0 ]] && padding=0
 	local left_pad=$(printf "%${padding}s" "")
-	local right_pad=$(printf "%$((width - padding - display_width))s" "")
-	[[ ${#right_pad} -lt 0 ]] && right_pad=""
+	local right_pad_len=$((width - padding - display_width))
+	[[ $right_pad_len -lt 0 ]] && right_pad_len=0
+	local right_pad=$(printf "%${right_pad_len}s" "")
 	local output="\033[45m${left_pad}${msg}${right_pad}\033[0m"
 	echo -e "$output"
 	echo -e "$output" >>"$DOTFILES_LOG"
@@ -159,7 +163,9 @@ print_section() {
 
 # 分隔线（仅用于重要分隔）
 print_divider() {
-	local width=$(tput cols)
+	local width
+	width=$(tput cols 2>/dev/null) || width=80
+	[[ -z "$width" || "$width" -lt 40 ]] && width=80
 	local line
 	printf -v line "%*s" "$width" ""
 	line="${line// /─}"

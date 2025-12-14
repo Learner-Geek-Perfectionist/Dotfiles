@@ -116,12 +116,19 @@ print_item() {
 }
 
 # 计算字符串显示宽度（跨平台，考虑中文/emoji）
+# 注意：bash 的 ${#str} 在某些系统返回字节数而非字符数，需用 wc -m
 _display_width() {
 	local str="$1"
-	local char_count=${#str}
+	# 使用 wc -m 获取真实字符数（而非字节数）
+	local char_count
+	char_count=$(printf '%s' "$str" | wc -m | tr -d ' ')
+	# ASCII 字符数
 	local ascii_count
 	ascii_count=$(printf '%s' "$str" | LC_ALL=C tr -cd '\0-\177' | wc -c | tr -d ' ')
-	echo $((char_count + char_count - ascii_count))
+	# 非 ASCII 字符数 (中文/emoji 等，显示宽度为 2)
+	local non_ascii_count=$((char_count - ascii_count))
+	# 显示宽度 = ASCII 字符数 + 非 ASCII 字符数 * 2
+	echo $((ascii_count + non_ascii_count * 2))
 }
 
 # 脚本标题横幅（背景色填充，文字居中）

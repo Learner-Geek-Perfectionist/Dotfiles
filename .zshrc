@@ -93,13 +93,20 @@ else
 		done
 		path=($new_path)
 
-		# 设置 PATH 和 CONDA_PREFIX（不能混用两个环境，因为 wrapper 脚本依赖 CONDA_PREFIX）
-		# 项目 pixi 环境优先，否则使用 home pixi 环境
-		if [[ -n "$project_dir" && -d "$project_dir/.pixi/envs/default" ]]; then
+		# 设置 PATH：项目 Pixi 优先，home Pixi 作为 fallback
+		# 先添加 home 的（fallback，优先级较低）
+		if [[ -d "$HOME/.pixi/envs/default/bin" ]]; then
+			path=("$HOME/.pixi/envs/default/bin" $path)
+		fi
+		# 再添加项目的（优先级更高，会覆盖 home 中同名命令）
+		if [[ -n "$project_dir" && -d "$project_dir/.pixi/envs/default/bin" ]]; then
 			path=("$project_dir/.pixi/envs/default/bin" $path)
+		fi
+
+		# 设置 CONDA_PREFIX（wrapper 脚本需要这个变量）
+		if [[ -n "$project_dir" && -d "$project_dir/.pixi/envs/default" ]]; then
 			export CONDA_PREFIX="$project_dir/.pixi/envs/default"
 		elif [[ -d "$HOME/.pixi/envs/default" ]]; then
-			path=("$HOME/.pixi/envs/default/bin" $path)
 			export CONDA_PREFIX="$HOME/.pixi/envs/default"
 		fi
 

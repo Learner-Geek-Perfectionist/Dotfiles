@@ -99,8 +99,8 @@ else
 			path=("$project_dir/.pixi/envs/default/bin" $path)
 		elif [[ -d "$HOME/.pixi/envs/default" ]]; then
 			export CONDA_PREFIX="$HOME/.pixi/envs/default"
+			[[ -d "$HOME/.pixi/envs/default/bin" ]] && path=("$HOME/.pixi/envs/default/bin" $path)
 		fi
-		[[ -d "$HOME/.pixi/envs/default/bin" ]] && path=("$HOME/.pixi/envs/default/bin" $path)
 
 		if [[ -n "$project_dir" ]]; then
 			export PIXI_PROJECT_NAME="$(grep -m1 '^name' "$project_dir/pixi.toml" 2>/dev/null | sed 's/.*\"\(.*\)\".*/\1/')"

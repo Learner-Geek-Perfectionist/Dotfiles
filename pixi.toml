@@ -41,6 +41,7 @@ lua = "*"
 rust = "*"
 openjdk = "*"
 gradle = "*"
+kotlin = "*"
 
 # 终端增强工具
 ripgrep = "*"

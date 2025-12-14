@@ -41,7 +41,6 @@ mkdir -p "$DOTFILES_LOG_DIR"
 #
 # 使用场景:
 #   - has_sudo: 用于判断用户是否有 sudo 权限（可能需要密码输入）
-#   - has_sudo_nopasswd: 用于非交互式脚本，仅检查免密 sudo
 # ========================================
 has_sudo() {
 	[[ $EUID -eq 0 ]] && return 0                              # root 用户
@@ -50,13 +49,6 @@ has_sudo() {
 	# 检查用户是否在 sudo/wheel/admin 组中（有 sudo 权限但需要密码）
 	groups 2>/dev/null | grep -qwE 'sudo|wheel|admin' && return 0
 	return 1
-}
-
-# 检测是否有免密 sudo 权限（适用于非交互式脚本，如 curl | bash）
-has_sudo_nopasswd() {
-	[[ $EUID -eq 0 ]] && return 0                              # root 用户
-	command -v sudo &>/dev/null || return 1                    # 无 sudo 命令
-	sudo -n true 2>/dev/null                                   # 免密 sudo
 }
 
 # ========================================

@@ -53,13 +53,6 @@ has_sudo() {
 	return 1
 }
 
-# 检测是否有免密 sudo 权限（适用于非交互式场景）
-has_sudo_nopasswd() {
-	[[ $EUID -eq 0 ]] && return 0                              # root 用户
-	command -v sudo &>/dev/null || return 1                    # 无 sudo 命令
-	sudo -n true 2>/dev/null                                   # 免密 sudo
-}
-
 # ========================================
 # 统一日志输出函数
 # - stdout 和日志文件都保留 ANSI 颜色

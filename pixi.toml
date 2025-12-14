@@ -40,6 +40,7 @@ ruby = "*"
 lua = "*"
 rust = "*"
 openjdk = "*"
+gradle = "*"
 
 # 终端增强工具
 ripgrep = "*"

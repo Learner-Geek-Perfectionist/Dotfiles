@@ -1,7 +1,7 @@
 #!/bin/bash
 # VSCode/Cursor 插件批量安装脚本
 # 远程服务器的插件通过 settings.json 的 remote.SSH.defaultExtensions 自动同步
-set -e
+set -eo pipefail
 
 source "$(dirname "${BASH_SOURCE[0]}")/../lib/utils.sh"
 

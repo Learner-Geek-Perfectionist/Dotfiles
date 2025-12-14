@@ -1,7 +1,7 @@
 #!/bin/bash
 # Dotfiles 卸载脚本
 
-set -euo pipefail
+set -eo pipefail
 
 # ========================================
 # 日志配置

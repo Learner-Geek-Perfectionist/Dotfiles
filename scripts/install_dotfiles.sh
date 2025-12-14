@@ -2,7 +2,7 @@
 # Dotfiles 配置安装脚本
 # 只同步明确列出的文件/目录，避免覆盖用户的其它配置
 
-set -e
+set -eo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTFILES_DIR="$(dirname "$SCRIPT_DIR")"

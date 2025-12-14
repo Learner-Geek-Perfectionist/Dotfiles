@@ -1,7 +1,7 @@
 #!/bin/bash
 # macOS 安装脚本 - 使用 Homebrew
 
-set -e
+set -eo pipefail
 
 # ========================================
 # 路径检测

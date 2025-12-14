@@ -2,7 +2,7 @@
 # Package definitions for macOS (Homebrew)
 # Linux 包管理已迁移到 devbox.json
 
-set -e
+set -eo pipefail
 
 # ========================================
 # macOS Homebrew Casks (GUI 应用)

@@ -84,12 +84,13 @@ print_error() { _log "ERROR" "✗" "$RED" "$1"; }
 print_header() { _log "INFO" "" "$BLUE" "$1"; }
 
 # 计算字符串显示宽度（跨平台，考虑中文/emoji）
-# 注意：bash 的 ${#str} 在某些系统返回字节数而非字符数，需用 wc -m
+# 注意：Pixi 环境可能覆盖 wc 命令，导致 wc -m 返回字节数
+# 使用 LC_ALL=C.UTF-8 bash 强制正确的 UTF-8 字符计数
 _display_width() {
 	local str="$1"
-	# 使用 wc -m 获取真实字符数（而非字节数）
+	# 强制 UTF-8 locale 获取真实字符数（避免 Pixi 环境污染）
 	local char_count
-	char_count=$(printf '%s' "$str" | wc -m | tr -d ' ')
+	char_count=$(LC_ALL=C.UTF-8 bash -c 'echo ${#1}' _ "$str")
 	# ASCII 字符数
 	local ascii_count
 	ascii_count=$(printf '%s' "$str" | LC_ALL=C tr -cd '\0-\177' | wc -c | tr -d ' ')

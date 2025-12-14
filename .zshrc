@@ -108,6 +108,8 @@ else
 			export PIXI_PROJECT_NAME="home"
 		fi
 		export CONDA_DEFAULT_ENV="${PIXI_PROJECT_NAME:-default}"
+		# p10k anaconda segment 需要 CONDA_SHLVL 才会显示
+		export CONDA_SHLVL=1
 	}
 
 	_pixi_async_init() {

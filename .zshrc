@@ -81,7 +81,7 @@ else
 		[[ -f "$lock_file" ]] && stat -c %Y "$lock_file" 2>/dev/null || echo ""
 	}
 
-	# 只负责 PATH（避免与 pixi shell-hook 的 PATH 改写打架）
+	# 只负责 PATH 和 CONDA_PREFIX（避免与 pixi shell-hook 的 PATH 改写打架）
 	_pixi_fast_path() {
 		local project_dir="$1"
 		# 清理旧的 pixi env PATH（避免串环境/重复）
@@ -92,8 +92,15 @@ else
 			new_path+=("$p")
 		done
 		path=($new_path)
+
+		# 设置 CONDA_PREFIX（wrapper 脚本需要这个变量）
+		if [[ -n "$project_dir" && -d "$project_dir/.pixi/envs/default" ]]; then
+			export CONDA_PREFIX="$project_dir/.pixi/envs/default"
+			path=("$project_dir/.pixi/envs/default/bin" $path)
+		elif [[ -d "$HOME/.pixi/envs/default" ]]; then
+			export CONDA_PREFIX="$HOME/.pixi/envs/default"
+		fi
 		[[ -d "$HOME/.pixi/envs/default/bin" ]] && path=("$HOME/.pixi/envs/default/bin" $path)
-		[[ -n "$project_dir" && -d "$project_dir/.pixi/envs/default/bin" ]] && path=("$project_dir/.pixi/envs/default/bin" $path)
 
 		if [[ -n "$project_dir" ]]; then
 			export PIXI_PROJECT_NAME="$(grep -m1 '^name' "$project_dir/pixi.toml" 2>/dev/null | sed 's/.*\"\(.*\)\".*/\1/')"

@@ -95,9 +95,16 @@ _display_width() {
 # 脚本标题横幅（背景色填充，文字居中）
 print_banner() {
 	local msg="$1"
-	# 多种方式获取终端宽度：COLUMNS > 0 时使用，否则用 tput cols
+	# 获取终端宽度：优先从 /dev/tty 获取真实宽度，避免 tput 默认值问题
 	local width
-	[[ "${COLUMNS:-0}" -gt 0 ]] && width="$COLUMNS" || width="$(tput cols 2>/dev/null)"
+	# 1. 尝试从 /dev/tty 获取（最可靠，直接查询终端驱动）
+	if [[ -e /dev/tty ]]; then
+		width=$(stty size </dev/tty 2>/dev/null | awk '{print $2}')
+	fi
+	# 2. 如果失败，尝试 COLUMNS（交互式 shell 中可用）
+	[[ -z "$width" || "$width" -le 0 ]] 2>/dev/null && [[ "${COLUMNS:-0}" -gt 0 ]] && width="$COLUMNS"
+	# 3. 最后尝试 tput cols
+	[[ -z "$width" || "$width" -le 0 ]] 2>/dev/null && width="$(tput cols 2>/dev/null)"
 	local display_width=$(_display_width "$msg")
 	local padding=$(((width - display_width) / 2))
 	[[ $padding -lt 0 ]] && padding=0

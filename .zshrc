@@ -155,11 +155,11 @@ else
 		[[ -x "$pixi_bin" ]] || return 0
 
 		# 执行 pixi shell-hook（使用绝对路径）
+		# 先执行 home 的（fallback，优先级较低）
+		[[ -f "$HOME/pixi.toml" ]] && eval "$("$pixi_bin" shell-hook --manifest-path "$HOME" 2>/dev/null)" &>/dev/null
+		# 再执行项目的（优先级更高，会覆盖 home 的同名变量）
 		if [[ -n "$project_dir" ]]; then
-			[[ -f "$HOME/pixi.toml" ]] && eval "$("$pixi_bin" shell-hook --manifest-path "$HOME" 2>/dev/null)" &>/dev/null
 			eval "$("$pixi_bin" shell-hook --manifest-path "$project_dir" 2>/dev/null)" &>/dev/null
-		else
-			[[ -f "$HOME/pixi.toml" ]] && eval "$("$pixi_bin" shell-hook --manifest-path "$HOME" 2>/dev/null)" &>/dev/null
 		fi
 
 		# 回传关键环境变量（不回传 PATH）

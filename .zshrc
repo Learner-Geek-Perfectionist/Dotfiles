@@ -181,8 +181,9 @@ else
 		[[ -x "$pixi_bin" ]] || return 0
 		
 		# 如果项目有 pixi.toml 但没有构建环境，自动运行 pixi install
+		# 使用 --manifest-path 避免 cd 触发 chpwd hook 导致递归
 		if [[ -f "$project_dir/pixi.toml" && ! -d "$project_dir/.pixi/envs/default" ]]; then
-			(cd "$project_dir" && "$pixi_bin" install)
+			"$pixi_bin" install --manifest-path "$project_dir"
 		fi
 		return 0
 	}

@@ -78,7 +78,13 @@ else
 	# 获取 pixi.lock 文件的修改时间（用于检测 pixi add/remove 等操作）
 	_pixi_lock_mtime() {
 		local lock_file="$1/pixi.lock"
-		[[ -f "$lock_file" ]] && stat -c %Y "$lock_file" 2>/dev/null || echo ""
+		[[ -f "$lock_file" ]] || { echo ""; return; }
+		# macOS 使用 stat -f %m，Linux 使用 stat -c %Y
+		if [[ "$OSTYPE" == darwin* ]]; then
+			stat -f %m "$lock_file" 2>/dev/null || echo ""
+		else
+			stat -c %Y "$lock_file" 2>/dev/null || echo ""
+		fi
 	}
 
 	# 只负责 PATH 和 CONDA_PREFIX（避免与 pixi shell-hook 的 PATH 改写打架）
@@ -176,15 +182,7 @@ else
 		
 		# 如果项目有 pixi.toml 但没有构建环境，自动运行 pixi install
 		if [[ -f "$project_dir/pixi.toml" && ! -d "$project_dir/.pixi/envs/default" ]]; then
-			local project_name="$(grep -m1 '^name' "$project_dir/pixi.toml" 2>/dev/null | sed 's/.*\"\(.*\)\".*/\1/')"
-			print -P "%F{yellow}⚡ 检测到项目 %F{cyan}${project_name:-$project_dir}%F{yellow} 环境未构建，正在自动安装...%f"
 			(cd "$project_dir" && "$pixi_bin" install)
-			if [[ $? -eq 0 ]]; then
-				print -P "%F{green}✓ 项目环境构建完成%f"
-			else
-				print -P "%F{red}✗ 项目环境构建失败%f"
-				return 1
-			fi
 		fi
 		return 0
 	}

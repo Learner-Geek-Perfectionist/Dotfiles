@@ -166,6 +166,29 @@ else
 		export -p | grep -E '^export (PIXI_|CONDA_|CC|CXX|CFLAGS|CXXFLAGS|LDFLAGS|JAVA_HOME|GOROOT|GEM_|CARGO_|RUST)='
 	}
 
+	# 自动构建项目环境（如果 pixi.toml 存在但环境未构建）
+	_pixi_auto_install() {
+		local project_dir="$1"
+		local pixi_bin="$HOME/.pixi/bin/pixi"
+		
+		[[ -n "$project_dir" ]] || return 0
+		[[ -x "$pixi_bin" ]] || return 0
+		
+		# 如果项目有 pixi.toml 但没有构建环境，自动运行 pixi install
+		if [[ -f "$project_dir/pixi.toml" && ! -d "$project_dir/.pixi/envs/default" ]]; then
+			local project_name="$(grep -m1 '^name' "$project_dir/pixi.toml" 2>/dev/null | sed 's/.*\"\(.*\)\".*/\1/')"
+			print -P "%F{yellow}⚡ 检测到项目 %F{cyan}${project_name:-$project_dir}%F{yellow} 环境未构建，正在自动安装...%f"
+			(cd "$project_dir" && "$pixi_bin" install)
+			if [[ $? -eq 0 ]]; then
+				print -P "%F{green}✓ 项目环境构建完成%f"
+			else
+				print -P "%F{red}✗ 项目环境构建失败%f"
+				return 1
+			fi
+		fi
+		return 0
+	}
+
 	_pixi_switch() {
 		local project_dir="$(_pixi_find_project)"
 		local current_mtime=""
@@ -186,8 +209,16 @@ else
 
 		(( need_refresh )) || return 0
 
+		# 自动构建项目环境（如果需要）
+		_pixi_auto_install "$project_dir"
+
 		typeset -g _PIXI_PROJECT_DIR="$project_dir"
-		typeset -g _PIXI_LOCK_MTIME="$current_mtime"
+		# 重新获取 mtime（因为 pixi install 可能创建/更新了 lock 文件）
+		if [[ -n "$project_dir" ]]; then
+			typeset -g _PIXI_LOCK_MTIME="$(_pixi_lock_mtime "$project_dir")"
+		else
+			typeset -g _PIXI_LOCK_MTIME="$(_pixi_lock_mtime "$HOME")"
+		fi
 
 		_pixi_fast_path "$project_dir"
 

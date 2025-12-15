@@ -190,9 +190,13 @@ cd Dotfiles && ./install.sh
 Dotfiles/
 ├── install.sh                    # 主安装脚本
 ├── uninstall.sh                  # 卸载脚本
+├── pixi.toml                     # Pixi 项目配置（工具定义）
 ├── .zshrc                        # Zsh 主配置（PATH、别名、setopt）
 ├── .zprofile                     # Zsh 登录配置
-├── .zshenv                       # Zsh 环境变量（最先加载，缓存路径、历史配置）
+├── .zshenv                       # Zsh 环境变量（最先加载）
+├── .gitconfig                    # Git 全局配置
+├── .ssh/
+│   └── config                    # SSH 配置
 ├── .config/
 │   ├── zsh/                      # Zsh 插件和工具
 │   │   ├── plugins/
@@ -201,10 +205,16 @@ Dotfiles/
 │   │   ├── fzf/                  # fzf 配置
 │   │   └── .p10k.zsh             # Powerlevel10k 主题配置
 │   ├── kitty/                    # Kitty 终端配置
-│   ├── Code/User/                # VSCode 设置
-│   └── Cursor/User/              # Cursor 设置
-├── .pixi/manifests/
-│   └── pixi-global.toml          # Pixi 全局工具定义
+│   ├── karabiner/                # Karabiner-Elements 键盘映射 (macOS)
+│   ├── Code/User/                # VSCode 设置 (Linux)
+│   └── Cursor/User/              # Cursor 设置 (Linux)
+├── .hammerspoon/                 # Hammerspoon 自动化脚本 (macOS)
+│   ├── init.lua                  # 入口文件
+│   ├── config/                   # 配置文件
+│   └── modules/                  # 功能模块
+├── Library/Application Support/  # macOS 应用配置
+│   ├── Code/User/                # VSCode 设置 (macOS)
+│   └── Cursor/User/              # Cursor 设置 (macOS)
 ├── scripts/
 │   ├── install_pixi.sh           # Pixi 安装脚本
 │   ├── install_dotfiles.sh       # Dotfiles 部署脚本
@@ -213,6 +223,8 @@ Dotfiles/
 ├── lib/
 │   ├── packages.sh               # Homebrew 包定义
 │   └── utils.sh                  # 工具函数
+├── sh-script/                    # 独立 Shell 脚本
+│   └── get-my-ip.sh              # 获取本机 IP
 └── docs/
     └── flowchart.md              # 架构流程图
 ```

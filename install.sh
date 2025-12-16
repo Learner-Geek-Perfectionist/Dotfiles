@@ -583,8 +583,9 @@ main() {
 	# 更新 tldr 缓存（macOS 和 Linux 通用）
 	# 支持不同客户端的缓存路径：tldr-c-client (~/.tldrc)、tldr-python (~/.cache/tldr)
 	if command -v tldr &>/dev/null; then
+		_echo_blank
 		if [[ -d ~/.tldrc/tldr ]] || [[ -d ~/.cache/tldr/pages ]]; then
-			print_dim "tldr 缓存已存在，跳过更新"
+			print_success "tldr 缓存已存在，跳过更新"
 		else
 			print_info "更新 tldr 缓存..."
 			tldr --update &>/dev/null && print_success "tldr 缓存更新完成"

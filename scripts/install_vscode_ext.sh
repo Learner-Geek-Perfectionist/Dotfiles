@@ -161,4 +161,4 @@ for entry in "${editors[@]}"; do
 done
 
 _echo_blank
-print_success "VSCode 插件安装完成"
+print_success "编辑器插件安装完成"

@@ -37,6 +37,7 @@
     "editor.unicodeHighlight.allowedLocales": {
         "zh-hans": true
     },
+    "markdown.extension.preview.autoShowPreviewToSide": true,
     "files.exclude": {
         "**/node_modules": true,
         "**/build": false,
@@ -115,9 +116,7 @@
         // Shell
         "mkhl.shfmt",
         // Markdown
-        "shd101wyy.markdown-preview-enhanced",
-        "bierner.markdown-mermaid",
-        "DavidAnson.vscode-markdownlint",
+        "yzhang.markdown-all-in-one",
         // Git
         "mhutchie.git-graph",
         // Docker

@@ -38,6 +38,7 @@
         "zh-hans": true
     },
     "workbench.editor.enablePreview": false,
+    "markdown.preview.doubleClickToSwitchToEditor": false,
     "files.exclude": {
         "**/node_modules": true,
         "**/build": false,

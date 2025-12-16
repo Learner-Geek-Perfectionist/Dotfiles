@@ -34,8 +34,6 @@ EXTENSIONS=(
 	"sumneko.lua"
 	# Shell
 	"mkhl.shfmt"
-	# Markdown
-	"shd101wyy.markdown-preview-enhanced"
 	# Git
 	"mhutchie.git-graph"
 	# Docker

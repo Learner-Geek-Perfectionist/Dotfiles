@@ -90,6 +90,8 @@
     "ruff.lint.enable": true,
     "ruff.format.enable": true,
     "git.ignoreRebaseWarning": true,
+    // ======================= Markdown 设置 =======================
+    "markdown.preview.doubleClickToSwitchToEditor": true,
     // ======================= Remote SSH 自动安装插件 =======================
     "remote.SSH.defaultExtensions": [
         // 中文语言包
@@ -118,8 +120,6 @@
         "sumneko.lua",
         // Shell
         "mkhl.shfmt",
-        // Markdown
-        "shd101wyy.markdown-preview-enhanced",
         // Git
         "mhutchie.git-graph",
         // Docker

@@ -41,7 +41,6 @@
         "zh-hans": true
     },
     "workbench.editor.enablePreview": false,
-    "markdown.extension.preview.autoShowPreviewToSide": true,
     "files.exclude": {
         "**/node_modules": true,
         "**/build": false,
@@ -117,7 +116,6 @@
         "mkhl.shfmt",
         // Markdown
         "shd101wyy.markdown-preview-enhanced",
-        "yzhang.markdown-all-in-one",
         // Git
         "mhutchie.git-graph",
         // Docker

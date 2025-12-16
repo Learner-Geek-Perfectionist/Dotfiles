@@ -103,3 +103,6 @@ config.json
 ################################
 config.development.json
 config.production.json
+
+pixi.lock
+!.pixi/config.toml

@@ -35,7 +35,7 @@ EXTENSIONS=(
 	# Shell
 	"mkhl.shfmt"
 	# Markdown
-	"bierner.markdown-mermaid" "DavidAnson.vscode-markdownlint"
+	"shd101wyy.markdown-preview-enhanced" "bierner.markdown-mermaid" "DavidAnson.vscode-markdownlint"
 	# Git
 	"mhutchie.git-graph"
 	# Docker

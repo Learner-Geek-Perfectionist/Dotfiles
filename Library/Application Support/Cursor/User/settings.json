@@ -40,8 +40,6 @@
     "editor.unicodeHighlight.allowedLocales": {
         "zh-hans": true
     },
-    "workbench.editor.enablePreview": false,
-    "markdown.preview.doubleClickToSwitchToEditor": false,
     "files.exclude": {
         "**/node_modules": true,
         "**/build": false,
@@ -116,6 +114,7 @@
         // Shell
         "mkhl.shfmt",
         // Markdown
+        "shd101wyy.markdown-preview-enhanced",
         "yzhang.markdown-all-in-one",
         "bierner.markdown-mermaid",
         "DavidAnson.vscode-markdownlint",

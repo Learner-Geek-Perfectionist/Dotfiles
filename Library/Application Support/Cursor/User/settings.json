@@ -95,9 +95,7 @@
         // 中文语言包
         "ms-ceintl.vscode-language-pack-zh-hans",
         // C/C++
-        "ms-vscode.cmake-tools",
         "xaver.clang-format",
-        "vadimcn.vscode-lldb",
         "anysphere.cpptools",
         // Rust
         "rust-lang.rust-analyzer",

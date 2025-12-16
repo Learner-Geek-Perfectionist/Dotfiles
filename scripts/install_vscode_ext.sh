@@ -54,7 +54,7 @@ SPECIFIC=(
 	"vscode:ms-vscode-remote.remote-containers"
 	# Cursor 专属
 	"cursor:anysphere.cpptools"
-	"cursor:anysphere.pyright"
+	"cursor:anysphere.cursorpyright"
 	"cursor:anysphere.remote-ssh"
 	"cursor:anysphere.remote-containers"
 )
@@ -91,6 +91,7 @@ print_dim "检测到 ${#editors[@]} 个编辑器"
 
 for entry in "${editors[@]}"; do
 	type="${entry%%:*}" cmd="${entry#*:}"
+	_echo_blank
 	print_info ">>> $type ($cmd)"
 
 	# 获取已安装的插件（转小写比较）
@@ -144,7 +145,6 @@ for entry in "${editors[@]}"; do
 	fi
 
 	# 打印简洁结果
-	echo ""
 	if [[ ${#success[@]} -gt 0 ]]; then
 		print_success "新安装 ${#success[@]} 个插件"
 	fi
@@ -160,4 +160,5 @@ for entry in "${editors[@]}"; do
 	fi
 done
 
+_echo_blank
 print_success "VSCode 插件安装完成"

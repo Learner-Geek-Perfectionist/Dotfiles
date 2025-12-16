@@ -144,7 +144,7 @@ install_home_tools() {
 	fi
 
 	# 显示已安装的顶层工具
-	echo ""
+	_echo_blank
 	print_info "已安装的顶层工具:"
 	(cd "$HOME" && _run_and_log pixi list --explicit 2>/dev/null) || print_dim "运行 'pixi list --explicit --manifest-path ~' 查看"
 }
@@ -237,11 +237,11 @@ main() {
 	if [[ -z "$DOTFILES_DIR" ]]; then
 		local rc_file="~/.bashrc"
 		[[ "$SHELL" == *zsh ]] && rc_file="~/.zshrc"
-		echo ""
+		_echo_blank
 		print_success "Pixi 设置完成！"
 		print_dim "下一步: source $rc_file 或重新打开终端"
 		print_dim "验证: cd ~ && pixi list"
-		echo ""
+		_echo_blank
 	fi
 }
 

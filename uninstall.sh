@@ -223,6 +223,6 @@ fi
 [[ "$REMOVE_PIXI" == "true" ]] && confirm "确认删除 Pixi?" && remove_pixi
 [[ "$REMOVE_DOTFILES" == "true" ]] && confirm "确认删除 Dotfiles?" && remove_dotfiles
 
-echo ""
+_echo_blank
 print_success "卸载完成！"
 print_dim "📝 日志: $DOTFILES_LOG"

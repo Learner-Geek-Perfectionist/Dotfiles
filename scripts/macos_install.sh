@@ -58,9 +58,9 @@ else
 	print_success "Homebrew 安装完成"
 fi
 
-echo ""
+_echo_blank
 print_warn "提示: 建议开启代理以加速 Homebrew 下载"
-echo ""
+_echo_blank
 
 # 3. 安装 CLI 工具
 print_info "安装 CLI 工具..."
@@ -98,7 +98,7 @@ fi
 # ========================================
 # 完成
 # ========================================
-echo ""
+_echo_blank
 print_success "=========================================="
 print_success "macOS 安装完成！"
 print_success "=========================================="

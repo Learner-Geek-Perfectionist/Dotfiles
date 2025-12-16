@@ -90,7 +90,7 @@ main() {
 	[[ -d "$HOME/sh-script" ]] && chmod +x "$HOME/sh-script"/*.sh 2>/dev/null
 
 	# 安装 zinit 插件
-	echo ""
+	_echo_blank
 	print_info "🔌 安装 Zinit 插件..."
 	if command -v zsh &>/dev/null; then
 		# ZINIT_SYNC=1 同步加载，确保所有插件安装完成再退出

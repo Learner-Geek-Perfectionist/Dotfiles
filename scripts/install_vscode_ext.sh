@@ -21,7 +21,7 @@ EXTENSIONS=(
 	# 中文语言包
 	"ms-ceintl.vscode-language-pack-zh-hans"
 	# C/C++
-	"ms-vscode.cmake-tools" "xaver.clang-format" "vadimcn.vscode-lldb"
+	"xaver.clang-format"
 	# Rust
 	"rust-lang.rust-analyzer" "fill-labs.dependi" "tamasfe.even-better-toml"
 	# Go
@@ -47,6 +47,9 @@ SPECIFIC=(
 	# VSCode 专属
 	"vscode:ms-vscode.cpptools"
 	"vscode:ms-vscode.cpptools-extension-pack"
+	"vscode:ms-vscode.cmake-tools"
+	"vscode:vadimcn.vscode-lldb"
+	"vscode:llvm-vs-code-extensions.vscode-clangd"
 	"vscode:ms-python.vscode-pylance"
 	"vscode:ms-vscode-remote.remote-ssh"
 	"vscode:ms-vscode-remote.remote-ssh-edit"

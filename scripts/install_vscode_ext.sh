@@ -49,7 +49,6 @@ SPECIFIC=(
 	"vscode:ms-vscode.cpptools-extension-pack"
 	"vscode:ms-vscode.cmake-tools"
 	"vscode:vadimcn.vscode-lldb"
-	"vscode:llvm-vs-code-extensions.vscode-clangd"
 	"vscode:ms-python.vscode-pylance"
 	"vscode:ms-vscode-remote.remote-ssh"
 	"vscode:ms-vscode-remote.remote-ssh-edit"

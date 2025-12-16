@@ -37,7 +37,7 @@
     "editor.unicodeHighlight.allowedLocales": {
         "zh-hans": true
     },
-    "markdown.extension.preview.autoShowPreviewToSide": true,
+    "workbench.editor.enablePreview": false,
     "files.exclude": {
         "**/node_modules": true,
         "**/build": false,
@@ -116,6 +116,7 @@
         // Shell
         "mkhl.shfmt",
         // Markdown
+        "shd101wyy.markdown-preview-enhanced",
         "yzhang.markdown-all-in-one",
         // Git
         "mhutchie.git-graph",

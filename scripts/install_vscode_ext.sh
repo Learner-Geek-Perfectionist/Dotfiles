@@ -35,7 +35,7 @@ EXTENSIONS=(
 	# Shell
 	"mkhl.shfmt"
 	# Markdown
-	"yzhang.markdown-all-in-one"
+	"shd101wyy.markdown-preview-enhanced" "yzhang.markdown-all-in-one"
 	# Git
 	"mhutchie.git-graph"
 	# Docker

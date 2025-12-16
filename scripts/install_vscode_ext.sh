@@ -54,6 +54,7 @@ SPECIFIC=(
 	"vscode:ms-vscode-remote.remote-containers"
 	# Cursor 专属
 	"cursor:anysphere.cpptools"
+	"cursor:anysphere.pyright"
 	"cursor:anysphere.remote-ssh"
 	"cursor:anysphere.remote-containers"
 )

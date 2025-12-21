@@ -5,6 +5,3 @@
 # 信任 home 目录下所有的 .envrc
 # __HOME__ 会在安装时被替换为实际的 home 路径
 prefix = ["__HOME__"]
-
-
-

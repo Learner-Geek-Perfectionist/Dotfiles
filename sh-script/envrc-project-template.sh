@@ -45,8 +45,14 @@ unset _home_path _home_env _name _value
 export CONDA_DEFAULT_ENV="$(grep -m1 '^name' pixi.toml 2>/dev/null | sed 's/.*"\(.*\)".*/\1/')"
 
 # ========== 项目特定环境变量（按需修改）==========
-# 示例：设置项目安装目录和库路径
+# 方式 1：使用 pixi activation script（推荐，在 pixi.toml 中配置）
+#   [activation]
+#   scripts = ["scripts/env.sh"]
+#
+# 方式 2：直接在这里设置（如果不想用 pixi activation）
 # PROJECT_INSTALL="$PWD/install"
 # path_add LD_LIBRARY_PATH "$PROJECT_INSTALL/lib"
 # path_add CMAKE_PREFIX_PATH "$PROJECT_INSTALL"
+
+
 

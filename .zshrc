@@ -62,6 +62,8 @@ else
 
 	# Pixi + direnv：进入/离开目录自动加载/卸载环境变量
 	path_prepend "$HOME/.pixi/bin"
+	# 先激活 home 的 pixi 环境，确保 direnv 等工具可用
+	path_prepend "$HOME/.pixi/envs/default/bin"
 	command -v direnv >/dev/null && eval "$(direnv hook zsh)"
 
 	# OrbStack Linux 支持 open 命令打开 macOS Finder

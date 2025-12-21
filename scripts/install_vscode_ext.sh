@@ -26,8 +26,8 @@ EXTENSIONS=(
 	"rust-lang.rust-analyzer" "fill-labs.dependi" "tamasfe.even-better-toml"
 	# Go
 	"golang.go"
-	# Python
-	"ms-python.python" "charliermarsh.ruff" "ms-python.debugpy"
+	# Python - 只保留 ruff（通用 linter/formatter），其他由各编辑器专属扩展提供
+	"charliermarsh.ruff"
 	# Java/Kotlin
 	"vscjava.vscode-java-pack" "fwcd.kotlin"
 	# Lua
@@ -47,12 +47,14 @@ SPECIFIC=(
 	"vscode:ms-vscode.cpptools-extension-pack"
 	"vscode:ms-vscode.cmake-tools"
 	"vscode:vadimcn.vscode-lldb"
+	"vscode:ms-python.python"
 	"vscode:ms-python.vscode-pylance"
+	"vscode:ms-python.debugpy"
 	"vscode:ms-vscode-remote.remote-ssh"
 	"vscode:ms-vscode-remote.remote-ssh-edit"
 	"vscode:ms-vscode.remote-explorer"
 	"vscode:ms-vscode-remote.remote-containers"
-	# Cursor 专属
+	# Cursor 专属（cursorpyright 会自动安装 debugpy）
 	"cursor:anysphere.cpptools"
 	"cursor:anysphere.cursorpyright"
 	"cursor:anysphere.remote-ssh"

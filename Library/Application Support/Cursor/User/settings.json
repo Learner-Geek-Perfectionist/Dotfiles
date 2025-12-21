@@ -105,10 +105,9 @@
         "tamasfe.even-better-toml",
         // Go
         "golang.go",
-        // Python
-        "ms-python.python",
+        // Python（cursorpyright 会自动安装 debugpy）
+        "anysphere.cursorpyright",
         "charliermarsh.ruff",
-        "ms-python.debugpy",
         // Java/Kotlin
         "vscjava.vscode-java-pack",
         "fwcd.kotlin",

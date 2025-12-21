@@ -56,7 +56,8 @@ fastfetch = "*"
 tmux = "*"
 
 # 开发工具
-neovim = "*"
+nvim = "*"
+vim = "*"
 jq = "*"
 yq = "*"
 graphviz = "*"

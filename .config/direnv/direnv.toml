@@ -1,0 +1,8 @@
+# direnv 配置
+# 文档: https://direnv.net/man/direnv.toml.1.html
+
+[whitelist]
+# 信任 home 目录下所有的 .envrc
+# __HOME__ 会在安装时被替换为实际的 home 路径
+prefix = ["__HOME__"]
+

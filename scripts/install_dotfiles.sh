@@ -48,10 +48,18 @@ main() {
 	copy_path ".zshrc" ".zshrc"
 	copy_path ".zprofile" ".zprofile"
 	copy_path ".zshenv" ".zshenv"
+	copy_path ".envrc" ".envrc"
 
 	# .config 子目录（通用）
 	copy_path ".config/zsh" ".config/zsh"
 	copy_path ".config/kitty" ".config/kitty"
+
+	# direnv 配置（替换 __HOME__ 为实际路径）
+	if [[ -f "$DOTFILES_DIR/.config/direnv/direnv.toml" ]]; then
+		mkdir -p "$HOME/.config/direnv"
+		sed "s|__HOME__|$HOME|g" "$DOTFILES_DIR/.config/direnv/direnv.toml" > "$HOME/.config/direnv/direnv.toml"
+		print_success "~/.config/direnv/direnv.toml"
+	fi
 
 	# VSCode/Cursor 配置（只复制 settings.json 和 keybindings.json，避免覆盖用户的其它配置）
 	if [[ "$(uname)" == "Darwin" ]]; then

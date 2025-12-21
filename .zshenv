@@ -1,3 +1,6 @@
+# 禁用 direnv 加载提示（必须在最早阶段设置）
+export DIRENV_LOG_FORMAT=""
+
 # 跳过系统的 compinit（我们在 zinit 中自己调用）
 export skip_global_compinit=1
 

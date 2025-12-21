@@ -76,6 +76,7 @@ llvm-tools = "*"
 
 # 其他工具
 tldr = "*"
+direnv = "*"
 
 # 构建工具
 cxx-compiler = "*"

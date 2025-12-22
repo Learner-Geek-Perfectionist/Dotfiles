@@ -102,32 +102,51 @@ if [[ "$(uname)" == "Darwin" ]]; then
 	done
 	unset key_fp
 else
-	# Linux: 使用持久化的 agent socket
-	_ssh_agent_sock="$HOME/.ssh/agent.sock"
+	# Linux: 优先使用 SSH 转发的 agent，否则使用本地持久化 agent
+	_need_local_agent=false
 
-	# 尝试连接现有 socket
-	if [[ -S "$_ssh_agent_sock" ]]; then
-		export SSH_AUTH_SOCK="$_ssh_agent_sock"
-		# 检查 agent 是否还活着（状态码 2 = 无法连接）
-		if ! ssh-add -l &>/dev/null && [[ $? -eq 2 ]]; then
-			rm -f "$_ssh_agent_sock"
-			unset SSH_AUTH_SOCK
+	# 检查当前 SSH_AUTH_SOCK 是否有效（可能是 SSH 转发的）
+	if [[ -n "$SSH_AUTH_SOCK" && -S "$SSH_AUTH_SOCK" ]]; then
+		# 测试 agent 是否可用
+		ssh-add -l &>/dev/null
+		if [[ $? -eq 2 ]]; then
+			# agent 不可用，需要本地 agent
+			_need_local_agent=true
 		fi
+		# 否则使用当前的 agent（SSH 转发的）
+	else
+		_need_local_agent=true
 	fi
 
-	# 需要启动新 agent
-	if [[ ! -S "$_ssh_agent_sock" ]]; then
-		eval "$(ssh-agent -a "$_ssh_agent_sock" -s)" >/dev/null 2>&1
+	# 如果需要本地 agent
+	if $_need_local_agent; then
+		_ssh_agent_sock="$HOME/.ssh/agent.sock"
+
+		# 尝试连接现有本地 socket
+		if [[ -S "$_ssh_agent_sock" ]]; then
+			export SSH_AUTH_SOCK="$_ssh_agent_sock"
+			if ! ssh-add -l &>/dev/null && [[ $? -eq 2 ]]; then
+				rm -f "$_ssh_agent_sock"
+				unset SSH_AUTH_SOCK
+			fi
+		fi
+
+		# 如果本地 socket 不存在，启动新 agent
+		if [[ ! -S "$_ssh_agent_sock" ]]; then
+			eval "$(ssh-agent -a "$_ssh_agent_sock" -s)" >/dev/null 2>&1
+		fi
+
+		unset _ssh_agent_sock
 	fi
 
-	# 如果 agent 为空，加载密钥
-	if ! ssh-add -l &>/dev/null; then
+	# 如果 agent 为空且有本地密钥，加载密钥
+	if [[ $(ssh-add -l 2>&1) == "The agent has no identities." ]]; then
 		for key in ~/.ssh/id_{ed25519,rsa,ecdsa}; do
 			[[ -f "$key" ]] && ssh-add "$key" 2>/dev/null
 		done
 	fi
 
-	unset _ssh_agent_sock
+	unset _need_local_agent
 fi
 
 # ============================================

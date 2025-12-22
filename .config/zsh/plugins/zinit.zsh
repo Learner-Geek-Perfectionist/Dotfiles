@@ -40,14 +40,6 @@ fi
 # 2.加载 p10k 主题
 zinit light romkatv/powerlevel10k
 
-# 2.5 加载 zsh-async（用于异步加载 pixi 环境）
-zinit light mafredri/zsh-async
-
-# 2.6 zsh-async 加载后，异步执行完整的 pixi 环境加载
-if (($+functions[async_init])); then
-	async_init
-fi
-
 # 3.加载 p10k 主题的配置文件
 [[ ! -f ~/.config/zsh/.p10k.zsh ]] || source ~/.config/zsh/.p10k.zsh
 

@@ -10,7 +10,7 @@
 
 # SSH 会话 locale 回退（避免远程服务器没有安装本地 locale 导致乱码）
 # 场景：macOS SSH 发送 LANG=zh_CN.UTF-8，但远程 Linux 没有安装该 locale
-if [[ -n "$SSH_TTY" ]] && locale 2>&1 | command grep -q "Cannot set"; then
+if [[ -n "$SSH_CONNECTION" ]] && locale 2>&1 | command grep -q "Cannot set"; then
     export LANG="C.UTF-8"
     export LC_ALL="C.UTF-8"
 fi

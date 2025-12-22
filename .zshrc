@@ -79,16 +79,28 @@ fi
 
 # SSH Agent 配置
 # ============================================
+# 测试 Agent 是否生效：
+#   echo $SSH_AUTH_SOCK          # 查看 socket 路径
+#   ssh-add -l                   # 列出已加载的公钥指纹
+#   ssh -T git@github.com        # 测试 GitHub 认证
+#
+# Docker 容器使用 Agent Forwarding：
+#   docker run -v $SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent ...
+# ============================================
 if [[ "$(uname)" == "Darwin" ]]; then
 	# macOS: 从 Keychain 恢复密钥
 	ssh-add --apple-load-keychain 2>/dev/null
 
-	# 如果 agent 仍然为空，自动添加密钥到 Keychain（自愈机制）
-	if [[ $(ssh-add -l 2>&1) == "The agent has no identities." ]]; then
-		for key in ~/.ssh/id_{ed25519,rsa,ecdsa}; do
-			[[ -f "$key" ]] && ssh-add --apple-use-keychain "$key" 2>/dev/null
-		done
-	fi
+	# 确保指定的密钥都被加载（通过公钥指纹检查，自愈机制）
+	for key in ~/.ssh/id_{ed25519,rsa,ecdsa}; do
+		if [[ -f "$key" && -f "$key.pub" ]]; then
+			key_fp=$(ssh-keygen -lf "$key.pub" 2>/dev/null | awk '{print $2}')
+			if [[ -n "$key_fp" ]] && ! ssh-add -l 2>/dev/null | grep -q "$key_fp"; then
+				ssh-add --apple-use-keychain "$key" 2>/dev/null
+			fi
+		fi
+	done
+	unset key_fp
 else
 	# Linux: 使用持久化的 agent socket
 	_ssh_agent_sock="$HOME/.ssh/agent.sock"

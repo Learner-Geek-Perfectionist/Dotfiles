@@ -263,7 +263,7 @@ fd() {
 		--version|-V|--help|-h) "${cmd[@]}" "$@"; return;;
 	esac
 
-	"${cmd[@]}" --color=always "${_fd_opts[@]}" "$@"
+	"${cmd[@]}" --color=always "${_fd_opts[@]}" "$@" 2>/dev/null
 }
 
 # ============================================

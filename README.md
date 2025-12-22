@@ -76,6 +76,7 @@ graph TB
 | jq / yq | JSON/YAML 处理 |
 | tldr | 简洁的命令手册 |
 | fastfetch | 系统信息 |
+| direnv | 目录级环境变量管理 |
 
 ### 构建工具 (Pixi) - 完全 Rootless
 
@@ -194,9 +195,11 @@ Dotfiles/
 ├── .zshrc                        # Zsh 主配置（PATH、别名、setopt）
 ├── .zprofile                     # Zsh 登录配置
 ├── .zshenv                       # Zsh 环境变量（最先加载）
+├── .envrc                        # direnv 配置（Home 基础环境）
 ├── .gitconfig                    # Git 全局配置
+├── .gitignore                    # Git 忽略规则
 ├── .ssh/
-│   └── config                    # SSH 配置
+│   └── config                    # SSH 配置（含 Agent Forwarding）
 ├── .config/
 │   ├── zsh/                      # Zsh 插件和工具
 │   │   ├── plugins/
@@ -204,6 +207,8 @@ Dotfiles/
 │   │   │   └── platform.zsh      # 平台特定配置
 │   │   ├── fzf/                  # fzf 配置
 │   │   └── .p10k.zsh             # Powerlevel10k 主题配置
+│   ├── direnv/                   # direnv 配置
+│   │   └── direnv.toml           # direnv 全局设置
 │   ├── kitty/                    # Kitty 终端配置
 │   ├── karabiner/                # Karabiner-Elements 键盘映射 (macOS)
 │   ├── Code/User/                # VSCode 设置 (Linux)
@@ -224,7 +229,8 @@ Dotfiles/
 │   ├── packages.sh               # Homebrew 包定义
 │   └── utils.sh                  # 工具函数
 ├── sh-script/                    # 独立 Shell 脚本
-│   └── get-my-ip.sh              # 获取本机 IP
+│   ├── get-my-ip.sh              # 获取本机 IP
+│   └── envrc-project-template.sh # 项目 .envrc 模板
 └── docs/
     └── flowchart.md              # 架构流程图
 ```

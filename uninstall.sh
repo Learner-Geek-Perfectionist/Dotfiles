@@ -115,6 +115,10 @@ remove_dotfiles() {
 		rm_path "$p"
 	done
 
+	# direnv 配置
+	rm_path ~/.envrc
+	rm_path ~/.config/direnv
+
 	# .config 目录下的配置
 	for p in ~/.config/{zsh,kitty}; do
 		rm_path "$p"

@@ -79,91 +79,44 @@ fi
 
 # SSH Agent 配置
 # ============================================
-# 适用场景：
-#   - macOS 系统自带 agent（launchd 管理）
-#   - OrbStack 自动转发
-#   - ssh -A 连接的服务器
-#   - Docker 容器挂载 socket
-#   - 无 agent 的 Linux 服务器（自动启动本地 agent）
-#
-# 测试 Agent Forwarding 是否生效：
-#   echo $SSH_AUTH_SOCK          # 查看 socket 路径
-#   ssh-add -l                   # 列出已加载的公钥指纹
-#   ssh -T git@github.com        # 测试 GitHub 认证
-#
-# Docker 容器使用 Agent Forwarding：
-#   # 方式 1：挂载 socket（推荐）
-#   docker run -v $SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent ...
-#
-#   # 方式 2：SSH 连接（需要容器安装 sshd）
-#   apt update && apt install -y openssh-server iproute2 git zsh sudo curl
-#   echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
-#   service ssh start
-#   passwd root  # 设置密码
-#   # 然后从 macOS(客户端): ssh root@<容器IP>
-#
-# ============================================
-# 1. 尝试连接当前环境中的 agent
-# ssh-add -l 返回 0 代表连接正常且有密钥；返回 1 代表连接正常但无密钥；返回 2 代表无法连接
-ssh-add -l &>/dev/null
-_agent_status=$?
+if [[ "$(uname)" == "Darwin" ]]; then
+	# macOS: 从 Keychain 恢复密钥
+	ssh-add --apple-load-keychain 2>/dev/null
 
-if [[ $_agent_status -eq 0 ]]; then
-	# [情况A] Agent 存活且已有密钥 -> 检查是否只有我们需要的密钥
-	# 如果密钥数量超过预期，清空后重新加载（避免 Keychain 自动加载旧密钥）
-	_key_count=$(ssh-add -l 2>/dev/null | wc -l | tr -d ' ')
-	_expected_keys=0
-	for key in ~/.ssh/id_{ed25519,rsa,ecdsa}; do [[ -f "$key" ]] && ((_expected_keys++)); done
-	if [[ $_key_count -gt $_expected_keys ]]; then
-		ssh-add -D &>/dev/null  # 清空所有
+	# 如果 agent 仍然为空，自动添加密钥到 Keychain（自愈机制）
+	if [[ $(ssh-add -l 2>&1) == "The agent has no identities." ]]; then
 		for key in ~/.ssh/id_{ed25519,rsa,ecdsa}; do
-			if [[ -f "$key" ]]; then
-				[[ "$(uname)" == "Darwin" ]] && OPTS="--apple-use-keychain" || OPTS=""
-				ssh-add $OPTS "$key" 2>/dev/null
-			fi
+			[[ -f "$key" ]] && ssh-add --apple-use-keychain "$key" 2>/dev/null
 		done
 	fi
-	unset _key_count _expected_keys
-	:
-elif [[ $_agent_status -eq 1 ]]; then
-	# [情况B] Agent 存活但没有密钥 -> 只需要加载密钥
-	for key in ~/.ssh/id_{ed25519,rsa,ecdsa}; do
-		if [[ -f "$key" ]]; then
-			# macOS 用户建议加上 --apple-use-keychain
-			[[ "$(uname)" == "Darwin" ]] && OPTS="--apple-use-keychain" || OPTS=""
-			ssh-add $OPTS "$key" 2>/dev/null
-		fi
-	done
 else
-	# [情况C] 无法连接 Agent (状态码 2) 或者 SSH_AUTH_SOCK 为空 -> 启动/复用固定 Agent
+	# Linux: 使用持久化的 agent socket
 	_ssh_agent_sock="$HOME/.ssh/agent.sock"
 
-	# 如果 socket 文件存在，但连不上(上面已经测过了)，说明是死 socket，删掉
+	# 尝试连接现有 socket
 	if [[ -S "$_ssh_agent_sock" ]]; then
 		export SSH_AUTH_SOCK="$_ssh_agent_sock"
-		if ! ssh-add -l &>/dev/null; then
+		# 检查 agent 是否还活着（状态码 2 = 无法连接）
+		if ! ssh-add -l &>/dev/null && [[ $? -eq 2 ]]; then
 			rm -f "$_ssh_agent_sock"
+			unset SSH_AUTH_SOCK
 		fi
 	fi
 
-	# 如果 socket 不存在（被删了或本来就没有），启动新的
+	# 需要启动新 agent
 	if [[ ! -S "$_ssh_agent_sock" ]]; then
 		eval "$(ssh-agent -a "$_ssh_agent_sock" -s)" >/dev/null 2>&1
-	else
-		# 即使文件存在，也要 export 一下确保当前 shell 拿到变量
-		export SSH_AUTH_SOCK="$_ssh_agent_sock"
 	fi
 
-	# 启动完新 agent 后，加载密钥
-	for key in ~/.ssh/id_{ed25519,rsa,ecdsa}; do
-		if [[ -f "$key" ]]; then
-			[[ "$(uname)" == "Darwin" ]] && OPTS="--apple-use-keychain" || OPTS=""
-			ssh-add $OPTS "$key" 2>/dev/null
-		fi
-	done
-fi
+	# 如果 agent 为空，加载密钥
+	if ! ssh-add -l &>/dev/null; then
+		for key in ~/.ssh/id_{ed25519,rsa,ecdsa}; do
+			[[ -f "$key" ]] && ssh-add "$key" 2>/dev/null
+		done
+	fi
 
-unset _agent_status _ssh_agent_sock
+	unset _ssh_agent_sock
+fi
 
 # ============================================
 # Zsh 选项

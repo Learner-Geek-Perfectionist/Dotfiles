@@ -87,67 +87,36 @@ fi
 # Docker 容器使用 Agent Forwarding：
 #   docker run -v $SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent ...
 # ============================================
-if [[ "$(uname)" == "Darwin" ]]; then
-	# macOS: 从 Keychain 恢复密钥
-	ssh-add --apple-load-keychain 2>/dev/null
 
-	# 确保指定的密钥都被加载（通过公钥指纹检查，自愈机制）
-	for key in ~/.ssh/id_{ed25519,rsa,ecdsa}; do
-		if [[ -f "$key" && -f "$key.pub" ]]; then
-			key_fp=$(ssh-keygen -lf "$key.pub" 2>/dev/null | awk '{print $2}')
-			if [[ -n "$key_fp" ]] && ! ssh-add -l 2>/dev/null | grep -q "$key_fp"; then
-				ssh-add --apple-use-keychain "$key" 2>/dev/null
-			fi
-		fi
-	done
-	unset key_fp
-else
-	# Linux: 优先使用 SSH 转发的 agent，否则使用本地持久化 agent
-	_need_local_agent=false
+# 密钥路径 & 指纹
+typeset -g _ssh_key="$HOME/.ssh/id_ed25519"
+typeset -g _ssh_fp=$(ssh-keygen -lf "$_ssh_key.pub" 2>/dev/null | awk '{print $2}')
 
-	# 检查当前 SSH_AUTH_SOCK 是否有效（可能是 SSH 转发的）
-	if [[ -n "$SSH_AUTH_SOCK" && -S "$SSH_AUTH_SOCK" ]]; then
-		# 测试 agent 是否可用
-		ssh-add -l &>/dev/null
-		if [[ $? -eq 2 ]]; then
-			# agent 不可用，需要本地 agent
-			_need_local_agent=true
+if [[ -f "$_ssh_key" && -n "$_ssh_fp" ]]; then
+	# SSH 转发场景：agent 可用则复用，不覆盖
+	if [[ -n "$SSH_CONNECTION" && -n "$SSH_AUTH_SOCK" ]] && ssh-add -l &>/dev/null; ret=$?; (( ret <= 1 )); then
+		ssh-add -l 2>/dev/null | grep -qF "$_ssh_fp" || ssh-add "$_ssh_key" 2>/dev/null
+
+	# macOS：launchd 自动管理
+	elif [[ "$(uname)" == "Darwin" && -n "$SSH_AUTH_SOCK" ]] && ssh-add -l &>/dev/null; ret=$?; (( ret <= 1 )); then
+		ssh-add -l 2>/dev/null | grep -qF "$_ssh_fp" || ssh-add "$_ssh_key" 2>/dev/null
+
+	# Linux 本地
+	elif [[ "$(uname)" == "Linux" ]]; then
+		typeset -g _sock="$HOME/.ssh/agent.sock"
+		# 尝试复用现有 socket
+		[[ -S "$_sock" ]] && export SSH_AUTH_SOCK="$_sock"
+		# agent 不可用则启动新的
+		if ! { [[ -n "$SSH_AUTH_SOCK" ]] && ssh-add -l &>/dev/null; ret=$?; (( ret <= 1 )); }; then
+			rm -f "$_sock" 2>/dev/null
+			eval "$(ssh-agent -a "$_sock" 2>/dev/null)"
 		fi
-		# 否则使用当前的 agent（SSH 转发的）
-	else
-		_need_local_agent=true
+		ssh-add -l 2>/dev/null | grep -qF "$_ssh_fp" || ssh-add "$_ssh_key" 2>/dev/null
+		unset _sock
 	fi
-
-	# 如果需要本地 agent
-	if $_need_local_agent; then
-		_ssh_agent_sock="$HOME/.ssh/agent.sock"
-
-		# 尝试连接现有本地 socket
-		if [[ -S "$_ssh_agent_sock" ]]; then
-			export SSH_AUTH_SOCK="$_ssh_agent_sock"
-			if ! ssh-add -l &>/dev/null && [[ $? -eq 2 ]]; then
-				rm -f "$_ssh_agent_sock"
-				unset SSH_AUTH_SOCK
-			fi
-		fi
-
-		# 如果本地 socket 不存在，启动新 agent
-		if [[ ! -S "$_ssh_agent_sock" ]]; then
-			eval "$(ssh-agent -a "$_ssh_agent_sock" -s)" >/dev/null 2>&1
-		fi
-
-		unset _ssh_agent_sock
-	fi
-
-	# 如果 agent 为空且有本地密钥，加载密钥
-	if [[ $(ssh-add -l 2>&1) == "The agent has no identities." ]]; then
-		for key in ~/.ssh/id_{ed25519,rsa,ecdsa}; do
-			[[ -f "$key" ]] && ssh-add "$key" 2>/dev/null
-		done
-	fi
-
-	unset _need_local_agent
 fi
+
+unset _ssh_key _ssh_fp 2>/dev/null
 
 # ============================================
 # Zsh 选项

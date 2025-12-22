@@ -283,7 +283,7 @@ alias uninstall='/bin/bash -c "$(curl -H '\''Cache-Control: no-cache'\'' -fsSL "
 
 # 常用命令简化
 alias python=python3
-alias g1='git clone --depth=1'
+alias g1='git clone --depth=1 --recursive'
 alias mkdir='mkdir -p'
 alias cp='cp -r'
 alias show='kitty +kitten icat'

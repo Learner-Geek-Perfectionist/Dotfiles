@@ -8,6 +8,13 @@
 # Kitty 终端 SSH 时回退 TERM（远程服务器可能没有 xterm-kitty terminfo）
 [[ "$TERM" == "xterm-kitty" && ! -e "/usr/share/terminfo/x/xterm-kitty" ]] && export TERM="xterm-256color"
 
+# SSH 会话 locale 回退（避免远程服务器没有安装本地 locale 导致乱码）
+# 场景：macOS SSH 发送 LANG=zh_CN.UTF-8，但远程 Linux 没有安装该 locale
+if [[ -n "$SSH_TTY" ]] && locale 2>&1 | command grep -q "Cannot set"; then
+    export LANG="C.UTF-8"
+    export LC_ALL="C.UTF-8"
+fi
+
 # 让 p10k instant prompt / 补全尽早生效
 export ZSH_COMPDUMP="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/.zcompdump"
 command mkdir -p "${ZSH_COMPDUMP:h}" 2>/dev/null

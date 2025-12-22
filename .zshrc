@@ -133,7 +133,12 @@ setopt rm_star_silent       # 取消 zsh 的安全防护功能（默认对 rm -r
 # ============================================
 # Fzf 配置
 # ============================================
-command -v fzf >/dev/null 2>&1 && source <(fzf --zsh)
+# 加载 fzf 快捷键（Ctrl+T, Ctrl+R, Alt+C），但保留 fzf-tab 的 Tab 补全
+if command -v fzf >/dev/null 2>&1; then
+	source <(fzf --zsh)
+	# 恢复 fzf-tab 的 Tab 绑定（fzf --zsh 会覆盖为 fzf-completion）
+	bindkey '^I' fzf-tab-complete
+fi
 
 # ============================================
 # 命令增强

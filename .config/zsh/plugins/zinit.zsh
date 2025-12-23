@@ -50,7 +50,12 @@ COMPLETION_WAITING_DOTS='true'
 # OMZ 迁移和插件配置
 _ice
 zinit snippet OMZL::clipboard.zsh
-_ice
+# 修复 Fedora zsh 补全兼容性问题（必须在 atload 中设置，否则会被异步加载覆盖）
+# 问题：OMZL::completion.zsh 的 matcher-list 含 `-_` 等价规则，
+#       与 Fedora 精简版 _path_commands（4行 vs Ubuntu 65行）结合，
+#       导致 `fast<Tab>` 自动变成 `fast-`，过滤掉 `fastfetch`
+# 解决：移除 `-_` 等价性，只保留大小写不敏感
+_ice atload"zstyle ':completion:*' matcher-list 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}' 'r:|=*' 'l:|=* r:|=*'"
 zinit snippet OMZL::completion.zsh
 _ice
 zinit snippet OMZL::grep.zsh

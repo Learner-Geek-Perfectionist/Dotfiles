@@ -79,7 +79,24 @@ zinit snippet OMZ::plugins/colored-man-pages/colored-man-pages.plugin.zsh
 # 3.Completions should be configured before compinit, as stated in the zsh-completions manual installation guide.
 
 # 设置插件加载的选项，加载 fzf-tab 插件
-_ice atinit'autoload -Uz compinit; compinit -C -d "$ZSH_COMPDUMP"; zicdreplay'
+_ice atinit'
+    autoload -Uz compinit
+    local zcd="${ZSH_COMPDUMP:-$HOME/.cache/zsh/.zcompdump}"
+    # 检查是否有 FPATH 目录比缓存更新
+    local need_update=0
+    if [[ -f "$zcd" ]]; then
+        for dir in ${(s.:.)FPATH}; do
+            [[ -d "$dir" && "$dir" -nt "$zcd" ]] && { need_update=1; break }
+        done
+    fi
+    # 缓存不存在或过期时完整扫描，否则用快速模式
+    if [[ ! -f "$zcd" || $need_update -eq 1 ]]; then
+        compinit -d "$zcd"
+    else
+        compinit -C -d "$zcd"
+    fi
+    zicdreplay
+'
 zinit light Aloxaf/fzf-tab
 
 # 配置 fzf-tab

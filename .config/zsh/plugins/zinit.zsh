@@ -89,6 +89,26 @@ zstyle ':fzf-tab:complete:code:*' popup-pad 30 0
 zstyle ":fzf-tab:*" fzf-flags --color=bg+:23
 zstyle ':fzf-tab:*' switch-group '<' '>'
 
+# ============================================
+# 修复 Fedora zsh 补全兼容性问题
+# ============================================
+# 问题：输入 `fast<Tab>` 时自动变成 `fast-`，导致 `fastfetch` 不显示
+#
+# 根本原因：
+#   1. OMZL::completion.zsh 设置的 matcher-list 包含 `-_` 等价规则：
+#      'm:{[:lower:][:upper:]-_}={[:upper:][:lower:]_-}'
+#      这使得 `-` 和 `_` 被视为相同字符
+#
+#   2. Fedora 的 zsh 包中 `_path_commands` 函数是精简版（仅 4 行），
+#      而 Ubuntu 是完整版（65 行）。精简版在处理补全时，
+#      与 `-_` 等价规则结合会产生异常行为：
+#      - `fast` 匹配 `FAST_*` 变量（大小写不敏感 + `_`=`-`）
+#      - 补全系统认为 `fast-` 是"共同前缀"，自动插入 `-`
+#      - 导致 `fastfetch` 被过滤掉
+#
+# 解决方案：移除 `-_` 等价性，只保留大小写不敏感
+zstyle ':completion:*' matcher-list 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}' 'r:|=*' 'l:|=* r:|=*'
+
 # 添加 _fzf 补全函数（使用本地文件）
 zinit ice as"completion"
 zinit snippet "$HOME/.config/zsh/fzf/_fzf"

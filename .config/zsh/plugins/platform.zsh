@@ -12,6 +12,13 @@ if [[ "$(uname -s)" == "Darwin" ]]; then
 
 elif [[ "$(uname -s)" == "Linux" ]]; then
 	# ========================================
+	# Linux: 修复 pixi 可能覆盖的 HOST 变量
+	# pixi 激活时会设置 HOST 为平台三元组 (如 aarch64-conda-linux-gnu)
+	# 这会导致 p10k 的 context segment 显示错误的主机名
+	# ========================================
+	export HOST=$(hostname -s 2>/dev/null || hostname)
+
+	# ========================================
 	# Linux: 添加 zsh 补全路径到 FPATH
 	# ========================================
 	if [[ -d "/usr/share/zsh" ]]; then

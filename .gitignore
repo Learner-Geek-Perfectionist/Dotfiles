@@ -92,6 +92,7 @@ obj/
 ###########################
 temp/
 tmp/
+.cache/
 /build*/*
 /CMakeFiles
 /examples/hello_world/build

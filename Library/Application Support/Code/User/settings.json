@@ -42,6 +42,7 @@
     },
     "workbench.editor.enablePreview": false,
     "workbench.editor.wrapTabs": true,
+    "workbench.editor.tabSizing": "shrink",
     "files.associations": {
         "**/ripgrep/ignore": "ignore"
     },

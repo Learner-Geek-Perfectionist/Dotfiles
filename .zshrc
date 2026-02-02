@@ -261,5 +261,7 @@ alias reboot='sudo reboot'
 # ============================================
 # 修复 pixi 覆盖的 HOST 变量（必须在最后）
 # ============================================
-[[ "$(uname)" == "Linux" ]] && export HOST=$(hostname -s 2>/dev/null || hostname)
+if [[ "$(uname)" == "Linux" ]]; then
+	export HOST=$(hostname -s 2>/dev/null || hostname)
+fi
 

@@ -41,6 +41,10 @@
         "zh-hans": true
     },
     "workbench.editor.enablePreview": false,
+    "workbench.editor.wrapTabs": true,
+    "files.associations": {
+        "**/ripgrep/ignore": "ignore"
+    },
     "files.exclude": {
         "**/node_modules": true,
         "**/build": false,

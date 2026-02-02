@@ -1,0 +1,11 @@
+# 应用缓存和数据库
+**/com.microsoft.VSCode.ShipIt/**
+**/SafariTabs.db*
+**/WebKitCache/**
+**/clipboard.paste/**
+**/Library/Containers/**
+
+# IDE 历史记录
+**/Application Support/Cursor/User/History/**
+**/Application Support/Code/User/History/**
+

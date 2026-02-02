@@ -1,0 +1,14 @@
+# 大小写不敏感
+--ignore-case
+
+# 多线程
+--threads=0
+
+# 跳过二进制文件
+--no-binary
+
+# 抑制错误信息（如权限拒绝）
+--no-messages
+
+# 全局忽略文件
+--ignore-file=~/.config/ripgrep/ignore

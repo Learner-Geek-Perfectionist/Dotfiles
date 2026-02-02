@@ -15,6 +15,9 @@ if [[ -n "$SSH_CONNECTION" ]] && locale 2>&1 | command grep -q "Cannot set"; the
     export LC_ALL="C.UTF-8"
 fi
 
+# ripgrep 全局配置（包含忽略文件设置）
+export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/config"
+
 # 让 p10k instant prompt / 补全尽早生效
 export ZSH_COMPDUMP="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/.zcompdump"
 command mkdir -p "${ZSH_COMPDUMP:h}" 2>/dev/null
@@ -55,11 +58,11 @@ if [[ "$(uname)" == "Darwin" ]]; then
 	alias cl=clion
 	# pycharm 映射到 py
 	alias py=pycharm
-	alias rg='rg -uuu -i --threads=$(sysctl -n hw.ncpu) 2>/dev/null'
+	# rg 配置已移至 ~/.config/ripgrep/config
 	alias open='open -R'
 
 else
-	alias rg='rg -uuu -i --threads=$(nproc) 2>/dev/null'
+	# rg 配置已移至 ~/.config/ripgrep/config
 
 	# Cursor 编辑器（Linux）- 先添加，确保 cursor 命令可用
 	path_prepend "/opt/Cursor/resources/app/bin"
@@ -243,7 +246,7 @@ alias clear='clear && printf '\''\e[3J'\'''  # 清除整个屏幕（含回滚）
 alias reload="source ~/.zshenv;source ~/.zprofile;source ~/.zshrc"
 
 # Dotfiles 管理
-alias upgrade='/bin/bash -c "$(curl -H '\''Cache-Control: no-cache'\'' -fsSL "https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/update_dotfiles.sh?$(date +%s)")" && reload'
+alias upgrade='/bin/bash -c "$(curl -H '\''Cache-Control: no-cache'\'' -fsSL "https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/beta/update_dotfiles.sh?$(date +%s)")" && reload'
 alias uninstall='/bin/bash -c "$(curl -H '\''Cache-Control: no-cache'\'' -fsSL "https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/uninstall_dotfiles.sh?$(date +%s)")"'
 
 # 常用命令简化

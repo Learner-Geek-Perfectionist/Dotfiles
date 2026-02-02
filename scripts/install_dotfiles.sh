@@ -53,6 +53,7 @@ main() {
 	# .config 子目录（通用）
 	copy_path ".config/zsh" ".config/zsh"
 	copy_path ".config/kitty" ".config/kitty"
+	copy_path ".config/ripgrep" ".config/ripgrep"
 
 	# direnv 配置（替换 __HOME__ 为实际路径）
 	if [[ -f "$DOTFILES_DIR/.config/direnv/direnv.toml" ]]; then

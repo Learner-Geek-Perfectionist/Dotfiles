@@ -246,7 +246,7 @@ alias clear='clear && printf '\''\e[3J'\'''  # 清除整个屏幕（含回滚）
 alias reload="source ~/.zshenv;source ~/.zprofile;source ~/.zshrc"
 
 # Dotfiles 管理
-alias upgrade='/bin/bash -c "$(curl -H '\''Cache-Control: no-cache'\'' -fsSL "https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/beta/update_dotfiles.sh?$(date +%s)")" && reload'
+alias upgrade='/bin/bash -c "$(curl -H '\''Cache-Control: no-cache'\'' -fsSL "https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/beta/install.sh?$(date +%s)")" -- --dotfiles-only && reload'
 alias uninstall='/bin/bash -c "$(curl -H '\''Cache-Control: no-cache'\'' -fsSL "https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/uninstall_dotfiles.sh?$(date +%s)")"'
 
 # 常用命令简化

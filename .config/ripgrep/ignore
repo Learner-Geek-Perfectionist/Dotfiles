@@ -9,3 +9,8 @@
 **/Application Support/Cursor/User/History/**
 **/Application Support/Code/User/History/**
 
+# 垃圾桶和系统目录
+**/.Trash/**
+/System/Volumes/Data/**
+**/.local/share/Trash/**
+

@@ -187,8 +187,8 @@ fi
 # tldr 替代 man（更简洁的命令手册）
 command -v tldr >/dev/null 2>&1 && alias man='tldr'
 
-# fzf 默认选项：预览、翻页绑定、倒序显示
-export FZF_DEFAULT_OPTS='--preview "${HOME}/.config/zsh/fzf/fzf-preview.sh {}" --bind "shift-left:preview-page-up,shift-right:preview-page-down" --no-sort --tac'
+# fzf 默认选项：--exact 精确匹配（连续字符），搜索时加 ' 前缀可切换回模糊匹配
+export FZF_DEFAULT_OPTS='--exact --preview "${HOME}/.config/zsh/fzf/fzf-preview.sh {}" --bind "shift-left:preview-page-up,shift-right:preview-page-down"'
 
 # ============================================
 # fd 配置

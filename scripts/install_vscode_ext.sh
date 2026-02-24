@@ -43,6 +43,7 @@ EXTENSIONS=(
 # 专属插件 (vscode:ext 或 cursor:ext)
 SPECIFIC=(
 	# VSCode 专属
+	"vscode:huacnlee.autocorrect"
 	"vscode:ms-vscode.cpptools"
 	"vscode:ms-vscode.cpptools-extension-pack"
 	"vscode:ms-vscode.cmake-tools"
@@ -60,6 +61,33 @@ SPECIFIC=(
 	"cursor:anysphere.remote-ssh"
 	"cursor:anysphere.remote-containers"
 )
+
+# Cursor 需要从 VS Code Marketplace 下载 VSIX 安装的插件（Open VSX 没有）
+CURSOR_VSIX=(
+	"huacnlee.autocorrect"
+)
+
+# 从 VS Code Marketplace 下载 VSIX 并安装
+install_vsix_from_marketplace() {
+	local ext="$1" cmd="$2"
+	local publisher="${ext%%.*}"
+	local name="${ext#*.}"
+	local tmp="/tmp/${publisher}.${name}.vsix"
+
+	curl -sL "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/${publisher}/vsextensions/${name}/latest/vspackage" \
+		-o "${tmp}.gz" || return 1
+
+	if file "${tmp}.gz" | grep -q "gzip"; then
+		gunzip -c "${tmp}.gz" >"$tmp"
+	else
+		mv "${tmp}.gz" "$tmp"
+	fi
+
+	"$cmd" --install-extension "$tmp" --force &>/dev/null
+	local rc=$?
+	rm -f "$tmp" "${tmp}.gz"
+	return $rc
+}
 
 # 检测真实的编辑器类型（code 命令可能实际是 Cursor）
 detect_real_type() {
@@ -108,6 +136,11 @@ for entry in "${editors[@]}"; do
 		t="${item%%:*}" e="${item#*:}"
 		[[ "$t" == "$type" ]] && all_exts+=("$e|$t")
 	done
+	if [[ "$type" == "cursor" ]]; then
+		for ext in "${CURSOR_VSIX[@]}"; do
+			all_exts+=("$ext|cursor-vsix")
+		done
+	fi
 
 	# 分类：已安装、待安装
 	skipped=() to_install=()
@@ -133,7 +166,11 @@ for entry in "${editors[@]}"; do
 			((++count))
 			printf "\r${CYAN}[%d/%d]${NC} 安装中: ${YELLOW}%s${NC}%-20s" "$count" "$total" "$ext" ""
 			# 尝试安装
-			"$cmd" --install-extension "$ext" --force &>/dev/null
+			if [[ "$tag" == "cursor-vsix" ]]; then
+				install_vsix_from_marketplace "$ext" "$cmd"
+			else
+				"$cmd" --install-extension "$ext" --force &>/dev/null
+			fi
 			# 验证是否真的安装成功（重新检查）
 			new_installed=$("$cmd" --list-extensions 2>/dev/null | tr '[:upper:]' '[:lower:]')
 			ext_lower=$(echo "$ext" | tr '[:upper:]' '[:lower:]')

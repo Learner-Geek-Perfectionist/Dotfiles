@@ -94,6 +94,10 @@
     "ruff.enable": true,
     "ruff.lint.enable": true,
     "ruff.format.enable": true,
+    // ======================= AutoCorrect 中英文排版 =======================
+    "autocorrect.enable": true,
+    "autocorrect.enableLint": true,
+    "autocorrect.formatOnSave": true,
     "git.ignoreRebaseWarning": true,
     // ======================= Markdown 设置 =======================
     "markdown.preview.doubleClickToSwitchToEditor": false,

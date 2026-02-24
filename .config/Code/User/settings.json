@@ -91,6 +91,10 @@
     "ruff.enable": true,
     "ruff.lint.enable": true,
     "ruff.format.enable": true,
+    // ======================= AutoCorrect 中英文排版 =======================
+    "autocorrect.enable": true,
+    "autocorrect.enableLint": true,
+    "autocorrect.formatOnSave": true,
     "git.ignoreRebaseWarning": true,
     // ======================= Remote SSH 自动安装插件 =======================
     "remote.SSH.defaultExtensions": [
@@ -125,6 +129,8 @@
         // Git
         "mhutchie.git-graph",
         // Docker
-        "ms-azuretools.vscode-docker"
+        "ms-azuretools.vscode-docker",
+        // 中英文排版
+        "huacnlee.autocorrect"
     ]
 }

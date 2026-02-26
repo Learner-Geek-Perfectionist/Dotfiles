@@ -10,10 +10,11 @@ is_remote_server() {
 	[[ -n "$VSCODE_IPC_HOOK_CLI" ]] && [[ -n "$SSH_CONNECTION" ]]
 }
 
-# 如果是远程服务器，跳过安装
+# 远程服务器环境标记（常规插件通过 settings.json 自动同步，VSIX 插件需手动安装）
+REMOTE_SERVER=false
 if is_remote_server; then
-	print_dim "远程服务器环境，插件通过 settings.json 自动同步"
-	exit 0
+	REMOTE_SERVER=true
+	print_dim "远程服务器环境，仅安装 Open VSX 缺失的 VSIX 插件"
 fi
 
 # 通用插件（VSCode 和 Cursor 共用）
@@ -127,19 +128,28 @@ for entry in "${editors[@]}"; do
 	# 获取已安装的插件（转小写比较）
 	installed=$("$cmd" --list-extensions 2>/dev/null | tr '[:upper:]' '[:lower:]')
 
-	# 收集要安装的插件：ext|tag (tag: common/vscode/cursor)
+	# 收集要安装的插件：ext|tag (tag: common/vscode/cursor/cursor-vsix)
 	all_exts=()
-	for ext in "${EXTENSIONS[@]}"; do
-		all_exts+=("$ext|common")
-	done
-	for item in "${SPECIFIC[@]}"; do
-		t="${item%%:*}" e="${item#*:}"
-		[[ "$t" == "$type" ]] && all_exts+=("$e|$t")
-	done
-	if [[ "$type" == "cursor" ]]; then
-		for ext in "${CURSOR_VSIX[@]}"; do
-			all_exts+=("$ext|cursor-vsix")
+	if [[ "$REMOTE_SERVER" == true ]]; then
+		# 远程环境：仅安装 Open VSX 缺失的 VSIX 插件
+		if [[ "$type" == "cursor" ]]; then
+			for ext in "${CURSOR_VSIX[@]}"; do
+				all_exts+=("$ext|cursor-vsix")
+			done
+		fi
+	else
+		for ext in "${EXTENSIONS[@]}"; do
+			all_exts+=("$ext|common")
 		done
+		for item in "${SPECIFIC[@]}"; do
+			t="${item%%:*}" e="${item#*:}"
+			[[ "$t" == "$type" ]] && all_exts+=("$e|$t")
+		done
+		if [[ "$type" == "cursor" ]]; then
+			for ext in "${CURSOR_VSIX[@]}"; do
+				all_exts+=("$ext|cursor-vsix")
+			done
+		fi
 	fi
 
 	# 分类：已安装、待安装

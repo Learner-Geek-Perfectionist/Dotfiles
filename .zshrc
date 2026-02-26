@@ -188,7 +188,7 @@ fi
 command -v tldr >/dev/null 2>&1 && alias man='tldr'
 
 # fzf 默认选项：--exact 精确匹配（连续字符），搜索时加 ' 前缀可切换回模糊匹配
-export FZF_DEFAULT_OPTS='--exact --preview "${HOME}/.config/zsh/fzf/fzf-preview.sh {}" --bind "shift-left:preview-page-up,shift-right:preview-page-down"'
+export FZF_DEFAULT_OPTS='--exact --tac --preview "${HOME}/.config/zsh/fzf/fzf-preview.sh {}" --bind "shift-left:preview-page-up,shift-right:preview-page-down"'
 
 # ============================================
 # fd 配置

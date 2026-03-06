@@ -1,5 +1,4 @@
 {
-    "skipDangerousModePermissionPrompt": true,
     "permissions": {
         "allow": [
             "Bash(*)",
@@ -13,5 +12,8 @@
             "NotebookEdit(*)"
         ]
     },
-    "alwaysThinkingEnabled": true
+    "alwaysThinkingEnabled": true,
+    "skipDangerousModePermissionPrompt": true,
+    "effortLevel": "high",
+    "outputStyle": "Explanatory"
 }

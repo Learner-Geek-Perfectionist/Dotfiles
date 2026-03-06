@@ -82,44 +82,49 @@ fi
 
 # SSH Agent 配置
 # ============================================
-# 测试 Agent 是否生效：
-#   echo $SSH_AUTH_SOCK          # 查看 socket 路径
-#   ssh-add -l                   # 列出已加载的公钥指纹
-#   ssh -T git@github.com        # 测试 GitHub 认证
-#
-# Docker 容器使用 Agent Forwarding：
-#   docker run -v $SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent ...
+# 四个场景：macOS 本地 / Linux 本地 / macOS→Linux 转发 / Linux→其他服务器
+# 测试：echo $SSH_AUTH_SOCK && ssh-add -l && ssh -T git@github.com
+# Docker：docker run -v $SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent ...
 # ============================================
 
-# 密钥路径 & 指纹
-typeset -g _ssh_key="$HOME/.ssh/id_ed25519"
-typeset -g _ssh_fp=$(ssh-keygen -lf "$_ssh_key.pub" 2>/dev/null | awk '{print $2}')
+if [[ -f "$HOME/.ssh/id_ed25519" ]]; then
+	# 工具函数：检测 agent 是否可用（exit 0=有key, 1=无key, 2=agent挂了）
+	_ssh_agent_ok() { ssh-add -l &>/dev/null; [[ $? -le 1 ]]; }
+	_ssh_ensure_key() {
+		local fp
+		fp=$(ssh-keygen -lf "$HOME/.ssh/id_ed25519.pub" 2>/dev/null | awk '{print $2}')
+		[[ -n "$fp" ]] && ! ssh-add -l 2>/dev/null | grep -qF "$fp" && ssh-add "$HOME/.ssh/id_ed25519" 2>/dev/null
+	}
 
-if [[ -f "$_ssh_key" && -n "$_ssh_fp" ]]; then
-	# SSH 转发场景：agent 可用则复用，不覆盖
-	if [[ -n "$SSH_CONNECTION" && -n "$SSH_AUTH_SOCK" ]] && ssh-add -l &>/dev/null; ret=$?; (( ret <= 1 )); then
-		ssh-add -l 2>/dev/null | grep -qF "$_ssh_fp" || ssh-add "$_ssh_key" 2>/dev/null
+	if [[ -n "$SSH_CONNECTION" ]]; then
+		# 场景 3/4：SSH 转发（macOS→Linux / Linux→其他服务器）
+		# ForwardAgent 已转发 agent，只确保本机 key 也加载
+		_ssh_agent_ok && _ssh_ensure_key
 
-	# macOS：launchd 自动管理
-	elif [[ "$(uname)" == "Darwin" && -n "$SSH_AUTH_SOCK" ]] && ssh-add -l &>/dev/null; ret=$?; (( ret <= 1 )); then
-		ssh-add -l 2>/dev/null | grep -qF "$_ssh_fp" || ssh-add "$_ssh_key" 2>/dev/null
+	elif [[ "$(uname)" == "Darwin" ]]; then
+		# 场景 2：macOS 本地
+		# 修复：Kitty 等非 Apple 终端不继承 launchd 的 SSH_AUTH_SOCK
+		[[ -z "$SSH_AUTH_SOCK" ]] && export SSH_AUTH_SOCK=$(launchctl getenv SSH_AUTH_SOCK 2>/dev/null)
+		# launchd agent 也挂了则启动独立的
+		if ! _ssh_agent_ok; then
+			eval "$(ssh-agent 2>/dev/null)"
+		fi
+		_ssh_ensure_key
 
-	# Linux 本地
-	elif [[ "$(uname)" == "Linux" ]]; then
+	else
+		# 场景 1：Linux 本地（无 launchd，需手动管理 agent）
 		typeset -g _sock="$HOME/.ssh/agent.sock"
-		# 尝试复用现有 socket
 		[[ -S "$_sock" ]] && export SSH_AUTH_SOCK="$_sock"
-		# agent 不可用则启动新的
-		if ! { [[ -n "$SSH_AUTH_SOCK" ]] && ssh-add -l &>/dev/null; ret=$?; (( ret <= 1 )); }; then
+		if ! _ssh_agent_ok; then
 			rm -f "$_sock" 2>/dev/null
 			eval "$(ssh-agent -a "$_sock" 2>/dev/null)"
 		fi
-		ssh-add -l 2>/dev/null | grep -qF "$_ssh_fp" || ssh-add "$_ssh_key" 2>/dev/null
+		_ssh_ensure_key
 		unset _sock
 	fi
-fi
 
-unset _ssh_key _ssh_fp 2>/dev/null
+	unset -f _ssh_agent_ok _ssh_ensure_key
+fi
 
 # ============================================
 # Zsh 选项

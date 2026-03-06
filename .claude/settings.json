@@ -12,5 +12,6 @@
             "WebSearch(*)",
             "NotebookEdit(*)"
         ]
-    }
+    },
+    "alwaysThinkingEnabled": true
 }

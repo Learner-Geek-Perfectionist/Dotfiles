@@ -88,6 +88,9 @@ main() {
 	copy_path ".gitconfig" ".gitconfig"
 	copy_path ".gitignore" ".gitignore"
 
+	# Claude Code 配置
+	copy_path ".claude/settings.json" ".claude/settings.json"
+
 	# 其它文件
 	copy_path ".ssh/config" ".ssh/config"
 	# pixi.toml 由 install.sh 的 sync_pixi_tools() 统一部署，避免重复

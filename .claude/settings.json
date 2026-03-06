@@ -16,5 +16,9 @@
     "alwaysThinkingEnabled": true,
     "skipDangerousModePermissionPrompt": true,
     "effortLevel": "high",
-    "outputStyle": "Explanatory"
+    "outputStyle": "Explanatory",
+    "statusLine": {
+        "type": "command",
+        "command": "~/.claude/statusline.sh"
+    }
 }

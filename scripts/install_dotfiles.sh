@@ -90,6 +90,7 @@ main() {
 
 	# Claude Code 配置
 	copy_path ".claude/settings.json" ".claude/settings.json"
+	copy_path ".claude/statusline.sh" ".claude/statusline.sh"
 
 	# 其它文件
 	copy_path ".ssh/config" ".ssh/config"
@@ -100,6 +101,7 @@ main() {
 	[[ -d "$HOME/.ssh" ]] && chmod 700 "$HOME/.ssh" && chmod 600 "$HOME/.ssh"/* 2>/dev/null
 	[[ -f "$HOME/.config/zsh/fzf/fzf-preview.sh" ]] && chmod +x "$HOME/.config/zsh/fzf/fzf-preview.sh"
 	[[ -d "$HOME/sh-script" ]] && chmod +x "$HOME/sh-script"/*.sh 2>/dev/null
+	[[ -f "$HOME/.claude/statusline.sh" ]] && chmod +x "$HOME/.claude/statusline.sh"
 
 	# 安装 zinit 插件
 	_echo_blank

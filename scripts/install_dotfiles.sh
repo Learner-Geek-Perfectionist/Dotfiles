@@ -98,7 +98,7 @@ main() {
 	copy_path "sh-script" "sh-script"
 
 	# 权限
-	[[ -d "$HOME/.ssh" ]] && chmod 700 "$HOME/.ssh" && chmod 600 "$HOME/.ssh"/* 2>/dev/null
+	[[ -d "$HOME/.ssh" ]] && chmod 700 "$HOME/.ssh" && find "$HOME/.ssh" -maxdepth 1 -type f -exec chmod 600 {} + 2>/dev/null
 	[[ -f "$HOME/.config/zsh/fzf/fzf-preview.sh" ]] && chmod +x "$HOME/.config/zsh/fzf/fzf-preview.sh"
 	[[ -d "$HOME/sh-script" ]] && chmod +x "$HOME/sh-script"/*.sh 2>/dev/null
 	[[ -f "$HOME/.claude/statusline.sh" ]] && chmod +x "$HOME/.claude/statusline.sh"

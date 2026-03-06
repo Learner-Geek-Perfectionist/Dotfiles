@@ -16,5 +16,6 @@
     "alwaysThinkingEnabled": true,
     "skipDangerousModePermissionPrompt": true,
     "effortLevel": "high",
-    "outputStyle": "Explanatory"
+    "outputStyle": "Explanatory",
+    "trustWorkspaces": true
 }

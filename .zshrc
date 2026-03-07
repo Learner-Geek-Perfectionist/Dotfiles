@@ -176,32 +176,10 @@ fi
 # fzf 读取列表时不要走包装函数（避免任何额外输出）
 export FZF_DEFAULT_COMMAND="command fd --color=never ${(j: :)_fd_opts}"
 
-# fd 智能函数：有 sudo 权限就用 sudo，否则回退普通模式
+# fd 智能函数：有免密 sudo 就提权，否则回退普通模式
 fd() {
-	emulate -L zsh
-
-	local -a cmd
-	local fd_bin
-	fd_bin=$(whence -p fd)
-
-	# fd 未安装时直接返回错误
-	if [[ -z "$fd_bin" ]]; then
-		echo "fd: command not found (install via: pixi global install fd-find)" >&2
-		return 127
-	fi
-
-	if sudo -n true 2>/dev/null; then
-		cmd=( sudo "$fd_bin" )
-	else
-		cmd=( "$fd_bin" )
-	fi
-
-	# 这些选项直接透传，避免默认参数干扰
-	case "$1" in
-		--version|-V|--help|-h) "${cmd[@]}" "$@"; return;;
-	esac
-
-	"${cmd[@]}" --color=always "${_fd_opts[@]}" "$@" 2>/dev/null
+	local -a pre; sudo -n true 2>/dev/null && pre=(sudo)
+	"${pre[@]}" =fd --color=always "${_fd_opts[@]}" "$@" 2>/dev/null
 }
 
 # ============================================

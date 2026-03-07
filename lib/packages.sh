@@ -162,4 +162,5 @@ brew_formulas=(
 	googletest
 	google-benchmark
 	tldr
+	keychain
 )

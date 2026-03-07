@@ -81,50 +81,14 @@ else
 	[[ -d "/opt/orbstack-guest" ]] && command -v open &>/dev/null && alias open='open -R'
 fi
 
-# SSH Agent 配置
+# SSH Agent (keychain)
 # ============================================
-# 四个场景：macOS 本地 / Linux 本地 / macOS→Linux 转发 / Linux→其他服务器
-# 测试：echo $SSH_AUTH_SOCK && ssh-add -l && ssh -T git@github.com
-# Docker：docker run -v $SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent ...
+# 仅本地运行：keychain 管理 agent，远程依赖 ForwardAgent 转发
+# 测试：ssh-add -l && ssh -T git@github.com
 # ============================================
 
-if [[ -f "$HOME/.ssh/id_ed25519" ]]; then
-	# 工具函数：检测 agent 是否可用（exit 0=有key, 1=无key, 2=agent挂了）
-	_ssh_agent_ok() { ssh-add -l &>/dev/null; [[ $? -le 1 ]]; }
-	_ssh_ensure_key() {
-		local fp
-		fp=$(ssh-keygen -lf "$HOME/.ssh/id_ed25519.pub" 2>/dev/null | awk '{print $2}')
-		[[ -n "$fp" ]] && ! ssh-add -l 2>/dev/null | grep -qF "$fp" && ssh-add "$HOME/.ssh/id_ed25519" 2>/dev/null
-	}
-
-	if [[ -n "$SSH_CONNECTION" ]]; then
-		# 场景 3/4：SSH 转发（macOS→Linux / Linux→其他服务器）
-		# ForwardAgent 已转发 agent，只确保本机 key 也加载
-		_ssh_agent_ok && _ssh_ensure_key
-
-	elif [[ "$(uname)" == "Darwin" ]]; then
-		# 场景 2：macOS 本地
-		# 修复：Kitty 等非 Apple 终端不继承 launchd 的 SSH_AUTH_SOCK
-		[[ -z "$SSH_AUTH_SOCK" ]] && export SSH_AUTH_SOCK=$(launchctl getenv SSH_AUTH_SOCK 2>/dev/null)
-		# launchd agent 也挂了则启动独立的
-		if ! _ssh_agent_ok; then
-			eval "$(ssh-agent 2>/dev/null)"
-		fi
-		_ssh_ensure_key
-
-	else
-		# 场景 1：Linux 本地（无 launchd，需手动管理 agent）
-		typeset -g _sock="$HOME/.ssh/agent.sock"
-		[[ -S "$_sock" ]] && export SSH_AUTH_SOCK="$_sock"
-		if ! _ssh_agent_ok; then
-			rm -f "$_sock" 2>/dev/null
-			eval "$(ssh-agent -a "$_sock" 2>/dev/null)"
-		fi
-		_ssh_ensure_key
-		unset _sock
-	fi
-
-	unset -f _ssh_agent_ok _ssh_ensure_key
+if [[ -z "$SSH_CONNECTION" && -f "$HOME/.ssh/id_ed25519" ]] && command -v keychain &>/dev/null; then
+	eval "$(keychain --eval --quiet --inherit any --agents ssh id_ed25519 2>/dev/null)"
 fi
 
 # ============================================

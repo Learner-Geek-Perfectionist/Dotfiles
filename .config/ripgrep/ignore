@@ -1,16 +1,31 @@
+# macOS 应用 bundle（本地化资源是最大噪音源）
+/Applications/**
+**/Contents/Resources/*.lproj/**
+
+# macOS 系统目录
+/System/**
+/Volumes/**
+/private/var/**
+
+# Library 子目录（缓存、日志、应用状态等）
+**/Library/Caches/**
+**/Library/Containers/**
+**/Library/Logs/**
+**/Library/Saved Application State/**
+**/Library/Cookies/**
+**/Library/Mail/**
+**/Library/Group Containers/**
+
 # 应用缓存和数据库
 **/com.microsoft.VSCode.ShipIt/**
 **/SafariTabs.db*
 **/WebKitCache/**
 **/clipboard.paste/**
-**/Library/Containers/**
 
 # IDE 历史记录
 **/Application Support/Cursor/User/History/**
 **/Application Support/Code/User/History/**
 
-# 垃圾桶和系统目录
+# 垃圾桶
 **/.Trash/**
-/System/Volumes/Data/**
 **/.local/share/Trash/**
-

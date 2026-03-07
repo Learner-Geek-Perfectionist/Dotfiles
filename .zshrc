@@ -15,8 +15,9 @@ if [[ -n "$SSH_CONNECTION" ]] && locale 2>&1 | command grep -q "Cannot set"; the
     export LC_ALL="C.UTF-8"
 fi
 
-# ripgrep 全局配置（包含忽略文件设置）
+# ripgrep 全局配置（忽略文件路径须由 shell 展开，不能放 config 里）
 export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/config"
+alias rg='command rg --ignore-file "$HOME/.config/ripgrep/ignore"'
 
 # 让 p10k instant prompt / 补全尽早生效
 export ZSH_COMPDUMP="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/.zcompdump"

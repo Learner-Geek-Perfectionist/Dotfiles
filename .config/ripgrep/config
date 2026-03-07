@@ -9,6 +9,3 @@
 
 # 抑制错误信息（如权限拒绝）
 --no-messages
-
-# 全局忽略文件
---ignore-file=~/.config/ripgrep/ignore

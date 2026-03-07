@@ -1,20 +1,18 @@
 # macOS 应用 bundle（本地化资源是最大噪音源）
-/Applications/**
+**/Applications/**
 **/Contents/Resources/*.lproj/**
 
 # macOS 系统目录
-/System/**
-/Volumes/**
-/private/var/**
+**/System/**
+**/Volumes/**
+**/private/var/**
 
-# Library 子目录（缓存、日志、应用状态等）
-**/Library/Caches/**
-**/Library/Containers/**
-**/Library/Logs/**
-**/Library/Saved Application State/**
-**/Library/Cookies/**
-**/Library/Mail/**
-**/Library/Group Containers/**
+# Homebrew 内部（文档、vendor bundle）
+**/homebrew/docs/**
+**/homebrew/Library/Homebrew/vendor/**
+
+# Library（系统级和用户级统一排除，含缓存/日志/应用数据等）
+**/Library/**
 
 # 应用缓存和数据库
 **/com.microsoft.VSCode.ShipIt/**

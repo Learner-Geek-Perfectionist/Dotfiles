@@ -94,6 +94,16 @@ main() {
 
 	# 其它文件
 	copy_path ".ssh/config" ".ssh/config"
+	# Linux: 安装 keychain（SSH agent 管理器，纯 shell 脚本）
+	if [[ "$(uname)" != "Darwin" ]] && ! command -v keychain &>/dev/null; then
+		mkdir -p "$HOME/.local/bin"
+		if curl -fsSL "https://github.com/funtoo/keychain/raw/master/keychain.sh" -o "$HOME/.local/bin/keychain"; then
+			chmod +x "$HOME/.local/bin/keychain"
+			print_success "keychain (SSH agent manager)"
+		else
+			print_warn "keychain 下载失败，SSH agent 需手动管理"
+		fi
+	fi
 	# pixi.toml 由 install.sh 的 sync_pixi_tools() 统一部署，避免重复
 	copy_path "sh-script" "sh-script"
 

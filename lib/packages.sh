@@ -72,6 +72,7 @@ brew_casks=(
 brew_formulas=(
 	# 核心工具
 	git
+	gh
 	curl
 	wget
 	coreutils

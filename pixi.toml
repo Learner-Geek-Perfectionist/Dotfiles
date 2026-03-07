@@ -18,6 +18,7 @@ platforms = ["linux-64", "linux-aarch64"]
 # 基础系统工具
 git = "*"
 git-lfs = "*"
+gh = "*"
 curl = "*"
 wget = "*"
 zip = "*"

@@ -6,13 +6,15 @@
 [[ -z "$TERM" || "$TERM" == "dumb" ]] && export TERM="xterm-256color"
 
 # Kitty 终端 SSH 时回退 TERM（远程服务器可能没有 xterm-kitty terminfo）
-[[ "$TERM" == "xterm-kitty" && ! -e "/usr/share/terminfo/x/xterm-kitty" ]] && export TERM="xterm-256color"
+[[ "$TERM" == "xterm-kitty" ]] && ! infocmp xterm-kitty &>/dev/null && export TERM="xterm-256color"
+
+# 在 kitty 终端中自动用 kitten ssh（自动传 terminfo + shell integration）
+[[ -n "$KITTY_WINDOW_ID" ]] && alias ssh='kitten ssh'
 
 # SSH 会话 locale 回退（避免远程服务器没有安装本地 locale 导致乱码）
-# 场景：macOS SSH 发送 LANG=zh_CN.UTF-8，但远程 Linux 没有安装该 locale
-if [[ -n "$SSH_CONNECTION" ]] && locale 2>&1 | command grep -q "Cannot set"; then
-    export LANG="C.UTF-8"
-    export LC_ALL="C.UTF-8"
+if [[ -n "$SSH_CONNECTION" ]]; then
+    export LANG="${LANG:-en_US.UTF-8}"
+    export LC_ALL="${LC_ALL:-en_US.UTF-8}"
 fi
 
 # ripgrep 全局配置（忽略文件路径须由 shell 展开，不能放 config 里）

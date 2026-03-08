@@ -20,7 +20,7 @@ BAR=""; for ((i=0; i<FILLED; i++)); do BAR+="█"; done; for ((i=0; i<EMPTY; i++
 MINS=$((DURATION_MS / 60000)); SECS=$(((DURATION_MS % 60000) / 1000))
 
 BRANCH=""
-git rev-parse --git-dir > /dev/null 2>&1 && BRANCH=" | $(printf '\uf126') $(git branch --show-current 2>/dev/null)"
+git rev-parse --git-dir > /dev/null 2>&1 && BRANCH=" | $(printf '\xef\x84\xa6') $(git branch --show-current 2>/dev/null)"
 
 echo -e "${CYAN}[$MODEL]${RESET} 📁 ${DIR##*/}$BRANCH"
 COST_FMT=$(printf '$%.2f' "$COST")

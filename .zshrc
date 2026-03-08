@@ -207,5 +207,5 @@ alias show='kitty +kitten icat'
 alias reboot='sudo reboot'
 
 # claude
-claude='claude --dangerously-skip-permissions'
+alias claude='claude --dangerously-skip-permissions'
 

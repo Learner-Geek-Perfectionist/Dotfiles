@@ -206,3 +206,6 @@ alias cp='cp -r'
 alias show='kitty +kitten icat'
 alias reboot='sudo reboot'
 
+# claude
+claude='claude --dangerously-skip-permissions'
+

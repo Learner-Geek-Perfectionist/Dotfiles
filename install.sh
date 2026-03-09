@@ -21,6 +21,7 @@ SKIP_DOTFILES="${SKIP_DOTFILES:-false}"
 PIXI_ONLY="${PIXI_ONLY:-false}"
 DOTFILES_ONLY="${DOTFILES_ONLY:-false}"
 VSCODE_ONLY="${VSCODE_ONLY:-false}"
+LSP_ONLY="${LSP_ONLY:-false}"
 
 # 日志目录（日志文件名在参数解析后生成，包含安装模式）
 DOTFILES_LOG_DIR="/tmp/dotfiles-logs-$(whoami)/install"
@@ -136,6 +137,7 @@ Dotfiles 安装脚本 v${DOTFILES_VERSION}
     --pixi-only      仅安装 Pixi（跳过 Dotfiles 和 VSCode）
     --dotfiles-only  仅安装 Dotfiles 配置（跳过包管理和 VSCode）
     --vscode-only    仅安装 VSCode/Cursor 插件
+    --lsp-only       仅安装 LSP Servers
     --skip-dotfiles  跳过 Dotfiles 配置
     --skip-vscode    跳过 VSCode 插件安装
     -h, --help       显示帮助
@@ -154,6 +156,8 @@ setup_logging() {
 		mode_suffix="-dotfiles-only"
 	elif [[ "$VSCODE_ONLY" == "true" ]]; then
 		mode_suffix="-vscode-only"
+	elif [[ "$LSP_ONLY" == "true" ]]; then
+		mode_suffix="-lsp-only"
 	elif [[ "$SKIP_DOTFILES" == "true" && "$SKIP_VSCODE" == "true" ]]; then
 		mode_suffix="-skip-dotfiles-vscode"
 	elif [[ "$SKIP_DOTFILES" == "true" ]]; then
@@ -375,6 +379,22 @@ install_vscode() {
 }
 
 # ========================================
+# 安装 LSP Servers
+# ========================================
+install_lsp_servers() {
+	local dotfiles_dir="$1"
+	local step_num="$2"
+
+	print_section "步骤 ${step_num}: 🔧 安装 LSP Servers"
+
+	if [[ -f "$dotfiles_dir/scripts/install_lsp.sh" ]]; then
+		bash "$dotfiles_dir/scripts/install_lsp.sh"
+	else
+		print_warn "未找到 LSP 安装脚本，跳过"
+	fi
+}
+
+# ========================================
 # 设置默认 shell 为 zsh
 # ========================================
 setup_default_shell() {
@@ -440,8 +460,14 @@ install_linux() {
 		return 0
 	fi
 
+	# 仅安装 LSP 模式
+	if [[ "$LSP_ONLY" == "true" ]]; then
+		install_lsp_servers "$dotfiles_dir" "1/1"
+		return 0
+	fi
+
 	# 步骤 1: 安装 Pixi
-	install_pixi_binary "$dotfiles_dir" "1/5"
+	install_pixi_binary "$dotfiles_dir" "1/6"
 
 	if [[ "$PIXI_ONLY" == "true" ]]; then
 		print_success "Pixi 安装完成（仅 Pixi 模式）"
@@ -449,16 +475,19 @@ install_linux() {
 	fi
 
 	# 步骤 2: 同步 Pixi 工具包
-	sync_pixi_tools "$dotfiles_dir" "2/5"
+	sync_pixi_tools "$dotfiles_dir" "2/6"
 
-	# 步骤 3: 安装 Dotfiles 配置
-	setup_dotfiles "$dotfiles_dir" "3/5"
+	# 步骤 3: 安装 LSP Servers
+	install_lsp_servers "$dotfiles_dir" "3/6"
 
-	# 步骤 4: 设置默认 shell
-	setup_default_shell "4/5"
+	# 步骤 4: 安装 Dotfiles 配置
+	setup_dotfiles "$dotfiles_dir" "4/6"
 
-	# 步骤 5: VSCode 插件
-	install_vscode "$dotfiles_dir" "5/5"
+	# 步骤 5: 设置默认 shell
+	setup_default_shell "5/6"
+
+	# 步骤 6: VSCode 插件
+	install_vscode "$dotfiles_dir" "6/6"
 }
 
 # ========================================
@@ -479,14 +508,23 @@ install_macos() {
 		return 0
 	fi
 
+	# 仅安装 LSP 模式
+	if [[ "$LSP_ONLY" == "true" ]]; then
+		install_lsp_servers "$dotfiles_dir" "1/1"
+		return 0
+	fi
+
 	# 步骤 1: 安装 Homebrew 包
-	install_macos_homebrew "$dotfiles_dir" "1/3"
+	install_macos_homebrew "$dotfiles_dir" "1/4"
 
-	# 步骤 2: 安装 Dotfiles 配置（已包含 SSH config）
-	setup_dotfiles "$dotfiles_dir" "2/3"
+	# 步骤 2: 安装 LSP Servers
+	install_lsp_servers "$dotfiles_dir" "2/4"
 
-	# 步骤 3: VSCode 插件
-	install_vscode "$dotfiles_dir" "3/3"
+	# 步骤 3: 安装 Dotfiles 配置（已包含 SSH config）
+	setup_dotfiles "$dotfiles_dir" "3/4"
+
+	# 步骤 4: VSCode 插件
+	install_vscode "$dotfiles_dir" "4/4"
 }
 
 # ========================================
@@ -506,6 +544,10 @@ main() {
 			;;
 		--vscode-only)
 			VSCODE_ONLY="true"
+			shift
+			;;
+		--lsp-only)
+			LSP_ONLY="true"
 			shift
 			;;
 		--skip-dotfiles)

@@ -35,7 +35,12 @@ edit-tokens() {
     echo '# export GITHUB_TOKEN="ghp_xxx"' >> "$tmp"
   fi
 
-  ${EDITOR:-nvim} "$tmp"
+  local editor=$(command -v nvim || command -v vim)
+  if [[ -z "$editor" ]]; then
+    echo "错误：未找到 nvim 或 vim"
+    rm -f "$tmp"; trap - EXIT INT TERM; return 1
+  fi
+  "$editor" "$tmp"
 
   if [[ $? -ne 0 ]]; then
     echo "编辑器异常退出，放弃保存"

@@ -1,3 +1,6 @@
 [user]
 	name = 信萌新
 	email = 1273730703@qq.com
+
+[url "git@github.com:"]
+	insteadOf = https://github.com/

@@ -17,6 +17,9 @@ if [[ -n "$SSH_CONNECTION" ]]; then
     export LC_ALL="${LC_ALL:-en_US.UTF-8}"
 fi
 
+# GitHub token（从 gh CLI keyring 动态获取，供 MCP 等工具使用）
+command -v gh &>/dev/null && export GITHUB_PERSONAL_ACCESS_TOKEN="$(gh auth token 2>/dev/null)"
+
 # ripgrep 全局配置（忽略文件路径须由 shell 展开，不能放 config 里）
 export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/config"
 alias rg='command rg --ignore-file "$HOME/.config/ripgrep/ignore"'

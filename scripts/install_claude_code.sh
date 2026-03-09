@@ -493,6 +493,32 @@ install_cli() {
 }
 
 # ========================================
+# 预填充 GitHub Host Key
+# ========================================
+
+# Claude CLI 内部 git clone 使用 -c core.sshCommand="ssh -o StrictHostKeyChecking=yes"，
+# 要求 host key 必须已存在于 known_hosts 中，否则连接被拒绝。
+# 通过 ssh-keyscan 预先获取 GitHub 的 host key 来满足此要求。
+ensure_github_host_keys() {
+	local known_hosts="$HOME/.ssh/known_hosts"
+	mkdir -p "$HOME/.ssh"
+
+	local needs_update=false
+	# 检查标准端口 (22) 和 443 端口 (ssh.github.com) 的 key 是否都已存在
+	grep -q "^github\.com " "$known_hosts" 2>/dev/null || needs_update=true
+	grep -q "^\[ssh\.github\.com\]:443 " "$known_hosts" 2>/dev/null || needs_update=true
+
+	if [[ "$needs_update" == true ]]; then
+		print_info "预填充 GitHub host key..."
+		ssh-keyscan github.com >>"$known_hosts" 2>/dev/null
+		ssh-keyscan -p 443 ssh.github.com >>"$known_hosts" 2>/dev/null
+		print_success "GitHub host key 已添加"
+	else
+		print_success "GitHub host key 已存在"
+	fi
+}
+
+# ========================================
 # 添加 Marketplace
 # ========================================
 add_marketplaces() {
@@ -581,13 +607,18 @@ main() {
 		return 0
 	fi
 
-	# 3) 添加 Marketplace
+	# 3) 预填充 GitHub host key
+	# Claude CLI 内部 git clone 强制 StrictHostKeyChecking=yes，
+	# 需要 host key 预先存在于 known_hosts 中
+	ensure_github_host_keys
+
+	# 4) 添加 Marketplace
 	add_marketplaces
 
-	# 4) 安装 LSP 插件
+	# 5) 安装 LSP 插件
 	install_plugins "LSP " "${LSP_PLUGINS[@]}"
 
-	# 5) 安装 Skill 插件
+	# 6) 安装 Skill 插件
 	install_plugins "Skill " "${SKILL_PLUGINS[@]}"
 
 	print_success "Claude Code 配置完成"

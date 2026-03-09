@@ -107,7 +107,12 @@ install_cli() {
 add_marketplaces() {
 	print_info "配置插件 Marketplace..."
 
-	local added=0 skipped=0
+	# .gitconfig 的 insteadOf 将 HTTPS 重写为 SSH，而 claude CLI 内部的 git
+	# 不读取 ~/.ssh/config（StrictHostKeyChecking=no 不生效），导致 host key 验证失败。
+	# 通过 GIT_SSH_COMMAND 显式传递 SSH 选项绕过此问题。
+	export GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+
+	local added=0 skipped=0 failed=0
 	for repo in "${MARKETPLACES[@]}"; do
 		if is_marketplace_installed "$repo"; then
 			skipped=$((skipped + 1))
@@ -118,10 +123,11 @@ add_marketplaces() {
 			added=$((added + 1))
 		else
 			print_warn "Marketplace 添加失败: $repo"
+			failed=$((failed + 1))
 		fi
 	done
 
-	if [[ $skipped -gt 0 && $added -eq 0 ]]; then
+	if [[ $failed -eq 0 && $skipped -gt 0 && $added -eq 0 ]]; then
 		print_success "所有 Marketplace 已配置 (${#MARKETPLACES[@]} 个)"
 	elif [[ $skipped -gt 0 ]]; then
 		print_dim "跳过 $skipped 个已存在的 Marketplace"

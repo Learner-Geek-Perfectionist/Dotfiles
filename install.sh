@@ -393,18 +393,12 @@ install_lsp_servers() {
 
 	print_section "步骤 ${step_num}: 🔧 安装 LSP Servers 及工具"
 
-	if [[ -f "$dotfiles_dir/scripts/install_lsp.sh" ]]; then
-		bash "$dotfiles_dir/scripts/install_lsp.sh"
-	else
-		print_warn "未找到 LSP 安装脚本，跳过"
-	fi
-
 	# Kotlin/Native (包管理器不提供，从 GitHub Release 下载)
 	if [[ -f "$dotfiles_dir/scripts/install_kotlin_native.sh" ]]; then
 		bash "$dotfiles_dir/scripts/install_kotlin_native.sh"
 	fi
 
-	# Claude Code CLI + 插件 (LSP 插件依赖上面安装的 LSP 二进制)
+	# Claude Code: LSP 二进制 + CLI + 插件
 	if [[ -f "$dotfiles_dir/scripts/install_claude_code.sh" ]]; then
 		bash "$dotfiles_dir/scripts/install_claude_code.sh"
 	fi

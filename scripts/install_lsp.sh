@@ -60,17 +60,77 @@ save_local_version() {
 # ========================================
 
 # 1. rust-analyzer (Both platforms)
+# 优先使用 rustup，无 rustup 时从 GitHub Releases 下载预编译二进制
 install_rust_analyzer() {
-	print_info "安装 rust-analyzer..."
-	if ! command -v rustup &>/dev/null; then
-		print_warn "rustup 未找到，跳过 rust-analyzer"
+	# 方式 1: rustup（macOS brew 安装的 rust 自带 rustup）
+	if command -v rustup &>/dev/null; then
+		print_info "安装 rust-analyzer (via rustup)..."
+		if rustup component add rust-analyzer &>/dev/null; then
+			print_success "rust-analyzer 安装完成"
+		else
+			print_warn "rust-analyzer 安装失败"
+		fi
 		return 0
 	fi
-	if rustup component add rust-analyzer &>/dev/null; then
-		print_success "rust-analyzer 安装完成"
-	else
-		print_warn "rust-analyzer 安装失败"
+
+	# 方式 2: GitHub Releases 下载（Linux pixi 环境无 rustup）
+	local name="rust-analyzer"
+	local repo="rust-lang/rust-analyzer"
+
+	print_info "安装 $name (via GitHub release)..."
+
+	local latest
+	latest=$(get_latest_release "$repo") || true
+	if [[ -z "$latest" ]]; then
+		print_warn "$name: 无法获取最新版本，跳过"
+		return 0
 	fi
+
+	local local_ver
+	local_ver=$(get_local_version "$name")
+	if [[ "$local_ver" == "$latest" ]]; then
+		print_success "$name 已是最新版本 ($latest)"
+		return 0
+	fi
+
+	print_dim "版本: ${local_ver:-无} -> $latest"
+
+	# 确定平台和架构
+	local os arch platform
+	os=$(detect_os)
+	arch=$(detect_arch)
+	if [[ "$os" == "macos" ]]; then
+		if [[ "$arch" == "aarch64" ]]; then
+			platform="aarch64-apple-darwin"
+		else
+			platform="x86_64-apple-darwin"
+		fi
+	else
+		if [[ "$arch" == "aarch64" ]]; then
+			platform="aarch64-unknown-linux-gnu"
+		else
+			platform="x86_64-unknown-linux-gnu"
+		fi
+	fi
+
+	local download_url="https://github.com/${repo}/releases/download/${latest}/rust-analyzer-${platform}.gz"
+	local tmp_dir
+	tmp_dir=$(mktemp -d)
+
+	if ! curl -fsSL "$download_url" -o "$tmp_dir/rust-analyzer.gz"; then
+		print_warn "$name: 下载失败"
+		rm -rf "$tmp_dir"
+		return 0
+	fi
+
+	# 解压 .gz 并安装到 ~/.local/bin
+	gunzip "$tmp_dir/rust-analyzer.gz"
+	chmod +x "$tmp_dir/rust-analyzer"
+	mv "$tmp_dir/rust-analyzer" "$LSP_BIN/rust-analyzer"
+	rm -rf "$tmp_dir"
+
+	save_local_version "$name" "$latest"
+	print_success "$name $latest 安装完成"
 }
 
 # 2. gopls (Linux only, macOS uses brew)

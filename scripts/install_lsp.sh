@@ -152,7 +152,7 @@ install_kotlin_ls() {
 	print_info "安装 $name..."
 
 	local latest
-	latest=$(get_latest_release "$repo")
+	latest=$(get_latest_release "$repo") || true
 	if [[ -z "$latest" ]]; then
 		print_warn "$name: 无法获取最新版本，跳过"
 		return 0
@@ -213,7 +213,7 @@ install_lua_ls() {
 	arch=$(detect_arch)
 
 	local latest
-	latest=$(get_latest_release "$repo")
+	latest=$(get_latest_release "$repo") || true
 	if [[ -z "$latest" ]]; then
 		print_warn "$name: 无法获取最新版本，跳过"
 		return 0
@@ -274,6 +274,8 @@ install_lua_ls() {
 }
 
 # 7. jdtls (Linux only, macOS uses brew)
+# jdtls 不使用 GitHub Releases 发布正式版本，从 Eclipse 官方镜像下载
+# 通过 Homebrew API 获取最新版本号（与 brew install jdtls 保持一致）
 install_jdtls() {
 	local os
 	os=$(detect_os)
@@ -282,7 +284,6 @@ install_jdtls() {
 	fi
 
 	local name="jdtls"
-	local repo="eclipse-jdtls/eclipse.jdt.ls"
 
 	print_info "安装 $name..."
 
@@ -291,10 +292,20 @@ install_jdtls() {
 		return 0
 	fi
 
-	local latest
-	latest=$(get_latest_release "$repo")
-	if [[ -z "$latest" ]]; then
-		print_warn "$name: 无法获取最新版本，跳过"
+	# 从 Homebrew formula API 获取最新版本和下载 URL
+	local brew_json
+	brew_json=$(curl -fsSL "https://formulae.brew.sh/api/formula/jdtls.json" 2>/dev/null) || true
+	if [[ -z "$brew_json" ]]; then
+		print_warn "$name: 无法获取版本信息，跳过"
+		return 0
+	fi
+
+	local latest download_url
+	latest=$(echo "$brew_json" | jq -r '.versions.stable // empty' 2>/dev/null)
+	download_url=$(echo "$brew_json" | jq -r '.urls.stable.url // empty' 2>/dev/null)
+
+	if [[ -z "$latest" || -z "$download_url" ]]; then
+		print_warn "$name: 无法解析版本信息，跳过"
 		return 0
 	fi
 
@@ -307,15 +318,10 @@ install_jdtls() {
 
 	print_dim "版本: ${local_ver:-无} -> $latest"
 
-	# 版本号去掉开头的 v
-	local ver_without_v="${latest#v}"
-	local tarball="jdt-language-server-${ver_without_v}.tar.gz"
-	local download_url="https://github.com/${repo}/releases/download/${latest}/${tarball}"
-
 	local tmp_dir
 	tmp_dir=$(mktemp -d)
 
-	if ! curl -fsSL "$download_url" -o "$tmp_dir/$tarball"; then
+	if ! curl -fsSL "$download_url" -o "$tmp_dir/jdtls.tar.gz"; then
 		print_warn "$name: 下载失败"
 		rm -rf "$tmp_dir"
 		return 0
@@ -326,7 +332,7 @@ install_jdtls() {
 	mkdir -p "$LSP_DIR/$name"
 
 	# 解压
-	if ! tar -xzf "$tmp_dir/$tarball" -C "$LSP_DIR/$name"; then
+	if ! tar -xzf "$tmp_dir/jdtls.tar.gz" -C "$LSP_DIR/$name"; then
 		print_warn "$name: 解压失败"
 		rm -rf "$tmp_dir"
 		return 0
@@ -352,8 +358,7 @@ install_jdtls() {
 	CONFIG_DIR="$JDTLS_HOME/config_linux"
 
 	# 每个项目使用独立的 data 目录（基于工作目录的哈希）
-	PROJECT_DIR="${1:-$(pwd)}"
-	PROJECT_HASH=$(echo "$PROJECT_DIR" | md5sum | cut -d' ' -f1)
+	PROJECT_HASH=$(echo -n "$(pwd)" | md5sum | cut -d' ' -f1)
 	DATA_DIR="$HOME/.cache/jdtls/workspace-${PROJECT_HASH}"
 	mkdir -p "$DATA_DIR"
 

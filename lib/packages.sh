@@ -124,6 +124,12 @@ brew_formulas=(
 	luajit
 	perl
 
+	# LSP Servers
+	pyright
+	gopls
+	lua-language-server
+	jdtls
+
 	# Rust 工具
 	cargo-update
 	cargo-binstall

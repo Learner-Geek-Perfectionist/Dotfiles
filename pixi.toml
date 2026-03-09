@@ -44,6 +44,9 @@ openjdk = "*"
 gradle = "*"
 kotlin = "*"
 
+# LSP Servers
+pyright = "*"
+
 # 终端增强工具
 ripgrep = "*"
 fd-find = "*"

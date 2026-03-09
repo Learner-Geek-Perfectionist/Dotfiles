@@ -58,11 +58,11 @@ has_sudo() {
 _log() {
 	local level="$1" prefix="$2" color="$3" msg="$4"
 	local output
-	# 格式: [LEVEL] prefix message
+	# 格式: 2空格缩进 + [LEVEL]/prefix + message（在 section 标题下形成层次感）
 	if [[ -n "$prefix" ]]; then
-		output="${color}${prefix} ${msg}${NC}"
+		output="  ${color}${prefix} ${msg}${NC}"
 	else
-		output="${color}[${level}] ${msg}${NC}"
+		output="  ${color}[${level}] ${msg}${NC}"
 	fi
 	echo -e "$output"
 	echo -e "$output" >>"$DOTFILES_LOG"
@@ -99,10 +99,10 @@ print_warn() { _log "WARN" "⚠" "$YELLOW" "$1"; }
 print_error() { _log "ERROR" "✗" "$RED" "$1"; }
 print_header() { _log "INFO" "" "$BLUE" "$1"; }
 
-# 次要信息（灰色，无前缀，带缩进）
+# 次要信息（灰色，无前缀，带缩进 — 比 _log 多一级）
 print_dim() {
 	local msg="$1"
-	local output="${DIM}   ${msg}${NC}"
+	local output="${DIM}     ${msg}${NC}"
 	echo -e "$output"
 	echo -e "$output" >>"$DOTFILES_LOG"
 }
@@ -110,7 +110,7 @@ print_dim() {
 # 列表项（用于工具列表等）
 print_item() {
 	local msg="$1"
-	local output="${DIM}   • ${msg}${NC}"
+	local output="${DIM}     • ${msg}${NC}"
 	echo -e "$output"
 	echo -e "$output" >>"$DOTFILES_LOG"
 }

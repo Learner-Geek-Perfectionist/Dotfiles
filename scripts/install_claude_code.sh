@@ -109,8 +109,8 @@ add_marketplaces() {
 
 	# .gitconfig 的 insteadOf 将 HTTPS 重写为 SSH，而 claude CLI 内部的 git
 	# 不读取 ~/.ssh/config（StrictHostKeyChecking=no 不生效），导致 host key 验证失败。
-	# 通过 GIT_SSH_COMMAND 显式传递 SSH 选项绕过此问题。
-	export GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+	# 通过 GIT_SSH_COMMAND 在命令级别传递 SSH 选项绕过此问题。
+	local _git_ssh="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 
 	local added=0 skipped=0 failed=0
 	for repo in "${MARKETPLACES[@]}"; do
@@ -118,7 +118,7 @@ add_marketplaces() {
 			skipped=$((skipped + 1))
 			continue
 		fi
-		if claude plugin marketplace add "$repo" &>/dev/null; then
+		if GIT_SSH_COMMAND="$_git_ssh" claude plugin marketplace add "$repo" &>/dev/null; then
 			print_success "Marketplace: $repo"
 			added=$((added + 1))
 		else
@@ -144,13 +144,16 @@ install_plugins() {
 
 	print_info "安装${label}插件..."
 
+	# claude plugin install 内部也可能通过 git 拉取，同样需要绕过 host key 问题
+	local _git_ssh="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+
 	local installed=0 skipped=0 failed=0
 	for plugin in "${plugins[@]}"; do
 		if is_plugin_installed "$plugin"; then
 			skipped=$((skipped + 1))
 			continue
 		fi
-		if claude plugin install "$plugin" &>/dev/null; then
+		if GIT_SSH_COMMAND="$_git_ssh" claude plugin install "$plugin" &>/dev/null; then
 			print_success "$plugin"
 			installed=$((installed + 1))
 		else

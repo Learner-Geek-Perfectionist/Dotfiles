@@ -50,6 +50,12 @@ LSP_PLUGINS=(
 	lua-lsp@claude-plugins-official
 )
 
+# 工具插件 (plugin@marketplace)
+TOOL_PLUGINS=(
+	github@claude-plugins-official
+	commit-commands@claude-plugins-official
+)
+
 # Skill 插件 (plugin@marketplace)
 SKILL_PLUGINS=(
 	example-skills@anthropic-agent-skills
@@ -619,7 +625,10 @@ main() {
 	# 5) 安装 LSP 插件
 	install_plugins "LSP " "${LSP_PLUGINS[@]}"
 
-	# 6) 安装 Skill 插件
+	# 6) 安装工具插件
+	install_plugins "Tool " "${TOOL_PLUGINS[@]}"
+
+	# 7) 安装 Skill 插件
 	install_plugins "Skill " "${SKILL_PLUGINS[@]}"
 
 	print_success "Claude Code 配置完成"

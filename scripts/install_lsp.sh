@@ -95,20 +95,33 @@ install_gopls() {
 
 # 3. npm LSP servers (Both platforms)
 install_npm_lsps() {
-	print_info "安装 npm LSP servers..."
 	if ! command -v npm &>/dev/null; then
 		print_warn "npm 未找到，跳过 npm LSP servers"
 		return 0
 	fi
-	if npm install -g typescript-language-server typescript &>/dev/null; then
-		print_success "typescript-language-server 安装完成"
+
+	# typescript-language-server
+	if command -v typescript-language-server &>/dev/null; then
+		print_success "typescript-language-server 已安装"
 	else
-		print_warn "typescript-language-server 安装失败"
+		print_info "安装 typescript-language-server..."
+		if npm install -g typescript-language-server typescript &>/dev/null; then
+			print_success "typescript-language-server 安装完成"
+		else
+			print_warn "typescript-language-server 安装失败"
+		fi
 	fi
-	if npm install -g intelephense &>/dev/null; then
-		print_success "intelephense 安装完成"
+
+	# intelephense
+	if command -v intelephense &>/dev/null; then
+		print_success "intelephense 已安装"
 	else
-		print_warn "intelephense 安装失败"
+		print_info "安装 intelephense..."
+		if npm install -g intelephense &>/dev/null; then
+			print_success "intelephense 安装完成"
+		else
+			print_warn "intelephense 安装失败"
+		fi
 	fi
 }
 

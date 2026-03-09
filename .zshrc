@@ -32,6 +32,7 @@ alias rg='command rg --ignore-file "$HOME/.config/ripgrep/ignore"'
 export ZSH_COMPDUMP="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/.zcompdump"
 command mkdir -p "${ZSH_COMPDUMP:h}" 2>/dev/null
 [[ -f "${HOME}/.config/zsh/plugins/platform.zsh" ]] && source "${HOME}/.config/zsh/plugins/platform.zsh"
+[[ -f "${HOME}/.config/zsh/plugins/age-tokens.zsh" ]] && source "${HOME}/.config/zsh/plugins/age-tokens.zsh"
 [[ -f "${HOME}/.config/zsh/plugins/zinit.zsh" ]] && source "${HOME}/.config/zsh/plugins/zinit.zsh"
 
 # ============================================

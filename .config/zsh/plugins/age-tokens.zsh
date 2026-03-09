@@ -35,16 +35,7 @@ edit-tokens() {
     echo '# export GITHUB_TOKEN="ghp_xxx"' >> "$tmp"
   fi
 
-  # 优先 VSCode，其次 nvim，最后 vi
-  local editor
-  if command -v code &>/dev/null; then
-    editor="code --wait"
-  elif command -v nvim &>/dev/null; then
-    editor="nvim"
-  else
-    editor="vi"
-  fi
-  ${=editor} "$tmp"
+  ${EDITOR:-vi} "$tmp"
 
   if [[ $? -ne 0 ]]; then
     echo "编辑器异常退出，放弃保存"

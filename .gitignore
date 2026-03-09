@@ -107,3 +107,6 @@ config.production.json
 
 pixi.lock
 !.pixi/config.toml
+
+# Claude Code 生成的计划文件
+docs/plans/

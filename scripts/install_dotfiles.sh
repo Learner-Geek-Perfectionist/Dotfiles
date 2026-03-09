@@ -111,6 +111,7 @@ main() {
 	copy_path ".claude/statusline.sh" ".claude/statusline.sh"
 
 	# 其它文件
+	copy_path ".tokens.sh.age" ".tokens.sh.age"
 	copy_path ".ssh/config" ".ssh/config"
 	# Linux: 安装 keychain（SSH agent 管理器，纯 shell 脚本）
 	if [[ "$(uname)" != "Darwin" ]] && ! command -v keychain &>/dev/null; then

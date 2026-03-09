@@ -501,18 +501,19 @@ install_cli() {
 # 通过 ssh-keyscan 预先获取 GitHub 的 host key 来满足此要求。
 ensure_github_host_keys() {
 	local known_hosts="$HOME/.ssh/known_hosts"
-	mkdir -p "$HOME/.ssh"
+	mkdir -p -m 700 "$HOME/.ssh"
 
-	local needs_update=false
-	# 检查标准端口 (22) 和 443 端口 (ssh.github.com) 的 key 是否都已存在
-	grep -q "^github\.com " "$known_hosts" 2>/dev/null || needs_update=true
-	grep -q "^\[ssh\.github\.com\]:443 " "$known_hosts" 2>/dev/null || needs_update=true
+	local added=0
+	# 分别检查并填充每个 host key，避免重复追加
+	if ! grep -q "^github\.com " "$known_hosts" 2>/dev/null; then
+		ssh-keyscan github.com >>"$known_hosts" 2>/dev/null && ((added++))
+	fi
+	if ! grep -q "^\[ssh\.github\.com\]:443 " "$known_hosts" 2>/dev/null; then
+		ssh-keyscan -p 443 ssh.github.com >>"$known_hosts" 2>/dev/null && ((added++))
+	fi
 
-	if [[ "$needs_update" == true ]]; then
-		print_info "预填充 GitHub host key..."
-		ssh-keyscan github.com >>"$known_hosts" 2>/dev/null
-		ssh-keyscan -p 443 ssh.github.com >>"$known_hosts" 2>/dev/null
-		print_success "GitHub host key 已添加"
+	if ((added > 0)); then
+		print_success "GitHub host key 已添加 ($added)"
 	else
 		print_success "GitHub host key 已存在"
 	fi

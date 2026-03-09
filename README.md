@@ -8,10 +8,11 @@
 - 🔒 **完全 Rootless** - Linux 上所有内容安装在用户目录，无需 root 权限
 - 🏗️ **跨平台** - 支持 Linux (x86_64, aarch64) 和 macOS (x86_64, arm64)
 - ⚡ **快速** - 所有工具预编译，秒装即用
-- 📦 **构建工具** - 包含 GCC/Make/CMake，无需系统级安装
+- 📦 **构建工具** - 包含 GCC/Clang 双工具链，无需系统级安装
 - 🎨 **智能补全** - fzf-tab 模糊补全 + 彩色分组显示
 - 📝 **历史记录** - 带时间戳的命令历史，容量无限
 - 🧹 **整洁 Home** - 缓存文件统一存放在 `~/.cache/zsh/`
+- 🔐 **加密凭证** - age 加密的 token 自动解密加载
 
 ## 🏛️ 架构
 
@@ -24,24 +25,24 @@
 graph TB
     subgraph arch["Dotfiles 架构"]
         direction TB
-        
+
         subgraph top["包管理"]
             A["Homebrew<br/>(macOS)"]
             B["Pixi<br/>(Linux)"]
             C["配置文件<br/>直接复制"]
         end
-        
+
         subgraph bottom["安装位置"]
             D["CLI + GUI<br/>应用程序"]
             E["~/.pixi/<br/>bin/"]
             F["~/.config<br/>~/.zshrc"]
         end
-        
+
         A --> D
         B --> E
         C --> F
     end
-    
+
     style arch fill:#1a1a2e,stroke:#16213e,color:#fff
 ```
 
@@ -49,45 +50,16 @@ graph TB
 
 ## 📦 包含的工具
 
-### 编程语言 (Pixi)
-
-| 语言 | 说明 |
+| 类别 | 包含 |
 |------|------|
-| Python | 通用脚本语言 |
-| Node.js | JavaScript 运行时 |
-| Go | 系统编程 |
-| Rust | 安全的系统编程 |
-| Ruby | 脚本和 Web 开发 |
-| Lua | 嵌入式脚本 |
-| Java (OpenJDK) | 企业级开发 |
+| 编程语言 | Python、Node.js、Go、Rust、Ruby、Lua、Java、Kotlin |
+| CLI 工具 | fzf、ripgrep、fd、bat、eza、gh、tmux、neovim、jq/yq、tldr、direnv 等 |
+| 构建工具 | GCC / Clang 双工具链、CMake、Ninja、Make、autoconf 等 |
+| 开发库 | OpenSSL、zlib、Boost、readline、ncurses、gtest 等 |
+| 代码工具 | ruff、pyright、go-shfmt、doxygen、graphviz |
+| 加密 | age（用于 token 加密存储） |
 
-### CLI 工具 (Pixi)
-
-| 工具 | 说明 |
-|------|------|
-| fzf | 模糊搜索 |
-| ripgrep (rg) | 快速代码搜索 |
-| fd | 现代化 find |
-| bat | 带语法高亮的 cat |
-| eza | 现代化 ls |
-| dust | 现代化 du |
-| tree | 目录树显示 |
-| neovim | 编辑器 |
-| jq / yq | JSON/YAML 处理 |
-| tldr | 简洁的命令手册 |
-| fastfetch | 系统信息 |
-| direnv | 目录级环境变量管理 |
-
-### 构建工具 (Pixi) - 完全 Rootless
-
-| 工具 | 说明 |
-|------|------|
-| gcc / g++ | C/C++ 编译器 |
-| make | 构建工具 |
-| cmake | 跨平台构建系统 |
-| ninja | 快速构建系统 |
-| pkg-config | 库配置工具 |
-| openssl / zlib | 开发库 |
+> 完整列表见 [`pixi.toml`](pixi.toml)
 
 ### Zsh 插件 (Zinit)
 
@@ -98,7 +70,8 @@ graph TB
 | zsh-autosuggestions | 历史命令建议 |
 | fast-syntax-highlighting | 语法高亮 |
 | zsh-completions | 额外补全定义 |
-| Oh My Zsh 片段 | git、clipboard、directories、history 等 |
+| Oh My Zsh 片段 | git、clipboard、directories、history、key-bindings、colored-man-pages 等 |
+| age-tokens | 加密 token 自动解密加载 |
 
 ### Zsh 功能增强
 
@@ -114,9 +87,12 @@ graph TB
 
 自动检测编辑器类型，安装对应插件：
 
-- 通用插件：Rust、Go、Python、C/C++、Markdown 等
-- VSCode 专属：ms-vscode.cpptools、remote-ssh 等
-- Cursor 专属：anysphere.cpptools、anysphere.remote-ssh 等
+- **语言支持**：Rust、Go、Python、C/C++、Java、Kotlin、Lua、Shell、Markdown
+- **工具**：Docker、Git Graph、TOML、Clang Format、AutoCorrect
+- **依赖管理**：dependi（Cargo/npm/pip 依赖版本检查）
+- **本地化**：中文语言包
+
+> 完整列表见 [`scripts/install_vscode_ext.sh`](scripts/install_vscode_ext.sh)
 
 ## 🚀 快速开始
 
@@ -165,6 +141,9 @@ cd Dotfiles && ./install.sh
 # 仅安装 VSCode/Cursor 插件
 ./install.sh --vscode-only
 
+# 仅安装 LSP Servers 及工具
+./install.sh --lsp-only
+
 # 跳过 VSCode 插件
 ./install.sh --skip-vscode
 
@@ -181,6 +160,12 @@ cd Dotfiles && ./install.sh
 # 仅删除已部署的 Dotfiles
 ./uninstall.sh --dotfiles
 
+# 同时删除 Pixi 和 Dotfiles
+./uninstall.sh --all
+
+# 跳过确认提示
+./uninstall.sh --all -f
+
 # 交互式选择（默认）
 ./uninstall.sh
 ```
@@ -189,50 +174,21 @@ cd Dotfiles && ./install.sh
 
 ```text
 Dotfiles/
-├── install.sh                    # 主安装脚本
-├── uninstall.sh                  # 卸载脚本
-├── pixi.toml                     # Pixi 项目配置（工具定义）
-├── .zshrc                        # Zsh 主配置（PATH、别名、setopt）
-├── .zprofile                     # Zsh 登录配置
-├── .zshenv                       # Zsh 环境变量（最先加载）
-├── .envrc                        # direnv 配置（Home 基础环境）
-├── .gitconfig                    # Git 全局配置
-├── .gitignore                    # Git 忽略规则
-├── .ssh/
-│   └── config                    # SSH 配置（含 Agent Forwarding）
-├── .config/
-│   ├── zsh/                      # Zsh 插件和工具
-│   │   ├── plugins/
-│   │   │   ├── zinit.zsh         # Zinit 插件管理 + 补全配置
-│   │   │   └── platform.zsh      # 平台特定配置
-│   │   ├── fzf/                  # fzf 配置
-│   │   └── .p10k.zsh             # Powerlevel10k 主题配置
-│   ├── direnv/                   # direnv 配置
-│   │   └── direnv.toml           # direnv 全局设置
-│   ├── kitty/                    # Kitty 终端配置
-│   ├── karabiner/                # Karabiner-Elements 键盘映射 (macOS)
-│   ├── Code/User/                # VSCode 设置 (Linux)
-│   └── Cursor/User/              # Cursor 设置 (Linux)
-├── .hammerspoon/                 # Hammerspoon 自动化脚本 (macOS)
-│   ├── init.lua                  # 入口文件
-│   ├── config/                   # 配置文件
-│   └── modules/                  # 功能模块
-├── Library/Application Support/  # macOS 应用配置
-│   ├── Code/User/                # VSCode 设置 (macOS)
-│   └── Cursor/User/              # Cursor 设置 (macOS)
-├── scripts/
-│   ├── install_pixi.sh           # Pixi 安装脚本
-│   ├── install_dotfiles.sh       # Dotfiles 部署脚本
-│   ├── install_vscode_ext.sh     # VSCode/Cursor 插件安装
-│   └── macos_install.sh          # macOS Homebrew 安装
-├── lib/
-│   ├── packages.sh               # Homebrew 包定义
-│   └── utils.sh                  # 工具函数
-├── sh-script/                    # 独立 Shell 脚本
-│   ├── get-my-ip.sh              # 获取本机 IP
-│   └── envrc-project-template.sh # 项目 .envrc 模板
-└── docs/
-    └── flowchart.md              # 架构流程图
+├── install.sh / uninstall.sh       # 安装/卸载入口
+├── pixi.toml                       # Pixi 依赖定义
+├── .zshrc / .zprofile / .zshenv    # Zsh 配置
+├── .envrc                          # direnv Home 环境
+├── .gitconfig / .gitignore         # Git 配置
+├── .ssh/                           # SSH 配置
+├── .claude/                        # Claude Code 配置
+├── cursor-ssh-fix.sh               # Cursor SSH 连接修复脚本
+├── scripts/                        # 安装子脚本（pixi、dotfiles、vscode、claude code、kotlin native）
+├── lib/                            # 工具函数（packages.sh、utils.sh）
+├── .config/                        # 应用配置（zsh、kitty、direnv、ripgrep、karabiner）
+├── .hammerspoon/                   # macOS 自动化（Lua）
+├── Library/Application Support/    # macOS 编辑器配置
+├── sh-script/                      # 独立脚本（get-my-ip、envrc 模板）
+└── docs/                           # 文档
 ```
 
 ## 🔧 常用命令
@@ -265,15 +221,14 @@ uninstall             # 卸载 Dotfiles
 
 ### 常用别名
 
-| 别名 | 原命令 | 说明 |
-|------|--------|------|
-| `cat` | `bat` | 带语法高亮的 cat |
-| `man` | `tldr` | 简洁的命令手册 |
+| 别名 | 实际命令 | 说明 |
+|------|---------|------|
+| `cat` | `bat`（含 ANSI fallback） | 语法高亮的 cat |
 | `ls` | `eza --icons` | 带图标的现代化 ls |
-| `g1` | `git clone --depth=1` | 浅克隆 |
-| `cp` | `cp -r` | 递归复制 |
-| `mkdir` | `mkdir -p` | 递归创建目录 |
-| `show` | `kitty +kitten icat` | 终端显示图片 |
+| `man` | `tldr` | 简洁命令手册 |
+| `g1` | `git clone --depth=1 --recursive` | 浅克隆（含子模块） |
+| `python` | `python3` | 默认 Python 3 |
+| `getip` | `sh-script/get-my-ip.sh` | 获取本机 IP |
 
 ## ⚙️ 自定义
 

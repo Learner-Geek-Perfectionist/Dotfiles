@@ -35,7 +35,7 @@ edit-tokens() {
     echo '# export GITHUB_TOKEN="ghp_xxx"' >> "$tmp"
   fi
 
-  ${EDITOR:-vi} "$tmp"
+  ${EDITOR:-nvim} "$tmp"
 
   if [[ $? -ne 0 ]]; then
     echo "编辑器异常退出，放弃保存"

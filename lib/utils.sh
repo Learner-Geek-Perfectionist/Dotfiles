@@ -195,3 +195,33 @@ detect_arch() {
 	*) echo "$(uname -m)" ;;
 	esac
 }
+
+# ========================================
+# GitHub Release 版本管理
+# ========================================
+
+# 获取 GitHub 仓库最新 release 的 tag_name
+# 参数: $1 = owner/repo (例如 fwcd/kotlin-language-server)
+github_latest_release() {
+	local repo="$1"
+	curl -fsSL "https://api.github.com/repos/${repo}/releases/latest" 2>/dev/null \
+		| jq -r '.tag_name // empty' 2>/dev/null
+}
+
+# 获取本地已安装的版本
+# 参数: $1 = 安装目录（版本文件存储在 $1/.version）
+get_local_version() {
+	local version_file="$1/.version"
+	if [[ -f "$version_file" ]]; then
+		cat "$version_file"
+	else
+		echo ""
+	fi
+}
+
+# 保存本地版本记录
+# 参数: $1 = 安装目录, $2 = 版本号
+save_local_version() {
+	mkdir -p "$1"
+	echo "$2" >"$1/.version"
+}

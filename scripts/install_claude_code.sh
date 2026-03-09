@@ -30,24 +30,24 @@ KNOWN_MARKETPLACES_JSON="$CLAUDE_PLUGINS_DIR/known_marketplaces.json"
 
 # 插件 Marketplace 列表 (GitHub owner/repo)
 MARKETPLACES=(
-	boostvolt/claude-code-lsps
+	anthropics/claude-plugins-official
 	anthropics/skills
 	obra/superpowers-marketplace
 )
 
 # LSP 插件 (plugin@marketplace)
 LSP_PLUGINS=(
-	pyright@claude-code-lsps
-	vtsls@claude-code-lsps
-	gopls@claude-code-lsps
-	rust-analyzer@claude-code-lsps
-	jdtls@claude-code-lsps
-	clangd@claude-code-lsps
-	omnisharp@claude-code-lsps
-	intelephense@claude-code-lsps
-	kotlin-lsp@claude-code-lsps
-	sourcekit-lsp@claude-code-lsps
-	lua-language-server@claude-code-lsps
+	pyright-lsp@claude-plugins-official
+	typescript-lsp@claude-plugins-official
+	gopls-lsp@claude-plugins-official
+	rust-analyzer-lsp@claude-plugins-official
+	jdtls-lsp@claude-plugins-official
+	clangd-lsp@claude-plugins-official
+	csharp-lsp@claude-plugins-official
+	php-lsp@claude-plugins-official
+	kotlin-lsp@claude-plugins-official
+	swift-lsp@claude-plugins-official
+	lua-lsp@claude-plugins-official
 )
 
 # Skill 插件 (plugin@marketplace)
@@ -63,35 +63,6 @@ SKILL_PLUGINS=(
 # 确保 LSP 目录存在
 ensure_lsp_dirs() {
 	mkdir -p "$LSP_DIR" "$LSP_BIN"
-}
-
-# 获取 GitHub 仓库最新 release 的 tag_name
-# 参数: $1 = owner/repo (例如 fwcd/kotlin-language-server)
-get_latest_release() {
-	local repo="$1"
-	curl -fsSL "https://api.github.com/repos/${repo}/releases/latest" 2>/dev/null \
-		| jq -r '.tag_name // empty' 2>/dev/null
-}
-
-# 获取本地已安装的版本
-# 参数: $1 = LSP 名称
-get_local_version() {
-	local name="$1"
-	local version_file="$LSP_DIR/$name/.version"
-	if [[ -f "$version_file" ]]; then
-		cat "$version_file"
-	else
-		echo ""
-	fi
-}
-
-# 保存本地版本记录
-# 参数: $1 = LSP 名称, $2 = 版本号
-save_local_version() {
-	local name="$1"
-	local version="$2"
-	mkdir -p "$LSP_DIR/$name"
-	echo "$version" >"$LSP_DIR/$name/.version"
 }
 
 # ========================================
@@ -119,14 +90,14 @@ install_rust_analyzer() {
 	print_info "安装 $name (via GitHub release)..."
 
 	local latest
-	latest=$(get_latest_release "$repo") || true
+	latest=$(github_latest_release "$repo") || true
 	if [[ -z "$latest" ]]; then
 		print_warn "$name: 无法获取最新版本，跳过"
 		return 0
 	fi
 
 	local local_ver
-	local_ver=$(get_local_version "$name")
+	local_ver=$(get_local_version "$LSP_DIR/$name")
 	if [[ "$local_ver" == "$latest" ]]; then
 		print_success "$name 已是最新版本 ($latest)"
 		return 0
@@ -166,7 +137,7 @@ install_rust_analyzer() {
 	mv "$tmp_dir/rust-analyzer" "$LSP_BIN/rust-analyzer"
 	rm -rf "$tmp_dir"
 
-	save_local_version "$name" "$latest"
+	save_local_version "$LSP_DIR/$name" "$latest"
 	print_success "$name $latest 安装完成"
 }
 
@@ -249,14 +220,14 @@ install_kotlin_ls() {
 	print_info "安装 $name..."
 
 	local latest
-	latest=$(get_latest_release "$repo") || true
+	latest=$(github_latest_release "$repo") || true
 	if [[ -z "$latest" ]]; then
 		print_warn "$name: 无法获取最新版本，跳过"
 		return 0
 	fi
 
 	local local_ver
-	local_ver=$(get_local_version "$name")
+	local_ver=$(get_local_version "$LSP_DIR/$name")
 	if [[ "$local_ver" == "$latest" ]]; then
 		print_success "$name 已是最新版本 ($latest)"
 		return 0
@@ -289,7 +260,7 @@ install_kotlin_ls() {
 	chmod +x "$LSP_DIR/$name/server/bin/kotlin-language-server"
 	ln -sf "$LSP_DIR/$name/server/bin/kotlin-language-server" "$LSP_BIN/kotlin-language-server"
 
-	save_local_version "$name" "$latest"
+	save_local_version "$LSP_DIR/$name" "$latest"
 	print_success "$name $latest 安装完成"
 }
 
@@ -305,14 +276,14 @@ install_lua_ls() {
 	print_info "安装 $name..."
 
 	local latest
-	latest=$(get_latest_release "$repo") || true
+	latest=$(github_latest_release "$repo") || true
 	if [[ -z "$latest" ]]; then
 		print_warn "$name: 无法获取最新版本，跳过"
 		return 0
 	fi
 
 	local local_ver
-	local_ver=$(get_local_version "$name")
+	local_ver=$(get_local_version "$LSP_DIR/$name")
 	if [[ "$local_ver" == "$latest" ]]; then
 		print_success "$name 已是最新版本 ($latest)"
 		return 0
@@ -360,7 +331,7 @@ install_lua_ls() {
 	WRAPPER
 	chmod +x "$LSP_BIN/lua-language-server"
 
-	save_local_version "$name" "$latest"
+	save_local_version "$LSP_DIR/$name" "$latest"
 	print_success "$name $latest 安装完成"
 }
 
@@ -399,7 +370,7 @@ install_jdtls() {
 	fi
 
 	local local_ver
-	local_ver=$(get_local_version "$name")
+	local_ver=$(get_local_version "$LSP_DIR/$name")
 	if [[ "$local_ver" == "$latest" ]]; then
 		print_success "$name 已是最新版本 ($latest)"
 		return 0
@@ -468,7 +439,7 @@ install_jdtls() {
 	WRAPPER
 	chmod +x "$LSP_BIN/jdtls"
 
-	save_local_version "$name" "$latest"
+	save_local_version "$LSP_DIR/$name" "$latest"
 	print_success "$name $latest 安装完成"
 }
 
@@ -477,17 +448,19 @@ install_jdtls() {
 # ========================================
 
 # 检查 marketplace 是否已添加
-# 参数: $1 = GitHub owner/repo (例如 boostvolt/claude-code-lsps)
+# 参数: $1 = GitHub owner/repo (例如 anthropics/claude-plugins-official)
 is_marketplace_installed() {
 	local repo="$1"
-	[[ -f "$KNOWN_MARKETPLACES_JSON" ]] && grep -q "\"$repo\"" "$KNOWN_MARKETPLACES_JSON"
+	[[ -f "$KNOWN_MARKETPLACES_JSON" ]] && \
+		jq -e --arg repo "$repo" 'any(.[]; .source.repo == $repo)' "$KNOWN_MARKETPLACES_JSON" &>/dev/null
 }
 
 # 检查插件是否已安装
-# 参数: $1 = plugin@marketplace (例如 pyright@claude-code-lsps)
+# 参数: $1 = plugin@marketplace (例如 pyright-lsp@claude-plugins-official)
 is_plugin_installed() {
 	local plugin="$1"
-	[[ -f "$INSTALLED_PLUGINS_JSON" ]] && grep -q "\"$plugin\"" "$INSTALLED_PLUGINS_JSON"
+	[[ -f "$INSTALLED_PLUGINS_JSON" ]] && \
+		jq -e --arg p "$plugin" '.plugins | has($p)' "$INSTALLED_PLUGINS_JSON" &>/dev/null
 }
 
 # ========================================
@@ -501,10 +474,7 @@ install_cli() {
 		return 0
 	fi
 
-	local os
-	os=$(detect_os)
-
-	if [[ "$os" == "macos" ]]; then
+	if [[ "$OS" == "macos" ]]; then
 		# macOS 由 brew cask 安装，此处不处理
 		print_warn "Claude Code CLI 未安装，请先运行 brew install --cask claude-code"
 		return 1
@@ -528,18 +498,13 @@ install_cli() {
 add_marketplaces() {
 	print_info "配置插件 Marketplace..."
 
-	# .gitconfig 的 insteadOf 将 HTTPS 重写为 SSH，而 claude CLI 内部的 git
-	# 不读取 ~/.ssh/config（StrictHostKeyChecking=no 不生效），导致 host key 验证失败。
-	# 通过 GIT_SSH_COMMAND 在命令级别传递 SSH 选项绕过此问题。
-	local _git_ssh="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-
 	local added=0 skipped=0 failed=0
 	for repo in "${MARKETPLACES[@]}"; do
 		if is_marketplace_installed "$repo"; then
 			skipped=$((skipped + 1))
 			continue
 		fi
-		if GIT_SSH_COMMAND="$_git_ssh" claude plugin marketplace add "$repo" &>/dev/null; then
+		if claude plugin marketplace add "$repo" &>/dev/null; then
 			print_success "Marketplace: $repo"
 			added=$((added + 1))
 		else
@@ -565,16 +530,13 @@ install_plugins() {
 
 	print_info "安装${label}插件..."
 
-	# claude plugin install 内部也可能通过 git 拉取，同样需要绕过 host key 问题
-	local _git_ssh="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-
 	local installed=0 skipped=0 failed=0
 	for plugin in "${plugins[@]}"; do
 		if is_plugin_installed "$plugin"; then
 			skipped=$((skipped + 1))
 			continue
 		fi
-		if GIT_SSH_COMMAND="$_git_ssh" claude plugin install "$plugin" &>/dev/null; then
+		if claude plugin install "$plugin" &>/dev/null; then
 			print_success "$plugin"
 			installed=$((installed + 1))
 		else

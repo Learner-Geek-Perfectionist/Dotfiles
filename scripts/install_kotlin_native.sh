@@ -26,26 +26,6 @@ NATIVE_BINS=(konanc cinterop klib)
 # 辅助函数
 # ========================================
 
-get_local_version() {
-	local version_file="$INSTALL_DIR/.version"
-	if [[ -f "$version_file" ]]; then
-		cat "$version_file"
-	else
-		echo ""
-	fi
-}
-
-save_local_version() {
-	mkdir -p "$INSTALL_DIR"
-	echo "$1" >"$INSTALL_DIR/.version"
-}
-
-# 获取最新版本号 (tag_name 如 "v2.3.10")
-get_latest_version() {
-	curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null \
-		| jq -r '.tag_name // empty' 2>/dev/null
-}
-
 # 确定平台标识 (用于下载文件名)
 # 返回空字符串表示不支持
 get_platform() {
@@ -87,7 +67,7 @@ install_kotlin_native() {
 
 	# 获取最新版本
 	local latest
-	latest=$(get_latest_version) || true
+	latest=$(github_latest_release "$REPO") || true
 	if [[ -z "$latest" ]]; then
 		print_warn "Kotlin/Native: 无法获取最新版本，跳过"
 		return 0
@@ -95,7 +75,7 @@ install_kotlin_native() {
 
 	# 版本比对
 	local local_ver
-	local_ver=$(get_local_version)
+	local_ver=$(get_local_version "$INSTALL_DIR")
 	if [[ "$local_ver" == "$latest" ]]; then
 		print_success "Kotlin/Native 已是最新版本 ($latest)"
 		return 0
@@ -150,7 +130,7 @@ install_kotlin_native() {
 		fi
 	done
 
-	save_local_version "$latest"
+	save_local_version "$INSTALL_DIR" "$latest"
 	print_success "Kotlin/Native $latest 安装完成"
 }
 

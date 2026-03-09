@@ -65,7 +65,7 @@ install_rust_analyzer() {
 	# 方式 1: rustup（macOS brew 安装的 rust 自带 rustup）
 	if command -v rustup &>/dev/null; then
 		print_info "安装 rust-analyzer (via rustup)..."
-		if rustup component add rust-analyzer &>/dev/null; then
+		if rustup component add rust-analyzer >/dev/null; then
 			print_success "rust-analyzer 安装完成"
 		else
 			print_warn "rust-analyzer 安装失败"
@@ -96,17 +96,15 @@ install_rust_analyzer() {
 	print_dim "版本: ${local_ver:-无} -> $latest"
 
 	# 确定平台和架构
-	local os arch platform
-	os=$(detect_os)
-	arch=$(detect_arch)
-	if [[ "$os" == "macos" ]]; then
-		if [[ "$arch" == "aarch64" ]]; then
+	local platform
+	if [[ "$OS" == "macos" ]]; then
+		if [[ "$ARCH" == "aarch64" ]]; then
 			platform="aarch64-apple-darwin"
 		else
 			platform="x86_64-apple-darwin"
 		fi
 	else
-		if [[ "$arch" == "aarch64" ]]; then
+		if [[ "$ARCH" == "aarch64" ]]; then
 			platform="aarch64-unknown-linux-gnu"
 		else
 			platform="x86_64-unknown-linux-gnu"
@@ -135,9 +133,7 @@ install_rust_analyzer() {
 
 # 2. gopls (Linux only, macOS uses brew)
 install_gopls() {
-	local os
-	os=$(detect_os)
-	if [[ "$os" == "macos" ]]; then
+	if [[ "$OS" == "macos" ]]; then
 		return 0
 	fi
 
@@ -146,7 +142,7 @@ install_gopls() {
 		print_warn "go 未找到，跳过 gopls"
 		return 0
 	fi
-	if go install golang.org/x/tools/gopls@latest &>/dev/null; then
+	if go install golang.org/x/tools/gopls@latest >/dev/null; then
 		print_success "gopls 安装完成"
 	else
 		print_warn "gopls 安装失败"
@@ -165,7 +161,7 @@ install_npm_lsps() {
 		print_success "typescript-language-server 已安装"
 	else
 		print_info "安装 typescript-language-server..."
-		if npm install -g typescript-language-server typescript &>/dev/null; then
+		if npm install -g typescript-language-server typescript >/dev/null; then
 			print_success "typescript-language-server 安装完成"
 		else
 			print_warn "typescript-language-server 安装失败"
@@ -177,7 +173,7 @@ install_npm_lsps() {
 		print_success "intelephense 已安装"
 	else
 		print_info "安装 intelephense..."
-		if npm install -g intelephense &>/dev/null; then
+		if npm install -g intelephense >/dev/null; then
 			print_success "intelephense 安装完成"
 		else
 			print_warn "intelephense 安装失败"
@@ -192,11 +188,11 @@ install_csharp_ls() {
 		print_warn "dotnet 未找到，跳过 csharp-ls"
 		return 0
 	fi
-	if dotnet tool install -g csharp-ls &>/dev/null; then
+	if dotnet tool install -g csharp-ls >/dev/null; then
 		print_success "csharp-ls 安装完成"
 	else
 		# 已安装时 install 会失败，尝试 update
-		if dotnet tool update -g csharp-ls &>/dev/null; then
+		if dotnet tool update -g csharp-ls >/dev/null; then
 			print_success "csharp-ls 更新完成"
 		else
 			print_warn "csharp-ls 安装/更新失败"
@@ -237,16 +233,15 @@ install_kotlin_ls() {
 		return 0
 	fi
 
-	# 清理旧安装
-	rm -rf "$LSP_DIR/$name"
-	mkdir -p "$LSP_DIR/$name"
-
-	# 解压（zip 内含 server/ 子目录）
-	if ! unzip -qo "$tmp_dir/server.zip" -d "$LSP_DIR/$name"; then
+	# 解压到暂存目录（成功后再替换旧安装，避免解压失败丢失已有版本）
+	mkdir -p "$tmp_dir/staging"
+	if ! unzip -qo "$tmp_dir/server.zip" -d "$tmp_dir/staging"; then
 		print_warn "$name: 解压失败"
 		rm -rf "$tmp_dir"
 		return 0
 	fi
+	rm -rf "$LSP_DIR/$name"
+	mv "$tmp_dir/staging" "$LSP_DIR/$name"
 	rm -rf "$tmp_dir"
 
 	# 创建符号链接
@@ -259,9 +254,7 @@ install_kotlin_ls() {
 
 # 6. lua-language-server (Linux only, macOS uses brew)
 install_lua_ls() {
-	local os arch
-	os=$(detect_os)
-	if [[ "$os" == "macos" ]]; then
+	if [[ "$OS" == "macos" ]]; then
 		return 0
 	fi
 
@@ -269,8 +262,6 @@ install_lua_ls() {
 	local repo="LuaLS/lua-language-server"
 
 	print_info "安装 $name..."
-
-	arch=$(detect_arch)
 
 	local latest
 	latest=$(get_latest_release "$repo") || true
@@ -290,7 +281,7 @@ install_lua_ls() {
 
 	# 确定平台标识
 	local platform
-	if [[ "$arch" == "aarch64" ]]; then
+	if [[ "$ARCH" == "aarch64" ]]; then
 		platform="linux-arm64"
 	else
 		platform="linux-x64"
@@ -310,16 +301,15 @@ install_lua_ls() {
 		return 0
 	fi
 
-	# 清理旧安装
-	rm -rf "$LSP_DIR/$name"
-	mkdir -p "$LSP_DIR/$name"
-
-	# 解压
-	if ! tar -xzf "$tmp_dir/$tarball" -C "$LSP_DIR/$name"; then
+	# 解压到暂存目录（成功后再替换旧安装，避免解压失败丢失已有版本）
+	mkdir -p "$tmp_dir/staging"
+	if ! tar -xzf "$tmp_dir/$tarball" -C "$tmp_dir/staging"; then
 		print_warn "$name: 解压失败"
 		rm -rf "$tmp_dir"
 		return 0
 	fi
+	rm -rf "$LSP_DIR/$name"
+	mv "$tmp_dir/staging" "$LSP_DIR/$name"
 	rm -rf "$tmp_dir"
 
 	# 创建 wrapper 脚本
@@ -337,9 +327,7 @@ install_lua_ls() {
 # jdtls 不使用 GitHub Releases 发布正式版本，从 Eclipse 官方镜像下载
 # 通过 Homebrew API 获取最新版本号（与 brew install jdtls 保持一致）
 install_jdtls() {
-	local os
-	os=$(detect_os)
-	if [[ "$os" == "macos" ]]; then
+	if [[ "$OS" == "macos" ]]; then
 		return 0
 	fi
 
@@ -387,16 +375,15 @@ install_jdtls() {
 		return 0
 	fi
 
-	# 清理旧安装
-	rm -rf "$LSP_DIR/$name"
-	mkdir -p "$LSP_DIR/$name"
-
-	# 解压
-	if ! tar -xzf "$tmp_dir/jdtls.tar.gz" -C "$LSP_DIR/$name"; then
+	# 解压到暂存目录（成功后再替换旧安装，避免解压失败丢失已有版本）
+	mkdir -p "$tmp_dir/staging"
+	if ! tar -xzf "$tmp_dir/jdtls.tar.gz" -C "$tmp_dir/staging"; then
 		print_warn "$name: 解压失败"
 		rm -rf "$tmp_dir"
 		return 0
 	fi
+	rm -rf "$LSP_DIR/$name"
+	mv "$tmp_dir/staging" "$LSP_DIR/$name"
 	rm -rf "$tmp_dir"
 
 	# 创建 wrapper 脚本
@@ -448,9 +435,11 @@ install_jdtls() {
 # 主函数
 # ========================================
 main() {
-	print_section "🔧 安装 LSP Servers"
-
 	ensure_lsp_dirs
+
+	# 缓存平台信息，避免各安装函数重复检测
+	OS=$(detect_os)
+	ARCH=$(detect_arch)
 
 	install_rust_analyzer
 	install_gopls

@@ -7,7 +7,7 @@ readonly AGE_SSH_PUB="${HOME}/.ssh/id_ed25519.pub"
 readonly AGE_TOKENS="${HOME}/.tokens.sh.age"
 
 # 启动时自动加载加密的 tokens
-if [[ -f "$AGE_TOKENS" && -f "$AGE_SSH_KEY" ]]; then
+if (( $+commands[age] )) && [[ -f "$AGE_TOKENS" && -f "$AGE_SSH_KEY" ]]; then
   source <(age -d -i "$AGE_SSH_KEY" "$AGE_TOKENS" 2>/dev/null)
 fi
 

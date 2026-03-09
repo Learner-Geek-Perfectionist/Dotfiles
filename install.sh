@@ -368,6 +368,12 @@ install_vscode() {
 		return 0
 	fi
 
+	# SSH 环境下跳过（远程插件由宿主机 settings.json 的 remote.SSH.defaultExtensions 管理）
+	if [[ -n "$SSH_CONNECTION" ]]; then
+		print_warn "SSH 环境，跳过 VSCode 插件安装（由宿主机自动推送）"
+		return 0
+	fi
+
 	print_section "步骤 ${step_num}: 💻 安装 VSCode 插件"
 
 	if [[ -f "$dotfiles_dir/scripts/install_vscode_ext.sh" ]]; then

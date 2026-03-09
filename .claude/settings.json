@@ -5,24 +5,6 @@
         "type": "command",
         "command": "~/.claude/statusline.sh"
     },
-    "enabledPlugins": {
-        "example-skills@anthropic-agent-skills": true,
-        "superpowers@superpowers-marketplace": true
-    },
-    "extraKnownMarketplaces": {
-        "anthropic-agent-skills": {
-            "source": {
-                "source": "github",
-                "repo": "anthropics/skills"
-            }
-        },
-        "superpowers-marketplace": {
-            "source": {
-                "source": "github",
-                "repo": "obra/superpowers-marketplace"
-            }
-        }
-    },
     "outputStyle": "Explanatory",
     "language": "中文",
     "alwaysThinkingEnabled": true,

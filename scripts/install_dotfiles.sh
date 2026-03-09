@@ -89,7 +89,25 @@ main() {
 	copy_path ".gitignore" ".gitignore"
 
 	# Claude Code 配置
-	copy_path ".claude/settings.json" ".claude/settings.json"
+	# settings.json 使用 jq 合并：静态设置覆盖，动态字段（插件等）保留
+	local claude_src="$DOTFILES_DIR/.claude/settings.json"
+	local claude_dest="$HOME/.claude/settings.json"
+	if [[ -f "$claude_src" ]]; then
+		mkdir -p "$HOME/.claude"
+		if [[ -f "$claude_dest" ]] && command -v jq &>/dev/null; then
+			local tmp_merged
+			tmp_merged=$(mktemp)
+			if jq -s '.[0] * .[1]' "$claude_dest" "$claude_src" >"$tmp_merged" 2>/dev/null; then
+				mv "$tmp_merged" "$claude_dest"
+			else
+				rm -f "$tmp_merged"
+				cp -f "$claude_src" "$claude_dest"
+			fi
+		else
+			cp -f "$claude_src" "$claude_dest"
+		fi
+		print_success "~/.claude/settings.json"
+	fi
 	copy_path ".claude/statusline.sh" ".claude/statusline.sh"
 
 	# 其它文件

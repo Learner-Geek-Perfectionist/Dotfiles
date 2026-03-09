@@ -56,6 +56,8 @@ if [[ "$(uname)" == "Darwin" ]]; then
 	path_prepend "/Applications/IntelliJ IDEA.app/Contents/MacOS"
 	path_prepend "/opt/homebrew/anaconda3/bin"
 	path_prepend "/opt/homebrew/opt/openjdk/bin"
+	path_prepend "$HOME/.cargo/bin"
+	path_prepend "$HOME/.local/bin"
 	export HOMEBREW_NO_ENV_HINTS=1
 	# clion 映射到 cl
 	alias cl=clion

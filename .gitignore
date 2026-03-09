@@ -110,3 +110,6 @@ pixi.lock
 
 # Claude Code 生成的计划文件
 docs/plans/
+
+# age 加密的 tokens（机器绑定，不跨机器同步）
+.tokens.sh.age

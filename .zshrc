@@ -25,7 +25,6 @@ alias rg='command rg --ignore-file "$HOME/.config/ripgrep/ignore"'
 export ZSH_COMPDUMP="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/.zcompdump"
 command mkdir -p "${ZSH_COMPDUMP:h}" 2>/dev/null
 [[ -f "${HOME}/.config/zsh/plugins/platform.zsh" ]] && source "${HOME}/.config/zsh/plugins/platform.zsh"
-[[ -f "${HOME}/.config/zsh/plugins/age-tokens.zsh" ]] && source "${HOME}/.config/zsh/plugins/age-tokens.zsh"
 [[ -f "${HOME}/.config/zsh/plugins/zinit.zsh" ]] && source "${HOME}/.config/zsh/plugins/zinit.zsh"
 
 # ============================================
@@ -86,6 +85,9 @@ else
 	# OrbStack Linux 支持 open 命令打开 macOS Finder
 	[[ -d "/opt/orbstack-guest" ]] && command -v open &>/dev/null && alias open='open -R'
 fi
+
+# age 加密的 tokens（必须在 PATH 设置之后，因为 age 在 pixi 环境中）
+[[ -f "${HOME}/.config/zsh/plugins/age-tokens.zsh" ]] && source "${HOME}/.config/zsh/plugins/age-tokens.zsh"
 
 # SSH Agent (keychain)
 # ============================================

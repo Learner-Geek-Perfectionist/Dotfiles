@@ -385,18 +385,23 @@ install_vscode() {
 }
 
 # ========================================
-# 安装 LSP Servers
+# 安装 LSP Servers 及其他 GitHub Release 工具
 # ========================================
 install_lsp_servers() {
 	local dotfiles_dir="$1"
 	local step_num="$2"
 
-	print_section "步骤 ${step_num}: 🔧 安装 LSP Servers"
+	print_section "步骤 ${step_num}: 🔧 安装 LSP Servers 及工具"
 
 	if [[ -f "$dotfiles_dir/scripts/install_lsp.sh" ]]; then
 		bash "$dotfiles_dir/scripts/install_lsp.sh"
 	else
 		print_warn "未找到 LSP 安装脚本，跳过"
+	fi
+
+	# Kotlin/Native (包管理器不提供，从 GitHub Release 下载)
+	if [[ -f "$dotfiles_dir/scripts/install_kotlin_native.sh" ]]; then
+		bash "$dotfiles_dir/scripts/install_kotlin_native.sh"
 	fi
 }
 
@@ -483,7 +488,7 @@ install_linux() {
 	# 步骤 2: 同步 Pixi 工具包
 	sync_pixi_tools "$dotfiles_dir" "2/6"
 
-	# 步骤 3: 安装 LSP Servers
+	# 步骤 3: 安装 LSP Servers 及工具
 	install_lsp_servers "$dotfiles_dir" "3/6"
 
 	# 步骤 4: 安装 Dotfiles 配置
@@ -523,7 +528,7 @@ install_macos() {
 	# 步骤 1: 安装 Homebrew 包
 	install_macos_homebrew "$dotfiles_dir" "1/4"
 
-	# 步骤 2: 安装 LSP Servers
+	# 步骤 2: 安装 LSP Servers 及工具
 	install_lsp_servers "$dotfiles_dir" "2/4"
 
 	# 步骤 3: 安装 Dotfiles 配置（已包含 SSH config）

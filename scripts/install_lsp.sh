@@ -156,6 +156,8 @@ install_npm_lsps() {
 		return 0
 	fi
 
+	print_info "安装 npm LSP servers..."
+
 	# typescript-language-server
 	if command -v typescript-language-server &>/dev/null; then
 		print_success "typescript-language-server 已安装"

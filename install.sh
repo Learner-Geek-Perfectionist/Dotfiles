@@ -403,6 +403,11 @@ install_lsp_servers() {
 	if [[ -f "$dotfiles_dir/scripts/install_kotlin_native.sh" ]]; then
 		bash "$dotfiles_dir/scripts/install_kotlin_native.sh"
 	fi
+
+	# Claude Code CLI + 插件 (LSP 插件依赖上面安装的 LSP 二进制)
+	if [[ -f "$dotfiles_dir/scripts/install_claude_code.sh" ]]; then
+		bash "$dotfiles_dir/scripts/install_claude_code.sh"
+	fi
 }
 
 # ========================================

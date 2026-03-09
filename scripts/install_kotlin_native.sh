@@ -160,8 +160,8 @@ install_kotlin_native() {
 main() {
 	install_kotlin_native
 
-	_echo_blank
 	print_success "Kotlin/Native 安装完成"
+	_echo_blank
 }
 
 main "$@"

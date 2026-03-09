@@ -182,8 +182,8 @@ main() {
 	# 4) 安装 Skill 插件
 	install_plugins "Skill " "${SKILL_PLUGINS[@]}"
 
-	_echo_blank
 	print_success "Claude Code 配置完成"
+	_echo_blank
 }
 
 main "$@"

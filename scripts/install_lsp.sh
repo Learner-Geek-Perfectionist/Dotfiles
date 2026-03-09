@@ -451,8 +451,8 @@ main() {
 	install_lua_ls
 	install_jdtls
 
-	_echo_blank
 	print_success "LSP Servers 安装完成"
+	_echo_blank
 }
 
 main "$@"

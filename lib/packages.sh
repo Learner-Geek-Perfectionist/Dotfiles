@@ -162,6 +162,9 @@ brew_formulas=(
 	zstd
 	brotli
 
+	# 加密
+	age
+
 	# 其他
 	rsync
 	mas

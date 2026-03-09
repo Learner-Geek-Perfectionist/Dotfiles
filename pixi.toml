@@ -78,6 +78,9 @@ lld = "*"
 lldb = "*"
 llvm-tools = "*"
 
+# 加密
+age = "*"
+
 # 其他工具
 tldr = "*"
 direnv = "*"

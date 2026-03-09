@@ -11,7 +11,16 @@ edit-tokens() {
   local tmp=$(mktemp)
   local pubkey=$(grep 'public key:' ~/.age/key.txt | awk '{print $NF}')
   age -d -i ~/.age/key.txt ~/.tokens.sh.age > "$tmp"
-  ${EDITOR:-vim} "$tmp"
+  # 优先 VSCode，其次 nvim，最后 vi
+  local editor
+  if command -v code &>/dev/null; then
+    editor="code --wait"
+  elif command -v nvim &>/dev/null; then
+    editor="nvim"
+  else
+    editor="vi"
+  fi
+  ${=editor} "$tmp"
   age -r "$pubkey" -o ~/.tokens.sh.age "$tmp"
   rm -f "$tmp"
   source <(age -d -i ~/.age/key.txt ~/.tokens.sh.age 2>/dev/null)

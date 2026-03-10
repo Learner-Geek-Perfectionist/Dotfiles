@@ -54,6 +54,7 @@ LSP_PLUGINS=(
 TOOL_PLUGINS=(
 	github@claude-plugins-official
 	commit-commands@claude-plugins-official
+	code-simplifier@claude-plugins-official
 )
 
 # Skill 插件 (plugin@marketplace)

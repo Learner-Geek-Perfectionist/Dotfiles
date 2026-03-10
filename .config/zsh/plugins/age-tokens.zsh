@@ -2,9 +2,11 @@
 # 依赖: age (https://github.com/FiloSottile/age)
 # 密钥: 复用 ~/.ssh/id_ed25519，无需额外管理 age 专用密钥
 
-readonly AGE_SSH_KEY="${HOME}/.ssh/id_ed25519"
-readonly AGE_SSH_PUB="${HOME}/.ssh/id_ed25519.pub"
-readonly AGE_TOKENS="${HOME}/.tokens.sh.age"
+if (( ! ${+AGE_SSH_KEY} )); then
+  readonly AGE_SSH_KEY="${HOME}/.ssh/id_ed25519"
+  readonly AGE_SSH_PUB="${HOME}/.ssh/id_ed25519.pub"
+  readonly AGE_TOKENS="${HOME}/.tokens.sh.age"
+fi
 
 # 启动时自动加载加密的 tokens
 if (( $+commands[age] )) && [[ -f "$AGE_TOKENS" && -f "$AGE_SSH_KEY" ]]; then

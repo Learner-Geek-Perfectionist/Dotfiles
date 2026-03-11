@@ -31,6 +31,26 @@
     {
         "key": "ctrl+shift+-",
         "command": "-workbench.action.navigateForward"
+    },
+
+    // ======================= Markdown Preview Enhanced =======================
+    // Cmd+K V: 使用 MPE 预览 Markdown（覆盖 VS Code 默认预览）
+    {
+        "key": "cmd+k v",
+        "command": "markdown-preview-enhanced.openPreviewToTheSide",
+        "when": "editorLangId == 'markdown'"
+    },
+    {
+        "key": "cmd+k v",
+        "command": "-markdown.showPreviewToSide",
+        "when": "editorLangId == 'markdown'"
+    },
+
+    // ======================= Claude Code Reference =======================
+    // Alt+K: 复制文件路径和行号引用
+    {
+        "key": "alt+k",
+        "command": "claude-code-ref.copyReference"
     }
 ]
 

@@ -9,7 +9,7 @@ if [[ -d "$HOME/.pixi/envs/default/share/zsh/site-functions" ]]; then
 	FPATH="$HOME/.pixi/envs/default/share/zsh/site-functions:$FPATH"
 fi
 
-if [[ "$(uname -s)" == "Darwin" ]]; then
+if [[ "$OSTYPE" == darwin* ]]; then
 	# ========================================
 	# macOS: Homebrew 镜像加速
 	# ========================================

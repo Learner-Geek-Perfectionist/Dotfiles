@@ -66,7 +66,7 @@ _ice
 zinit snippet OMZP::git/git.plugin.zsh
 
 # 内联原 OMZL::history.zsh 的必要设置（HIST* 变量已在 .zshrc 开头重设）
-setopt extended_history         # 记录命令时间戳
+# setopt extended_history 已在 .zshenv 中设置，此处不重复
 setopt hist_expire_dups_first   # 历史满时优先删除重复
 setopt hist_ignore_dups         # 不记录重复命令
 setopt hist_verify              # 展开历史后让用户确认再执行
@@ -149,3 +149,6 @@ zinit light zsh-users/zsh-autosuggestions
 # 必须在 zdharma-continuum/fast-syntax-highlighting 之前加载 autosuggestions，否则「粘贴代码」太亮了。
 _ice
 zinit light zdharma-continuum/fast-syntax-highlighting
+
+# 清理：_ice 仅在 zinit.zsh 加载期间使用
+unfunction _ice

@@ -3,11 +3,12 @@
 
 # 添加 homebrew 的环境变量（缓存输出，仅 brew 二进制更新时重新生成）
 if [[ -x "/opt/homebrew/bin/brew" ]]; then
-	_brew_cache="$HOME/.cache/zsh/brew-shellenv.zsh"
+	_brew_cache="$ZSH_CACHE_DIR/brew-shellenv.zsh"
 	if [[ ! -f "$_brew_cache" || "/opt/homebrew/bin/brew" -nt "$_brew_cache" ]]; then
 		/opt/homebrew/bin/brew shellenv > "$_brew_cache"
 	fi
 	source "$_brew_cache"
+	unset _brew_cache
 fi
 
 # 延迟加载 anaconda（首次调用 conda 时才初始化）

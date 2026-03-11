@@ -26,10 +26,9 @@ alias rg='command rg --ignore-file "$HOME/.config/ripgrep/ignore"'
 
 # 让 p10k instant prompt / 补全尽早生效
 export ZSH_COMPDUMP="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/.zcompdump"
-command mkdir -p "${ZSH_COMPDUMP:h}" 2>/dev/null
 
 # 重设 HIST*（/etc/zshrc 会覆盖 .zshenv 的值，必须在 .zshrc 中再次设置）
-HISTFILE="$HOME/.cache/zsh/.zsh_history"
+HISTFILE="$ZSH_CACHE_DIR/.zsh_history"
 HISTSIZE=10000000
 SAVEHIST=10000000
 [[ -f "${HOME}/.config/zsh/plugins/platform.zsh" ]] && source "${HOME}/.config/zsh/plugins/platform.zsh"
@@ -46,7 +45,7 @@ typeset -U path
 # 平台特定配置
 # ============================================
 
-if [[ "$(uname)" == "Darwin" ]]; then
+if [[ "$OSTYPE" == darwin* ]]; then
 	# macOS specific settings
 	path=(
 		"$HOME/.local/bin"
@@ -83,7 +82,14 @@ else
 	)
 
 	# Pixi + direnv：进入/离开目录自动加载/卸载环境变量
-	(( $+commands[direnv] )) && eval "$(direnv hook zsh)"
+	if (( $+commands[direnv] )); then
+		_direnv_cache="$ZSH_CACHE_DIR/direnv-hook.zsh"
+		if [[ ! -f "$_direnv_cache" || "$commands[direnv]" -nt "$_direnv_cache" ]]; then
+			direnv hook zsh > "$_direnv_cache"
+		fi
+		source "$_direnv_cache"
+		unset _direnv_cache
+	fi
 
 	# OrbStack Linux 支持 open 命令打开 macOS Finder
 	[[ -d "/opt/orbstack-guest" ]] && (( $+commands[open] )) && alias open='open -R'
@@ -98,7 +104,7 @@ fi
 # 测试：ssh-add -l && ssh -T git@github.com
 # ============================================
 
-_kc_cache="$HOME/.cache/zsh/keychain-env.zsh"
+_kc_cache="$ZSH_CACHE_DIR/keychain-env.zsh"
 if [[ -z "$SSH_CONNECTION" && -f "$HOME/.ssh/id_ed25519" ]] && (( $+commands[keychain] )); then
 	if [[ -f "$_kc_cache" ]] && source "$_kc_cache" 2>/dev/null && kill -0 "$SSH_AGENT_PID" 2>/dev/null; then
 		: # agent alive, cache valid
@@ -107,6 +113,7 @@ if [[ -z "$SSH_CONNECTION" && -f "$HOME/.ssh/id_ed25519" ]] && (( $+commands[key
 			&& typeset -p SSH_AUTH_SOCK SSH_AGENT_PID > "$_kc_cache" 2>/dev/null
 	fi
 fi
+unset _kc_cache
 
 # ============================================
 # Zsh 选项
@@ -125,11 +132,12 @@ setopt rm_star_silent       # 取消 zsh 的安全防护功能（默认对 rm -r
 # ============================================
 # 加载 fzf 快捷键（Ctrl+T, Ctrl+R, Alt+C），但保留 fzf-tab 的 Tab 补全
 if (( $+commands[fzf] )); then
-	_fzf_cache="$HOME/.cache/zsh/fzf-keybindings.zsh"
-	if [[ ! -f "$_fzf_cache" || "$(command -v fzf)" -nt "$_fzf_cache" ]]; then
+	_fzf_cache="$ZSH_CACHE_DIR/fzf-keybindings.zsh"
+	if [[ ! -f "$_fzf_cache" || "$commands[fzf]" -nt "$_fzf_cache" ]]; then
 		fzf --zsh > "$_fzf_cache"
 	fi
 	source "$_fzf_cache"
+	unset _fzf_cache
 	# 不要在这里 bindkey '^I' fzf-tab-complete ！
 	# fzf-tab 通过 zinit turbo 延迟加载，在 enable-fzf-tab 中会自动绑定 ^I。
 	# 如果在这里提前绑定，enable-fzf-tab 会误把 fzf-tab-complete 当作"原始 widget"，
@@ -190,7 +198,7 @@ export FZF_DEFAULT_OPTS='--exact --tac --preview "${HOME}/.config/zsh/fzf/fzf-pr
 # fd 基础参数（排除垃圾桶和系统目录）
 typeset -ga _fd_opts
 _fd_opts=( -g -H -I -i -a )
-if [[ "$(uname)" == "Darwin" ]]; then
+if [[ "$OSTYPE" == darwin* ]]; then
 	_fd_opts+=( -E .Trash -E /System/Volumes/Data )
 else
 	_fd_opts+=( -E .local/share/Trash )
@@ -232,16 +240,18 @@ alias reboot='sudo reboot'
 alias claude='claude --dangerously-skip-permissions'
 
 # ============================================
-# 预编译：加速下次启动（首次同步执行，后续按需跳过）
+# 预编译：加速下次启动（后台执行，不阻塞当前启动）
 # ============================================
-() {
+{
 	local f
 	# 只编译 ~/.config 和 ~/.cache 下的脚本
 	# 不编译 ~/.zshrc ~/.zshenv ~/.zprofile ——避免在 $HOME 下生成 .zwc 缓存文件
 	# （对这些小文件，编译带来的启动加速可忽略）
+	# 跳过 keychain-env.zsh（含 PID，频繁变更，编译无收益）
 	for f in ~/.config/zsh/plugins/*.zsh \
 		~/.config/zsh/.p10k.zsh \
-		"$HOME/.cache/zsh"/*.zsh(N); do
+		"$ZSH_CACHE_DIR"/*.zsh(N); do
+		[[ "$f" == *keychain-env.zsh ]] && continue
 		[[ -f "$f" && ( ! -f "${f}.zwc" || "$f" -nt "${f}.zwc" ) ]] && zcompile "$f"
 	done
-}
+} &!

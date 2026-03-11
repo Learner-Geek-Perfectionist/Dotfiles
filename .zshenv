@@ -20,3 +20,7 @@ setopt EXTENDED_HISTORY
 
 # history 命令显示时间格式（年-月-日 时:分:秒）
 export HIST_STAMPS="%Y-%m-%d %H:%M:%S"
+
+# 本地终端：跳过 p10k 的 SSH 检测（节省 ~30% 启动时间）
+# SSH 会话中 $SSH_CONNECTION 非空，p10k 会正常检测
+[[ -z "$SSH_CONNECTION" ]] && export P9K_SSH=0

@@ -6,7 +6,10 @@
 [[ -z "$TERM" || "$TERM" == "dumb" ]] && export TERM="xterm-256color"
 
 # Kitty 终端 SSH 时回退 TERM（远程服务器可能没有 xterm-kitty terminfo）
-[[ "$TERM" == "xterm-kitty" ]] && ! infocmp xterm-kitty &>/dev/null && export TERM="xterm-256color"
+# 在 Kitty 终端中不需要 infocmp 检测；只有非 Kitty 环境且 TERM 为 xterm-kitty 时才回退
+if [[ "$TERM" == "xterm-kitty" && -z "$KITTY_WINDOW_ID" ]]; then
+	infocmp xterm-kitty &>/dev/null || export TERM="xterm-256color"
+fi
 
 # 在 kitty 终端中自动用 kitten ssh（自动传 terminfo + shell integration）
 [[ -n "$KITTY_WINDOW_ID" ]] && alias ssh='kitten ssh'
@@ -24,6 +27,11 @@ alias rg='command rg --ignore-file "$HOME/.config/ripgrep/ignore"'
 # 让 p10k instant prompt / 补全尽早生效
 export ZSH_COMPDUMP="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/.zcompdump"
 command mkdir -p "${ZSH_COMPDUMP:h}" 2>/dev/null
+
+# 重设 HIST*（/etc/zshrc 会覆盖 .zshenv 的值，必须在 .zshrc 中再次设置）
+HISTFILE="$HOME/.cache/zsh/.zsh_history"
+HISTSIZE=10000000
+SAVEHIST=10000000
 [[ -f "${HOME}/.config/zsh/plugins/platform.zsh" ]] && source "${HOME}/.config/zsh/plugins/platform.zsh"
 [[ -f "${HOME}/.config/zsh/plugins/zinit.zsh" ]] && source "${HOME}/.config/zsh/plugins/zinit.zsh"
 
@@ -31,59 +39,54 @@ command mkdir -p "${ZSH_COMPDUMP:h}" 2>/dev/null
 # PATH 管理
 # ============================================
 
-# PATH 添加函数（避免重复添加）
-path_prepend() {
-	[[ -d "$1" ]] && [[ ":$PATH:" != *":$1:"* ]] && export PATH="$1:$PATH"
-}
+# 自动去重，无需手动检查
+typeset -U path
 
 # ============================================
 # 平台特定配置
 # ============================================
 
 if [[ "$(uname)" == "Darwin" ]]; then
-	# macOS specific settings，设置 git 、clang++、ruby、make bash、VSCode、gre、less 等工具的环境变量
-	path_prepend "/opt/homebrew/opt/llvm/bin"
-	path_prepend "/opt/homebrew/opt/ruby/bin"
-	path_prepend "/opt/homebrew/opt/git/bin"
-	path_prepend "/opt/homebrew/opt/less/bin"
-	path_prepend "/opt/homebrew/opt/make/libexec/gnubin"
-	path_prepend "/opt/homebrew/opt/bash/bin"
-	path_prepend "/opt/homebrew/opt/grep/libexec/gnubin"
-	path_prepend "/Applications/Cursor.app/Contents/Resources/app/bin"
-	path_prepend "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
-	path_prepend "/Applications/CLion.app/Contents/MacOS"
-	path_prepend "/Applications/PyCharm.app/Contents/MacOS"
-	path_prepend "/Applications/IntelliJ IDEA.app/Contents/MacOS"
-	path_prepend "/opt/homebrew/anaconda3/bin"
-	path_prepend "/opt/homebrew/opt/openjdk/bin"
-	path_prepend "$HOME/.cargo/bin"
-	path_prepend "$HOME/.local/bin"
+	# macOS specific settings
+	path=(
+		"$HOME/.local/bin"
+		"$HOME/.cargo/bin"
+		/opt/homebrew/opt/openjdk/bin
+		/opt/homebrew/anaconda3/bin
+		"/Applications/IntelliJ IDEA.app/Contents/MacOS"
+		"/Applications/PyCharm.app/Contents/MacOS"
+		"/Applications/CLion.app/Contents/MacOS"
+		"/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
+		"/Applications/Cursor.app/Contents/Resources/app/bin"
+		/opt/homebrew/opt/grep/libexec/gnubin
+		/opt/homebrew/opt/bash/bin
+		/opt/homebrew/opt/make/libexec/gnubin
+		/opt/homebrew/opt/less/bin
+		/opt/homebrew/opt/git/bin
+		/opt/homebrew/opt/ruby/bin
+		/opt/homebrew/opt/llvm/bin
+		$path
+	)
 	export HOMEBREW_NO_ENV_HINTS=1
-	# clion 映射到 cl
 	alias cl=clion
-	# pycharm 映射到 py
 	alias py=pycharm
-	# rg 配置已移至 ~/.config/ripgrep/config
 	alias open='open -R'
 
 else
-	# rg 配置已移至 ~/.config/ripgrep/config
-
-	# Cursor 编辑器（Linux）- 先添加，确保 cursor 命令可用
-	path_prepend "/opt/Cursor/resources/app/bin"
-
-	# VSCode 编辑器（Linux）- 后添加，确保 code 命令指向 VSCode 而非 Cursor
-	path_prepend "/opt/visual-studio-code/bin"
+	path=(
+		"$HOME/.local/bin"
+		"$HOME/.pixi/envs/default/bin"
+		"$HOME/.pixi/bin"
+		/opt/visual-studio-code/bin
+		/opt/Cursor/resources/app/bin
+		$path
+	)
 
 	# Pixi + direnv：进入/离开目录自动加载/卸载环境变量
-	path_prepend "$HOME/.pixi/bin"
-	# 先激活 home 的 pixi 环境，确保 direnv 等工具可用
-	path_prepend "$HOME/.pixi/envs/default/bin"
-	path_prepend "$HOME/.local/bin"
-	command -v direnv >/dev/null && eval "$(direnv hook zsh)"
+	(( $+commands[direnv] )) && eval "$(direnv hook zsh)"
 
 	# OrbStack Linux 支持 open 命令打开 macOS Finder
-	[[ -d "/opt/orbstack-guest" ]] && command -v open &>/dev/null && alias open='open -R'
+	[[ -d "/opt/orbstack-guest" ]] && (( $+commands[open] )) && alias open='open -R'
 fi
 
 # age 加密的 tokens（必须在 PATH 设置之后，因为 age 在 pixi 环境中）
@@ -95,8 +98,14 @@ fi
 # 测试：ssh-add -l && ssh -T git@github.com
 # ============================================
 
-if [[ -z "$SSH_CONNECTION" && -f "$HOME/.ssh/id_ed25519" ]] && command -v keychain &>/dev/null; then
-	eval "$(keychain --eval --quiet --inherit any --agents ssh id_ed25519 2>/dev/null)"
+_kc_cache="$HOME/.cache/zsh/keychain-env.zsh"
+if [[ -z "$SSH_CONNECTION" && -f "$HOME/.ssh/id_ed25519" ]] && (( $+commands[keychain] )); then
+	if [[ -f "$_kc_cache" ]] && source "$_kc_cache" 2>/dev/null && kill -0 "$SSH_AGENT_PID" 2>/dev/null; then
+		: # agent alive, cache valid
+	else
+		eval "$(keychain --eval --quiet --inherit any --agents ssh id_ed25519 2>/dev/null)" \
+			&& typeset -p SSH_AUTH_SOCK SSH_AGENT_PID > "$_kc_cache" 2>/dev/null
+	fi
 fi
 
 # ============================================
@@ -115,10 +124,16 @@ setopt rm_star_silent       # 取消 zsh 的安全防护功能（默认对 rm -r
 # Fzf 配置
 # ============================================
 # 加载 fzf 快捷键（Ctrl+T, Ctrl+R, Alt+C），但保留 fzf-tab 的 Tab 补全
-if command -v fzf >/dev/null 2>&1; then
-	source <(fzf --zsh)
-	# 恢复 fzf-tab 的 Tab 绑定（fzf --zsh 会覆盖为 fzf-completion）
-	bindkey '^I' fzf-tab-complete
+if (( $+commands[fzf] )); then
+	_fzf_cache="$HOME/.cache/zsh/fzf-keybindings.zsh"
+	if [[ ! -f "$_fzf_cache" || "$(command -v fzf)" -nt "$_fzf_cache" ]]; then
+		fzf --zsh > "$_fzf_cache"
+	fi
+	source "$_fzf_cache"
+	# 不要在这里 bindkey '^I' fzf-tab-complete ！
+	# fzf-tab 通过 zinit turbo 延迟加载，在 enable-fzf-tab 中会自动绑定 ^I。
+	# 如果在这里提前绑定，enable-fzf-tab 会误把 fzf-tab-complete 当作"原始 widget"，
+	# 导致递归调用自身 → "job table full or recursion limit exceeded"。
 fi
 
 # ============================================
@@ -126,7 +141,7 @@ fi
 # ============================================
 
 # bat 映射到 cat
-if command -v bat >/dev/null 2>&1; then
+if (( $+commands[bat] )); then
 	# cat：默认用 bat；若文件本身包含 ANSI 转义序列(ESC=0x1b)，则回退到系统 cat 以便终端渲染颜色
 	cat() {
 		emulate -L zsh
@@ -163,7 +178,7 @@ if command -v bat >/dev/null 2>&1; then
 fi
 
 # tldr 替代 man（更简洁的命令手册）
-command -v tldr >/dev/null 2>&1 && alias man='tldr'
+(( $+commands[tldr] )) && alias man='tldr'
 
 # fzf 默认选项：--exact 精确匹配（连续字符），搜索时加 ' 前缀可切换回模糊匹配
 export FZF_DEFAULT_OPTS='--exact --tac --preview "${HOME}/.config/zsh/fzf/fzf-preview.sh {}" --bind "shift-left:preview-page-up,shift-right:preview-page-down"'
@@ -216,3 +231,17 @@ alias reboot='sudo reboot'
 # claude
 alias claude='claude --dangerously-skip-permissions'
 
+# ============================================
+# 预编译：加速下次启动（首次同步执行，后续按需跳过）
+# ============================================
+() {
+	local f
+	# 只编译 ~/.config 和 ~/.cache 下的脚本
+	# 不编译 ~/.zshrc ~/.zshenv ~/.zprofile ——避免在 $HOME 下生成 .zwc 缓存文件
+	# （对这些小文件，编译带来的启动加速可忽略）
+	for f in ~/.config/zsh/plugins/*.zsh \
+		~/.config/zsh/.p10k.zsh \
+		"$HOME/.cache/zsh"/*.zsh(N); do
+		[[ -f "$f" && ( ! -f "${f}.zwc" || "$f" -nt "${f}.zwc" ) ]] && zcompile "$f"
+	done
+}

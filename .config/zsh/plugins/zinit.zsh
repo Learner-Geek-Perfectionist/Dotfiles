@@ -48,32 +48,34 @@ zinit light romkatv/powerlevel10k
 HYPHEN_INSENSITIVE='true'
 COMPLETION_WAITING_DOTS='true'
 
-# OMZ 迁移和插件配置
-_ice
-zinit snippet OMZL::clipboard.zsh
-# 修复 Fedora zsh 补全兼容性问题（必须在 atload 中设置，否则会被异步加载覆盖）
-# 问题：OMZL::completion.zsh 的 matcher-list 含 `-_` 等价规则，
-#       与 Fedora 精简版 _path_commands（4行 vs Ubuntu 65行）结合，
-#       导致 `fast<Tab>` 自动变成 `fast-`，过滤掉 `fastfetch`
-# 解决：移除 `-_` 等价性，只保留大小写不敏感
-_ice atload"zstyle ':completion:*' matcher-list 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}' 'r:|=*' 'l:|=* r:|=*'"
-zinit snippet OMZL::completion.zsh
-_ice
-zinit snippet OMZL::grep.zsh
+# OMZ 精简插件配置（移除 clipboard/grep/completion/history/theme/colored-man-pages）
+# 保留：key-bindings, directories, git
+
+# key-bindings: 键盘快捷键
 _ice
 zinit snippet OMZL::key-bindings.zsh
+
+# directories: 目录导航（d / cd 增强）
 _ice atload'setopt no_auto_cd'
 zinit snippet OMZL::directories.zsh
-_ice atload'unsetopt hist_ignore_space'
-zinit snippet OMZL::history.zsh
-_ice atload'command -v eza &>/dev/null && alias ls="eza --icons -ha --time-style=iso"'
-zinit snippet OMZL::theme-and-appearance.zsh
+
+# git: git 别名和函数
 _ice
 zinit snippet OMZL::git.zsh
 _ice
 zinit snippet OMZP::git/git.plugin.zsh
-_ice
-zinit snippet OMZ::plugins/colored-man-pages/colored-man-pages.plugin.zsh
+
+# 内联原 OMZL::history.zsh 的必要设置（HIST* 变量已在 .zshrc 开头重设）
+setopt extended_history         # 记录命令时间戳
+setopt hist_expire_dups_first   # 历史满时优先删除重复
+setopt hist_ignore_dups         # 不记录重复命令
+setopt hist_verify              # 展开历史后让用户确认再执行
+setopt share_history            # 多终端共享历史
+# history 命令显示全部历史（zsh 内置只显示最近 16 条）
+alias history='fc -l 1'
+
+# 内联原 OMZL::theme-and-appearance.zsh 的 eza 别名
+(( $+commands[eza] )) && alias ls="eza --icons -ha --time-style=iso"
 
 # 1.make sure fzf is installed
 # 2.fzf-tab needs to be loaded 「after」 compinit, but 「before」 plugins which will wrap widgets, such as zsh-autosuggestions or fast-syntax-highlighting
@@ -102,7 +104,7 @@ zinit light Aloxaf/fzf-tab
 
 # 配置 fzf-tab
 zstyle ':fzf-tab:complete:_zlua:*' query-string input
-zstyle ':fzf-tab:complete:kill:argument-rest' fzf-preview 'ps --pid=$word -o cmd --no-headers -w'
+zstyle ':fzf-tab:complete:kill:argument-rest' fzf-preview 'ps -p $word -o comm= 2>/dev/null'
 zstyle ':fzf-tab:complete:kill:argument-rest' fzf-flags '--preview-window=down:15:wrap'
 zstyle ':fzf-tab:complete:kill:*' popup-pad 0 3
 zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --color=always $realpath'

@@ -1,20 +1,22 @@
 # # 加载 zprof 模块，分析 Zsh 脚本的性能。 执行 zprof 命令。
 # zmodload zsh/zprof
 
-# 删除 Apple Terminal 的 .zsh_sessions 文件
-[[ -e "$HOME/.zsh_sessions" ]] && rm -rf "$HOME/.zsh_sessions"
-
-# 清理旧的 .zcompdump 文件（已迁移到 ~/.cache/zsh/）
-rm -rf "$HOME"/.zcompdump*(N) 2>/dev/null
-
-# 添加 homebrew 的环境变量
+# 添加 homebrew 的环境变量（缓存输出，仅 brew 二进制更新时重新生成）
 if [[ -x "/opt/homebrew/bin/brew" ]]; then
-	eval $(/opt/homebrew/bin/brew shellenv)
+	_brew_cache="$HOME/.cache/zsh/brew-shellenv.zsh"
+	if [[ ! -f "$_brew_cache" || "/opt/homebrew/bin/brew" -nt "$_brew_cache" ]]; then
+		/opt/homebrew/bin/brew shellenv > "$_brew_cache"
+	fi
+	source "$_brew_cache"
 fi
 
-# 添加 anaconda 的环境变量
-if [[ -x "/opt/homebrew/anaconda3/etc/profile.d/conda.sh" ]]; then
-	source /opt/homebrew/anaconda3/etc/profile.d/conda.sh
+# 延迟加载 anaconda（首次调用 conda 时才初始化）
+if [[ -f "/opt/homebrew/anaconda3/etc/profile.d/conda.sh" ]]; then
+	conda() {
+		unfunction conda
+		source /opt/homebrew/anaconda3/etc/profile.d/conda.sh
+		conda "$@"
+	}
 fi
 
 # 添加 orbstack 的环境变量

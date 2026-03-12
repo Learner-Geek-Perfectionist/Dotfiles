@@ -189,7 +189,7 @@ fi
 (( $+commands[tldr] )) && alias man='tldr'
 
 # fzf 默认选项：--exact 精确匹配（连续字符），搜索时加 ' 前缀可切换回模糊匹配
-export FZF_DEFAULT_OPTS='--exact --tac --preview "${HOME}/.config/zsh/fzf/fzf-preview.sh {}" --bind "shift-left:preview-page-up,shift-right:preview-page-down"'
+export FZF_DEFAULT_OPTS='--no-mouse --exact --tac --preview "${HOME}/.config/zsh/fzf/fzf-preview.sh {}" --bind "shift-left:preview-page-up,shift-right:preview-page-down"'
 
 # ============================================
 # fd 配置
@@ -211,6 +211,20 @@ export FZF_DEFAULT_COMMAND="command fd --color=never ${(j: :)_fd_opts}"
 fd() {
 	local -a pre; sudo -n true 2>/dev/null && pre=(sudo)
 	"${pre[@]}" =fd --color=always "${_fd_opts[@]}" "$@" 2>/dev/null
+}
+
+# fzf 包装函数：透明处理管道输入
+fzf() {
+	if [ -p /dev/stdin ]; then
+		local tmp=$(mktemp)
+		trap "rm -f '$tmp'" EXIT INT TERM
+		sed 's/\x1b\[[0-9;]*m//g' > "$tmp"
+		command fzf "$@" < "$tmp"
+		rm -f "$tmp"
+		trap - EXIT INT TERM
+	else
+		command fzf "$@"
+	fi
 }
 
 # ============================================

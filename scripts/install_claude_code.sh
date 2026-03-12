@@ -462,12 +462,11 @@ is_marketplace_installed() {
 		jq -e --arg repo "$repo" 'any(.[]; .source.repo == $repo)' "$KNOWN_MARKETPLACES_JSON" &>/dev/null
 }
 
-# 检查插件是否已安装
+# 检查插件是否已安装（通过 CLI 而非 JSON）
 # 参数: $1 = plugin@marketplace (例如 pyright-lsp@claude-plugins-official)
 is_plugin_installed() {
 	local plugin="$1"
-	[[ -f "$INSTALLED_PLUGINS_JSON" ]] && \
-		jq -e --arg p "$plugin" '.plugins | has($p)' "$INSTALLED_PLUGINS_JSON" &>/dev/null
+	claude plugin list 2>/dev/null | grep -q "^  ❯ ${plugin}$"
 }
 
 # ========================================
@@ -587,6 +586,42 @@ install_plugins() {
 }
 
 # ========================================
+# 激活插件
+# ========================================
+enable_plugins() {
+	local settings_file="$HOME/.claude/settings.json"
+
+	if [[ ! -f "$settings_file" ]]; then
+		print_warn "settings.json 不存在，跳过插件激活"
+		return 1
+	fi
+
+	if ! command -v jq &>/dev/null; then
+		print_warn "jq 未安装，跳过插件激活"
+		return 1
+	fi
+
+	local plugins=("$@")
+	local enabled=0
+
+	for plugin in "${plugins[@]}"; do
+		# 检查插件是否已启用
+		if jq -e --arg p "$plugin" '.enabledPlugins[$p] == true' "$settings_file" &>/dev/null; then
+			continue
+		fi
+
+		# 启用插件
+		jq --arg p "$plugin" '.enabledPlugins[$p] = true' "$settings_file" > "$settings_file.tmp" && \
+			mv "$settings_file.tmp" "$settings_file"
+		enabled=$((enabled + 1))
+	done
+
+	if [[ $enabled -gt 0 ]]; then
+		print_success "已激活 $enabled 个插件"
+	fi
+}
+
+# ========================================
 # 主函数
 # ========================================
 main() {
@@ -625,15 +660,23 @@ main() {
 
 	# 5) 安装 LSP 插件
 	install_plugins "LSP " "${LSP_PLUGINS[@]}"
+	enable_plugins "${LSP_PLUGINS[@]}"
 
 	# 6) 安装工具插件
 	install_plugins "Tool " "${TOOL_PLUGINS[@]}"
+	enable_plugins "${TOOL_PLUGINS[@]}"
 
 	# 7) 安装 Skill 插件
 	install_plugins "Skill " "${SKILL_PLUGINS[@]}"
+	enable_plugins "${SKILL_PLUGINS[@]}"
 
 	print_success "Claude Code 配置完成"
 	_echo_blank
+
+	# 提示用户重启以激活 LSP servers
+	print_info "⚠️  重要提示："
+	print_dim "   LSP 插件需要重启 Claude Code 才能激活"
+	print_dim "   请退出当前会话并重新运行 'claude' 命令"
 }
 
 main "$@"

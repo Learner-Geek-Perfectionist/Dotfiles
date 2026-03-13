@@ -11,7 +11,7 @@ _ice() {
 	if [[ -n "$ZINIT_SYNC" ]]; then
 		zinit ice depth=1 "$@"
 	else
-		zinit ice wait lucid depth=1 "$@"
+		zinit ice wait lucid depth=1 "$@"  # wait = 延迟加载(turbo)，lucid = 不显示加载消息
 	fi
 }
 
@@ -75,7 +75,7 @@ setopt share_history            # 多终端共享历史
 alias history='fc -l 1'
 
 # 内联原 OMZL::theme-and-appearance.zsh 的 eza 别名
-(( $+commands[eza] )) && alias ls="eza --icons -ha --time-style=iso"
+(( $+commands[eza] )) && alias ls="eza --icons -ha --time-style=iso"  # eza 已安装则替代 ls
 
 # 1.make sure fzf is installed
 # 2.fzf-tab needs to be loaded 「after」 compinit, but 「before」 plugins which will wrap widgets, such as zsh-autosuggestions or fast-syntax-highlighting
@@ -88,7 +88,7 @@ _ice atinit'
     # 检查是否有 FPATH 目录比缓存更新
     local need_update=0
     if [[ -f "$zcd" ]]; then
-        for dir in ${(s.:.)FPATH}; do
+        for dir in ${(s.:.)FPATH}; do  # ${(s.:.)X}: 用冒号分割字符串为数组
             [[ -d "$dir" && "$dir" -nt "$zcd" ]] && { need_update=1; break }
         done
     fi
@@ -96,9 +96,9 @@ _ice atinit'
     if [[ ! -f "$zcd" || $need_update -eq 1 ]]; then
         compinit -d "$zcd"
     else
-        compinit -C -d "$zcd"
+        compinit -C -d "$zcd"  # -C = 跳过安全检查，直接用缓存（快速模式）
     fi
-    zicdreplay
+    zicdreplay  # 回放 zinit 在 compinit 之前缓存的 compdef 调用
 '
 zinit light Aloxaf/fzf-tab
 
@@ -139,11 +139,11 @@ zinit ice as"completion"
 zinit snippet "$HOME/.config/zsh/fzf/_fzf"
 
 # zsh-completions 提供大量的补全定义
-_ice blockf
+_ice blockf  # blockf: 阻止插件修改 FPATH（由 zinit 统一管理）
 zinit light zsh-users/zsh-completions
 
 # autosuggestions，atload 用于保障启动 autosuggest 功能。
-_ice atload'!_zsh_autosuggest_start'
+_ice atload'!_zsh_autosuggest_start'  # atload'!func': 加载后执行 func，! = 追踪模式（支持 zinit 卸载回滚）
 zinit light zsh-users/zsh-autosuggestions
 
 # 必须在 zdharma-continuum/fast-syntax-highlighting 之前加载 autosuggestions，否则「粘贴代码」太亮了。
@@ -151,4 +151,4 @@ _ice
 zinit light zdharma-continuum/fast-syntax-highlighting
 
 # 清理：_ice 仅在 zinit.zsh 加载期间使用
-unfunction _ice
+unfunction _ice  # 删除辅助函数，防止泄漏到用户的全局命名空间

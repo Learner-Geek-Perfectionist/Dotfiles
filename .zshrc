@@ -40,7 +40,7 @@ SAVEHIST=10000000
 # ============================================
 
 # 自动去重，无需手动检查
-typeset -U path
+typeset -U path  # -U = unique，path 数组自动去重（等效于 PATH 去重）
 
 # ============================================
 # 平台特定配置
@@ -83,9 +83,9 @@ else
 	)
 
 	# Pixi + direnv：进入/离开目录自动加载/卸载环境变量
-	if (( $+commands[direnv] )); then
+	if (( $+commands[direnv] )); then  # $+commands[x]: 若 x 在 PATH 中则为 1，否则为 0
 		_direnv_cache="$ZSH_CACHE_DIR/direnv-hook.zsh"
-		if [[ ! -f "$_direnv_cache" || "$commands[direnv]" -nt "$_direnv_cache" ]]; then
+		if [[ ! -f "$_direnv_cache" || "$commands[direnv]" -nt "$_direnv_cache" ]]; then  # $commands[x] = x 的绝对路径；-nt = newer than
 			direnv hook zsh > "$_direnv_cache"
 		fi
 		source "$_direnv_cache"
@@ -93,7 +93,7 @@ else
 	fi
 
 	# OrbStack Linux 支持 open 命令打开 macOS Finder
-	[[ -d "/opt/orbstack-guest" ]] && (( $+commands[open] )) && alias open='open -R'
+	[[ -d "/opt/orbstack-guest" ]] && (( $+commands[open] )) && alias open='open -R'  # $+commands[open]: open 命令是否可用
 fi
 
 # age 加密的 tokens（必须在 PATH 设置之后，因为 age 在 pixi 环境中）
@@ -106,12 +106,12 @@ fi
 # ============================================
 
 _kc_cache="$ZSH_CACHE_DIR/keychain-env.zsh"
-if [[ -z "$SSH_CONNECTION" && -f "$HOME/.ssh/id_ed25519" ]] && (( $+commands[keychain] )); then
+if [[ -z "$SSH_CONNECTION" && -f "$HOME/.ssh/id_ed25519" ]] && (( $+commands[keychain] )); then  # $+commands[]: PATH 中是否存在
 	if [[ -f "$_kc_cache" ]] && source "$_kc_cache" 2>/dev/null && kill -0 "$SSH_AGENT_PID" 2>/dev/null; then
 		: # agent alive, cache valid
 	else
 		eval "$(keychain --eval --quiet --inherit any --agents ssh id_ed25519 2>/dev/null)" \
-			&& typeset -p SSH_AUTH_SOCK SSH_AGENT_PID > "$_kc_cache" 2>/dev/null
+			&& typeset -p SSH_AUTH_SOCK SSH_AGENT_PID > "$_kc_cache" 2>/dev/null  # typeset -p: 输出变量的声明语句（可直接 source 还原）
 	fi
 fi
 unset _kc_cache
@@ -132,9 +132,9 @@ setopt rm_star_silent       # 取消 zsh 的安全防护功能（默认对 rm -r
 # Fzf 配置
 # ============================================
 # 加载 fzf 快捷键（Ctrl+T, Ctrl+R, Alt+C），但保留 fzf-tab 的 Tab 补全
-if (( $+commands[fzf] )); then
+if (( $+commands[fzf] )); then  # fzf 是否已安装
 	_fzf_cache="$ZSH_CACHE_DIR/fzf-keybindings.zsh"
-	if [[ ! -f "$_fzf_cache" || "$commands[fzf]" -nt "$_fzf_cache" ]]; then
+	if [[ ! -f "$_fzf_cache" || "$commands[fzf]" -nt "$_fzf_cache" ]]; then  # fzf 二进制更新了 → 重新生成缓存
 		fzf --zsh > "$_fzf_cache"
 	fi
 	source "$_fzf_cache"
@@ -150,10 +150,10 @@ fi
 # ============================================
 
 # bat 映射到 cat
-if (( $+commands[bat] )); then
+if (( $+commands[bat] )); then  # bat 是否已安装
 	# cat：默认用 bat；若文件本身包含 ANSI 转义序列(ESC=0x1b)，则回退到系统 cat 以便终端渲染颜色
 	cat() {
-		emulate -L zsh
+		emulate -L zsh  # 在函数内重置为纯净 zsh 默认选项（-L = 仅限本函数作用域）
 		setopt local_options no_aliases
 
 		# 无参数/stdin：保持原生 cat 行为
@@ -187,7 +187,7 @@ if (( $+commands[bat] )); then
 fi
 
 # tldr 替代 man（更简洁的命令手册）
-(( $+commands[tldr] )) && alias man='tldr'
+(( $+commands[tldr] )) && alias man='tldr'  # tldr 已安装则用它替代 man
 
 # fzf 默认选项：--exact 精确匹配（连续字符），搜索时加 ' 前缀可切换回模糊匹配
 export FZF_DEFAULT_OPTS='--no-mouse --exact --tac --preview "${HOME}/.config/zsh/fzf/fzf-preview.sh {}" --bind "shift-left:preview-page-up,shift-right:preview-page-down"'
@@ -197,7 +197,7 @@ export FZF_DEFAULT_OPTS='--no-mouse --exact --tac --preview "${HOME}/.config/zsh
 # ============================================
 
 # fd 基础参数（排除垃圾桶和系统目录）
-typeset -ga _fd_opts
+typeset -ga _fd_opts  # -g = 全局变量，-a = 数组类型
 _fd_opts=( -g -H -I -i -a )
 if [[ "$OSTYPE" == darwin* ]]; then
 	_fd_opts+=( -E .Trash -E /System/Volumes/Data )
@@ -206,12 +206,12 @@ else
 fi
 
 # fzf 读取列表时不要走包装函数（避免任何额外输出）
-export FZF_DEFAULT_COMMAND="command fd --color=never ${(j: :)_fd_opts}"
+export FZF_DEFAULT_COMMAND="command fd --color=never ${(j: :)_fd_opts}"  # ${(j: :)arr}: 用空格拼接数组元素为字符串
 
 # fd 智能函数：有免密 sudo 就提权，否则回退普通模式
 fd() {
 	local -a pre; sudo -n true 2>/dev/null && pre=(sudo)
-	"${pre[@]}" =fd --color=always "${_fd_opts[@]}" "$@" 2>/dev/null
+	"${pre[@]}" =fd --color=always "${_fd_opts[@]}" "$@" 2>/dev/null  # =fd: 展开为 fd 的绝对路径（绕过本函数自身的递归）
 }
 
 # fzf 包装函数：透明处理管道输入
@@ -265,8 +265,8 @@ alias claude='claude --dangerously-skip-permissions'
 	# 跳过 keychain-env.zsh（含 PID，频繁变更，编译无收益）
 	for f in ~/.config/zsh/plugins/*.zsh \
 		~/.config/zsh/.p10k.zsh \
-		"$ZSH_CACHE_DIR"/*.zsh(N); do
+		"$ZSH_CACHE_DIR"/*.zsh(N); do  # (N): glob qualifier — 无匹配时返回空（不报错）
 		[[ "$f" == *keychain-env.zsh ]] && continue
-		[[ -f "$f" && ( ! -f "${f}.zwc" || "$f" -nt "${f}.zwc" ) ]] && zcompile "$f"
+		[[ -f "$f" && ( ! -f "${f}.zwc" || "$f" -nt "${f}.zwc" ) ]] && zcompile "$f"  # zcompile: 编译为字节码 .zwc，source 时更快
 	done
-} &!
+} &!  # &! = 后台执行 + disown（不受 HUP 信号影响，不阻塞启动）

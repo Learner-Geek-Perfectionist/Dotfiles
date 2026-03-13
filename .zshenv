@@ -5,7 +5,7 @@ export DIRENV_LOG_FORMAT=""
 export skip_global_compinit=1
 
 # 缓存目录（所有 zsh 缓存文件统一放在这里）
-export ZSH_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
+export ZSH_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/zsh"  # ${X:-default}: X 为空时用 default
 [[ -d "$ZSH_CACHE_DIR" ]] || mkdir -p "$ZSH_CACHE_DIR"
 
 # 设置 compdump 路径（compinit 缓存文件）

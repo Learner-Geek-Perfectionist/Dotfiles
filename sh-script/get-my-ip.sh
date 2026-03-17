@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# 设置你的 ipinfo.io API Token
-API_TOKEN="ea27ab2f0f061a"
+# ipinfo.io API Token（从 age-tokens 加密环境变量读取）
+API_TOKEN="${IPINFO_TOKEN:?请先运行 edit-tokens 设置 IPINFO_TOKEN}"
 
 # 🌐 获取公网IP
 echo -e "\033[1;34m🌐 Fetching public IP address...\033[0m"

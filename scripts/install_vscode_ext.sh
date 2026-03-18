@@ -70,6 +70,31 @@ CURSOR_VSIX=(
 	"huacnlee.autocorrect"
 )
 
+# GitHub Release 分发的私有 VSIX 插件（owner/repo:extension-id）
+GITHUB_VSIX=(
+	"Learner-Geek-Perfectionist/claude-code-ref:xin.claude-code-ref"
+)
+
+# 从 GitHub Release 下载最新 VSIX 并安装
+# 参数: $1 = "owner/repo" $2 = editor command (code/cursor)
+install_vsix_from_github() {
+	local repo="$1" cmd="$2"
+	local name="${repo#*/}"
+
+	local tag
+	tag=$(github_latest_release "$repo") || return 1
+
+	local vsix_name="${name}-${tag#v}.vsix"
+	local tmp="/tmp/$vsix_name"
+	local url="https://github.com/${repo}/releases/download/${tag}/${vsix_name}"
+
+	curl -fsSL "$url" -o "$tmp" || return 1
+	"$cmd" --install-extension "$tmp" --force &>/dev/null
+	local rc=$?
+	rm -f "$tmp"
+	return $rc
+}
+
 # 从 VS Code Marketplace 下载 VSIX 并安装
 install_vsix_from_marketplace() {
 	local ext="$1" cmd="$2"
@@ -152,6 +177,11 @@ for entry in "${editors[@]}"; do
 				all_exts+=("$ext|cursor-vsix")
 			done
 		fi
+		# GitHub Release 分发的 VSIX（VSCode 和 Cursor 通用）
+		for item in "${GITHUB_VSIX[@]}"; do
+			local ext_id="${item#*:}"
+			all_exts+=("$ext_id|github-vsix:${item%%:*}")
+		done
 	fi
 
 	# 分类：已安装、待安装
@@ -178,7 +208,10 @@ for entry in "${editors[@]}"; do
 			((++count))
 			printf "\r${CYAN}[%d/%d]${NC} 安装中: ${YELLOW}%s${NC}%-20s" "$count" "$total" "$ext" ""
 			# 尝试安装
-			if [[ "$tag" == "cursor-vsix" ]]; then
+			if [[ "$tag" == github-vsix:* ]]; then
+				local repo="${tag#github-vsix:}"
+				install_vsix_from_github "$repo" "$cmd"
+			elif [[ "$tag" == "cursor-vsix" ]]; then
 				install_vsix_from_marketplace "$ext" "$cmd"
 			else
 				"$cmd" --install-extension "$ext" --force &>/dev/null

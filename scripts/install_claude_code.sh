@@ -622,6 +622,86 @@ enable_plugins() {
 }
 
 # ========================================
+# MCP Servers 配置
+# ========================================
+
+# 简单 MCP Servers（name:npx-package 格式，用 claude mcp add 安装）
+MCP_SERVERS=(
+	"tavily:tavily-mcp"
+	"fetch:@kazuph/mcp-fetch"
+)
+
+# 安装 MCP Servers
+install_mcp_servers() {
+	print_info "配置 MCP Servers..."
+
+	# 缓存 mcp list 输出，避免重复调用 claude CLI
+	local mcp_list
+	mcp_list="$(claude mcp list 2>/dev/null)"
+
+	local installed=0 skipped=0 failed=0
+
+	# 1) 简单 MCP Servers（数据驱动）
+	for entry in "${MCP_SERVERS[@]}"; do
+		local name="${entry%%:*}"
+		local package="${entry#*:}"
+
+		if echo "$mcp_list" | grep -q "^  $name:"; then
+			skipped=$((skipped + 1))
+			continue
+		fi
+
+		local output
+		if output="$(claude mcp add "$name" --scope user -- npx -y "$package" 2>&1)"; then
+			print_success "MCP: $name"
+			installed=$((installed + 1))
+		else
+			print_warn "MCP $name 安装失败: $output"
+			failed=$((failed + 1))
+		fi
+	done
+
+	# TAVILY_API_KEY 通过 age-tokens 注入 shell 环境，MCP 子进程自动继承
+	if echo "$mcp_list" | grep -q "^  tavily:" || [[ $installed -gt 0 ]]; then
+		[[ -z "$TAVILY_API_KEY" ]] && print_warn "提醒: 请通过 edit-tokens 添加 TAVILY_API_KEY"
+	fi
+
+	# 2) Open-WebSearch MCP（需要 claude mcp add-json，有自定义 env）
+	if echo "$mcp_list" | grep -q "^  open-websearch:"; then
+		skipped=$((skipped + 1))
+	else
+		local output
+		if output="$(claude mcp add-json open-websearch '{
+			"type": "stdio",
+			"command": "npx",
+			"args": ["-y", "open-websearch@latest"],
+			"env": {
+				"MODE": "stdio",
+				"DEFAULT_SEARCH_ENGINE": "duckduckgo",
+				"ALLOWED_SEARCH_ENGINES": "bing,baidu,duckduckgo,csdn,juejin",
+				"USE_PROXY": "true",
+				"PROXY_URL": "http://127.0.0.1:7890"
+			}
+		}' --scope user 2>&1)"; then
+			print_success "MCP: open-websearch"
+			installed=$((installed + 1))
+		else
+			print_warn "MCP open-websearch 安装失败: $output"
+			failed=$((failed + 1))
+		fi
+	fi
+
+	# 汇总
+	if [[ $failed -eq 0 && $skipped -gt 0 && $installed -eq 0 ]]; then
+		print_success "所有 MCP Servers 已配置 ($((installed + skipped)) 个)"
+	elif [[ $installed -gt 0 ]]; then
+		print_success "MCP Servers: 新增 $installed, 跳过 $skipped, 失败 $failed"
+	elif [[ $failed -gt 0 ]]; then
+		print_warn "MCP Servers: $failed 个安装失败"
+	fi
+}
+
+# ========================================
 # 主函数
 # ========================================
 main() {
@@ -669,6 +749,9 @@ main() {
 	# 7) 安装 Skill 插件
 	install_plugins "Skill " "${SKILL_PLUGINS[@]}"
 	enable_plugins "${SKILL_PLUGINS[@]}"
+
+	# 8) 配置 MCP Servers（搜索增强：Tavily + Fetch + Open-WebSearch）
+	install_mcp_servers
 
 	print_success "Claude Code 配置完成"
 	_echo_blank

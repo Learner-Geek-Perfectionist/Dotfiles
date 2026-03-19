@@ -1,5 +1,5 @@
 # ============================================
-# 终端环境初始化
+# 终端环境
 # ============================================
 
 # 确保 TERM 有值（空或 dumb 时设置默认值）
@@ -20,31 +20,38 @@ if [[ -n "$SSH_CONNECTION" ]]; then
     export LC_ALL="${LC_ALL:-en_US.UTF-8}"
 fi
 
-# ripgrep 全局配置（忽略文件路径须由 shell 展开，不能放 config 里）
-export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/config"
-alias rg='command rg --ignore-file "$HOME/.config/ripgrep/ignore"'
+# ============================================
+# Shell 基础配置
+# ============================================
 
 # 重设 HIST*（macOS /etc/zshrc 会覆盖 .zshenv 的值，必须在 .zshrc 中再次设置）
 HISTFILE="$ZSH_CACHE_DIR/.zsh_history"
 HISTSIZE=10000000
 SAVEHIST=10000000
+
+setopt interactive_comments # 注释行不报错
+setopt no_nomatch           # 通配符 * 匹配不到文件也不报错
+setopt nocaseglob           # 路径名匹配时忽略大小写
+setopt notify               # 后台任务完成后通知
+setopt no_beep              # 关闭终端提示音
+setopt no_bang_hist         # 不对双引号当中的叹号做历史记录拓展 "!"
+setopt GLOB_DOTS            # 文件名展开（globbing）包括以点(dot)开始的文件
+setopt rm_star_silent       # 取消 zsh 的安全防护功能（默认对 rm -rf ./* 删除操作触发）
+
+# ============================================
+# 插件加载
+# ============================================
 [[ -f "${HOME}/.config/zsh/plugins/platform.zsh" ]] && source "${HOME}/.config/zsh/plugins/platform.zsh"
 [[ -f "${HOME}/.config/zsh/plugins/zinit.zsh" ]] && source "${HOME}/.config/zsh/plugins/zinit.zsh"
 [[ -f "${HOME}/.config/zsh/plugins/double-esc-clear.zsh" ]] && source "${HOME}/.config/zsh/plugins/double-esc-clear.zsh"
 
 # ============================================
-# PATH 管理
+# PATH 与平台配置
 # ============================================
 
-# 自动去重，无需手动检查
 typeset -U path  # -U = unique，path 数组自动去重（等效于 PATH 去重）
 
-# ============================================
-# 平台特定配置
-# ============================================
-
 if [[ "$OSTYPE" == darwin* ]]; then
-	# macOS specific settings
 	path=(
 		"$HOME/.local/bin"
 		"$HOME/.cargo/bin"
@@ -93,15 +100,16 @@ else
 	[[ -d "/opt/orbstack-guest" ]] && (( $+commands[open] )) && alias open='open -R'  # $+commands[open]: open 命令是否可用
 fi
 
+# ============================================
+# 凭证与密钥
+# ============================================
+
 # age 加密的 tokens（必须在 PATH 设置之后，因为 age 在 pixi 环境中）
 [[ -f "${HOME}/.config/zsh/plugins/age-tokens.zsh" ]] && source "${HOME}/.config/zsh/plugins/age-tokens.zsh"
 
 # SSH Agent (keychain)
-# ============================================
 # 仅本地运行：keychain 管理 agent，远程依赖 ForwardAgent 转发
 # 测试：ssh-add -l && ssh -T git@github.com
-# ============================================
-
 _kc_cache="$ZSH_CACHE_DIR/keychain-env.zsh"
 if [[ -z "$SSH_CONNECTION" && -f "$HOME/.ssh/id_ed25519" ]] && (( $+commands[keychain] )); then  # $+commands[]: PATH 中是否存在
 	if [[ -f "$_kc_cache" ]] && source "$_kc_cache" 2>/dev/null && kill -0 "$SSH_AGENT_PID" 2>/dev/null; then
@@ -114,20 +122,13 @@ fi
 unset _kc_cache
 
 # ============================================
-# Zsh 选项
+# 工具配置（ripgrep / fzf / fd）
 # ============================================
-setopt interactive_comments # 注释行不报错
-setopt no_nomatch           # 通配符 * 匹配不到文件也不报错
-setopt nocaseglob           # 路径名匹配时忽略大小写
-setopt notify               # 后台任务完成后通知
-setopt no_beep              # 关闭终端提示音
-setopt no_bang_hist         # 不对双引号当中的叹号做历史记录拓展 "!"
-setopt GLOB_DOTS            # 文件名展开（globbing）包括以点(dot)开始的文件
-setopt rm_star_silent       # 取消 zsh 的安全防护功能（默认对 rm -rf ./* 删除操作触发）
 
-# ============================================
-# Fzf 配置
-# ============================================
+# ripgrep 全局配置（忽略文件路径须由 shell 展开，不能放 config 里）
+export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/config"
+alias rg='command rg --ignore-file "$HOME/.config/ripgrep/ignore"'
+
 # 加载 fzf 快捷键（Ctrl+T, Ctrl+R, Alt+C），但保留 fzf-tab 的 Tab 补全
 if (( $+commands[fzf] )); then  # fzf 是否已安装
 	_fzf_cache="$ZSH_CACHE_DIR/fzf-keybindings.zsh"
@@ -142,35 +143,8 @@ if (( $+commands[fzf] )); then  # fzf 是否已安装
 	# 导致递归调用自身 → "job table full or recursion limit exceeded"。
 fi
 
-# ============================================
-# 命令增强
-# ============================================
-
-# bat 映射到 cat（仅当所有参数都是不含 ANSI 的普通文件时才用 bat，其余回退系统 cat）
-if (( $+commands[bat] )); then
-	cat() {
-		emulate -L zsh
-		(( $# )) || { command cat; return }
-		local f
-		for f in "$@"; do
-			# 有标志(-x/--x/-)、非普通文件、含 ANSI 转义 → 回退
-			[[ "$f" == -* || ! -f "$f" ]] \
-				|| LC_ALL=C command grep -q $'\x1b' -- "$f" 2>/dev/null \
-				&& { command cat "$@"; return }
-		done
-		command bat -- "$@"
-	}
-fi
-
-# tldr 替代 man（更简洁的命令手册）
-(( $+commands[tldr] )) && alias man='tldr'  # tldr 已安装则用它替代 man
-
 # fzf 默认选项：--exact 精确匹配（连续字符），搜索时加 ' 前缀可切换回模糊匹配
 export FZF_DEFAULT_OPTS='--no-mouse --exact --tac --preview "${HOME}/.config/zsh/fzf/fzf-preview.sh {}" --bind "shift-left:preview-page-up,shift-right:preview-page-down"'
-
-# ============================================
-# fd 配置
-# ============================================
 
 # fd 基础参数（排除垃圾桶和系统目录）
 typeset -ga _fd_opts  # -g = 全局变量，-a = 数组类型
@@ -203,6 +177,29 @@ fzf() {
 		command fzf "$@"
 	fi
 }
+
+# ============================================
+# 命令增强
+# ============================================
+
+# bat 映射到 cat（仅当所有参数都是不含 ANSI 的普通文件时才用 bat，其余回退系统 cat）
+if (( $+commands[bat] )); then
+	cat() {
+		emulate -L zsh
+		(( $# )) || { command cat; return }
+		local f
+		for f in "$@"; do
+			# 有标志(-x/--x/-)、非普通文件、含 ANSI 转义 → 回退
+			[[ "$f" == -* || ! -f "$f" ]] \
+				|| LC_ALL=C command grep -q $'\x1b' -- "$f" 2>/dev/null \
+				&& { command cat "$@"; return }
+		done
+		command bat -- "$@"
+	}
+fi
+
+# tldr 替代 man（更简洁的命令手册）
+(( $+commands[tldr] )) && alias man='tldr'  # tldr 已安装则用它替代 man
 
 # ============================================
 # 别名定义

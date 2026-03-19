@@ -20,10 +20,36 @@
 **/WebKitCache/**
 **/clipboard.paste/**
 
-# IDE 历史记录
+# IDE 历史记录与索引
 **/Application Support/Cursor/User/History/**
 **/Application Support/Code/User/History/**
 
-# 垃圾桶
+# 包管理器缓存（第三方依赖，非用户代码）
+**/go/pkg/mod/**
+**/node_modules/**
+**/.gradle/caches/**
+**/.m2/repository/**
+**/.nuget/packages/**
+**/anaconda3/pkgs/**
+**/anaconda3/lib/python*/site-packages/**
+**/.conda/pkgs/**
+**/vendor/bundle/**
+**/__pycache__/**
+
+# 构建产物
+**/build/classes/**
+**/build/generated/**
+**/build/intermediates/**
+**/build/outputs/**
+**/.build/**
+**/DerivedData/**
+**/cmake-build-*/**
+
+# 虚拟机 / 容器文件系统
+**/OrbStack/**
+**/Parallels/**
+
+# 下载 / 垃圾桶
+**/Downloads/**
 **/.Trash/**
 **/.local/share/Trash/**

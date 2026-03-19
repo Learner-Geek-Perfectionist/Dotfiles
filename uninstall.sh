@@ -30,6 +30,7 @@ fi
 
 REMOVE_PIXI=false
 REMOVE_DOTFILES=false
+REMOVE_CLAUDE=false
 FORCE=false
 
 show_help() {
@@ -39,7 +40,8 @@ show_help() {
 选项:
     --pixi       仅删除 Pixi (~/.pixi 等)
     --dotfiles   仅删除 Dotfiles 配置
-    --all        同时删除两者
+    --claude     仅删除 Claude Code 配置（插件/Skill/Hook/LSP/MCP）
+    --all        同时删除三者
     -f, --force  跳过确认
     -h, --help   显示帮助
 EOF
@@ -105,6 +107,70 @@ remove_pixi() {
 	rm_path ~/pixi.lock
 
 	print_success "Pixi 及所有工具已删除"
+}
+
+remove_claude() {
+	print_info "🤖 删除 Claude Code 配置（由 install_claude_code.sh 安装的内容）..."
+
+	# 1) study-master Skill + Hooks
+	rm_path ~/.claude/skills/study-master
+	rm_path ~/.claude/hooks/check-study_master.sh
+
+	# 清理 settings.json 中的 study-master hooks
+	local settings_file="$HOME/.claude/settings.json"
+	if [[ -f "$settings_file" ]] && command -v jq &>/dev/null; then
+		local hook_cmd='bash "$HOME/.claude/hooks/check-study_master.sh"'
+		jq --arg cmd "$hook_cmd" '
+			if .hooks.PostToolUse then
+				.hooks.PostToolUse |= map(
+					.hooks |= map(select(.command != $cmd))
+				) |
+				.hooks.PostToolUse |= map(select(.hooks | length > 0)) |
+				if (.hooks.PostToolUse | length) == 0 then del(.hooks.PostToolUse) else . end |
+				if (.hooks | length) == 0 then del(.hooks) else . end
+			else . end
+		' "$settings_file" > "$settings_file.tmp" && mv "$settings_file.tmp" "$settings_file"
+		print_dim "✓ 已清理 settings.json 中的 hooks"
+
+		# 清理 enabledPlugins
+		jq 'del(.enabledPlugins)' "$settings_file" > "$settings_file.tmp" && \
+			mv "$settings_file.tmp" "$settings_file"
+		print_dim "✓ 已清理 settings.json 中的 enabledPlugins"
+
+		# 清理 extraKnownMarketplaces
+		jq 'del(.extraKnownMarketplaces)' "$settings_file" > "$settings_file.tmp" && \
+			mv "$settings_file.tmp" "$settings_file"
+		print_dim "✓ 已清理 settings.json 中的 extraKnownMarketplaces"
+
+		# 清理 statusLine
+		jq 'del(.statusLine)' "$settings_file" > "$settings_file.tmp" && \
+			mv "$settings_file.tmp" "$settings_file"
+		print_dim "✓ 已清理 settings.json 中的 statusLine"
+	fi
+
+	# 2) claude-hud 配置
+	rm_path ~/.claude/plugins/claude-hud/config.json
+
+	# 3) 旧 statusline.sh
+	rm_path ~/.claude/statusline.sh
+
+	# 4) LSP Servers（由 install_claude_code.sh 安装）
+	rm_path ~/.local/share/lsp
+	for bin in rust-analyzer kotlin-language-server lua-language-server jdtls; do
+		rm_path ~/.local/bin/"$bin"
+	done
+
+	# 5) MCP Servers（通过 claude CLI 移除）
+	if command -v claude &>/dev/null; then
+		for mcp in tavily fetch open-websearch; do
+			if claude mcp list 2>/dev/null | grep -q "^  $mcp:"; then
+				claude mcp remove "$mcp" --scope user &>/dev/null && print_dim "✓ MCP: $mcp 已移除"
+			fi
+		done
+	fi
+
+	print_success "Claude Code 配置已清理"
+	print_dim "💡 Claude Code CLI 本身未卸载，如需卸载请运行: npm uninstall -g @anthropic-ai/claude-code"
 }
 
 remove_dotfiles() {
@@ -188,9 +254,11 @@ while (($#)); do
 	case "$1" in
 	--pixi) REMOVE_PIXI=true ;;
 	--dotfiles) REMOVE_DOTFILES=true ;;
+	--claude) REMOVE_CLAUDE=true ;;
 	--all)
 		REMOVE_PIXI=true
 		REMOVE_DOTFILES=true
+		REMOVE_CLAUDE=true
 		;;
 	-f | --force) FORCE=true ;;
 	-h | --help)
@@ -209,15 +277,17 @@ done
 setup_logging
 
 # 交互菜单
-if [[ "$REMOVE_PIXI" == "false" && "$REMOVE_DOTFILES" == "false" ]]; then
-	echo -e "\n请选择:\n  1) Pixi\n  2) Dotfiles\n  3) 全部\n  4) 退出"
-	read -r -p "输入 1-4: " c
+if [[ "$REMOVE_PIXI" == "false" && "$REMOVE_DOTFILES" == "false" && "$REMOVE_CLAUDE" == "false" ]]; then
+	echo -e "\n请选择:\n  1) Pixi\n  2) Dotfiles\n  3) Claude Code\n  4) 全部\n  5) 退出"
+	read -r -p "输入 1-5: " c
 	case "$c" in
 	1) REMOVE_PIXI=true ;;
 	2) REMOVE_DOTFILES=true ;;
-	3)
+	3) REMOVE_CLAUDE=true ;;
+	4)
 		REMOVE_PIXI=true
 		REMOVE_DOTFILES=true
+		REMOVE_CLAUDE=true
 		;;
 	*) exit 0 ;;
 	esac
@@ -226,6 +296,7 @@ fi
 # 执行删除
 [[ "$REMOVE_PIXI" == "true" ]] && confirm "确认删除 Pixi?" && remove_pixi
 [[ "$REMOVE_DOTFILES" == "true" ]] && confirm "确认删除 Dotfiles?" && remove_dotfiles
+[[ "$REMOVE_CLAUDE" == "true" ]] && confirm "确认删除 Claude Code 配置?" && remove_claude
 
 _echo_blank
 print_success "卸载完成！"

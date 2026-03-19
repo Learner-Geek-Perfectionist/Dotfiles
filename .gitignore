@@ -98,7 +98,6 @@ tmp/
 /examples/hello_world/build
 dist/
 credentials.json
-config.json
 
 # Ignore specific config files #
 ################################

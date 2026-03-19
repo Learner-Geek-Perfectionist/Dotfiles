@@ -719,6 +719,16 @@ setup_claude_hud() {
 		return 0
 	fi
 
+	# 部署 HUD 显示偏好（从 Dotfiles 复制，开启默认关闭的显示项）
+	local hud_config_src="$SCRIPT_DIR/../.claude/plugins/claude-hud/config.json"
+	local hud_config_dir="$HOME/.claude/plugins/claude-hud"
+	local hud_config="$hud_config_dir/config.json"
+	if [[ -f "$hud_config_src" && ! -f "$hud_config" ]]; then
+		mkdir -p "$hud_config_dir"
+		cp "$hud_config_src" "$hud_config"
+		print_success "claude-hud config.json 已部署"
+	fi
+
 	# 检查是否已经配置为 claude-hud（避免重复）
 	if [[ -f "$settings_file" ]] && grep -q "claude-hud" "$settings_file" 2>/dev/null && \
 		jq -e '.statusLine.command | test("claude-hud")' "$settings_file" &>/dev/null; then

@@ -12,7 +12,7 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 input="$(cat)"
 
 # 提取 file_path
-file_path="$(echo "$input" | jq -r '.tool_input.file_path // empty')"
+file_path="$(echo "$input" | jq -r '.tool_input.file_path // empty' 2>/dev/null)" || true
 if [[ -z "$file_path" ]]; then
   exit 0
 fi

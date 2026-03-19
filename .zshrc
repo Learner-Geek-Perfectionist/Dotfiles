@@ -5,12 +5,6 @@
 # 确保 TERM 有值（空或 dumb 时设置默认值）
 [[ -z "$TERM" || "$TERM" == "dumb" ]] && export TERM="xterm-256color"
 
-# Kitty 终端 SSH 时回退 TERM（远程服务器可能没有 xterm-kitty terminfo）
-# 在 Kitty 终端中不需要 infocmp 检测；只有非 Kitty 环境且 TERM 为 xterm-kitty 时才回退
-if [[ "$TERM" == "xterm-kitty" && -z "$KITTY_WINDOW_ID" ]]; then
-	infocmp xterm-kitty &>/dev/null || export TERM="xterm-256color"
-fi
-
 # 在 kitty 终端中自动用 kitten ssh（自动传 terminfo + shell integration）
 [[ -n "$KITTY_WINDOW_ID" ]] && alias ssh='kitten ssh'
 

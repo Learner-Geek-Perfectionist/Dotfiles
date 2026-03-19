@@ -5,5 +5,18 @@
     "language": "中文",
     "alwaysThinkingEnabled": true,
     "skipDangerousModePermissionPrompt": true,
-    "effortLevel": "high"
+    "effortLevel": "high",
+    "hooks": {
+        "PostToolUse": [
+            {
+                "matcher": "Write|Edit",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": ".claude/hooks/check-file-deps.sh"
+                    }
+                ]
+            }
+        ]
+    }
 }

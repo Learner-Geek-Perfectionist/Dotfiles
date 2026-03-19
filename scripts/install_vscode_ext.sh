@@ -188,11 +188,15 @@ for entry in "${editors[@]}"; do
 	fi
 
 	# 分类：已安装、待安装
+	# GitHub VSIX 插件始终检查更新，不跳过
 	skipped=() to_install=()
 	for item in "${all_exts[@]}"; do
 		ext="${item%%|*}"
+		tag="${item#*|}"
 		ext_lower=$(echo "$ext" | tr '[:upper:]' '[:lower:]')
-		if echo "$installed" | grep -Fxq "$ext_lower"; then
+		if [[ "$tag" == github-vsix:* ]]; then
+			to_install+=("$item")
+		elif echo "$installed" | grep -Fxq "$ext_lower"; then
 			skipped+=("$ext")
 		else
 			to_install+=("$item")

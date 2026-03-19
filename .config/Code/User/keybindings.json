@@ -44,13 +44,6 @@
         "key": "cmd+k v",
         "command": "-markdown.showPreviewToSide",
         "when": "editorLangId == 'markdown'"
-    },
-
-    // ======================= Claude Code Reference =======================
-    // Alt+K: 复制文件路径和行号引用
-    {
-        "key": "alt+k",
-        "command": "claude-code-ref.copyReference"
     }
 ]
 

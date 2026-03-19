@@ -14,8 +14,8 @@
        source -> .config/zsh/plugins/platform.zsh    -- 平台特定 PATH 和别名
        source -> .config/zsh/plugins/zinit.zsh       -- Zinit 插件管理器
                     zinit 加载 -> p10k, fzf-tab, autosuggestions, syntax-hl
-       source -> .config/zsh/plugins/age-tokens.zsh  -- age 加密令牌（依赖 PATH 已就绪）
        source -> .config/zsh/plugins/double-esc-clear.zsh
+       source -> .config/zsh/plugins/age-tokens.zsh  -- age 加密令牌（依赖 PATH 已就绪）
        引用   -> .config/zsh/fzf/fzf-preview.sh      -- FZF_DEFAULT_OPTS 中引用
        引用   -> .config/ripgrep/config               -- $RIPGREP_CONFIG_PATH 引用
 
@@ -26,6 +26,7 @@ install.sh <-> uninstall.sh
   调用 -> scripts/install_vscode_ext.sh   -- VSCode/Cursor 插件安装
   调用 -> scripts/install_claude_code.sh  -- Claude Code LSP/MCP/Skills/Hooks
   调用 -> scripts/install_pixi.sh         -- Pixi 包管理器（Linux）
+  调用 -> scripts/install_kotlin_native.sh  -- Kotlin Native 工具链
   调用 -> scripts/macos_install.sh        -- Homebrew 包安装（macOS）
   依赖 -> lib/utils.sh                    -- 通用工具函数（颜色、日志、权限）
   依赖 -> lib/packages.sh                 -- Homebrew 包列表定义

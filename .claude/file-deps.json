@@ -1,0 +1,97 @@
+{
+  ".zshenv": [
+    ".zshrc",
+    ".zprofile",
+    ".config/zsh/plugins/zinit.zsh",
+    ".config/zsh/plugins/age-tokens.zsh"
+  ],
+  ".zprofile": [
+    ".zshenv"
+  ],
+  ".zshrc": [
+    ".zshenv",
+    ".config/zsh/plugins/platform.zsh",
+    ".config/zsh/plugins/zinit.zsh",
+    ".config/zsh/plugins/age-tokens.zsh",
+    ".config/zsh/plugins/double-esc-clear.zsh",
+    ".config/zsh/fzf/fzf-preview.sh",
+    ".config/ripgrep/config"
+  ],
+  ".config/zsh/plugins/zinit.zsh": [
+    ".zshrc",
+    ".config/zsh/.p10k.zsh"
+  ],
+  ".config/zsh/plugins/platform.zsh": [
+    ".zshrc"
+  ],
+  ".config/zsh/plugins/age-tokens.zsh": [
+    ".zshrc",
+    ".zshenv"
+  ],
+  "install.sh": [
+    "uninstall.sh",
+    "lib/utils.sh",
+    "lib/packages.sh",
+    "scripts/install_dotfiles.sh",
+    "scripts/install_vscode_ext.sh",
+    "scripts/install_claude_code.sh",
+    "scripts/install_pixi.sh",
+    "scripts/install_kotlin_native.sh",
+    "scripts/macos_install.sh"
+  ],
+  "uninstall.sh": [
+    "install.sh",
+    "lib/utils.sh"
+  ],
+  "lib/packages.sh": [
+    "install.sh",
+    "scripts/macos_install.sh"
+  ],
+  "lib/utils.sh": [
+    "install.sh",
+    "uninstall.sh"
+  ],
+  "scripts/install_dotfiles.sh": [
+    "install.sh"
+  ],
+  "scripts/install_vscode_ext.sh": [
+    "install.sh"
+  ],
+  "scripts/install_claude_code.sh": [
+    "install.sh"
+  ],
+  "scripts/install_pixi.sh": [
+    "install.sh",
+    "pixi.toml"
+  ],
+  "scripts/install_kotlin_native.sh": [
+    "install.sh"
+  ],
+  "scripts/macos_install.sh": [
+    "install.sh",
+    "lib/packages.sh"
+  ],
+  "pixi.toml": [
+    "scripts/install_pixi.sh",
+    ".envrc"
+  ],
+  ".config/Code/User/settings.json": [
+    ".config/Cursor/User/settings.json"
+  ],
+  ".config/Code/User/keybindings.json": [
+    ".config/Cursor/User/keybindings.json"
+  ],
+  ".config/Cursor/User/settings.json": [
+    ".config/Code/User/settings.json"
+  ],
+  ".config/Cursor/User/keybindings.json": [
+    ".config/Code/User/keybindings.json"
+  ],
+  ".config/ripgrep/config": [
+    ".zshrc",
+    ".config/ripgrep/ignore"
+  ],
+  ".config/ripgrep/ignore": [
+    ".config/ripgrep/config"
+  ]
+}

@@ -100,11 +100,22 @@ else
 	print_success "GUI 应用安装完成"
 fi
 
-# 5. 清理 Homebrew 缓存
+# 5. 配置 Homebrew 自动更新
+print_info "配置 Homebrew 自动更新..."
+
+brew tap | grep -q "homebrew/autoupdate" || brew tap homebrew/autoupdate
+if brew autoupdate status 2>/dev/null | grep -q "running"; then
+	print_success "Homebrew autoupdate 已在运行，跳过"
+else
+	brew autoupdate start 21600 --upgrade --greedy --cleanup
+	print_success "Homebrew autoupdate 已配置（每 6 小时自动更新）"
+fi
+
+# 6. 清理 Homebrew 缓存
 print_info "清理 Homebrew 缓存..."
 brew cleanup --prune=all
 
-# 6. 配置网络抓包工具权限
+# 7. 配置网络抓包工具权限
 print_info "配置网络工具权限..."
 
 if dscl . -read /Groups/access_bpf &>/dev/null; then

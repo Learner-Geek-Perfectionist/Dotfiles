@@ -241,6 +241,10 @@ remove_dotfiles() {
 		for p in ~/.config/karabiner ~/.hammerspoon; do
 			rm_path "$p"
 		done
+		# 停止 Homebrew autoupdate
+		if command -v brew &>/dev/null && brew commands 2>/dev/null | grep -q autoupdate; then
+			brew autoupdate delete &>/dev/null && print_dim "✓ Homebrew autoupdate 已停止并删除"
+		fi
 	else
 		# Linux: .config 路径
 		for p in ~/.config/{Code,Cursor}/User/{settings.json,keybindings.json}; do

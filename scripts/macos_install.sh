@@ -63,18 +63,42 @@ print_warn "提示: 建议开启代理以加速 Homebrew 下载"
 _echo_blank
 
 # 3. 安装 CLI 工具
-print_info "安装 CLI 工具..."
-brew install "${brew_formulas[@]}"
-print_success "CLI 工具安装完成"
+print_info "检查 CLI 工具..."
+
+installed_formulas=$(brew list --formula -1 2>/dev/null)
+missing_formulas=()
+for formula in "${brew_formulas[@]}"; do
+	grep -qix "$formula" <<< "$installed_formulas" || missing_formulas+=("$formula")
+done
+
+if (( ${#missing_formulas[@]} == 0 )); then
+	print_success "所有 CLI 工具已安装，跳过"
+else
+	print_info "安装 ${#missing_formulas[@]} 个缺失的 CLI 工具: ${missing_formulas[*]}"
+	brew install "${missing_formulas[@]}"
+	print_success "CLI 工具安装完成"
+fi
 
 # 4. 安装 GUI 应用
-print_info "安装 GUI 应用..."
+print_info "检查 GUI 应用..."
 
-# 添加第三方 tap
-brew tap mihomo-party-org/mihomo-party
+# 添加第三方 tap（已 tap 则跳过 git fetch）
+brew tap | grep -q "mihomo-party-org/mihomo-party" || brew tap mihomo-party-org/mihomo-party
 
-brew install --cask "${brew_casks[@]}"
-print_success "GUI 应用安装完成"
+# 一次性获取已安装列表，本地比对找出缺失项
+installed_casks=$(brew list --cask -1 2>/dev/null)
+missing_casks=()
+for cask in "${brew_casks[@]}"; do
+	grep -qix "$cask" <<< "$installed_casks" || missing_casks+=("$cask")
+done
+
+if (( ${#missing_casks[@]} == 0 )); then
+	print_success "所有 GUI 应用已安装，跳过"
+else
+	print_info "安装 ${#missing_casks[@]} 个缺失的 GUI 应用: ${missing_casks[*]}"
+	brew install --cask "${missing_casks[@]}"
+	print_success "GUI 应用安装完成"
+fi
 
 # 5. 清理 Homebrew 缓存
 print_info "清理 Homebrew 缓存..."

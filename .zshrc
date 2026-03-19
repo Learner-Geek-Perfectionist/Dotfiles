@@ -24,10 +24,7 @@ fi
 export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/config"
 alias rg='command rg --ignore-file "$HOME/.config/ripgrep/ignore"'
 
-# 让 p10k instant prompt / 补全尽早生效
-export ZSH_COMPDUMP="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/.zcompdump"
-
-# 重设 HIST*（/etc/zshrc 会覆盖 .zshenv 的值，必须在 .zshrc 中再次设置）
+# 重设 HIST*（macOS /etc/zshrc 会覆盖 .zshenv 的值，必须在 .zshrc 中再次设置）
 HISTFILE="$ZSH_CACHE_DIR/.zsh_history"
 HISTSIZE=10000000
 SAVEHIST=10000000
@@ -149,39 +146,18 @@ fi
 # 命令增强
 # ============================================
 
-# bat 映射到 cat
-if (( $+commands[bat] )); then  # bat 是否已安装
-	# cat：默认用 bat；若文件本身包含 ANSI 转义序列(ESC=0x1b)，则回退到系统 cat 以便终端渲染颜色
+# bat 映射到 cat（仅当所有参数都是不含 ANSI 的普通文件时才用 bat，其余回退系统 cat）
+if (( $+commands[bat] )); then
 	cat() {
-		emulate -L zsh  # 在函数内重置为纯净 zsh 默认选项（-L = 仅限本函数作用域）
-		setopt local_options no_aliases
-
-		# 无参数/stdin：保持原生 cat 行为
-		if (( $# == 0 )); then
-			command cat
-			return $?
-		fi
-
-		# 对 cat 的参数/标准输入等情况，不做 bat 兼容，直接走系统 cat
-		local a
-		for a in "$@"; do
-			if [[ "$a" == "-" || "$a" == --* || "$a" == -* ]]; then
-				command cat "$@"
-				return $?
-			fi
-		done
-
-		# 若任一文件包含 ESC，则回退到系统 cat（让 ANSI 序列由终端解释渲染）
+		emulate -L zsh
+		(( $# )) || { command cat; return }
 		local f
 		for f in "$@"; do
-			[[ -f "$f" ]] || { command cat "$@"; return $?; }
-			if LC_ALL=C command grep -q $'\x1b' -- "$f" 2>/dev/null; then
-				command cat "$@"
-				return $?
-			fi
+			# 有标志(-x/--x/-)、非普通文件、含 ANSI 转义 → 回退
+			[[ "$f" == -* || ! -f "$f" ]] \
+				|| LC_ALL=C command grep -q $'\x1b' -- "$f" 2>/dev/null \
+				&& { command cat "$@"; return }
 		done
-
-		# 普通文本：继续用 bat
 		command bat -- "$@"
 	}
 fi

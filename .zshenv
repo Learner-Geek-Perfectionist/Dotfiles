@@ -8,13 +8,10 @@ export skip_global_compinit=1
 export ZSH_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/zsh"  # ${X:-default}: X 为空时用 default
 [[ -d "$ZSH_CACHE_DIR" ]] || mkdir -p "$ZSH_CACHE_DIR"
 
-# 设置 compdump 路径（compinit 缓存文件）
+# compdump 路径（compinit 缓存文件；/etc/zshrc 不会覆盖此值，设一次即可）
 export ZSH_COMPDUMP="$ZSH_CACHE_DIR/.zcompdump"
-# 设置历史文件路径（覆盖 /etc/zshrc 中的设置）
-export HISTFILE="$ZSH_CACHE_DIR/.zsh_history"
-# 让 history 命令的最大容量为无限
-export HISTSIZE=10000000
-export SAVEHIST=10000000
+# HISTFILE / HISTSIZE / SAVEHIST 在 .zshrc 中设置
+# （macOS /etc/zshrc 会覆盖 .zshenv 的值，放这里无效）
 
 # 记录命令执行时间戳
 setopt EXTENDED_HISTORY

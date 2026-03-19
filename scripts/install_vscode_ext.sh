@@ -153,7 +153,10 @@ for entry in "${editors[@]}"; do
 	print_info ">>> $type ($cmd)"
 
 	# 获取已安装的插件（转小写比较）
-	installed=$("$cmd" --list-extensions 2>/dev/null | tr '[:upper:]' '[:lower:]')
+	if ! installed=$("$cmd" --list-extensions 2>/dev/null | tr '[:upper:]' '[:lower:]'); then
+		print_warn "$type ($cmd) 无法获取插件列表，跳过"
+		continue
+	fi
 
 	# 收集要安装的插件：ext|tag (tag: common/vscode/cursor/cursor-vsix)
 	all_exts=()

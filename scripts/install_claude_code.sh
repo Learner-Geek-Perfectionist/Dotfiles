@@ -796,7 +796,7 @@ install_mcp_servers() {
 		local name="${entry%%:*}"
 		local package="${entry#*:}"
 
-		if echo "$mcp_list" | grep -q "^  $name:"; then
+		if echo "$mcp_list" | grep -q "$name:"; then
 			skipped=$((skipped + 1))
 			continue
 		fi
@@ -806,18 +806,23 @@ install_mcp_servers() {
 			print_success "MCP: $name"
 			installed=$((installed + 1))
 		else
-			print_warn "MCP $name 安装失败: $output"
-			failed=$((failed + 1))
+			# "already exists" 视为已安装（兜底 mcp list 格式变更时的检测失败）
+			if [[ "$output" == *"already exists"* ]]; then
+				skipped=$((skipped + 1))
+			else
+				print_warn "MCP $name 安装失败: $output"
+				failed=$((failed + 1))
+			fi
 		fi
 	done
 
 	# TAVILY_API_KEY 通过 age-tokens 注入 shell 环境，MCP 子进程自动继承
-	if echo "$mcp_list" | grep -q "^  tavily:" || [[ $installed -gt 0 ]]; then
+	if echo "$mcp_list" | grep -q "tavily:" || [[ $installed -gt 0 ]]; then
 		[[ -z "$TAVILY_API_KEY" ]] && print_warn "提醒: 请通过 edit-tokens 添加 TAVILY_API_KEY"
 	fi
 
 	# 2) Open-WebSearch MCP（需要 claude mcp add-json，有自定义 env）
-	if echo "$mcp_list" | grep -q "^  open-websearch:"; then
+	if echo "$mcp_list" | grep -q "open-websearch:"; then
 		skipped=$((skipped + 1))
 	else
 		local output
@@ -836,8 +841,12 @@ install_mcp_servers() {
 			print_success "MCP: open-websearch"
 			installed=$((installed + 1))
 		else
-			print_warn "MCP open-websearch 安装失败: $output"
-			failed=$((failed + 1))
+			if [[ "$output" == *"already exists"* ]]; then
+				skipped=$((skipped + 1))
+			else
+				print_warn "MCP open-websearch 安装失败: $output"
+				failed=$((failed + 1))
+			fi
 		fi
 	fi
 

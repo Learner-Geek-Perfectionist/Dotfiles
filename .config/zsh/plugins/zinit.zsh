@@ -115,6 +115,13 @@ zinit light Aloxaf/fzf-tab
 
 # ── wait'0c'：功能插件层 ──
 
+# OMZP::git 的别名（ggpush, gpsup 等）依赖此函数，原定义在 OMZL::git.zsh 中
+git_current_branch() {
+	local ref
+	ref=$(command git symbolic-ref --quiet HEAD 2>/dev/null) || return
+	echo ${ref#refs/heads/}
+}
+
 _ice wait'0c'
 zinit snippet OMZP::git/git.plugin.zsh
 

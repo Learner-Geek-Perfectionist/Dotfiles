@@ -108,8 +108,6 @@ main() {
 		fi
 		print_success "~/.claude/settings.json"
 	fi
-	copy_path ".claude/statusline.sh" ".claude/statusline.sh"
-
 	# 其它文件
 	copy_path ".ssh/config" ".ssh/config"
 	# Linux: 安装 keychain（SSH agent 管理器，纯 shell 脚本）
@@ -129,7 +127,6 @@ main() {
 	[[ -d "$HOME/.ssh" ]] && chmod 700 "$HOME/.ssh" && find "$HOME/.ssh" -maxdepth 1 -type f -exec chmod 600 {} + 2>/dev/null
 	[[ -f "$HOME/.config/zsh/fzf/fzf-preview.sh" ]] && chmod +x "$HOME/.config/zsh/fzf/fzf-preview.sh"
 	[[ -d "$HOME/sh-script" ]] && chmod +x "$HOME/sh-script"/*.sh 2>/dev/null
-	[[ -f "$HOME/.claude/statusline.sh" ]] && chmod +x "$HOME/.claude/statusline.sh"
 
 	# 安装 zinit 插件
 	_echo_blank

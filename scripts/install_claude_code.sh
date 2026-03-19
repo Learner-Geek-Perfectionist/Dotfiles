@@ -4,6 +4,7 @@
 # 2) 安装 Claude Code CLI（原生安装器）
 # 3) 添加插件 marketplace
 # 4) 安装 LSP 插件和 skill 插件
+# 5) 安装独立 Skill（study-master 等，在线 clone 安装）
 #
 # macOS 通过 brew cask 安装 CLI（见 lib/packages.sh），此脚本仅负责 Linux 安装 + 全平台插件配置
 
@@ -33,6 +34,7 @@ MARKETPLACES=(
 	anthropics/claude-plugins-official
 	anthropics/skills
 	obra/superpowers-marketplace
+	jarrodwatts/claude-hud
 )
 
 # LSP 插件 (plugin@marketplace)
@@ -55,6 +57,7 @@ TOOL_PLUGINS=(
 	github@claude-plugins-official
 	commit-commands@claude-plugins-official
 	code-simplifier@claude-plugins-official
+	claude-hud@claude-hud
 )
 
 # Skill 插件 (plugin@marketplace)
@@ -622,6 +625,143 @@ enable_plugins() {
 }
 
 # ========================================
+# study-master Skill 安装（独立 GitHub 仓库）
+# ========================================
+
+# 在线 clone 仓库，手动部署文件并注册 hooks
+# 不使用上游 install.sh（其 hook 注册路径和格式有误）
+install_study_master_skill() {
+	local repo="Learner-Geek-Perfectionist/claude-code-study-skills"
+	local skill_dir="$HOME/.claude/skills/study-master"
+	local hooks_dir="$HOME/.claude/hooks"
+	local settings_file="$HOME/.claude/settings.json"
+	local hook_cmd='bash "$HOME/.claude/hooks/check-study_master.sh"'
+
+	if [[ -d "$skill_dir" && -f "$skill_dir/SKILL.md" ]]; then
+		print_success "study-master Skill 已安装"
+		return 0
+	fi
+
+	print_info "安装 study-master Skill..."
+
+	# 1) Clone 仓库
+	local tmp_dir
+	tmp_dir=$(mktemp -d)
+
+	if ! git clone --depth 1 "https://github.com/${repo}.git" "$tmp_dir" &>/dev/null; then
+		print_warn "study-master: clone 失败"
+		rm -rf "$tmp_dir"
+		return 0
+	fi
+
+	local src="$tmp_dir/study-master-skill"
+
+	# 2) 复制 Skill 文件
+	mkdir -p "$skill_dir"
+	cp "$src/SKILL.md" "$skill_dir/"
+	print_dim "  Skill: $skill_dir/SKILL.md"
+
+	# 3) 复制 Hook 脚本
+	if [[ -d "$src/hooks" ]]; then
+		mkdir -p "$hooks_dir"
+		for file in "$src/hooks"/*; do
+			[[ -f "$file" ]] || continue
+			cp "$file" "$hooks_dir/"
+			chmod +x "$hooks_dir/$(basename "$file")"
+		done
+		print_dim "  Hooks: $(ls "$src/hooks" | tr '\n' ' ')"
+	fi
+
+	rm -rf "$tmp_dir"
+
+	# 4) 在 ~/.claude/settings.json 中注册 PostToolUse hooks（正确路径 + 正确格式）
+	if [[ -f "$settings_file" ]] && command -v jq &>/dev/null; then
+		for tool in Write Edit; do
+			# jq 一步完成：已存在则跳过，matcher 存在则追加 hook，否则新建 matcher
+			jq --arg tool "$tool" --arg cmd "$hook_cmd" '
+				.hooks //= {} |
+				.hooks.PostToolUse //= [] |
+				if (.hooks.PostToolUse | any(.matcher == $tool and (.hooks | any(.command == $cmd)))) then
+					.
+				elif (.hooks.PostToolUse | any(.matcher == $tool)) then
+					(.hooks.PostToolUse[] | select(.matcher == $tool)).hooks += [{"type":"command","command":$cmd,"timeout":10}]
+				else
+					.hooks.PostToolUse += [{"matcher":$tool,"hooks":[{"type":"command","command":$cmd,"timeout":10}]}]
+				end
+			' "$settings_file" > "$settings_file.tmp" && mv "$settings_file.tmp" "$settings_file"
+		done
+		print_dim "  Hooks 已注册到 ~/.claude/settings.json (Write + Edit)"
+	fi
+
+	# 5) 清理上游 install.sh 遗留的错误配置
+	local dead_settings="$HOME/.claude/settings/settings.json"
+	if [[ -f "$dead_settings" ]]; then
+		rm -f "$dead_settings"
+		rmdir "$HOME/.claude/settings" 2>/dev/null || true
+		print_dim "  已清理无效的 ~/.claude/settings/settings.json"
+	fi
+
+	print_success "study-master Skill 安装完成"
+}
+
+# ========================================
+# Claude HUD StatusLine 配置
+# ========================================
+
+# 等价于 /claude-hud:setup：检测 runtime → 生成动态命令 → 写入 settings.json
+setup_claude_hud() {
+	local settings_file="$HOME/.claude/settings.json"
+	local plugin_base="$HOME/.claude/plugins/cache/claude-hud/claude-hud"
+
+	# 检查插件是否已安装
+	if [[ ! -d "$plugin_base" ]]; then
+		print_warn "claude-hud 插件未安装，跳过 statusLine 配置"
+		return 0
+	fi
+
+	# 检查是否已经配置为 claude-hud（避免重复）
+	if [[ -f "$settings_file" ]] && grep -q "claude-hud" "$settings_file" 2>/dev/null && \
+		jq -e '.statusLine.command | test("claude-hud")' "$settings_file" &>/dev/null; then
+		print_success "claude-hud statusLine 已配置"
+		return 0
+	fi
+
+	# 检测 runtime（优先 bun，回退 node）
+	local runtime source
+	if command -v bun &>/dev/null; then
+		runtime="$(command -v bun)"
+		source="src/index.ts"
+	elif command -v node &>/dev/null; then
+		runtime="$(command -v node)"
+		source="dist/index.js"
+	else
+		print_warn "未找到 node 或 bun，跳过 claude-hud statusLine 配置"
+		return 0
+	fi
+
+	# 生成动态版本发现命令（与 /claude-hud:setup 一致）
+	local hud_cmd
+	hud_cmd="bash -c 'plugin_dir=\$(ls -d \"\$HOME\"/.claude/plugins/cache/claude-hud/claude-hud/*/ 2>/dev/null | awk -F/ '\"'\"'{ print \$(NF-1) \"\\t\" \$0 }'\"'\"' | sort -t. -k1,1n -k2,2n -k3,3n -k4,4n | tail -1 | cut -f2-); exec \"${runtime}\" \"\${plugin_dir}${source}\"'"
+
+	# 测试命令是否可用
+	local test_output
+	test_output=$(echo '{}' | eval "$hud_cmd" 2>&1) || true
+	if [[ -z "$test_output" ]]; then
+		print_warn "claude-hud 命令测试无输出，跳过（可在 Claude Code 中运行 /claude-hud:setup 手动配置）"
+		return 0
+	fi
+
+	# 写入 settings.json
+	if [[ -f "$settings_file" ]] && command -v jq &>/dev/null; then
+		jq --arg cmd "$hud_cmd" '.statusLine = {"type": "command", "command": $cmd}' \
+			"$settings_file" > "$settings_file.tmp" && mv "$settings_file.tmp" "$settings_file"
+		print_success "claude-hud statusLine 配置完成"
+	else
+		print_warn "无法写入 settings.json（文件不存在或缺少 jq）"
+	fi
+}
+
+# ========================================
 # MCP Servers 配置
 # ========================================
 
@@ -750,7 +890,13 @@ main() {
 	install_plugins "Skill " "${SKILL_PLUGINS[@]}"
 	enable_plugins "${SKILL_PLUGINS[@]}"
 
-	# 8) 配置 MCP Servers（搜索增强：Tavily + Fetch + Open-WebSearch）
+	# 8) 安装 study-master Skill（独立 GitHub 仓库，在线 clone 安装）
+	install_study_master_skill
+
+	# 9) 配置 claude-hud statusLine（等价于 /claude-hud:setup）
+	setup_claude_hud
+
+	# 10) 配置 MCP Servers（搜索增强：Tavily + Fetch + Open-WebSearch）
 	install_mcp_servers
 
 	print_success "Claude Code 配置完成"

@@ -9,9 +9,9 @@ ZINIT_HOME="${HOME}/.local/share/zinit/zinit.git"
 # ZINIT_SYNC=1 时同步加载（安装脚本用），否则使用 turbo 模式
 _ice() {
 	if [[ -n "$ZINIT_SYNC" ]]; then
-		zinit ice depth=1 "$@"
+		zinit ice depth=1 "${@:#wait*}"  # 同步模式：移除 wait 参数，其余保留
 	else
-		zinit ice wait lucid depth=1 "$@"  # wait = 延迟加载(turbo)，lucid = 不显示加载消息
+		zinit ice lucid depth=1 "$@"  # turbo 模式：wait 值由调用方指定
 	fi
 }
 
@@ -44,26 +44,12 @@ zinit light romkatv/powerlevel10k
 # 3.加载 p10k 主题的配置文件
 [[ ! -f ~/.config/zsh/.p10k.zsh ]] || source ~/.config/zsh/.p10k.zsh
 
-# General options for all plugins
-HYPHEN_INSENSITIVE='true'
-COMPLETION_WAITING_DOTS='true'
-
-# OMZ 精简插件配置（移除 clipboard/grep/completion/history/theme/colored-man-pages）
-# 保留：key-bindings, directories, git
-
-# key-bindings: 键盘快捷键
-_ice
-zinit snippet OMZL::key-bindings.zsh
-
-# directories: 目录导航（d / cd 增强）
-_ice atload'setopt no_auto_cd'
-zinit snippet OMZL::directories.zsh
-
-# git: git 别名和函数
-_ice
-zinit snippet OMZL::git.zsh
-_ice
-zinit snippet OMZP::git/git.plugin.zsh
+# 上下箭头：按已输入前缀搜索历史（替代 OMZL::key-bindings.zsh）
+autoload -Uz up-line-or-beginning-search down-line-or-beginning-search
+zle -N up-line-or-beginning-search
+zle -N down-line-or-beginning-search
+bindkey '^[[A' up-line-or-beginning-search
+bindkey '^[[B' down-line-or-beginning-search
 
 # 内联原 OMZL::history.zsh 的必要设置（HIST* 变量已在 .zshrc 开头重设）
 # setopt extended_history 已在 .zshenv 中设置，此处不重复
@@ -77,78 +63,68 @@ alias history='fc -l 1'
 # 内联原 OMZL::theme-and-appearance.zsh 的 eza 别名
 (( $+commands[eza] )) && alias ls="eza --icons -ha --time-style=iso"  # eza 已安装则替代 ls
 
-# 1.make sure fzf is installed
-# 2.fzf-tab needs to be loaded 「after」 compinit, but 「before」 plugins which will wrap widgets, such as zsh-autosuggestions or fast-syntax-highlighting
-# 3.Completions should be configured before compinit, as stated in the zsh-completions manual installation guide.
+# ============================================
+# Turbo 异步加载（prompt 显示后按优先级加载）
+# ============================================
+# 排序约束：
+#   0a: 补全定义 → 0b: compinit + fzf-tab → 0c: 功能插件 → 0d: autosuggestions
+#   F-Sy-H(0c) 必须在 autosuggestions(0d) 之前：
+#     F-Sy-H source 时绑定 widget 一次；autosuggestions 后加载直接包在外层，
+#     产生干净的 autosuggest → fsh → 原始 调用链，无冗余包装层。
 
-# 设置插件加载的选项，加载 fzf-tab 插件
-_ice atinit'
+# ── wait'0a'：补全定义层（为 compinit 准备 FPATH）──
+
+_ice wait'0a' as"completion"
+zinit snippet "$HOME/.config/zsh/fzf/_fzf"
+
+_ice wait'0a' blockf  # blockf: 阻止插件修改 FPATH（由 zinit 统一管理）
+zinit light zsh-users/zsh-completions
+
+# ── wait'0b'：补全系统激活 ──
+
+_ice wait'0b' atinit'
+    # 补全 matcher：移除 -_ 等价性，只保留大小写不敏感（修复 Fedora 兼容性）
+    zstyle ":completion:*" matcher-list "m:{[:lower:][:upper:]}={[:upper:][:lower:]}" "r:|=*" "l:|=* r:|=*"
     autoload -Uz compinit
     local zcd="${ZSH_COMPDUMP:-$HOME/.cache/zsh/.zcompdump}"
-    # 检查是否有 FPATH 目录比缓存更新
     local need_update=0
     if [[ -f "$zcd" ]]; then
-        for dir in ${(s.:.)FPATH}; do  # ${(s.:.)X}: 用冒号分割字符串为数组
+        for dir in ${(s.:.)FPATH}; do
             [[ -d "$dir" && "$dir" -nt "$zcd" ]] && { need_update=1; break }
         done
     fi
-    # 缓存不存在或过期时完整扫描，否则用快速模式
     if [[ ! -f "$zcd" || $need_update -eq 1 ]]; then
         compinit -d "$zcd"
     else
-        compinit -C -d "$zcd"  # -C = 跳过安全检查，直接用缓存（快速模式）
+        compinit -C -d "$zcd"
     fi
-    zicdreplay  # 回放 zinit 在 compinit 之前缓存的 compdef 调用
+    zicdreplay
+' atload'
+    zstyle ":fzf-tab:complete:_zlua:*" query-string input
+    zstyle ":fzf-tab:complete:kill:argument-rest" fzf-preview "ps -p \$word -o comm= 2>/dev/null"
+    zstyle ":fzf-tab:complete:kill:argument-rest" fzf-flags "--preview-window=down:15:wrap"
+    zstyle ":fzf-tab:complete:kill:*" popup-pad 0 3
+    zstyle ":fzf-tab:complete:cd:*" fzf-preview "eza -1 --color=always \$realpath"
+    zstyle ":fzf-tab:complete:cd:*" popup-pad 30 0
+    zstyle ":fzf-tab:complete:code:*" fzf-preview "eza -1 --color=always \$realpath"
+    zstyle ":fzf-tab:complete:code:*" popup-pad 30 0
+    zstyle ":fzf-tab:*" fzf-flags --color=bg+:23
+    zstyle ":fzf-tab:*" switch-group "<" ">"
 '
 zinit light Aloxaf/fzf-tab
 
-# 配置 fzf-tab
-zstyle ':fzf-tab:complete:_zlua:*' query-string input
-zstyle ':fzf-tab:complete:kill:argument-rest' fzf-preview 'ps -p $word -o comm= 2>/dev/null'
-zstyle ':fzf-tab:complete:kill:argument-rest' fzf-flags '--preview-window=down:15:wrap'
-zstyle ':fzf-tab:complete:kill:*' popup-pad 0 3
-zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --color=always $realpath'
-zstyle ':fzf-tab:complete:cd:*' popup-pad 30 0
-zstyle ':fzf-tab:complete:code:*' fzf-preview 'eza -1 --color=always $realpath'
-zstyle ':fzf-tab:complete:code:*' popup-pad 30 0
-zstyle ":fzf-tab:*" fzf-flags --color=bg+:23
-zstyle ':fzf-tab:*' switch-group '<' '>'
+# ── wait'0c'：功能插件层 ──
 
-# ============================================
-# 修复 Fedora zsh 补全兼容性问题
-# ============================================
-# 问题：输入 `fast<Tab>` 时自动变成 `fast-`，导致 `fastfetch` 不显示
-#
-# 根本原因：
-#   1. OMZL::completion.zsh 设置的 matcher-list 包含 `-_` 等价规则：
-#      'm:{[:lower:][:upper:]-_}={[:upper:][:lower:]_-}'
-#      这使得 `-` 和 `_` 被视为相同字符
-#
-#   2. Fedora 的 zsh 包中 `_path_commands` 函数是精简版（仅 4 行），
-#      而 Ubuntu 是完整版（65 行）。精简版在处理补全时，
-#      与 `-_` 等价规则结合会产生异常行为：
-#      - `fast` 匹配 `FAST_*` 变量（大小写不敏感 + `_`=`-`）
-#      - 补全系统认为 `fast-` 是"共同前缀"，自动插入 `-`
-#      - 导致 `fastfetch` 被过滤掉
-#
-# 解决方案：移除 `-_` 等价性，只保留大小写不敏感
-zstyle ':completion:*' matcher-list 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}' 'r:|=*' 'l:|=* r:|=*'
+_ice wait'0c'
+zinit snippet OMZP::git/git.plugin.zsh
 
-# 添加 _fzf 补全函数（使用本地文件）
-zinit ice as"completion"
-zinit snippet "$HOME/.config/zsh/fzf/_fzf"
-
-# zsh-completions 提供大量的补全定义
-_ice blockf  # blockf: 阻止插件修改 FPATH（由 zinit 统一管理）
-zinit light zsh-users/zsh-completions
-
-# autosuggestions，atload 用于保障启动 autosuggest 功能。
-_ice atload'!_zsh_autosuggest_start'  # atload'!func': 加载后执行 func，! = 追踪模式（支持 zinit 卸载回滚）
-zinit light zsh-users/zsh-autosuggestions
-
-# 必须在 zdharma-continuum/fast-syntax-highlighting 之前加载 autosuggestions，否则「粘贴代码」太亮了。
-_ice
+_ice wait'0c' atload'FAST_HIGHLIGHT[chroma-which]="→chroma/-precommand.ch"'
 zinit light zdharma-continuum/fast-syntax-highlighting
+
+# ── wait'0d'：自动建议（最外层 widget 包装）──
+
+_ice wait'0d' atload'!_zsh_autosuggest_start'
+zinit light zsh-users/zsh-autosuggestions
 
 # 清理：_ice 仅在 zinit.zsh 加载期间使用
 unfunction _ice  # 删除辅助函数，防止泄漏到用户的全局命名空间

@@ -182,7 +182,7 @@ for entry in "${editors[@]}"; do
 		fi
 		# GitHub Release 分发的 VSIX（VSCode 和 Cursor 通用）
 		for item in "${GITHUB_VSIX[@]}"; do
-			local ext_id="${item#*:}"
+			ext_id="${item#*:}"
 			all_exts+=("$ext_id|github-vsix:${item%%:*}")
 		done
 	fi
@@ -212,7 +212,7 @@ for entry in "${editors[@]}"; do
 			printf "\r${CYAN}[%d/%d]${NC} 安装中: ${YELLOW}%s${NC}%-20s" "$count" "$total" "$ext" ""
 			# 尝试安装
 			if [[ "$tag" == github-vsix:* ]]; then
-				local repo="${tag#github-vsix:}"
+				repo="${tag#github-vsix:}"
 				install_vsix_from_github "$repo" "$cmd"
 			elif [[ "$tag" == "cursor-vsix" ]]; then
 				install_vsix_from_marketplace "$ext" "$cmd"

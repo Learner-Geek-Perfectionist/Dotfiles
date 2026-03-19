@@ -15,6 +15,7 @@
        source -> .config/zsh/plugins/zinit.zsh       -- Zinit 插件管理器
                     zinit 加载 -> p10k, fzf-tab, autosuggestions, syntax-hl
        source -> .config/zsh/plugins/double-esc-clear.zsh
+       ...（PATH / 平台配置完成后）...
        source -> .config/zsh/plugins/age-tokens.zsh  -- age 加密令牌（依赖 PATH 已就绪）
        引用   -> .config/zsh/fzf/fzf-preview.sh      -- FZF_DEFAULT_OPTS 中引用
        引用   -> .config/ripgrep/config               -- $RIPGREP_CONFIG_PATH 引用

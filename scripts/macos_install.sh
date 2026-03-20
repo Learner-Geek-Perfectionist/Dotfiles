@@ -68,7 +68,10 @@ print_info "检查 CLI 工具..."
 installed_formulas=$(brew list --formula -1 2>/dev/null)
 missing_formulas=()
 for formula in "${brew_formulas[@]}"; do
-	grep -qix "$formula" <<< "$installed_formulas" || missing_formulas+=("$formula")
+	if ! grep -qix "$formula" <<< "$installed_formulas"; then
+		# 二次检查：处理别名/重命名（如 python→python@3.x, pkg-config→pkgconf）
+		brew ls --versions "$formula" &>/dev/null || missing_formulas+=("$formula")
+	fi
 done
 
 if (( ${#missing_formulas[@]} == 0 )); then

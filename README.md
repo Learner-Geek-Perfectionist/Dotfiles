@@ -89,10 +89,15 @@ graph LR
 
 ```mermaid
 graph LR
-    A["Code/User"] <-- "同步" --> B["Cursor/User"]
-    C["kitty/"] ~~~ D["ripgrep/"]
-    D ~~~ E["karabiner/<br/>macOS"]
-    E ~~~ F["direnv/"]
+    subgraph sync ["配置同步"]
+        A["Code/User"] <-- "同步" --> B["Cursor/User"]
+    end
+    subgraph standalone ["独立配置"]
+        C["kitty/"]
+        D["ripgrep/"]
+        E["karabiner/<br/>macOS"]
+        F["direnv/"]
+    end
 ```
 
 ## 设计原则

@@ -62,6 +62,7 @@ alias history='fc -l 1'
 
 # 内联原 OMZL::theme-and-appearance.zsh 的 eza 别名
 (( $+commands[eza] )) && alias ls="eza --icons -ha --time-style=iso"  # eza 已安装则替代 ls
+(( $+commands[eza] )) && alias ll="eza --icons -ha --long --time-style=iso"  # ll = ls 长格式
 
 # ============================================
 # Turbo 异步加载（prompt 显示后按优先级加载）

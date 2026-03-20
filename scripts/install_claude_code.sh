@@ -98,22 +98,8 @@ install_rust_analyzer() {
 	local repo="rust-lang/rust-analyzer"
 
 	print_info "安装 $name (via GitHub release)..."
-
-	local latest
-	latest=$(github_latest_release "$repo") || true
-	if [[ -z "$latest" ]]; then
-		print_warn "$name: 无法获取最新版本，跳过"
-		return 0
-	fi
-
-	local local_ver
-	local_ver=$(get_local_version "$LSP_DIR/$name")
-	if [[ "$local_ver" == "$latest" ]]; then
-		print_success "$name 已是最新版本 ($latest)"
-		return 0
-	fi
-
-	print_dim "版本: ${local_ver:-无} -> $latest"
+	check_github_update "$name" "$repo" "$LSP_DIR/$name" || return 0
+	local latest="$_GITHUB_LATEST"
 
 	# 确定平台和架构
 	local platform
@@ -228,22 +214,8 @@ install_kotlin_ls() {
 	local repo="fwcd/kotlin-language-server"
 
 	print_info "安装 $name..."
-
-	local latest
-	latest=$(github_latest_release "$repo") || true
-	if [[ -z "$latest" ]]; then
-		print_warn "$name: 无法获取最新版本，跳过"
-		return 0
-	fi
-
-	local local_ver
-	local_ver=$(get_local_version "$LSP_DIR/$name")
-	if [[ "$local_ver" == "$latest" ]]; then
-		print_success "$name 已是最新版本 ($latest)"
-		return 0
-	fi
-
-	print_dim "版本: ${local_ver:-无} -> $latest"
+	check_github_update "$name" "$repo" "$LSP_DIR/$name" || return 0
+	local latest="$_GITHUB_LATEST"
 
 	local tmp_dir
 	tmp_dir=$(mktemp -d)
@@ -284,22 +256,8 @@ install_lua_ls() {
 	local repo="LuaLS/lua-language-server"
 
 	print_info "安装 $name..."
-
-	local latest
-	latest=$(github_latest_release "$repo") || true
-	if [[ -z "$latest" ]]; then
-		print_warn "$name: 无法获取最新版本，跳过"
-		return 0
-	fi
-
-	local local_ver
-	local_ver=$(get_local_version "$LSP_DIR/$name")
-	if [[ "$local_ver" == "$latest" ]]; then
-		print_success "$name 已是最新版本 ($latest)"
-		return 0
-	fi
-
-	print_dim "版本: ${local_ver:-无} -> $latest"
+	check_github_update "$name" "$repo" "$LSP_DIR/$name" || return 0
+	local latest="$_GITHUB_LATEST"
 
 	# 确定平台标识
 	local platform
@@ -632,21 +590,20 @@ enable_plugins() {
 # 独立于文件部署——每次安装都执行，防止 install_dotfiles.sh 的 jq 合并覆盖动态 hooks
 ensure_study_master_hooks() {
 	local settings_file="$1"
-	local hook_cmd="$2"
+	local hook_matcher="$2"
+	local hook_cmd="$3"
 
 	[[ -f "$settings_file" ]] && command -v jq &>/dev/null || return 0
 
-	local matcher="Write|Edit"
-
 	# 已注册则跳过
-	if jq -e --arg m "$matcher" --arg cmd "$hook_cmd" \
+	if jq -e --arg m "$hook_matcher" --arg cmd "$hook_cmd" \
 		'.hooks.PostToolUse // [] | any(.matcher == $m and (.hooks | any(.command == $cmd)))' \
 		"$settings_file" &>/dev/null; then
 		return 0
 	fi
 
 	# 注册 hook：matcher 存在则追加，否则新建 matcher
-	jq --arg m "$matcher" --arg cmd "$hook_cmd" '
+	jq --arg m "$hook_matcher" --arg cmd "$hook_cmd" '
 		.hooks //= {} |
 		.hooks.PostToolUse //= [] |
 		if (.hooks.PostToolUse | any(.matcher == $m)) then
@@ -665,6 +622,7 @@ install_study_master_skill() {
 	local skill_dir="$HOME/.claude/skills/study-master"
 	local hooks_dir="$HOME/.claude/hooks"
 	local settings_file="$HOME/.claude/settings.json"
+	local hook_matcher="Write|Edit"
 	local hook_cmd='bash "$HOME/.claude/hooks/check-study_master.sh"'
 
 	# 1) 部署 Skill 文件（幂等：已存在则跳过 clone）
@@ -714,7 +672,7 @@ install_study_master_skill() {
 	fi
 
 	# 2) 确保 hooks 已注册（每次都检查，防止被 settings.json 合并覆盖）
-	ensure_study_master_hooks "$settings_file" "$hook_cmd"
+	ensure_study_master_hooks "$settings_file" "$hook_matcher" "$hook_cmd"
 }
 
 # ========================================

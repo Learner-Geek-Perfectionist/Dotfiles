@@ -196,6 +196,11 @@ detect_arch() {
 	esac
 }
 
+# 检测是否在远程服务器环境（VSCode/Cursor Remote SSH）
+is_remote_server() {
+	[[ -n "$VSCODE_IPC_HOOK_CLI" ]] && [[ -n "$SSH_CONNECTION" ]]
+}
+
 # ========================================
 # GitHub Release 版本管理
 # ========================================
@@ -206,6 +211,30 @@ github_latest_release() {
 	local repo="$1"
 	curl -fsSL "https://api.github.com/repos/${repo}/releases/latest" 2>/dev/null \
 		| jq -r '.tag_name // empty' 2>/dev/null
+}
+
+# 检查 GitHub Release 是否有更新
+# 参数: $1=显示名 $2=owner/repo $3=版本记录目录
+# 输出: 设置 _GITHUB_LATEST（最新版本号）供调用方使用
+# 返回: 0=有更新 1=已最新或检查失败（调用方应 return 0 跳过安装）
+check_github_update() {
+	local name="$1" repo="$2" install_dir="$3"
+
+	_GITHUB_LATEST=$(github_latest_release "$repo") || true
+	if [[ -z "$_GITHUB_LATEST" ]]; then
+		print_warn "$name: 无法获取最新版本，跳过"
+		return 1
+	fi
+
+	local local_ver
+	local_ver=$(get_local_version "$install_dir")
+	if [[ "$local_ver" == "$_GITHUB_LATEST" ]]; then
+		print_success "$name 已是最新版本 ($_GITHUB_LATEST)"
+		return 1
+	fi
+
+	print_dim "版本: ${local_ver:-无} -> $_GITHUB_LATEST"
+	return 0
 }
 
 # 获取本地已安装的版本

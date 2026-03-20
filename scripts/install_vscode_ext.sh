@@ -5,11 +5,6 @@ set -eo pipefail
 
 source "$(dirname "${BASH_SOURCE[0]}")/../lib/utils.sh"
 
-# 检测是否在远程服务器环境中（VSCode/Cursor Remote SSH）
-is_remote_server() {
-	[[ -n "$VSCODE_IPC_HOOK_CLI" ]] && [[ -n "$SSH_CONNECTION" ]]
-}
-
 # 远程服务器环境标记（常规插件通过 settings.json 自动同步，VSIX 插件需手动安装）
 REMOTE_SERVER=false
 if is_remote_server; then
@@ -152,13 +147,12 @@ for entry in "${editors[@]}"; do
 	_echo_blank
 	print_info ">>> $type ($cmd)"
 
-	# 获取已安装的插件（转小写比较）
-	if ! installed=$("$cmd" --list-extensions 2>/dev/null | tr '[:upper:]' '[:lower:]'); then
+	# 获取已安装的插件（带版本号，一次 CLI 调用同时满足存在性检查和版本比较）
+	if ! installed_ver=$("$cmd" --list-extensions --show-versions 2>/dev/null | tr '[:upper:]' '[:lower:]'); then
 		print_warn "$type ($cmd) 无法获取插件列表，跳过"
 		continue
 	fi
-	# 带版本号的列表，用于 GitHub VSIX 更新检查（ext@version 格式）
-	installed_ver=$("$cmd" --list-extensions --show-versions 2>/dev/null | tr '[:upper:]' '[:lower:]')
+	installed=$(echo "$installed_ver" | cut -d@ -f1)
 
 	# 收集要安装的插件：ext|tag (tag: common/vscode/cursor/cursor-vsix)
 	all_exts=()
@@ -234,16 +228,20 @@ for entry in "${editors[@]}"; do
 			else
 				"$cmd" --install-extension "$ext" --force &>/dev/null
 			fi
-			# 验证是否真的安装成功（重新检查）
-			new_installed=$("$cmd" --list-extensions 2>/dev/null | tr '[:upper:]' '[:lower:]')
+		done
+		echo ""
+
+		# 批量验证安装结果（一次 CLI 调用替代循环内 N 次）
+		new_installed=$("$cmd" --list-extensions 2>/dev/null | tr '[:upper:]' '[:lower:]')
+		for item in "${to_install[@]}"; do
+			ext="${item%%|*}"
 			ext_lower=$(echo "$ext" | tr '[:upper:]' '[:lower:]')
 			if echo "$new_installed" | grep -Fxq "$ext_lower"; then
 				success+=("$ext")
 			else
-				failed+=("$ext|$tag")
+				failed+=("$item")
 			fi
 		done
-		echo ""
 	fi
 
 	# 打印简洁结果

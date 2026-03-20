@@ -19,11 +19,6 @@ has_cursor() {
 	command -v cursor &>/dev/null && cursor --help 2>&1 | head -1 | grep -qi "cursor"
 }
 
-# 检测是否在远程服务器环境（VSCode/Cursor Remote SSH）
-is_remote_server() {
-	[[ -n "$VSCODE_IPC_HOOK_CLI" ]] && [[ -n "$SSH_CONNECTION" ]]
-}
-
 copy_path() {
 	local src="$DOTFILES_DIR/$1"
 	local dest="$HOME/$2"
@@ -107,10 +102,18 @@ main() {
 				mv "$tmp_merged" "$claude_dest"
 			else
 				rm -f "$tmp_merged"
-				cp -f "$claude_src" "$claude_dest"
+				# jq 合并失败；仍用 jq 剥离 repo 的项目级 hooks 后部署
+				jq 'del(.hooks)' "$claude_src" > "$claude_dest" 2>/dev/null \
+					|| cp -f "$claude_src" "$claude_dest"
 			fi
 		else
-			cp -f "$claude_src" "$claude_dest"
+			# 无已有配置或无 jq：部署时尽量剥离项目级 hooks
+			if command -v jq &>/dev/null; then
+				jq 'del(.hooks)' "$claude_src" > "$claude_dest" 2>/dev/null \
+					|| cp -f "$claude_src" "$claude_dest"
+			else
+				cp -f "$claude_src" "$claude_dest"
+			fi
 		fi
 		print_success "~/.claude/settings.json"
 	fi

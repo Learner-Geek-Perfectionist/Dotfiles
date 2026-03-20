@@ -64,24 +64,8 @@ install_kotlin_native() {
 	fi
 
 	print_info "安装 Kotlin/Native ($platform)..."
-
-	# 获取最新版本
-	local latest
-	latest=$(github_latest_release "$REPO") || true
-	if [[ -z "$latest" ]]; then
-		print_warn "Kotlin/Native: 无法获取最新版本，跳过"
-		return 0
-	fi
-
-	# 版本比对
-	local local_ver
-	local_ver=$(get_local_version "$INSTALL_DIR")
-	if [[ "$local_ver" == "$latest" ]]; then
-		print_success "Kotlin/Native 已是最新版本 ($latest)"
-		return 0
-	fi
-
-	print_dim "版本: ${local_ver:-无} -> $latest"
+	check_github_update "Kotlin/Native" "$REPO" "$INSTALL_DIR" || return 0
+	local latest="$_GITHUB_LATEST"
 
 	# 构造下载 URL (tag 带 v 前缀，文件名中的版本不带)
 	local version="${latest#v}"

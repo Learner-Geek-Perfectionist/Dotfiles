@@ -1,111 +1,126 @@
 # Dotfiles
 
-Cross-platform (macOS / Linux) development environment bootstrap system. One command to deploy Shell, editor, terminal, Git, SSH, package management, and AI tooling configurations.
+跨平台（macOS / Linux）开发环境一键部署系统。一条命令完成 Shell、编辑器、终端、Git、SSH、包管理、AI 工具链的全套配置。
 
 ---
 
-## Quick Start
+## 快速开始
 
 ```bash
-# Full install (macOS: Homebrew + configs / Linux: Pixi + configs)
+# 完整安装（macOS: Homebrew + 配置 / Linux: Pixi + 配置）
 curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/beta/install.sh | bash
 
-# Selective install
-bash install.sh --dotfiles-only   # Config files only
-bash install.sh --pixi-only       # Pixi package manager only (Linux)
-bash install.sh --vscode-only     # VSCode/Cursor extensions only
-bash install.sh --lsp-only        # LSP servers only
-bash install.sh --skip-vscode     # Everything except VSCode extensions
+# 选择性安装
+bash install.sh --dotfiles-only   # 仅配置文件
+bash install.sh --pixi-only       # 仅 Pixi 包管理器（Linux）
+bash install.sh --vscode-only     # 仅 VSCode/Cursor 插件
+bash install.sh --lsp-only        # 仅 LSP 服务器
+bash install.sh --skip-vscode     # 跳过 VSCode 插件
 ```
 
-## Features
+## 功能概览
 
-### Shell (Zsh)
+### Shell（Zsh）
 
-- **[Zinit](https://github.com/zdharma-continuum/zinit)** plugin manager with turbo async loading
-- **[Powerlevel10k](https://github.com/romkatv/powerlevel10k)** prompt with instant prompt cache
-- **[fzf-tab](https://github.com/Aloxaf/fzf-tab)** fuzzy completion, **[fast-syntax-highlighting](https://github.com/zdharma-continuum/fast-syntax-highlighting)**, **[zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions)**
-- Smart CLI wrappers: `fd` with auto-sudo, `cat` via `bat`, `ls` via `eza`, `man` via `tldr`
-- Pre-compiled `.zwc` bytecode for faster shell startup
-- **[age](https://github.com/FiloSottile/age)** encrypted token management
+- **[Zinit](https://github.com/zdharma-continuum/zinit)** 插件管理器，Turbo 异步加载
+- **[Powerlevel10k](https://github.com/romkatv/powerlevel10k)** 主题，instant prompt 缓存加速
+- **[fzf-tab](https://github.com/Aloxaf/fzf-tab)** 模糊补全、**[fast-syntax-highlighting](https://github.com/zdharma-continuum/fast-syntax-highlighting)** 语法高亮、**[zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions)** 自动建议
+- 智能命令包装：`fd` 自动提权、`cat` → `bat`、`ls` → `eza`、`man` → `tldr`
+- `.zwc` 字节码预编译加速启动
+- **[age](https://github.com/FiloSottile/age)** 加密令牌管理
 
-### Package Management
+### 包管理
 
-| Platform | Manager | Config |
-|----------|---------|--------|
-| macOS | Homebrew | `lib/packages.sh` (80+ formulas & casks) |
-| Linux | Pixi (rootless, conda-forge) | `pixi.toml` (90+ packages) |
+| 平台 | 管理器 | 配置文件 |
+|------|--------|----------|
+| macOS | Homebrew | `lib/packages.sh`（80+ formulas & casks） |
+| Linux | Pixi（无需 root，conda-forge） | `pixi.toml`（90+ 包） |
 
-### Terminal & Editor
+### 终端 & 编辑器
 
-- **[Kitty](https://sw.kovidgoyal.net/kitty/)** with Catppuccin Frappe theme, smart tab/close scripts
-- **VSCode / Cursor** synced settings & keybindings, automated extension install
+- **[Kitty](https://sw.kovidgoyal.net/kitty/)** 终端，Catppuccin Frappe 主题，智能标签页/关闭脚本
+- **VSCode / Cursor** 配置同步（settings.json + keybindings.json），插件自动安装
 - **Neovim / Vim**
 
-### macOS Extras
+### macOS 专属
 
-- **[Karabiner-Elements](https://karabiner-elements.pqrs.org/)** keyboard remapping
-- **[Hammerspoon](https://www.hammerspoon.org/)** window management & automation
-- Homebrew auto-update via `brew autoupdate`
+- **[Karabiner-Elements](https://karabiner-elements.pqrs.org/)** 键盘改键
+- **[Hammerspoon](https://www.hammerspoon.org/)** 窗口管理与自动化
+- Homebrew 自动更新（`brew autoupdate`）
 
-### AI Tooling
+### AI 工具链
 
-- **Claude Code** CLI with LSP servers (pyright, gopls, rust-analyzer, clangd, kotlin-ls, etc.)
-- MCP server integration, plugin marketplace, and skill system
+- **Claude Code** CLI + LSP 服务器（pyright, gopls, rust-analyzer, clangd, kotlin-ls 等）
+- MCP 服务器集成、插件市场、Skill 系统
 
-### Developer Toolchain
+### 开发工具链
 
-Languages: Python, Node.js, Go, Rust, Kotlin, Java, Ruby, Lua, C/C++ (LLVM/GCC)
+语言：Python, Node.js, Go, Rust, Kotlin, Java, Ruby, Lua, C/C++（LLVM/GCC）
 
-Build tools: CMake, Ninja, Make, Autoconf
+构建：CMake, Ninja, Make, Autoconf
 
-## Architecture
+## 架构
 
 ```
-install.sh / uninstall.sh          # Symmetric entry points
-  scripts/
-    install_dotfiles.sh            # Symlink deployment
-    install_vscode_ext.sh          # VSCode/Cursor extensions
-    install_claude_code.sh         # Claude Code LSP/MCP/Skills
-    install_pixi.sh                # Pixi (Linux)
-    install_kotlin_native.sh       # Kotlin Native toolchain
-    macos_install.sh               # Homebrew packages
-  lib/
-    utils.sh                       # Logging, colors, helpers
-    packages.sh                    # Homebrew package lists
+                          ┌─────────────────────┐
+                          │     install.sh       │
+                          │   统一安装入口 v5.0   │
+                          └────────┬────────────┘
+                                   │
+              ┌────────────────────┼────────────────────┐
+              │                    │                     │
+              ▼                    ▼                     ▼
+    ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+    │  macos_install   │  │ install_dotfiles │  │ install_vscode   │
+    │  ─────────────   │  │ ──────────────── │  │ ───────────────  │
+    │  Homebrew 包管理  │  │  配置文件部署     │  │ VSCode/Cursor   │
+    │  80+ 包 & casks  │  │  符号链接创建     │  │ 插件自动安装     │
+    └─────────────────┘  └─────────────────┘  └─────────────────┘
+              │
+              │  Linux 替代
+              ▼
+    ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+    │  install_pixi    │  │install_claude_code│ │install_kotlin    │
+    │  ─────────────   │  │ ──────────────── │  │ ───────────────  │
+    │  Pixi 包管理器   │  │ LSP/MCP/Skills   │  │ Kotlin Native   │
+    │  无需 root       │  │ 插件 & Hooks     │  │ 工具链           │
+    └─────────────────┘  └─────────────────┘  └─────────────────┘
 
-.zshenv -> .zprofile -> .zshrc     # Shell loading order
-  .config/zsh/plugins/
-    platform.zsh                   # Platform-specific PATH & aliases
-    zinit.zsh                      # Plugin manager & turbo loading
-    age-tokens.zsh                 # Encrypted credentials
-    double-esc-clear.zsh           # Double-ESC to clear
+  ───────────────── Shell 加载顺序 ─────────────────
 
-.config/
-  kitty/                           # Terminal emulator
-  Code/User/ & Cursor/User/       # Editor configs (kept in sync)
-  ripgrep/                         # rg global config & ignore
-  karabiner/                       # Keyboard remapping (macOS)
-  direnv/                          # Per-directory env management
+    .zshenv ──▶ .zprofile ──▶ .zshrc
+       │                        │
+       │ 环境变量               ├──▶ platform.zsh      平台 PATH & 别名
+       │ HISTFILE               ├──▶ zinit.zsh          插件管理 & Turbo
+       │ ZSH_CACHE_DIR          ├──▶ double-esc-clear   双击 ESC 清屏
+                                └──▶ age-tokens.zsh     加密凭证（依赖 PATH）
+
+  ──────────────── 应用配置层（.config/）────────────
+
+    kitty/              终端模拟器
+    Code/User/    ◄──同步──►    Cursor/User/    编辑器配置
+    ripgrep/            全局搜索配置
+    karabiner/          键盘改键（macOS）
+    direnv/             目录级环境管理
 ```
 
-## Design Principles
+## 设计原则
 
-- **Modular** - Each component installs/uninstalls independently
-- **Idempotent** - Safe to run repeatedly
-- **Symmetric** - Every `install` has a matching `uninstall`
-- **Rootless** - Linux setup requires no sudo (Pixi + conda-forge)
-- **Pipe-safe** - Supports `curl | bash` remote execution
+- **模块化** — 每个组件独立安装/卸载
+- **幂等** — 重复执行安全无副作用
+- **对称** — 每个 install 都有对应的 uninstall
+- **无需 root** — Linux 全程 rootless（Pixi + conda-forge）
+- **管道安全** — 支持 `curl | bash` 远程执行
 
-## Uninstall
+## 卸载
 
 ```bash
-bash uninstall.sh --all            # Remove everything
-bash uninstall.sh --dotfiles       # Config files only
-bash uninstall.sh --pixi           # Pixi only
-bash uninstall.sh --claude         # Claude Code only
+bash uninstall.sh --all            # 全部卸载
+bash uninstall.sh --dotfiles       # 仅配置文件
+bash uninstall.sh --pixi           # 仅 Pixi
+bash uninstall.sh --claude         # 仅 Claude Code
 ```
 
-## License
+## 许可证
 
 MIT

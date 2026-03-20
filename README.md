@@ -62,46 +62,46 @@ bash install.sh --skip-vscode     # 跳过 VSCode 插件
 ## 架构
 
 ```
-                          ┌─────────────────────┐
-                          │     install.sh       │
-                          │   统一安装入口 v5.0   │
-                          └────────┬────────────┘
-                                   │
-              ┌────────────────────┼────────────────────┐
-              │                    │                     │
-              ▼                    ▼                     ▼
-    ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
-    │  macos_install   │  │ install_dotfiles │  │ install_vscode   │
-    │  ─────────────   │  │ ──────────────── │  │ ───────────────  │
-    │  Homebrew 包管理  │  │  配置文件部署     │  │ VSCode/Cursor   │
-    │  80+ 包 & casks  │  │  符号链接创建     │  │ 插件自动安装     │
-    └─────────────────┘  └─────────────────┘  └─────────────────┘
-              │
-              │  Linux 替代
-              ▼
-    ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
-    │  install_pixi    │  │install_claude_code│ │install_kotlin    │
-    │  ─────────────   │  │ ──────────────── │  │ ───────────────  │
-    │  Pixi 包管理器   │  │ LSP/MCP/Skills   │  │ Kotlin Native   │
-    │  无需 root       │  │ 插件 & Hooks     │  │ 工具链           │
-    └─────────────────┘  └─────────────────┘  └─────────────────┘
+                        +---------------------+
+                        |     install.sh      |
+                        |  Entry Point v5.0   |
+                        +--------+------------+
+                                 |
+            +--------------------+--------------------+
+            |                    |                     |
+            v                    v                     v
+  +------------------+  +------------------+  +------------------+
+  |  macos_install   |  | install_dotfiles |  |  install_vscode  |
+  |------------------|  |------------------|  |------------------|
+  | Homebrew         |  | Config files     |  | VSCode / Cursor  |
+  | 80+ pkg & casks  |  | Symlink deploy   |  | Extensions       |
+  +------------------+  +------------------+  +------------------+
+            |
+            | Linux
+            v
+  +------------------+  +------------------+  +------------------+
+  |  install_pixi    |  | install_claude   |  | install_kotlin   |
+  |------------------|  |------------------|  |------------------|
+  | Pixi (rootless)  |  | LSP / MCP       |  | Kotlin Native    |
+  | conda-forge      |  | Skills & Hooks  |  | Toolchain        |
+  +------------------+  +------------------+  +------------------+
 
-  ───────────────── Shell 加载顺序 ─────────────────
+  ================== Shell Load Order ==================
 
-    .zshenv ──▶ .zprofile ──▶ .zshrc
-       │                        │
-       │ 环境变量               ├──▶ platform.zsh      平台 PATH & 别名
-       │ HISTFILE               ├──▶ zinit.zsh          插件管理 & Turbo
-       │ ZSH_CACHE_DIR          ├──▶ double-esc-clear   双击 ESC 清屏
-                                └──▶ age-tokens.zsh     加密凭证（依赖 PATH）
+  .zshenv --> .zprofile --> .zshrc
+     |                        |
+     | ENV VARS               +--> platform.zsh       PATH & aliases
+     | HISTFILE               +--> zinit.zsh           Plugins & Turbo
+     | ZSH_CACHE_DIR          +--> double-esc-clear    Double-ESC clear
+                              +--> age-tokens.zsh      Encrypted tokens
 
-  ──────────────── 应用配置层（.config/）────────────
+  =================== App Configs (.config/) ===================
 
-    kitty/              终端模拟器
-    Code/User/    ◄──同步──►    Cursor/User/    编辑器配置
-    ripgrep/            全局搜索配置
-    karabiner/          键盘改键（macOS）
-    direnv/             目录级环境管理
+  kitty/                Terminal emulator
+  Code/User/  <--sync-->  Cursor/User/      Editor settings
+  ripgrep/              Search config
+  karabiner/            Key remap (macOS)
+  direnv/               Per-dir env
 ```
 
 ## 设计原则

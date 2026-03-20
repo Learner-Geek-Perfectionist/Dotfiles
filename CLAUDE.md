@@ -57,3 +57,4 @@ install.sh <-> uninstall.sh
 8. scripts/install_*.sh 修改安装逻辑 -> 检查 install.sh 中的调用方式是否匹配
 9. pixi.toml 增删依赖 -> 检查是否有 shell 配置引用该工具（PATH、别名、环境变量）
 10. .config/zsh/plugins/ 下新增插件文件 -> 必须在 .zshrc 中添加 source 语句
+11. 配置文件采用复制部署（非 symlink）-> 修改仓库源文件后必须同步复制到系统部署路径，反之亦然

@@ -110,8 +110,8 @@ brew tap | grep -q "homebrew/autoupdate" || brew tap homebrew/autoupdate
 if brew autoupdate status 2>/dev/null | grep -q "running"; then
 	print_success "Homebrew autoupdate 已在运行，跳过"
 else
-	brew autoupdate start 21600 --upgrade --greedy --cleanup
-	print_success "Homebrew autoupdate 已配置（每 6 小时自动更新）"
+	brew autoupdate start 3600 --upgrade --greedy --cleanup
+	print_success "Homebrew autoupdate 已配置（每 1 小时自动更新）"
 fi
 
 # 6. 清理 Homebrew 缓存

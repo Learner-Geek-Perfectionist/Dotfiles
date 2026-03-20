@@ -148,8 +148,10 @@ remove_claude() {
 		print_dim "✓ 已清理 settings.json 中的 statusLine"
 	fi
 
-	# 2) claude-hud 配置
+	# 2) claude-hud 配置及旧版 wrapper 脚本
 	rm_path ~/.claude/plugins/claude-hud/config.json
+	rm_path ~/.claude/plugins/claude-hud/hud-wrapper.sh
+	rm_path ~/.claude/plugins/claude-hud/hud-proxy.mjs
 
 	# 3) 旧 statusline.sh
 	rm_path ~/.claude/statusline.sh

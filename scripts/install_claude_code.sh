@@ -753,13 +753,6 @@ setup_claude_hud() {
 		fi
 	fi
 
-	# 检查是否已经配置为 claude-hud（避免重复）
-	if [[ -f "$settings_file" ]] && grep -q "claude-hud" "$settings_file" 2>/dev/null && \
-		jq -e '.statusLine.command | test("claude-hud")' "$settings_file" &>/dev/null; then
-		print_success "claude-hud statusLine 已配置"
-		return 0
-	fi
-
 	# 检测 runtime（优先 bun，回退 node）
 	local runtime source
 	if command -v bun &>/dev/null; then
@@ -773,21 +766,25 @@ setup_claude_hud() {
 		return 0
 	fi
 
-	# 部署 hud-proxy.mjs 和 hud-wrapper.sh（解决 Node.js stdout 全缓冲问题）
-	local proxy_src="$SCRIPT_DIR/../.claude/plugins/claude-hud/hud-proxy.mjs"
-	local wrapper_src="$SCRIPT_DIR/../.claude/plugins/claude-hud/hud-wrapper.sh"
-	if [[ -f "$proxy_src" ]]; then
-		cp "$proxy_src" "$hud_config_dir/hud-proxy.mjs"
-		cp "$wrapper_src" "$hud_config_dir/hud-wrapper.sh"
-		chmod +x "$hud_config_dir/hud-wrapper.sh"
-	fi
+	# 清理旧版 wrapper 脚本（已改为直接命令方式）
+	rm -f "$hud_config_dir/hud-wrapper.sh" "$hud_config_dir/hud-proxy.mjs"
 
-	# 使用 bash wrapper 命令（Node.js 直接输出到 Claude Code 管道会导致多行只显示 1 行）
-	local hud_cmd="$hud_config_dir/hud-wrapper.sh"
+	# 生成动态版本查找命令（自动适配插件更新，无需硬编码版本号）
+	local hud_cmd
+	printf -v hud_cmd \
+		'bash -c '\''base="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/plugins/cache/claude-hud/claude-hud"; latest=$(ls "$base" | sort -t. -k1,1n -k2,2n -k3,3n -k4,4n | tail -1); exec "%s" "$base/$latest/%s"'\''' \
+		"$runtime" "$source"
+
+	# 检查是否已经配置为相同命令（避免重复写入）
+	if [[ -f "$settings_file" ]] && command -v jq &>/dev/null && \
+		jq -e --arg cmd "$hud_cmd" '.statusLine.command == $cmd' "$settings_file" &>/dev/null; then
+		print_success "claude-hud statusLine 已配置"
+		return 0
+	fi
 
 	# 测试命令是否可用
 	local test_output
-	test_output=$(echo '{}' | eval "$hud_cmd" 2>&1) || true
+	test_output=$(eval "$hud_cmd" 2>&1) || true
 	if [[ -z "$test_output" ]]; then
 		print_warn "claude-hud 命令测试无输出，跳过（可在 Claude Code 中运行 /claude-hud:setup 手动配置）"
 		return 0

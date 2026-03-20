@@ -3,19 +3,8 @@
     "showTools": true,
     "showAgents": true,
     "showTodos": true,
-    "showProject": true,
+    "showDuration": true,
     "showConfigCounts": true,
-    "showTokenBreakdown": true,
-    "showSpeed": true,
-    "showUsage": true,
-    "usageBarEnabled": true,
-    "showSessionName": true,
-    "showDuration": true
-  },
-  "gitStatus": {
-    "enabled": true,
-    "showDirty": true,
-    "showAheadBehind": true,
-    "showFileStats": false
+    "showSessionName": true
   }
 }

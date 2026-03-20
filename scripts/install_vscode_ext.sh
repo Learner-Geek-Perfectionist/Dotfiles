@@ -157,6 +157,8 @@ for entry in "${editors[@]}"; do
 		print_warn "$type ($cmd) 无法获取插件列表，跳过"
 		continue
 	fi
+	# 带版本号的列表，用于 GitHub VSIX 更新检查（ext@version 格式）
+	installed_ver=$("$cmd" --list-extensions --show-versions 2>/dev/null | tr '[:upper:]' '[:lower:]')
 
 	# 收集要安装的插件：ext|tag (tag: common/vscode/cursor/cursor-vsix)
 	all_exts=()
@@ -188,13 +190,22 @@ for entry in "${editors[@]}"; do
 	fi
 
 	# 分类：已安装、待安装
-	# GitHub VSIX 插件始终检查更新，不跳过
 	skipped=() to_install=()
 	for item in "${all_exts[@]}"; do
 		ext="${item%%|*}"
 		tag="${item#*|}"
 		ext_lower=$(echo "$ext" | tr '[:upper:]' '[:lower:]')
 		if [[ "$tag" == github-vsix:* ]]; then
+			# GitHub VSIX：比较已安装版本与最新 Release，一致则跳过
+			repo="${tag#github-vsix:}"
+			local_ver=$(echo "$installed_ver" | grep -i "^${ext_lower}@" | cut -d@ -f2)
+			if [[ -n "$local_ver" ]]; then
+				latest_tag=$(github_latest_release "$repo" 2>/dev/null) || true
+				if [[ "${latest_tag#v}" == "$local_ver" ]]; then
+					skipped+=("$ext")
+					continue
+				fi
+			fi
 			to_install+=("$item")
 		elif echo "$installed" | grep -Fxq "$ext_lower"; then
 			skipped+=("$ext")

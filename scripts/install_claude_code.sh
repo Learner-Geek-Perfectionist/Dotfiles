@@ -628,6 +628,36 @@ enable_plugins() {
 # study-master Skill 安装（独立 GitHub 仓库）
 # ========================================
 
+# 确保 study-master hooks 已在 settings.json 中注册
+# 独立于文件部署——每次安装都执行，防止 install_dotfiles.sh 的 jq 合并覆盖动态 hooks
+ensure_study_master_hooks() {
+	local settings_file="$1"
+	local hook_cmd="$2"
+
+	[[ -f "$settings_file" ]] && command -v jq &>/dev/null || return 0
+
+	local matcher="Write|Edit"
+
+	# 已注册则跳过
+	if jq -e --arg m "$matcher" --arg cmd "$hook_cmd" \
+		'.hooks.PostToolUse // [] | any(.matcher == $m and (.hooks | any(.command == $cmd)))' \
+		"$settings_file" &>/dev/null; then
+		return 0
+	fi
+
+	# 注册 hook：matcher 存在则追加，否则新建 matcher
+	jq --arg m "$matcher" --arg cmd "$hook_cmd" '
+		.hooks //= {} |
+		.hooks.PostToolUse //= [] |
+		if (.hooks.PostToolUse | any(.matcher == $m)) then
+			(.hooks.PostToolUse[] | select(.matcher == $m)).hooks += [{"type":"command","command":$cmd,"timeout":10}]
+		else
+			.hooks.PostToolUse += [{"matcher":$m,"hooks":[{"type":"command","command":$cmd,"timeout":10}]}]
+		end
+	' "$settings_file" > "$settings_file.tmp" && mv "$settings_file.tmp" "$settings_file"
+	print_dim "  study-master hooks 已注册"
+}
+
 # 在线 clone 仓库，手动部署文件并注册 hooks
 # 不使用上游 install.sh（其 hook 注册路径和格式有误）
 install_study_master_skill() {
@@ -637,71 +667,54 @@ install_study_master_skill() {
 	local settings_file="$HOME/.claude/settings.json"
 	local hook_cmd='bash "$HOME/.claude/hooks/check-study_master.sh"'
 
+	# 1) 部署 Skill 文件（幂等：已存在则跳过 clone）
 	if [[ -d "$skill_dir" && -f "$skill_dir/SKILL.md" ]]; then
 		print_success "study-master Skill 已安装"
-		return 0
-	fi
+	else
+		print_info "安装 study-master Skill..."
 
-	print_info "安装 study-master Skill..."
+		local tmp_dir
+		tmp_dir=$(mktemp -d)
 
-	# 1) Clone 仓库
-	local tmp_dir
-	tmp_dir=$(mktemp -d)
+		if ! git clone --depth 1 "https://github.com/${repo}.git" "$tmp_dir" &>/dev/null; then
+			print_warn "study-master: clone 失败"
+			rm -rf "$tmp_dir"
+			return 0
+		fi
 
-	if ! git clone --depth 1 "https://github.com/${repo}.git" "$tmp_dir" &>/dev/null; then
-		print_warn "study-master: clone 失败"
+		local src="$tmp_dir/study-master-skill"
+
+		# 复制 Skill 文件
+		mkdir -p "$skill_dir"
+		cp "$src/SKILL.md" "$skill_dir/"
+		print_dim "  Skill: $skill_dir/SKILL.md"
+
+		# 复制 Hook 脚本
+		if [[ -d "$src/hooks" ]]; then
+			mkdir -p "$hooks_dir"
+			for file in "$src/hooks"/*; do
+				[[ -f "$file" ]] || continue
+				cp "$file" "$hooks_dir/"
+				chmod +x "$hooks_dir/$(basename "$file")"
+			done
+			print_dim "  Hooks: $(ls "$src/hooks" | tr '\n' ' ')"
+		fi
+
 		rm -rf "$tmp_dir"
-		return 0
+
+		# 清理上游 install.sh 遗留的错误配置
+		local dead_settings="$HOME/.claude/settings/settings.json"
+		if [[ -f "$dead_settings" ]]; then
+			rm -f "$dead_settings"
+			rmdir "$HOME/.claude/settings" 2>/dev/null || true
+			print_dim "  已清理无效的 ~/.claude/settings/settings.json"
+		fi
+
+		print_success "study-master Skill 安装完成"
 	fi
 
-	local src="$tmp_dir/study-master-skill"
-
-	# 2) 复制 Skill 文件
-	mkdir -p "$skill_dir"
-	cp "$src/SKILL.md" "$skill_dir/"
-	print_dim "  Skill: $skill_dir/SKILL.md"
-
-	# 3) 复制 Hook 脚本
-	if [[ -d "$src/hooks" ]]; then
-		mkdir -p "$hooks_dir"
-		for file in "$src/hooks"/*; do
-			[[ -f "$file" ]] || continue
-			cp "$file" "$hooks_dir/"
-			chmod +x "$hooks_dir/$(basename "$file")"
-		done
-		print_dim "  Hooks: $(ls "$src/hooks" | tr '\n' ' ')"
-	fi
-
-	rm -rf "$tmp_dir"
-
-	# 4) 在 ~/.claude/settings.json 中注册 PostToolUse hooks（正确路径 + 正确格式）
-	if [[ -f "$settings_file" ]] && command -v jq &>/dev/null; then
-		for tool in Write Edit; do
-			# jq 一步完成：已存在则跳过，matcher 存在则追加 hook，否则新建 matcher
-			jq --arg tool "$tool" --arg cmd "$hook_cmd" '
-				.hooks //= {} |
-				.hooks.PostToolUse //= [] |
-				if (.hooks.PostToolUse | any(.matcher == $tool and (.hooks | any(.command == $cmd)))) then
-					.
-				elif (.hooks.PostToolUse | any(.matcher == $tool)) then
-					(.hooks.PostToolUse[] | select(.matcher == $tool)).hooks += [{"type":"command","command":$cmd,"timeout":10}]
-				else
-					.hooks.PostToolUse += [{"matcher":$tool,"hooks":[{"type":"command","command":$cmd,"timeout":10}]}]
-				end
-			' "$settings_file" > "$settings_file.tmp" && mv "$settings_file.tmp" "$settings_file"
-		done
-		print_dim "  Hooks 已注册到 ~/.claude/settings.json (Write + Edit)"
-	fi
-
-	# 5) 清理上游 install.sh 遗留的错误配置
-	local dead_settings="$HOME/.claude/settings/settings.json"
-	if [[ -f "$dead_settings" ]]; then
-		rm -f "$dead_settings"
-		rmdir "$HOME/.claude/settings" 2>/dev/null || true
-		print_dim "  已清理无效的 ~/.claude/settings/settings.json"
-	fi
-
-	print_success "study-master Skill 安装完成"
+	# 2) 确保 hooks 已注册（每次都检查，防止被 settings.json 合并覆盖）
+	ensure_study_master_hooks "$settings_file" "$hook_cmd"
 }
 
 # ========================================
@@ -719,14 +732,25 @@ setup_claude_hud() {
 		return 0
 	fi
 
-	# 部署 HUD 显示偏好（从 Dotfiles 复制，开启默认关闭的显示项）
+	# 部署 HUD 显示偏好（jq 合并：保留用户自定义，补充 Dotfiles 新增选项）
 	local hud_config_src="$SCRIPT_DIR/../.claude/plugins/claude-hud/config.json"
 	local hud_config_dir="$HOME/.claude/plugins/claude-hud"
 	local hud_config="$hud_config_dir/config.json"
-	if [[ -f "$hud_config_src" && ! -f "$hud_config" ]]; then
+	if [[ -f "$hud_config_src" ]]; then
 		mkdir -p "$hud_config_dir"
-		cp "$hud_config_src" "$hud_config"
-		print_success "claude-hud config.json 已部署"
+		if [[ -f "$hud_config" ]] && command -v jq &>/dev/null; then
+			# 用户配置优先（.[1] 覆盖 .[0]），Dotfiles 作为基底补充缺失项
+			local tmp_merged
+			tmp_merged=$(mktemp)
+			if jq -s '.[0] * .[1]' "$hud_config_src" "$hud_config" >"$tmp_merged" 2>/dev/null; then
+				mv "$tmp_merged" "$hud_config"
+			else
+				rm -f "$tmp_merged"
+			fi
+		else
+			cp "$hud_config_src" "$hud_config"
+			print_success "claude-hud config.json 已部署"
+		fi
 	fi
 
 	# 检查是否已经配置为 claude-hud（避免重复）
@@ -749,9 +773,17 @@ setup_claude_hud() {
 		return 0
 	fi
 
-	# 生成动态版本发现命令（与 /claude-hud:setup 一致）
-	local hud_cmd
-	hud_cmd="bash -c 'plugin_dir=\$(ls -d \"\$HOME\"/.claude/plugins/cache/claude-hud/claude-hud/*/ 2>/dev/null | awk -F/ '\"'\"'{ print \$(NF-1) \"\\t\" \$0 }'\"'\"' | sort -t. -k1,1n -k2,2n -k3,3n -k4,4n | tail -1 | cut -f2-); exec \"${runtime}\" \"\${plugin_dir}${source}\"'"
+	# 部署 hud-proxy.mjs 和 hud-wrapper.sh（解决 Node.js stdout 全缓冲问题）
+	local proxy_src="$SCRIPT_DIR/../.claude/plugins/claude-hud/hud-proxy.mjs"
+	local wrapper_src="$SCRIPT_DIR/../.claude/plugins/claude-hud/hud-wrapper.sh"
+	if [[ -f "$proxy_src" ]]; then
+		cp "$proxy_src" "$hud_config_dir/hud-proxy.mjs"
+		cp "$wrapper_src" "$hud_config_dir/hud-wrapper.sh"
+		chmod +x "$hud_config_dir/hud-wrapper.sh"
+	fi
+
+	# 使用 bash wrapper 命令（Node.js 直接输出到 Claude Code 管道会导致多行只显示 1 行）
+	local hud_cmd="$hud_config_dir/hud-wrapper.sh"
 
 	# 测试命令是否可用
 	local test_output

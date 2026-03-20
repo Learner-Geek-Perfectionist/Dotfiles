@@ -97,7 +97,13 @@ main() {
 		if [[ -f "$claude_dest" ]] && command -v jq &>/dev/null; then
 			local tmp_merged
 			tmp_merged=$(mktemp)
-			if jq -s '.[0] * .[1]' "$claude_dest" "$claude_src" >"$tmp_merged" 2>/dev/null; then
+			# repo 的 hooks 是项目级（如 check-file-deps.sh），不应提升到全局配置
+			# 合并时排除 repo hooks，仅保留 home 已有的用户级 hooks（如 study-master）
+			if jq -s '
+				.[0].hooks as $home_hooks |
+				(.[0] | del(.hooks)) * (.[1] | del(.hooks)) |
+				if $home_hooks then .hooks = $home_hooks else . end
+			' "$claude_dest" "$claude_src" >"$tmp_merged" 2>/dev/null; then
 				mv "$tmp_merged" "$claude_dest"
 			else
 				rm -f "$tmp_merged"

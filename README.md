@@ -61,47 +61,38 @@ bash install.sh --skip-vscode     # 跳过 VSCode 插件
 
 ## 架构
 
+### 安装模块
+
+```mermaid
+graph TD
+    A["install.sh<br/>统一入口 v5.0"] --> B["macos_install<br/>Homebrew 80+ 包"]
+    A --> C["install_dotfiles<br/>配置文件符号链接"]
+    A --> D["install_vscode<br/>VSCode/Cursor 插件"]
+    A --> E["install_claude_code<br/>LSP / MCP / Skills"]
+    A --> F["install_kotlin<br/>Kotlin Native 工具链"]
+    B -. "Linux 替代" .-> G["install_pixi<br/>Pixi (rootless)"]
 ```
-                        +---------------------+
-                        |     install.sh      |
-                        |  Entry Point v5.0   |
-                        +--------+------------+
-                                 |
-            +--------------------+--------------------+
-            |                    |                     |
-            v                    v                     v
-  +------------------+  +------------------+  +------------------+
-  |  macos_install   |  | install_dotfiles |  |  install_vscode  |
-  |------------------|  |------------------|  |------------------|
-  | Homebrew         |  | Config files     |  | VSCode / Cursor  |
-  | 80+ pkg & casks  |  | Symlink deploy   |  | Extensions       |
-  +------------------+  +------------------+  +------------------+
-            |
-            | Linux
-            v
-  +------------------+  +------------------+  +------------------+
-  |  install_pixi    |  | install_claude   |  | install_kotlin   |
-  |------------------|  |------------------|  |------------------|
-  | Pixi (rootless)  |  | LSP / MCP       |  | Kotlin Native    |
-  | conda-forge      |  | Skills & Hooks  |  | Toolchain        |
-  +------------------+  +------------------+  +------------------+
 
-  ================== Shell Load Order ==================
+### Shell 加载顺序
 
-  .zshenv --> .zprofile --> .zshrc
-     |                        |
-     | ENV VARS               +--> platform.zsh       PATH & aliases
-     | HISTFILE               +--> zinit.zsh           Plugins & Turbo
-     | ZSH_CACHE_DIR          +--> double-esc-clear    Double-ESC clear
-                              +--> age-tokens.zsh      Encrypted tokens
+```mermaid
+graph LR
+    A[".zshenv<br/>环境变量"] --> B[".zprofile<br/>Homebrew shellenv"]
+    B --> C[".zshrc<br/>交互式入口"]
+    C --> D["platform.zsh<br/>平台 PATH & 别名"]
+    C --> E["zinit.zsh<br/>插件管理 & Turbo"]
+    C --> F["double-esc-clear<br/>双击 ESC 清屏"]
+    C --> G["age-tokens.zsh<br/>加密凭证"]
+```
 
-  =================== App Configs (.config/) ===================
+### 应用配置（.config/）
 
-  kitty/                Terminal emulator
-  Code/User/  <--sync-->  Cursor/User/      Editor settings
-  ripgrep/              Search config
-  karabiner/            Key remap (macOS)
-  direnv/               Per-dir env
+```mermaid
+graph LR
+    A["Code/User"] <-- "同步" --> B["Cursor/User"]
+    C["kitty/"] ~~~ D["ripgrep/"]
+    D ~~~ E["karabiner/<br/>macOS"]
+    E ~~~ F["direnv/"]
 ```
 
 ## 设计原则

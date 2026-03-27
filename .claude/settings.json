@@ -14,6 +14,11 @@
                     {
                         "type": "command",
                         "command": ".claude/hooks/check-file-deps.sh"
+                    },
+                    {
+                        "type": "command",
+                        "command": ".claude/hooks/sync-dotfile.sh",
+                        "statusMessage": "Syncing dotfile to ~/..."
                     }
                 ]
             }

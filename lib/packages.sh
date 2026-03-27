@@ -165,6 +165,9 @@ brew_formulas=(
 	# 加密
 	age
 
+	# 文件关联管理
+	duti
+
 	# 其他
 	rsync
 	mas

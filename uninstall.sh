@@ -196,8 +196,8 @@ remove_dotfiles() {
 	rm_path ~/.gitconfig
 	rm_path ~/.gitignore
 
-	# SSH 配置
-	rm_path ~/.ssh/config
+	# SSH 配置（只移除 dotfiles 部分，保留机器本地配置）
+	rm_path ~/.ssh/config.d/00-dotfiles
 
 	# 工具脚本
 	rm_path ~/sh-script

@@ -117,8 +117,16 @@ main() {
 		fi
 		print_success "~/.claude/settings.json"
 	fi
-	# 其它文件
-	copy_path ".ssh/config" ".ssh/config"
+	# SSH 配置：通过 Include 浅合并，避免覆盖机器本地的 Host 定义
+	mkdir -p "$HOME/.ssh/config.d"
+	cp -f "$DOTFILES_DIR/.ssh/config" "$HOME/.ssh/config.d/00-dotfiles"
+	chmod 600 "$HOME/.ssh/config.d/00-dotfiles"
+	if [[ ! -f "$HOME/.ssh/config" ]]; then
+		printf "# Machine-specific hosts above, shared dotfiles defaults below\nInclude config.d/*\n" > "$HOME/.ssh/config"
+	elif ! grep -qF "config.d/" "$HOME/.ssh/config"; then
+		printf "\n# Dotfiles shared config (auto-added by install_dotfiles.sh)\nInclude config.d/*\n" >> "$HOME/.ssh/config"
+	fi
+	print_success "~/.ssh/config.d/00-dotfiles (via Include)"
 	# Linux: 安装 keychain（SSH agent 管理器，纯 shell 脚本）
 	if [[ "$(uname)" != "Darwin" ]] && ! command -v keychain &>/dev/null; then
 		mkdir -p "$HOME/.local/bin"
@@ -133,7 +141,7 @@ main() {
 	copy_path "sh-script" "sh-script"
 
 	# 权限
-	[[ -d "$HOME/.ssh" ]] && chmod 700 "$HOME/.ssh" && find "$HOME/.ssh" -maxdepth 1 -type f -exec chmod 600 {} + 2>/dev/null
+	[[ -d "$HOME/.ssh" ]] && chmod 700 "$HOME/.ssh" && find "$HOME/.ssh" -maxdepth 2 -type f -exec chmod 600 {} + 2>/dev/null
 	[[ -f "$HOME/.config/zsh/fzf/fzf-preview.sh" ]] && chmod +x "$HOME/.config/zsh/fzf/fzf-preview.sh"
 	[[ -d "$HOME/sh-script" ]] && chmod +x "$HOME/sh-script"/*.sh 2>/dev/null
 

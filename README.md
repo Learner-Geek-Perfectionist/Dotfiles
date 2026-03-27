@@ -62,6 +62,117 @@ bash install.sh --skip-vscode     # 跳过 VSCode 插件
 
 构建：CMake, Ninja, Make, Autoconf
 
+## 快捷键 & 常用操作
+
+### 键盘改键（Karabiner-Elements）
+
+底层键位重映射，所有上层快捷键依赖此配置：
+
+| 物理键 | 映射为 | 说明 |
+|--------|--------|------|
+| 右 Command | Ctrl + Alt + Cmd | **HyperKey** — Hammerspoon 所有快捷键的修饰键 |
+| 右 Option | Ctrl + Alt + Cmd | 同上，左右手均可触发 HyperKey |
+| CapsLock | 左 Shift | 废键利用，更符合人体工学 |
+
+### 应用切换（Hammerspoon · HyperKey + 字母）
+
+HyperKey 即 `Ctrl + Alt + Cmd`（通过右 Command 或右 Option 一键触发）：
+
+| 快捷键 | 应用 | 快捷键 | 应用 |
+|--------|------|--------|------|
+| Hyper + T | Kitty 终端 | Hyper + V | VS Code |
+| Hyper + S | Safari | Hyper + G | ChatGPT |
+| Hyper + C | Claude Desktop | Hyper + F | Finder |
+| Hyper + W | 微信 | Hyper + Q | QQ |
+| Hyper + D | Discord | Hyper + M | Mihomo Party |
+| Hyper + I | IntelliJ IDEA | Hyper + A | Android Studio |
+| Hyper + P | PyCharm | Hyper + U | 剪贴板工具 |
+| Hyper + O | OrbStack | Hyper + . | 活动监视器 |
+
+行为逻辑：应用在前台 → 隐藏；在后台 → 激活；未运行 → 启动。
+
+### 窗口管理（Hammerspoon · HyperKey + 方向键）
+
+| 快捷键 | 效果 |
+|--------|------|
+| Hyper + ← | 窗口占屏幕左半 |
+| Hyper + → | 窗口占屏幕右半 |
+| Hyper + ↑ | 窗口最大化 |
+| Hyper + ↓ | 窗口居中（80%） |
+| Hyper + `` ` `` | 同一应用的多窗口间循环切换 |
+
+### 系统功能（Hammerspoon）
+
+| 快捷键 | 功能 |
+|--------|------|
+| Hyper + L | 锁屏 |
+| Hyper + 1 | 切换 Caffeinate 模式（阻止息屏） |
+
+菜单栏实时显示：CPU / 内存 / 磁盘 / 网速 / 负载 / Wi-Fi / 电池（点击可复制信息）。
+
+### 终端快捷键（Kitty）
+
+#### 标签页 & 窗口
+
+| 快捷键 | 操作 |
+|--------|------|
+| Cmd + E | **智能新标签页**（SSH 中自动重连远程主机，退出后保留本地 shell） |
+| Cmd + W | **智能关闭**（多窗口关窗口，单窗口关标签页） |
+| Cmd + N | 新 OS 窗口 |
+| Cmd + Enter | 水平分屏 |
+| Cmd + D | 垂直分屏 |
+| Cmd + Shift + D | 水平分屏 |
+| Cmd + 1–9, 0 | 跳转到第 1–10 个标签页 |
+| Cmd + Option + ←/→ | 移动标签页顺序 |
+
+#### 导航 & 显示
+
+| 快捷键 | 操作 |
+|--------|------|
+| Cmd + ←/→ | 光标跳到行首 / 行尾 |
+| Cmd + ↑/↓ | 滚动到顶部 / 底部 |
+| Cmd + [ / ] | 切换上一个 / 下一个窗格 |
+| Cmd + L | 切换布局模式 |
+| Cmd + =/- | 字体放大 / 缩小 |
+| Cmd + , | 编辑 kitty.conf |
+
+#### 鼠标操作
+
+选中即复制 · 双击选词 · 三击选行 · Ctrl+Option+拖选 矩形选区
+
+### Shell 快捷键 & 别名（Zsh）
+
+#### 键盘快捷键
+
+| 快捷键 | 功能 |
+|--------|------|
+| ESC ESC（双击） | 清空当前输入行 |
+| ↑ / ↓ | 按已输入前缀搜索历史命令 |
+| Ctrl + T | fzf 模糊搜索文件 |
+| Ctrl + R | fzf 模糊搜索历史命令 |
+| Alt + C | fzf 模糊跳转目录 |
+| Tab | fzf-tab 模糊补全（`<` / `>` 切换分组） |
+
+#### 常用别名
+
+| 别名 | 实际命令 | 说明 |
+|------|----------|------|
+| `cat` | `bat`（自动判断） | 纯文件用 bat 高亮，管道/ANSI 回退原生 cat |
+| `ls` | `eza --icons -ha` | 带图标、隐藏文件、ISO 时间 |
+| `ll` | `eza --icons -ha --long` | 长格式列表 |
+| `man` | `tldr` | 简化版手册 |
+| `fd` | 自动 sudo fd | 有免密 sudo 时自动提权 |
+| `python` | `python3` | — |
+| `g1` | `git clone --depth=1 --recursive` | 浅克隆 |
+| `mkdir` | `mkdir -p` | 自动创建父目录 |
+| `cp` | `cp -r` | 默认递归 |
+| `show` | `kitty +kitten icat` | 终端内显示图片 |
+| `ssh` | `kitten ssh`（Kitty 内） | 自动传输 terminfo |
+| `rg` | rg + 自定义忽略规则 | 使用 `.config/ripgrep/ignore` |
+| `reload` | 重新加载所有 zsh 配置 | — |
+| `upgrade` | 远程拉取最新配置并重载 | — |
+| `edit-tokens` | age 加密令牌管理 | 编辑后自动加密保存 |
+
 ## 架构
 
 ### 安装模块

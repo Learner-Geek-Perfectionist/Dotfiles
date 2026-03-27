@@ -16,11 +16,14 @@ def main(args):
 
 
 def _extract_ssh_destination(window):
-    """从前台进程中提取 SSH 目标地址（user@host）。找到返回字符串，否则返回 None。"""
+    """从前台进程中提取 SSH 目标地址（user@host 或 hostname）。找到返回字符串，否则返回 None。"""
     try:
         fp = window.child.foreground_processes
     except (AttributeError, OSError):
         return None
+
+    # ssh 中需要跟参数值的选项字母（如 -p 22、-i keyfile、-o Option=val）
+    _SSH_OPTS_WITH_ARG = set('bcDEeFIiJLlmOopQRSWw')
 
     for p in fp:
         cmdline = p.get('cmdline', []) or []
@@ -37,10 +40,22 @@ def _extract_ssh_destination(window):
             dash_idx = cmdline.index('--')
             return cmdline[dash_idx + 1]
         except (ValueError, IndexError):
-            # 没有 '--'，尝试从参数中找 user@host 模式
-            for arg in cmdline[1:]:
-                if '@' in arg and not arg.startswith('-'):
-                    return arg
+            pass
+
+        # 没有 '--'，按 SSH 参数语法解析，找第一个非选项参数（即目标主机）
+        # 支持 user@host 和纯 hostname（如 ssh yumi）两种格式
+        skip_next = False
+        for arg in cmdline[1:]:
+            if skip_next:
+                skip_next = False
+                continue
+            if arg.startswith('-'):
+                # -p 22 这类选项，下一个参数是值，需要跳过
+                if len(arg) == 2 and arg[1] in _SSH_OPTS_WITH_ARG:
+                    skip_next = True
+                continue
+            # 第一个非选项参数就是目标主机
+            return arg
 
     return None
 

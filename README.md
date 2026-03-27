@@ -11,7 +11,7 @@
 curl -fsSL https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/beta/install.sh | bash
 
 # 浅克隆到本地（仅最新提交，节省带宽）
-git clone --depth=1 https://github.com/Learner-Geek-Perfectionist/Dotfiles.git
+git clone --depth=1 -b beta https://github.com/Learner-Geek-Perfectionist/Dotfiles.git
 
 # 选择性安装
 bash install.sh --dotfiles-only   # 仅配置文件

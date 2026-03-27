@@ -243,6 +243,10 @@ remove_dotfiles() {
 		for p in ~/.config/karabiner ~/.hammerspoon; do
 			rm_path "$p"
 		done
+		# 恢复电源管理默认值
+		if pmset -g | awk '/^ sleep/ {print $2}' | grep -q '^0$'; then
+			sudo pmset -a sleep 1 && print_dim "✓ 电源管理已恢复默认（sleep=1）"
+		fi
 		# 停止 Homebrew autoupdate
 		if command -v brew &>/dev/null && brew commands 2>/dev/null | grep -q autoupdate; then
 			brew autoupdate delete &>/dev/null && print_dim "✓ Homebrew autoupdate 已停止并删除"

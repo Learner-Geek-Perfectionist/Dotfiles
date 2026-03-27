@@ -118,7 +118,19 @@ fi
 print_info "清理 Homebrew 缓存..."
 brew cleanup --prune=all
 
-# 7. 配置网络抓包工具权限
+# 7. 配置电源管理（合盖不睡眠，保持 SSH 连接）
+print_info "配置电源管理..."
+
+current_sleep=$(pmset -g | awk '/^ sleep/ {print $2}')
+if [[ "$current_sleep" == "0" ]]; then
+	print_success "sleep 已设为 0，跳过"
+else
+	sudo pmset -a sleep 0
+	sudo pmset -a tcpkeepalive 1
+	print_success "电源管理已配置（合盖不睡眠，TCP 保活开启）"
+fi
+
+# 8. 配置网络抓包工具权限
 print_info "配置网络工具权限..."
 
 if dscl . -read /Groups/access_bpf &>/dev/null; then

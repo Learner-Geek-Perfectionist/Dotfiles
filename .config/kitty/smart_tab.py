@@ -1,7 +1,8 @@
-# smart_tab.py — Cmd+E 智能开新 tab
-# 普通情况：继承当前目录开新 tab（原有行为）
-# SSH 会话中：新 tab 先启动本地 zsh，再自动 SSH 进去
-# 这样 exit 退出 SSH 后，回落到本地 zsh，tab 不会消失
+# smart_tab.py — 智能开新 tab / os-window
+# 用法：kitten ./smart_tab.py [--type=tab|os-window]（默认 tab）
+# 普通情况：继承当前目录（原有行为）
+# SSH 会话中：先启动本地 zsh，再自动 SSH 进去
+# 这样 exit 退出 SSH 后，回落到本地 zsh，tab/window 不会消失
 
 import sys
 import shlex
@@ -66,13 +67,18 @@ def handle_result(args, result, target_window_id, boss):
     if window is None:
         return
 
+    launch_type = 'tab'
+    for arg in args[1:]:
+        if arg.startswith('--type='):
+            launch_type = arg.split('=', 1)[1]
+
     destination = _extract_ssh_destination(window)
 
     if destination is not None:
         ssh_cmd = f'kitten ssh {shlex.quote(destination)}; exec zsh -i'
-        launch_args = ['--type=tab', 'zsh', '-c', ssh_cmd]
+        launch_args = [f'--type={launch_type}', 'zsh', '-c', ssh_cmd]
     else:
-        launch_args = ['--type=tab', '--cwd=current']
+        launch_args = [f'--type={launch_type}', '--cwd=current']
 
     opts, remaining = parse_launch_args(launch_args)
     kitty_launch(boss, opts, remaining)

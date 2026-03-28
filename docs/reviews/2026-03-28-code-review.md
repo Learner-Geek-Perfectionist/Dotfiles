@@ -20,6 +20,22 @@
 
 ---
 
+#### [S-023] 跨脚本重复："下载-解压-替换-清理" 模式出现 5 次（100+ 行）
+- **文件:** `scripts/install_claude_code.sh:120-137, 220-246, 275-303, 349-367` 和 `scripts/install_kotlin_native.sh:76-106`
+- **维度:** 代码精简度
+- **描述:** `install_rust_analyzer`、`install_kotlin_ls`、`install_lua_ls`、`install_jdtls`、`install_kotlin_native` 都遵循相同模式：`mktemp -d` → `curl -fsSL` 下载 → 解压 → `rm -rf` 旧安装 → `mv` → 清理，每次 20-30 行，总计 100+ 行重复。
+- **修复建议:** 在 `lib/utils.sh` 中提取 `download_and_extract()` 通用函数，接受 URL、目标目录、解压格式三个参数。
+
+---
+
+#### [S-024] 跨脚本重复："计数器汇总报告" 模式出现 4+ 次
+- **文件:** `scripts/install_claude_code.sh:494-514, 526-547, 779-847` 和 `scripts/install_vscode_ext.sh:187-209, 247-260`
+- **维度:** 代码精简度
+- **描述:** `add_marketplaces`、`install_plugins`、`install_mcp_servers` 和 vscode_ext 安装循环都使用 `installed/skipped/failed` 计数器 + 相同的汇总打印逻辑，至少 4 次重复。
+- **修复建议:** 在 `lib/utils.sh` 中提取 `print_install_summary()` 函数。
+
+---
+
 ### Warning
 
 #### [L-001] 缺少 set -euo pipefail 防护，与 packages.sh 不一致
@@ -163,6 +179,102 @@
 - **维度:** 代码精简度
 - **描述:** 两个函数各自有相同的 `VSCODE_ONLY`/`DOTFILES_ONLY`/`LSP_ONLY` 三段 early return 检查（共 ~18 行重复），可提取到 `main` 中统一处理。
 - **修复建议:** 在 `main` 中统一处理 `*_ONLY` 模式后再分平台调用。
+
+---
+
+#### [S-001] curl 管道直接执行远程脚本，无完整性验证
+- **文件:** `scripts/install_pixi.sh:52`, `scripts/macos_install.sh:49`, `scripts/install_claude_code.sh:452`
+- **维度:** 安全性
+- **描述:** `curl -fsSL ... | bash` 将远程脚本直接管道执行，无校验和验证。DNS 劫持或上游入侵时会执行恶意代码。
+- **修复建议:** 可接受风险（官方推荐方式），建议添加注释说明。
+
+---
+
+#### [S-002] 从 GitHub raw 下载 keychain 脚本，未固定 commit hash
+- **文件:** `scripts/install_dotfiles.sh:141`
+- **维度:** 安全性
+- **描述:** 从 `master` 分支直接下载并赋予执行权限，上游恶意提交会在下次安装时被执行。
+- **修复建议:** 固定到特定 commit hash 或 tag，下载后验证 sha256sum。
+
+---
+
+#### [S-005] `sudo xcode-select --reset` 无条件执行，可能覆盖用户设置
+- **文件:** `scripts/macos_install.sh:38`
+- **维度:** 安全性
+- **描述:** 确认 Xcode CLT 已安装后无条件重置开发者工具路径，可能覆盖用户自定义的 `xcode-select -s` 设置。
+- **修复建议:** 改为仅在路径无效时执行：`xcode-select -p &>/dev/null || sudo xcode-select --reset`。
+
+---
+
+#### [S-007] VSCode 插件安装循环未捕获每个插件的退出码
+- **文件:** `scripts/install_vscode_ext.sh:222-231`
+- **维度:** 代码质量
+- **描述:** 安装是否成功完全依赖事后批量验证，`install_vsix_from_github` 和 `install_vsix_from_marketplace` 的返回值被忽略。
+- **修复建议:** 捕获退出码，安装失败时立即记录到 `failed` 数组。
+
+---
+
+#### [S-009] pixi shell 集成会修改已由 Dotfiles 管理的 .zshrc
+- **文件:** `scripts/install_pixi.sh:64-110`
+- **维度:** 代码质量
+- **描述:** `setup_shell_integration()` 往 `~/.zshrc` 追加 pixi PATH，但 `.zshrc` 由 `install_dotfiles.sh` 部署。被 `install.sh` 调用时不应再修改。
+- **修复建议:** 当 `DOTFILES_DIR` 非空时跳过 `setup_shell_integration()`。
+
+---
+
+#### [S-011] Claude 插件检测依赖脆弱的 CLI 输出格式
+- **文件:** `scripts/install_claude_code.sh:430`
+- **维度:** 代码质量
+- **描述:** `grep -q "^  ❯ ${plugin}$"` 精确匹配 Unicode 字符和固定缩进，CLI 版本更新后格式变化会导致每次都重装全部插件。
+- **修复建议:** 改为 `grep -qF "$plugin"` 宽松匹配。
+
+---
+
+#### [S-013] jq 失败时空文件覆盖 settings.json，导致配置丢失
+- **文件:** `scripts/install_claude_code.sh:575-576`
+- **维度:** 代码质量
+- **描述:** 如果 jq 命令失败（如 JSON 格式损坏），`> .tmp` 创建空文件，`mv` 会用空文件覆盖原配置。
+- **修复建议:** `mv` 前检查 `.tmp` 非空：`[[ -s "$settings_file.tmp" ]] && mv ...`。
+
+---
+
+#### [S-017] pixi `--manifest-path` 传递了目录而非文件
+- **文件:** `scripts/install_pixi.sh:138`
+- **维度:** 架构健康度
+- **描述:** `pixi install --manifest-path "$HOME"` 传入目录，文档要求传文件路径。
+- **修复建议:** 改为 `pixi install --manifest-path "$HOME/pixi.toml"`。
+
+---
+
+#### [S-025] jdtls wrapper 脚本 37 行 heredoc 内嵌函数中
+- **文件:** `scripts/install_claude_code.sh:370-407`
+- **维度:** 代码精简度
+- **描述:** wrapper 含 JVM 参数、jar 查找、哈希计算等复杂逻辑，作为 heredoc 嵌入使得函数难读且无法被 ShellCheck 检查。
+- **修复建议:** 将 wrapper 作为独立文件存储（如 `scripts/wrappers/jdtls`），安装时复制。
+
+---
+
+#### [S-029] `setup_claude_hud` 函数 76 行，职责过多
+- **文件:** `scripts/install_claude_code.sh:683-758`
+- **维度:** 代码精简度
+- **描述:** 承担配置部署、runtime 检测、旧文件清理、命令生成、测试、写入等 6 项职责。
+- **修复建议:** 拆分为 `_deploy_hud_config()`、`_detect_hud_runtime()`、`_write_hud_statusline()` 三个子函数。
+
+---
+
+#### [S-031] Claude settings.json 合并逻辑 3 层回退过于复杂
+- **文件:** `scripts/install_dotfiles.sh:104-127`
+- **维度:** 代码精简度
+- **描述:** jq 合并 → jq 去 hooks → python3 去 hooks → 原样拷贝，嵌套 if-else 共 24 行。
+- **修复建议:** 提取为 `_deploy_claude_settings()` 独立函数。
+
+---
+
+#### [S-035] VSCode 编辑器检测逻辑存在 code/cursor 重叠边界情况
+- **文件:** `scripts/install_vscode_ext.sh:126-136`
+- **维度:** 代码质量
+- **描述:** 如果系统同时有 `code`（实为 cursor 别名）和真正的 `cursor` 命令，第二个会被跳过。
+- **修复建议:** 基于二进制路径去重而非类型名。
 
 ---
 
@@ -341,6 +453,158 @@
 - **维度:** 代码精简度
 - **描述:** 8 个 `if/elif` 分支仅为设置 `mode_suffix`，可用条件赋值链简化。
 - **修复建议:** 可读性尚可，如需简化可用 `[[ ]] && mode_suffix=...` 链式写法。
+
+---
+
+#### [S-003] MCP Server 配置硬编码本地代理地址
+- **文件:** `scripts/install_claude_code.sh:825`
+- **维度:** 安全性
+- **描述:** `PROXY_URL` 硬编码为 `http://127.0.0.1:7890`，未运行代理的机器上 open-websearch MCP 会失败。
+- **修复建议:** 从环境变量读取：`${PROXY_URL:-http://127.0.0.1:7890}`。
+
+---
+
+#### [S-004] VSIX 临时文件使用可预测的 /tmp 路径
+- **文件:** `scripts/install_vscode_ext.sh:83,98`
+- **维度:** 安全性
+- **描述:** 使用固定 `/tmp/$vsix_name` 而非 `mktemp`，多用户系统存在 symlink race 风险。
+- **修复建议:** 使用 `mktemp -d` 创建临时目录。
+
+---
+
+#### [S-006] settings.json jq 操作的 .tmp 文件无中断清理
+- **文件:** `scripts/install_claude_code.sh:575-576`
+- **维度:** 安全性
+- **描述:** Ctrl+C 中断时 `.tmp` 文件会残留。
+- **修复建议:** 使用 `trap` 在 EXIT 时清理，或用 `mktemp` 生成唯一文件名。
+
+---
+
+#### [S-008] VSCode 扩展安装进度直接用 ANSI 码，绕过日志系统
+- **文件:** `scripts/install_vscode_ext.sh:221`
+- **维度:** 代码质量
+- **描述:** `printf "\r${CYAN}[%d/%d]${NC}..."` 不经过 `print_*` 函数，进度信息不写入日志。
+- **修复建议:** 如有意不记录日志可接受，建议添加注释。
+
+---
+
+#### [S-010] `install_kotlin_native.sh` 打印两次成功消息
+- **文件:** `scripts/install_kotlin_native.sh:118,127`
+- **维度:** 代码质量
+- **描述:** 函数内和 `main()` 各打印一次成功消息，且平台不支持时 `main()` 仍打印成功。
+- **修复建议:** 删除 `main()` 中第 127 行的重复消息。
+
+---
+
+#### [S-012] `install_claude_code.sh` 全局变量 `$OS`/`$ARCH` 未声明
+- **文件:** `scripts/install_claude_code.sh:855-856`
+- **维度:** 代码质量
+- **描述:** 大写全局变量被多个函数隐式引用，重构时容易遗漏。
+- **修复建议:** 在文件顶部显式声明，或各函数独立调用 `detect_os`/`detect_arch`。
+
+---
+
+#### [S-014] 所有 6 个脚本都缺少 `set -u`
+- **文件:** `scripts/*.sh`
+- **维度:** 代码质量
+- **描述:** 统一使用 `set -eo pipefail` 而非 `set -euo pipefail`，未定义变量引用不报错。
+- **修复建议:** 统一改为 `set -euo pipefail`，需检查 `${var:-default}` 用法。
+
+---
+
+#### [S-015] `has_vscode`/`has_cursor` 检测策略与 `detect_real_type` 不一致
+- **文件:** `scripts/install_dotfiles.sh:13-20` vs `scripts/install_vscode_ext.sh:116-123`
+- **维度:** 代码质量
+- **描述:** 两个脚本使用不同的 VSCode/Cursor 检测策略，可能导致配置部署到错误路径。
+- **修复建议:** 将 `detect_real_type()` 提取到 `lib/utils.sh` 统一使用。
+
+---
+
+#### [S-016] `install_csharp_ls` 的 stderr 未重定向
+- **文件:** `scripts/install_claude_code.sh:199`
+- **维度:** 代码质量
+- **描述:** `dotnet tool install -g csharp-ls >/dev/null` 只重定向 stdout，stderr 错误直接打印到终端。
+- **修复建议:** 改为 `&>/dev/null`。
+
+---
+
+#### [S-019] `install_pixi.sh` 使用防御性 source，其他脚本不使用，风格不一致
+- **文件:** `scripts/install_pixi.sh:14-16`
+- **维度:** 架构健康度
+- **描述:** `if [[ -f ... ]]; then source ...` 防御性加载，而其他 5 个脚本直接 `source`。如果文件不存在会静默继续但后续全部 `print_*` 调用报错。
+- **修复建议:** 统一为直接 `source`，让 `set -e` 在文件缺失时立即退出。
+
+---
+
+#### [S-020] `INSTALLED_PLUGINS_JSON` 变量定义但从未使用
+- **文件:** `scripts/install_claude_code.sh:29`
+- **维度:** 架构健康度
+- **描述:** 可能是设计初期打算用 JSON 检查已安装插件，后改用 CLI。死代码。
+- **修复建议:** 删除未使用的变量。
+
+---
+
+#### [S-022] `setup_claude_hud` 使用 `eval` 执行动态命令
+- **文件:** `scripts/install_claude_code.sh:745`
+- **维度:** 安全性
+- **描述:** `eval "$hud_cmd"` 中 `$hud_cmd` 由脚本控制非用户输入，但 `eval` 是安全审查高风险标记。
+- **修复建议:** 添加注释说明内容完全由脚本控制，无注入风险。
+
+---
+
+#### [S-026] 多个 LSP 安装函数的平台检测重复
+- **文件:** `scripts/install_claude_code.sh:107-118, 263-268`
+- **维度:** 代码精简度
+- **描述:** `install_rust_analyzer` 和 `install_lua_ls` 手动 if-else 构建平台字符串。
+- **修复建议:** 在 `lib/utils.sh` 中添加 `get_platform_triple()` 函数。
+
+---
+
+#### [S-028] brew tap 检查模式重复
+- **文件:** `scripts/macos_install.sh:89,109`
+- **维度:** 代码精简度
+- **描述:** 两次相同的 `brew tap | grep -q ... || brew tap ...` 模式。
+- **修复建议:** 提取 `ensure_brew_tap()` 函数。
+
+---
+
+#### [S-030] `ensure_study_master_hooks` 的 jq 表达式嵌套复杂
+- **文件:** `scripts/install_claude_code.sh:606-614`
+- **维度:** 代码精简度
+- **描述:** 嵌套 jq（条件判断+数组追加+默认值）在 shell 中难调试。
+- **修复建议:** 可接受，建议添加行内注释或移到 `.jq` 文件。
+
+---
+
+#### [S-032] npm LSP 安装代码重复，可用循环替代
+- **文件:** `scripts/install_claude_code.sh:168-190`
+- **维度:** 代码精简度
+- **描述:** `typescript-language-server` 和 `intelephense` 安装逻辑完全相同只是包名不同。
+- **修复建议:** 用数组+循环替代。
+
+---
+
+#### [S-033] `copy_path` 每个文件都打印成功消息，噪音较多
+- **文件:** `scripts/install_dotfiles.sh:36`
+- **维度:** 代码精简度
+- **描述:** 部署 20+ 文件时产生大量输出，淹没重要信息。
+- **修复建议:** 改用 `print_dim`，全部完成后用 `print_success` 汇总。
+
+---
+
+#### [S-034] 多个 LSP 安装函数各自判断 "Linux only"
+- **文件:** `scripts/install_claude_code.sh:142-143`
+- **维度:** 代码精简度
+- **描述:** `install_gopls`、`install_lua_ls`、`install_jdtls` 各自在函数内判断平台，分散且重复。
+- **修复建议:** 在 `main()` 中按平台有条件地调用。
+
+---
+
+#### [S-036] `macos_install.sh` 不包装到 main() 函数
+- **文件:** `scripts/macos_install.sh`
+- **维度:** 代码质量
+- **描述:** 所有代码在顶层执行，不检查参数，与其他脚本风格不一致。
+- **修复建议:** 包装到 `main()` 中。
 
 ## 按模块统计
 

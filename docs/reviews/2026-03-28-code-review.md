@@ -20,6 +20,14 @@
 
 ---
 
+#### [Z-002] `edit-tokens` trap 引号嵌套 + 第二个临时文件未清理
+- **文件:** `.config/zsh/plugins/age-tokens.zsh:31,53`
+- **维度:** 安全性
+- **描述:** `trap "rm -f '$tmp'" EXIT INT TERM` 中 `$tmp` 在设置时被字面嵌入，若 `$TMPDIR` 含空格或单引号会失败。更严重的是第 53 行创建的 `tmp_age` 文件未被 trap 覆盖，中断时明文残留。
+- **修复建议:** 使用 zsh 的 `${(q)var}` 安全引用，并在第 53 行后更新 trap 为同时清理两个文件。
+
+---
+
 #### [S-023] 跨脚本重复："下载-解压-替换-清理" 模式出现 5 次（100+ 行）
 - **文件:** `scripts/install_claude_code.sh:120-137, 220-246, 275-303, 349-367` 和 `scripts/install_kotlin_native.sh:76-106`
 - **维度:** 代码精简度
@@ -275,6 +283,118 @@
 - **维度:** 代码质量
 - **描述:** 如果系统同时有 `code`（实为 cursor 别名）和真正的 `cursor` 命令，第二个会被跳过。
 - **修复建议:** 基于二进制路径去重而非类型名。
+
+---
+
+#### [Z-001] `fzf-preview.sh` 缺少可执行权限
+- **文件:** `.config/zsh/fzf/fzf-preview.sh`
+- **维度:** 代码质量
+- **描述:** 文件有 shebang 但无 `+x` 权限，依赖 fzf 通过 `$SHELL -c` 执行的实现细节。
+- **修复建议:** `chmod +x .config/zsh/fzf/fzf-preview.sh`。
+
+---
+
+#### [Z-003] `edit-tokens` 中编辑器退出码检查不惯用
+- **文件:** `.config/zsh/plugins/age-tokens.zsh:47`
+- **维度:** 代码质量
+- **描述:** 分行检查 `$?` 而非直接 `if ! "$editor" "$tmp"`，易出错。
+- **修复建议:** 改为 `if ! "$editor" "$tmp"; then ...`。
+
+---
+
+#### [Z-004] age 解密失败时静默吞掉错误
+- **文件:** `.config/zsh/plugins/age-tokens.zsh:13`
+- **维度:** 安全性
+- **描述:** `2>/dev/null` 导致解密失败无任何提示，依赖 tokens 的命令会以更隐晦的方式失败。
+- **修复建议:** 解密失败时输出警告：`print -P "%F{yellow}[age-tokens] 解密失败%f" >&2`。
+
+---
+
+#### [Z-005] fzf 包装函数中 trap 会覆盖调用方已有的 trap
+- **文件:** `.zshrc:164-169`
+- **维度:** 代码质量
+- **描述:** 在函数（非子 shell）中设置 EXIT/INT/TERM trap 会替换整个 shell 会话的 trap。
+- **修复建议:** 使用 zsh 的 `always` 块替代 trap。
+
+---
+
+#### [Z-006] `cat` 包装函数的逻辑可读性差
+- **文件:** `.zshrc:185-192`
+- **维度:** 代码质量
+- **描述:** `||` 和 `&&` 优先级导致逻辑正确但难以阅读。
+- **修复建议:** 拆分为显式的 `if` 分支。
+
+---
+
+#### [Z-007] `rm_star_silent` 禁用了 `rm *` 安全确认
+- **文件:** `.zshrc:33`
+- **维度:** 安全性
+- **描述:** 关闭 zsh 对 `rm *` 的交互式确认提示，结合 `alias cp='cp -r'` 误操作影响放大。
+- **修复建议:** 在注释中标注风险等级，或考虑只在非交互式模式下设置。
+
+---
+
+#### [Z-009] `alias claude='claude --dangerously-skip-permissions'` 始终跳过权限检查
+- **文件:** `.zshrc:222`
+- **维度:** 安全性
+- **描述:** 将危险 flag 设为默认行为扩大了攻击面。flag 名称本身已标记其危险性。
+- **修复建议:** 保留裸 `claude` 的权限检查，使用单独别名如 `alias cly='claude --dangerously-skip-permissions'`。
+
+---
+
+#### [Z-012] `KEYTIMEOUT=1` 在 SSH 场景下可能破坏键位序列
+- **文件:** `.config/zsh/plugins/double-esc-clear.zsh:5`
+- **维度:** 代码质量
+- **描述:** 10ms 超时在网络延迟较高的 SSH 会话中可能导致箭头键和 Alt 组合键被误解析。
+- **修复建议:** SSH 连接时设为 `KEYTIMEOUT=20`，本地保持 1。
+
+---
+
+#### [Z-013] `double-esc-clear.zsh` 中文件描述符泄漏风险
+- **文件:** `.config/zsh/plugins/double-esc-clear.zsh:13`
+- **维度:** 代码质量
+- **描述:** 若 `exec {fd}<&-` 失败但 `unset _esc_timer_fd` 仍执行，后续 `zle -F` 移除被跳过，fd 和后台 `sleep` 泄漏。
+- **修复建议:** 将 `unset` 放在 `exec` 和 `zle -F` 之后的统一清理块中。
+
+---
+
+#### [Z-015] `--tac` 在 FZF_DEFAULT_OPTS 中影响所有 fzf 场景
+- **文件:** `.zshrc:141`
+- **维度:** 代码质量
+- **描述:** 全局 `--tac` 对文件列表、补全候选等场景导致反直觉排序。
+- **修复建议:** 移到 `FZF_CTRL_R_OPTS` 中只影响历史搜索。
+
+---
+
+#### [Z-018] `reload` 别名重复加载导致环境污染
+- **文件:** `.zshrc:207`
+- **维度:** 代码质量
+- **描述:** 重新 source 所有配置会累积 trap、zle widget、zinit 重复注册等全局状态。
+- **修复建议:** 改为 `alias reload='exec zsh -l'`。
+
+---
+
+#### [Z-019] `upgrade` 别名 curl 执行远程脚本
+- **文件:** `.zshrc:210`
+- **维度:** 安全性
+- **描述:** 作为日常使用的别名（非一次性安装），每次 upgrade 都远程拉取执行扩大了供应链攻击面。
+- **修复建议:** 改为 `cd ~/Dotfiles && git pull && bash install.sh --dotfiles-only`。
+
+---
+
+#### [Z-020] `upgrade` 用 beta 分支，`uninstall` 用 master 分支
+- **文件:** `.zshrc:210-211`
+- **维度:** 代码质量
+- **描述:** 两个别名使用不同分支，卸载脚本可能无法正确清理 beta 新增组件。
+- **修复建议:** 统一使用相同分支。
+
+---
+
+#### [Z-026] `edit-tokens` 明文临时文件的 TOCTOU 安全间隙
+- **文件:** `.config/zsh/plugins/age-tokens.zsh:29-62`
+- **维度:** 安全性
+- **描述:** `mktemp` 创建和 `chmod 600` 之间存在时间窗口，明文 tokens 在磁盘上存在时间等于编辑器会话时长。
+- **修复建议:** 使用 `(umask 077; tmp=$(mktemp))` 消除 TOCTOU 窗口。
 
 ---
 
@@ -605,6 +725,62 @@
 - **维度:** 代码质量
 - **描述:** 所有代码在顶层执行，不检查参数，与其他脚本风格不一致。
 - **修复建议:** 包装到 `main()` 中。
+
+---
+
+#### [Z-008] `alias man='tldr'` 完全替代 man
+- **文件:** `.zshrc:196`
+- **维度:** 代码质量
+- **描述:** tldr 只提供常见用法摘要，需要完整手册时无法方便访问。
+- **修复建议:** 增加 `alias manfull='command man'`。
+
+---
+
+#### [Z-010] `alias open='open -R'` 改变了默认语义
+- **文件:** `.zshrc:71,94`
+- **维度:** 代码质量
+- **描述:** `open -R` 是"在 Finder 中显示"而非"打开文件"，改变了标准行为。
+- **修复建议:** 考虑用 `alias reveal='open -R'` 替代。
+
+---
+
+#### [Z-014] `zinit.zsh` 中 ANSI 转义码 `\033[220m` 和 `\033[160m` 无效
+- **文件:** `.config/zsh/plugins/zinit.zsh:20,24`
+- **维度:** 代码质量
+- **描述:** 220 和 160 不是有效的 SGR 参数（范围 0-107），不会产生任何颜色效果。
+- **修复建议:** 改为标准颜色码如 `\033[33m`（黄色）和 `\033[31m`（红色）。
+
+---
+
+#### [Z-016] `fd` 函数每次调用都尝试 sudo 提权
+- **文件:** `.zshrc:157`
+- **维度:** 安全性
+- **描述:** 每次 `fd` 调用都 `sudo -n true` 检测，sudo 缓存有效期内会意外以 root 权限搜索。
+- **修复建议:** 改为显式 `sfd` 别名用于 sudo 场景。
+
+---
+
+#### [Z-022] `typeset -U path` 位置偏晚
+- **文件:** `.zshrc:46`
+- **维度:** 代码质量
+- **描述:** 设在 `.zshrc` 但 `.zprofile` 中 brew shellenv 可能已插入重复条目。
+- **修复建议:** 移到 `.zshenv` 中确保整个加载链去重。
+
+---
+
+#### [Z-023] `fzf-preview.sh` 中 bat 检测逻辑重复
+- **文件:** `.config/zsh/fzf/fzf-preview.sh:21-28,42-49`
+- **维度:** 代码精简度
+- **描述:** `batcat`/`bat` 检测完全相同出现两次。
+- **修复建议:** 提取到文件开头一次检测，后续引用变量。
+
+---
+
+#### [Z-025] `zinit.zsh` 中 eza 别名连续两次 `$+commands` 检查
+- **文件:** `.config/zsh/plugins/zinit.zsh:64-65`
+- **维度:** 代码精简度
+- **描述:** 连续两行分别检查同一命令，可合并为一个 `if` 块。
+- **修复建议:** 合并为 `if (( $+commands[eza] )); then alias ls=...; alias ll=...; fi`。
 
 ## 按模块统计
 

@@ -44,6 +44,14 @@
 
 ---
 
+#### [C-001] `.ssh/config` 全局开启 ForwardAgent yes，存在安全风险
+- **文件:** `.ssh/config:14`
+- **维度:** 安全性
+- **描述:** `Host *` 下 `ForwardAgent yes` 对所有主机生效。不受信任的服务器管理员可以利用 forwarded agent 冒充你登录其他系统。SSH 最佳实践明确不推荐全局启用。
+- **修复建议:** 从 `Host *` 移除，仅在需要的特定 Host 块（如 `fedora`、`orb`）中启用。
+
+---
+
 #### [Z-002] `edit-tokens` trap 引号嵌套 + 第二个临时文件未清理
 - **文件:** `.config/zsh/plugins/age-tokens.zsh:31,53`
 - **维度:** 安全性
@@ -582,6 +590,118 @@
 
 ---
 
+#### [E-001] Library Code settings.json 含 Linux 特定值（环境残留）
+- **文件:** `Library/Application Support/Code/User/settings.json:14-15`
+- **维度:** 架构健康度
+- **描述:** Library（macOS 部署源）中含 `C_Cpp.default.intelliSenseMode: "linux-gcc-arm64"` 和 `compilerPath: "/usr/bin/g++"`，明显是 Linux 环境残留。与 `.config` 版本不一致。
+- **修复建议:** 删除 Linux 特定值，与 `.config` 版本同步。
+
+---
+
+#### [E-002] Library Cursor settings.json 同样含 Linux 特定值
+- **文件:** `Library/Application Support/Cursor/User/settings.json:14-15`
+- **维度:** 架构健康度
+- **描述:** 同 E-001，Cursor Library 版本也有 `linux-gcc-arm64` 残留。
+- **修复建议:** 同 E-001。
+
+---
+
+#### [E-004] Cursor 缺少 autocorrect 远程扩展
+- **文件:** `.config/Cursor/User/settings.json:128-129`
+- **维度:** 架构健康度
+- **描述:** Code 的 `remote.SSH.defaultExtensions` 含 `huacnlee.autocorrect`，但 Cursor 两个版本均缺少。`autocorrect.enable: true` 已启用但远程连接后功能不可用。
+- **修复建议:** 在 Cursor 的 `remote.SSH.defaultExtensions` 中添加 `"huacnlee.autocorrect"`。
+
+---
+
+#### [E-005] file-deps.json 缺少 Library 路径的依赖映射
+- **文件:** `.claude/file-deps.json`
+- **维度:** 架构健康度
+- **描述:** 仅定义了 `.config/Code <-> .config/Cursor` 的依赖，`Library/Application Support/` 下的 4 个文件完全未登记，修改时不会触发关联提醒。
+- **修复建议:** 为 Library 下编辑器配置添加依赖映射。
+
+---
+
+#### [E-006] sync-dotfile.sh 不处理编辑器配置路径
+- **文件:** `.claude/hooks/sync-dotfile.sh:19-38`
+- **维度:** 架构健康度
+- **描述:** case 语句不覆盖 `.config/Code/*`、`.config/Cursor/*`、`Library/*`，编辑后不会自动同步。
+- **修复建议:** 在 case 中添加编辑器配置路径的同步逻辑。
+
+---
+
+#### [C-002] `.ssh/config` 全局 `StrictHostKeyChecking accept-new`
+- **文件:** `.ssh/config:12`
+- **维度:** 安全性
+- **描述:** 首次连接自动接受 host key 而不提示，降低了首次连接的 MITM 防护。
+- **修复建议:** `Host *` 恢复默认 `ask`，仅在信任主机块中设置 `accept-new`。
+
+---
+
+#### [C-005] pixi.toml 所有 91 个依赖使用 `*` 通配版本
+- **文件:** `pixi.toml:17-108`
+- **维度:** 代码质量
+- **描述:** 无版本约束，上游破坏性更新时环境可能崩溃。pixi.lock 提供了精确复现但 `*` 约束意味着更新时没有安全网。
+- **修复建议:** 对关键工具链指定主版本约束如 `python = ">=3.12,<4"`。
+
+---
+
+#### [T-001] get-my-ip.sh curl 调用缺少超时设置
+- **文件:** `sh-script/get-my-ip.sh:8-9`
+- **维度:** 代码质量
+- **描述:** 两处 curl 无 `--connect-timeout` 和 `--max-time`，网络不通时脚本无限期挂起。
+- **修复建议:** 添加 `--connect-timeout 5 --max-time 10`。
+
+---
+
+#### [T-002] get-my-ip.sh API Token 通过 URL 参数泄露
+- **文件:** `sh-script/get-my-ip.sh:9`
+- **维度:** 安全性
+- **描述:** token 嵌入 URL，会出现在 `ps aux`、shell history、服务器日志中。
+- **修复建议:** 改用 HTTP Header：`curl -H "Authorization: Bearer ${API_TOKEN}"`。
+
+---
+
+#### [T-003] get-my-ip.sh 获取公网 IP 失败时未检查直接传给下个 API
+- **文件:** `sh-script/get-my-ip.sh:8`
+- **维度:** 代码质量
+- **描述:** 第一次 curl 失败时 `MY_IP` 为空，仍会用空值调用 ipinfo API。
+- **修复建议:** 获取后立即验证 IP 格式。
+
+---
+
+#### [T-006] get-my-ip.sh 硬编码网络接口名 en0/eth0
+- **文件:** `sh-script/get-my-ip.sh:90,94`
+- **维度:** 代码质量
+- **描述:** 不匹配所有平台的接口命名（en1、ens*、wlp* 等）。
+- **修复建议:** macOS 用 `ipconfig getifaddr en0 || ipconfig getifaddr en1`，Linux 用 `hostname -I | awk '{print $1}'`。
+
+---
+
+#### [D-001] sync-dotfile.sh 变量未引号 + 缺少 `set -u`
+- **文件:** `.claude/hooks/sync-dotfile.sh:7,16`
+- **维度:** 安全性
+- **描述:** `$REPO` 未引号，路径含空格时出错。与 check-file-deps.sh 不一致（后者有 `set -euo pipefail`）。
+- **修复建议:** `REL="${FILE_PATH#"$REPO"/}"`，统一 `set -euo pipefail`。
+
+---
+
+#### [D-002] sync-dotfile.sh 和 check-file-deps.sh stdin 读取方式不一致
+- **文件:** `.claude/hooks/sync-dotfile.sh:7` vs `.claude/hooks/check-file-deps.sh:12-15`
+- **维度:** 代码质量
+- **描述:** 前者直接从 stdin 读取 jq，后者先 `cat` 缓存再 jq。风格不一致。
+- **修复建议:** 统一为先缓存再提取的方式。
+
+---
+
+#### [D-004] settings.json 中 skipDangerousModePermissionPrompt 跳过危险操作确认
+- **文件:** `.claude/settings.json:7`
+- **维度:** 安全性
+- **描述:** Claude Code 可在不经确认的情况下执行破坏性操作，在 dotfiles 仓库中尤其危险。
+- **修复建议:** 考虑移除此项（默认 false），或在注释中说明风险。
+
+---
+
 ### Info
 
 #### [L-002] 日志目录使用可预测的固定路径
@@ -1053,6 +1173,94 @@
 - **维度:** 代码精简度
 - **描述:** `charsize/utf8len/utf8sub/pushleft/pushright/popleft/popright` 共 7 个函数从未被调用，约 80 行死代码。
 - **修复建议:** 删除未使用的函数。
+
+---
+
+#### [E-003] Code vs Cursor markdown 预览设置不一致
+- **文件:** `Library/.../Code/User/settings.json:103` vs `Library/.../Cursor/User/settings.json:103`
+- **维度:** 架构健康度
+- **描述:** Code 版 `markdown.preview.doubleClickToSwitchToEditor: true`，Cursor 版为 `false`。
+- **修复建议:** 统一为 `true`。
+
+---
+
+#### [E-007] keybindings.json 末尾 trailing comma（所有 4 个版本）
+- **文件:** `.config/Code/User/keybindings.json:34-35` 等
+- **维度:** 代码质量
+- **描述:** JSONC 容忍但标准 JSON 不合法，其他工具可能解析失败。
+- **修复建议:** 删除最后一个 `}` 后的逗号。
+
+---
+
+#### [C-003] .gitconfig URL rewrite 全局将 HTTPS 转 SSH
+- **文件:** `.gitconfig:5-6`
+- **维度:** 安全性
+- **描述:** 无 SSH key 环境（CI、容器）中所有 GitHub 操作会失败。
+- **修复建议:** 在注释中说明影响和临时绕过方法。
+
+---
+
+#### [C-004] direnv.toml 使用未替换的 `__HOME__` 占位符
+- **文件:** `.config/direnv/direnv.toml:7`
+- **维度:** 代码质量
+- **描述:** 需安装脚本 sed 替换，直接复制部署时 direnv 白名单失效且无错误提示。
+- **修复建议:** 添加醒目注释标注不能直接复制部署。
+
+---
+
+#### [C-006] .envrc PATH 去重管道可能影响含空格路径
+- **文件:** `.envrc:8`
+- **维度:** 代码质量
+- **描述:** `tr ':' '\n'` 管道方式不够健壮（虽然 PATH 极少含空格）。
+- **修复建议:** 可用 `typeset -U PATH` (zsh) 或 `awk -v RS=:` 替代。
+
+---
+
+#### [C-007] ripgrep config 默认 `--ignore-case`
+- **文件:** `.config/ripgrep/config:2`
+- **维度:** 代码质量
+- **描述:** 代码搜索中大小写不敏感可能产生噪音。
+- **修复建议:** 考虑改用 `--smart-case`。
+
+---
+
+#### [T-004] get-my-ip.sh 国旗 case 语句有 4 个重复条目
+- **文件:** `sh-script/get-my-ip.sh:40/64, 48/75, 72/76, 53/77`
+- **维度:** 代码精简度
+- **描述:** SE、TH、CL、NG 各出现两次，后面的是死代码。
+- **修复建议:** 删除重复条目。
+
+---
+
+#### [T-005] get-my-ip.sh 缺少 `set -eo pipefail`
+- **文件:** `sh-script/get-my-ip.sh:1`
+- **维度:** 代码质量
+- **描述:** 未覆盖的错误路径会被静默忽略。
+- **修复建议:** 添加 `set -eo pipefail`。
+
+---
+
+#### [T-007] get-my-ip.sh 依赖 jq 但未检查
+- **文件:** `sh-script/get-my-ip.sh:18`
+- **维度:** 代码质量
+- **描述:** jq 不存在时报错不友好。
+- **修复建议:** 开头添加 `command -v jq &>/dev/null || { echo "Error: jq required"; exit 1; }`。
+
+---
+
+#### [D-003] check-file-deps.sh 路径前缀剥离依赖字面匹配
+- **文件:** `.claude/hooks/check-file-deps.sh:21-25`
+- **维度:** 代码质量
+- **描述:** 符号链接解析后的路径会导致前缀匹配失败，hook 静默退出。
+- **修复建议:** 用 `realpath` 规范化路径后再匹配。
+
+---
+
+#### [D-005] file-deps.json 缺少 .envrc 和 direnv.toml 的依赖
+- **文件:** `.claude/file-deps.json`
+- **维度:** 架构健康度
+- **描述:** 修改 `.envrc` 不会提醒检查 `pixi.toml` 和模板文件。
+- **修复建议:** 添加关联映射。
 
 ## 按模块统计
 

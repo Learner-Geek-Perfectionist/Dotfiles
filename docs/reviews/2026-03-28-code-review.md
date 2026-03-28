@@ -20,6 +20,30 @@
 
 ---
 
+#### [K-001] `cmd+0` 快捷键映射冲突，`goto_tab 10` 被静默覆盖
+- **文件:** `.config/kitty/kitty.conf:209,224`
+- **维度:** 代码质量
+- **描述:** `cmd+0` 同时映射到 `goto_tab 10` 和 `change_font_size all 0`。后定义的覆盖前面，`goto_tab 10` 永远不会触发。
+- **修复建议:** 将字体重置改为 `cmd+shift+0` 或移除 `goto_tab 10`。
+
+---
+
+#### [K-002] `smart_close.py` 中 `boss.window` 属性不存在，运行时 AttributeError
+- **文件:** `.config/kitty/smart_close.py:25`
+- **维度:** 安全性
+- **描述:** `boss` 是 `kitty.boss.Boss` 实例，没有 `.window` 属性。最后一个窗口关闭时执行到 `boss.window.close()` 会抛异常。
+- **修复建议:** 替换为 `boss.close_os_window()`，并重构整个 else 分支逻辑（见 K-013）。
+
+---
+
+#### [H-006] `systemInfo.lua` 中 `obj.last_down` 赋值两次，`obj.last_up` 丢失
+- **文件:** `.hammerspoon/modules/systemInfo.lua:164-165`
+- **维度:** 代码质量
+- **描述:** 复制粘贴错误：第 165 行 `obj.last_down = 0` 应为 `obj.last_up = 0`。在无网络时 `obj.last_up` 为 `nil`，后续算术运算抛异常。
+- **修复建议:** 将第 165 行改为 `obj.last_up = 0`。
+
+---
+
 #### [Z-002] `edit-tokens` trap 引号嵌套 + 第二个临时文件未清理
 - **文件:** `.config/zsh/plugins/age-tokens.zsh:31,53`
 - **维度:** 安全性
@@ -395,6 +419,166 @@
 - **维度:** 安全性
 - **描述:** `mktemp` 创建和 `chmod 600` 之间存在时间窗口，明文 tokens 在磁盘上存在时间等于编辑器会话时长。
 - **修复建议:** 使用 `(umask 077; tmp=$(mktemp))` 消除 TOCTOU 窗口。
+
+---
+
+#### [K-003] `smart_close.py` close 后立即检查 `tab.windows` 存在竞态
+- **文件:** `.config/kitty/smart_close.py:17-23`
+- **维度:** 安全性
+- **描述:** `window.close()` 后立即检查 `len(tab.windows)`，Kitty 内部异步操作可能尚未更新。
+- **修复建议:** close 之前决定行为：`len(tab.windows) == 1` 时直接 `boss.close_os_window()`。
+
+---
+
+#### [K-004] `smart_close.py` 未检查 `boss.active_window` 是否为 None
+- **文件:** `.config/kitty/smart_close.py:18`
+- **维度:** 安全性
+- **描述:** 极端情况下 `boss.active_window` 可能为 None，导致 AttributeError。
+- **修复建议:** 添加 `window = boss.active_window; if window is None: return`。
+
+---
+
+#### [K-005] SSH 解析函数 `_extract_ssh_destination` 在两个文件中完全重复（35 行）
+- **文件:** `.config/kitty/smart_tab.py:18-60` 和 `.config/kitty/smart_window.py:17-51`
+- **维度:** 代码精简度
+- **描述:** 两个文件逐字重复 35 行 SSH 参数解析逻辑，修改需同步两处。
+- **修复建议:** 提取到 `.config/kitty/ssh_utils.py` 共享模块。
+
+---
+
+#### [K-013] `smart_close.py` else 分支逻辑冗余且部分无效
+- **文件:** `.config/kitty/smart_close.py:17-25`
+- **维度:** 代码精简度
+- **描述:** 结合 K-002/K-003，else 分支需要整体重写。两步操作可简化为一步。
+- **修复建议:** 简化为：`len(tab.windows) == 1` → `boss.close_os_window()`，否则 `boss.active_window.close()`。
+
+---
+
+#### [K-014] `listen_on unix:/tmp/kitty-socket` 多实例会冲突
+- **文件:** `.config/kitty/kitty.conf:7`
+- **维度:** 安全性
+- **描述:** 固定 socket 路径，多个 Kitty 实例会冲突。
+- **修复建议:** 使用 `listen_on unix:/tmp/kitty-{kitty_pid}`。
+
+---
+
+#### [H-001] 全局变量污染 — `keyConfig`/`HyperKey`/`windowsConfig` 未声明 local
+- **文件:** `.hammerspoon/config/keyConfig.lua:3,23,25`
+- **维度:** 代码质量
+- **描述:** 三个配置变量均为全局变量，任何模块可意外覆盖。
+- **修复建议:** 声明为 `local`，通过 `return` 导出模块表。
+
+---
+
+#### [H-002] 全局变量污染 — `base.lua` 所有 11 个函数均为全局函数
+- **文件:** `.hammerspoon/modules/base.lua`
+- **维度:** 代码质量
+- **描述:** 11 个函数全部定义为全局，其中 `pushleft/pushright/popleft/popright/serialize/unserialize/utf8len/utf8sub/charsize` 从未被调用。
+- **修复建议:** 全部改为 local，收集到 `local M = {}` 表中并 `return M`。
+
+---
+
+#### [H-003] `unserialize` 使用 `load()` 执行任意字符串
+- **文件:** `.hammerspoon/modules/base.lua:100`
+- **维度:** 安全性
+- **描述:** `load(lua)` 将任意字符串编译为 Lua 代码并执行，存在代码注入风险。当前未被调用但暴露为全局函数。
+- **修复建议:** 删除此函数，如需反序列化使用 `hs.json.decode`。
+
+---
+
+#### [H-004] 命令注入 — `AppToggler` 拼接 bundleID 到 shell 命令
+- **文件:** `.hammerspoon/modules/AppToggler.lua:12,16`
+- **维度:** 安全性
+- **描述:** `hs.execute("open -b '" .. bundleID .. "'")` 直接拼接，含特殊字符时可注入。
+- **修复建议:** 改用 `hs.application.launchOrFocusByBundleID(bundleID)`。
+
+---
+
+#### [H-007] `systemInfo.lua` 网络接口仅加载时获取一次，切换后失效
+- **文件:** `.hammerspoon/modules/systemInfo.lua:8`
+- **维度:** 代码质量
+- **描述:** Wi-Fi 切有线或断网重连后，`interface` 变量仍保存旧值。
+- **修复建议:** 在 `init()` 或 `scan()` 中重新获取接口。
+
+---
+
+#### [H-010] `setSysInfo` 定时器 nil 检查可能空指针
+- **文件:** `.hammerspoon/modules/systemInfo.lua:294-299`
+- **维度:** 代码质量
+- **描述:** `if obj.timer or obj.timer1` 为 true 时，其中一个可能为 nil，`timer:stop()` 会崩溃。
+- **修复建议:** 拆分为独立的 `if obj.timer then ... end; if obj.timer1 then ... end`。
+
+---
+
+#### [H-011] 网速计算时间基准错误，显示值偏高 50%
+- **文件:** `.hammerspoon/modules/systemInfo.lua:26-39`
+- **维度:** 代码质量
+- **描述:** 注释说 2 秒刷新除以 2，实际定时器间隔 3 秒。且 `bytes < 1024` 分支未除以时间间隔。
+- **修复建议:** 统一使用 `local INTERVAL = 3` 作为除数。
+
+---
+
+#### [H-013] canvas 对象每 3 秒创建但从不 delete，资源泄漏
+- **文件:** `.hammerspoon/modules/systemInfo.lua:257,284-285`
+- **维度:** 代码质量
+- **描述:** `canvas:delete()` 被注释掉，一小时创建 1200 个未释放的 canvas 对象。
+- **修复建议:** 取消注释 `canvas:delete()`，或将 canvas 提升为模块级变量复用。
+
+---
+
+#### [H-016] `reload.lua` 中 `configWatcher` 为全局变量
+- **文件:** `.hammerspoon/modules/reload.lua:17`
+- **维度:** 代码质量
+- **描述:** 全局变量泄漏，应为 local。
+- **修复建议:** 改为 `local configWatcher`。
+
+---
+
+#### [H-017] `reload.lua` 中 `doReload` 为隐式全局变量
+- **文件:** `.hammerspoon/modules/reload.lua:5`
+- **维度:** 代码质量
+- **描述:** 缺少 `local` 声明。
+- **修复建议:** 改为 `local doReload = false`。
+
+---
+
+#### [H-018] `caffeinate.lua` 全局变量和函数
+- **文件:** `.hammerspoon/modules/caffeinate.lua:2`
+- **维度:** 代码质量
+- **描述:** `caffeinateMode` 和 `toggleCaffeinateMode` 均为全局。
+- **修复建议:** 改为 local，通过模块返回表导出。
+
+---
+
+#### [H-020] `windowManagement.lua` 全局函数 + 多余 require
+- **文件:** `.hammerspoon/modules/windowManagement.lua:4,8,40`
+- **维度:** 代码质量
+- **描述:** 两个函数为全局，`require "hs.window"` 多余（Hammerspoon 已全局可用）。
+- **修复建议:** 声明为 local，移除多余 require。
+
+---
+
+#### [H-022] `systemInfo.lua` 隐式依赖 `base.lua` 全局 `split` 函数
+- **文件:** `.hammerspoon/modules/systemInfo.lua:2,89`
+- **维度:** 架构健康度
+- **描述:** `require 'modules.base'` 后直接使用全局 `split`，若 base.lua 改为 local 模式则崩溃。
+- **修复建议:** 改为 `local base = require('modules.base')` 后 `base.split()`。
+
+---
+
+#### [H-023] 所有模块均无 `return` 语句，违反 Lua 模块规范
+- **文件:** 所有 `.hammerspoon/modules/*.lua` 和 `config/*.lua`
+- **维度:** 架构健康度
+- **描述:** 全部依赖全局变量传递接口，无法单元测试，依赖关系不透明。
+- **修复建议:** 统一采用 `local M = {} ... return M` 模块返回模式。
+
+---
+
+#### [H-024] `KeyBinds.lua` 隐式依赖加载顺序
+- **文件:** `.hammerspoon/init.lua:7-8`
+- **维度:** 架构健康度
+- **描述:** `KeyBinds.lua` 引用的全局函数依赖其他模块先被 require，但实际在之后才加载（靠回调延迟执行避免崩溃）。
+- **修复建议:** 在 `KeyBinds.lua` 中显式 require 所有依赖。
 
 ---
 
@@ -781,6 +965,94 @@
 - **维度:** 代码精简度
 - **描述:** 连续两行分别检查同一命令，可合并为一个 `if` 块。
 - **修复建议:** 合并为 `if (( $+commands[eza] )); then alias ls=...; alias ll=...; fi`。
+
+---
+
+#### [K-006] `smart_tab.py` 和 `smart_window.py` 的 `handle_result` 高度相似
+- **文件:** `.config/kitty/smart_tab.py:63-78` 和 `.config/kitty/smart_window.py:54-69`
+- **维度:** 代码精简度
+- **描述:** 唯一区别是 `--type=tab` vs `--type=os-window`，可提取工厂函数。
+- **修复建议:** 结合 K-005，提取 `smart_launch(boss, window, launch_type)` 到公共模块。
+
+---
+
+#### [K-007] Catppuccin 主题文件已注释但仍保留在仓库
+- **文件:** `.config/kitty/kitty.conf:238`
+- **维度:** 架构健康度
+- **描述:** `include ./Catppuccin-Frappe.conf` 已注释，文件仍存在。
+- **修复建议:** 如不再使用则移除文件，如临时切换则添加注释说明。
+
+---
+
+#### [K-011] 注释拼写错误 `siwtch windwos`
+- **文件:** `.config/kitty/kitty.conf:229`
+- **维度:** 代码质量
+- **描述:** 应为 `switch windows`。
+- **修复建议:** 修正拼写。
+
+---
+
+#### [K-012] 注释拼写错误 `inlcude`
+- **文件:** `.config/kitty/kitty.conf:237`
+- **维度:** 代码质量
+- **描述:** 应为 `include`。
+- **修复建议:** 修正拼写。
+
+---
+
+#### [H-005] `AppToggler` 可用原生 API 简化
+- **文件:** `.hammerspoon/modules/AppToggler.lua:3-18`
+- **维度:** 代码精简度
+- **描述:** `hs.application.launchOrFocusByBundleID` 已涵盖核心逻辑，只需额外处理隐藏。
+- **修复建议:** 简化为 4 行：检查 frontmost → hide，否则 launchOrFocusByBundleID。
+
+---
+
+#### [H-012] `systemInfo.lua` 中大量重复的 `hs.styledtext.new` 样式参数
+- **文件:** `.hammerspoon/modules/systemInfo.lua:237-252`
+- **维度:** 代码精简度
+- **描述:** 四处相同样式 table 每次内联创建。
+- **修复建议:** 提取为 `local STYLE = {...}` 常量复用。
+
+---
+
+#### [H-015] `init.lua` 和 `reload.lua` 双重发送启动通知
+- **文件:** `.hammerspoon/init.lua:22` 和 `.hammerspoon/modules/reload.lua:20`
+- **维度:** 代码质量
+- **描述:** 每次启动弹两条通知，冗余。
+- **修复建议:** 删除 `reload.lua` 的通知，只保留 `init.lua` 末尾的。
+
+---
+
+#### [H-019] `inputMethod.lua` 模块已废弃但仍被 require
+- **文件:** `.hammerspoon/modules/inputMethod.lua` 和 `.hammerspoon/init.lua:13`
+- **维度:** 代码精简度
+- **描述:** 整个模块处于废弃状态（watcher 代码已注释），但仍被加载。
+- **修复建议:** 从 `init.lua` 移除 require，或删除文件。
+
+---
+
+#### [H-025] `systemInfo.lua` 中 35+ 行注释掉的代码
+- **文件:** `.hammerspoon/modules/systemInfo.lua:195-216,315-327`
+- **维度:** 代码精简度
+- **描述:** 占文件 10%，增加阅读负担。Git 历史已保存。
+- **修复建议:** 删除注释掉的废弃代码。
+
+---
+
+#### [H-026] `formatPercent` 对 `percent <= 0` 返回 `"  1%"` 而非 `"  0%"`
+- **文件:** `.hammerspoon/modules/systemInfo.lua:14-15`
+- **维度:** 代码质量
+- **描述:** 语义不正确，0% 使用率应显示 0%。
+- **修复建议:** 改为 `"  0%"` 或移除特殊分支。
+
+---
+
+#### [H-028] `base.lua` 中 UTF-8 函数和双端队列函数均未使用
+- **文件:** `.hammerspoon/modules/base.lua:3-56,133-165`
+- **维度:** 代码精简度
+- **描述:** `charsize/utf8len/utf8sub/pushleft/pushright/popleft/popright` 共 7 个函数从未被调用，约 80 行死代码。
+- **修复建议:** 删除未使用的函数。
 
 ## 按模块统计
 

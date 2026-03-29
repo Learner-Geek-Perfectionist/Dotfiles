@@ -151,6 +151,23 @@ else
 	print_warn "access_bpf 组不存在，请先安装 Wireshark"
 fi
 
+# 9. 配置默认文件关联（无扩展名文本文件用 VSCode 打开）
+if command -v duti &>/dev/null; then
+	print_info "配置默认文件关联..."
+	local changed=0
+	for uti in public.plain-text public.data public.text public.unix-executable; do
+		if [[ "$(duti -d "$uti" 2>/dev/null)" != "com.microsoft.VSCode" ]]; then
+			duti -s com.microsoft.VSCode "$uti" all
+			changed=$((changed + 1))
+		fi
+	done
+	if [[ $changed -eq 0 ]]; then
+		print_success "文件关联已配置，跳过"
+	else
+		print_success "文件关联已更新 ($changed 项)"
+	fi
+fi
+
 # ========================================
 # 完成
 # ========================================

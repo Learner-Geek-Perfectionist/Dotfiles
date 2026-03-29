@@ -106,6 +106,9 @@ fi
 # age 加密的 tokens（必须在 PATH 设置之后，因为 age 在 pixi 环境中）
 [[ -f "${HOME}/.config/zsh/plugins/age-tokens.zsh" ]] && source "${HOME}/.config/zsh/plugins/age-tokens.zsh"
 
+# macOS Keychain 自动解锁（SSH 会话，依赖 age-tokens 提供 MACOS_KEYCHAIN_PASS）
+[[ -f "${HOME}/.config/zsh/plugins/ssh-keychain-unlock.zsh" ]] && source "${HOME}/.config/zsh/plugins/ssh-keychain-unlock.zsh"
+
 # SSH Agent (keychain)
 # 仅本地运行：keychain 管理 agent，远程依赖 ForwardAgent 转发
 # 测试：ssh-add -l && ssh -T git@github.com

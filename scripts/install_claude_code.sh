@@ -2,9 +2,10 @@
 # Claude Code 安装脚本
 # 1) 安装 LSP 二进制（rust-analyzer, gopls, kotlin-ls 等）
 # 2) 安装 Claude Code CLI（原生安装器）
-# 3) 添加插件 marketplace
-# 4) 安装 LSP 插件和 skill 插件
-# 5) 安装独立 Skill（study-master 等，在线 clone 安装）
+# 3) 启用自动更新（写入 ~/.claude.json）
+# 4) 添加插件 marketplace
+# 5) 安装 LSP 插件和 skill 插件
+# 6) 安装独立 Skill（study-master 等，在线 clone 安装）
 #
 # macOS 通过 brew cask 安装 CLI（见 lib/packages.sh），此脚本仅负责 Linux 安装 + 全平台插件配置
 
@@ -17,7 +18,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../lib/utils.sh"
 
 # 清理 jq 操作残留的 .tmp 文件（Ctrl+C 中断时可能残留）
-trap 'rm -f "$HOME/.claude/settings.json.tmp"' EXIT
+trap 'rm -f "$HOME/.claude/settings.json.tmp" "$HOME/.claude.json.tmp"' EXIT
 
 # ========================================
 # 配置
@@ -436,6 +437,38 @@ install_plugins() {
 }
 
 # ========================================
+# 配置自动更新（写入 ~/.claude.json 运行时偏好）
+# ========================================
+configure_auto_updates() {
+	local config_file="$HOME/.claude.json"
+
+	# ~/.claude.json 由 CLI 首次运行自动创建
+	if [[ ! -f "$config_file" ]]; then
+		print_dim "~/.claude.json 不存在（CLI 尚未运行过），跳过"
+		return 0
+	fi
+
+	if ! command -v jq &>/dev/null; then
+		print_warn "jq 未安装，跳过自动更新配置"
+		return 0
+	fi
+
+	# 已经是 true 则跳过
+	if jq -e '.autoUpdates == true' "$config_file" &>/dev/null; then
+		print_success "自动更新已启用"
+		return 0
+	fi
+
+	if jq '.autoUpdates = true' "$config_file" > "$config_file.tmp" && [[ -s "$config_file.tmp" ]]; then
+		mv "$config_file.tmp" "$config_file"
+		print_success "已启用自动更新"
+	else
+		rm -f "$config_file.tmp"
+		print_warn "自动更新配置写入失败"
+	fi
+}
+
+# ========================================
 # 激活插件
 # ========================================
 enable_plugins() {
@@ -793,33 +826,36 @@ main() {
 		return 0
 	fi
 
-	# 3) 预填充 GitHub host key
+	# 3) 启用自动更新（写入 ~/.claude.json 运行时偏好）
+	configure_auto_updates
+
+	# 4) 预填充 GitHub host key
 	# Claude CLI 内部 git clone 强制 StrictHostKeyChecking=yes，
 	# 需要 host key 预先存在于 known_hosts 中
 	ensure_github_host_keys
 
-	# 4) 添加 Marketplace
+	# 5) 添加 Marketplace
 	add_marketplaces
 
-	# 5) 安装 LSP 插件
+	# 6) 安装 LSP 插件
 	install_plugins "LSP " "${LSP_PLUGINS[@]}"
 	enable_plugins "${LSP_PLUGINS[@]}"
 
-	# 6) 安装工具插件
+	# 7) 安装工具插件
 	install_plugins "Tool " "${TOOL_PLUGINS[@]}"
 	enable_plugins "${TOOL_PLUGINS[@]}"
 
-	# 7) 安装 Skill 插件
+	# 8) 安装 Skill 插件
 	install_plugins "Skill " "${SKILL_PLUGINS[@]}"
 	enable_plugins "${SKILL_PLUGINS[@]}"
 
-	# 8) 安装 study-master Skill（独立 GitHub 仓库，在线 clone 安装）
+	# 9) 安装 study-master Skill（独立 GitHub 仓库，在线 clone 安装）
 	install_study_master_skill
 
-	# 9) 配置 claude-hud statusLine（等价于 /claude-hud:setup）
+	# 10) 配置 claude-hud statusLine（等价于 /claude-hud:setup）
 	setup_claude_hud
 
-	# 10) 配置 MCP Servers（搜索增强：Tavily + Fetch + Open-WebSearch）
+	# 11) 配置 MCP Servers（搜索增强：Tavily + Fetch + Open-WebSearch）
 	install_mcp_servers
 
 	print_success "Claude Code 配置完成"

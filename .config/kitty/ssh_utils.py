@@ -64,7 +64,7 @@ def smart_launch(boss, launch_type):
         ssh_cmd = f'kitten ssh {shlex.quote(destination)}; exec zsh -i'
         launch_args = [f'--type={launch_type}', 'zsh', '-c', ssh_cmd]
     else:
-        launch_args = [f'--type={launch_type}', '--cwd=current']
+        launch_args = [f'--type={launch_type}', '--cwd=last_reported']
 
     opts, remaining = parse_launch_args(launch_args)
     kitty_launch(boss, opts, remaining)

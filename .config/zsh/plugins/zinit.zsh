@@ -60,6 +60,9 @@ setopt share_history            # 多终端共享历史
 # history 命令显示全部历史（zsh 内置只显示最近 16 条）
 alias history='fc -l 1'
 
+# 尾部空格使 sudo 后面的词继续展开 alias（如 sudo ll → sudo eza ...）
+alias sudo='sudo '
+
 # 内联原 OMZL::theme-and-appearance.zsh 的 eza 别名
 if (( $+commands[eza] )); then
 	alias ls="eza --icons -ha --time-style=iso"

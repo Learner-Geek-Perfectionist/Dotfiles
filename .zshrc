@@ -6,7 +6,12 @@
 [[ -z "$TERM" || "$TERM" == "dumb" ]] && export TERM="xterm-256color"
 
 # 在 kitty 终端中自动用 kitten ssh（自动传 terminfo + shell integration）
-[[ -n "$KITTY_WINDOW_ID" ]] && alias ssh='kitten ssh'
+if [[ -n "$KITTY_WINDOW_ID" ]]; then
+	alias ssh='kitten ssh'
+	# 创建固定路径 symlink，供外部工具（如 VS Code 插件）定位 Kitty socket
+	# kitty.conf 使用 kitty-{kitty_pid} 防多实例冲突，这里补一个稳定入口
+	[[ -n "$KITTY_LISTEN_ON" ]] && ln -sf "${KITTY_LISTEN_ON#unix:}" /tmp/kitty-socket
+fi
 
 # SSH 会话 locale 回退（避免远程服务器没有安装本地 locale 导致乱码）
 if [[ -n "$SSH_CONNECTION" ]]; then

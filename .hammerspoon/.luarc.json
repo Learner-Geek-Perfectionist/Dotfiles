@@ -1,0 +1,11 @@
+{
+  "diagnostics": {
+    "globals": ["hs", "spoon"]
+  },
+  "runtime": {
+    "version": "Lua 5.4"
+  },
+  "workspace": {
+    "checkThirdParty": false
+  }
+}

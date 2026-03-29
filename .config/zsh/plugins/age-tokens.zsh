@@ -31,7 +31,7 @@ edit-tokens() {
   fi
 
   local tmp tmp_age
-  (umask 077; tmp=$(mktemp)) || { echo "无法创建临时文件"; return 1; }
+  tmp=$(umask 077 && mktemp) || { echo "无法创建临时文件"; return 1; }
   trap "rm -f ${(q)tmp}" EXIT INT TERM
 
   if [[ -f "$AGE_TOKENS" ]]; then

@@ -479,7 +479,7 @@
 - **维度：** 安全性
 - **描述：** `mktemp` 创建和 `chmod 600` 之间存在时间窗口，明文 tokens 在磁盘上存在时间等于编辑器会话时长。
 - **修复建议：** 使用 `(umask 077; tmp=$(mktemp))` 消除 TOCTOU 窗口。
-- **修复：** 见 Z-002，已改为 `(umask 077; tmp=$(mktemp))`，文件创建时即为 600 权限，无时间窗口。
+- **修复：** ~~见 Z-002，已改为 `(umask 077; tmp=$(mktemp))`~~ 此修复引入了新 bug：`(...)` 是子 shell，`tmp` 变量不传播到父 shell，导致 `$tmp` 为空，`edit-tokens` 运行时报 `no such file or directory`。已二次修复为 `tmp=$(umask 077 && mktemp)`，命令替换正确捕获 mktemp 输出且 umask 仅在子进程中生效。
 
 ---
 

@@ -134,10 +134,15 @@ main() {
 	cp -f "$DOTFILES_DIR/.ssh/config" "$HOME/.ssh/config.d/00-dotfiles"
 	chmod 600 "$HOME/.ssh/config.d/00-dotfiles"
 	if [[ ! -f "$HOME/.ssh/config" ]]; then
-		printf "# Machine-specific hosts above, shared dotfiles defaults below\nInclude config.d/*\n" > "$HOME/.ssh/config"
+		printf "# Dotfiles 共享配置（优先加载）\nInclude config.d/*\n\n# === 以下为本机特有配置 ===\n" > "$HOME/.ssh/config"
 	elif ! grep -qF "config.d/" "$HOME/.ssh/config"; then
-		printf "\n# Dotfiles shared config (auto-added by install_dotfiles.sh)\nInclude config.d/*\n" >> "$HOME/.ssh/config"
+		# 插入到文件开头，确保 Dotfiles 的 Host * 全局配置优先生效
+		local tmp_ssh
+		tmp_ssh=$(mktemp)
+		printf "# Dotfiles 共享配置（优先加载）\nInclude config.d/*\n\n" | cat - "$HOME/.ssh/config" > "$tmp_ssh"
+		mv "$tmp_ssh" "$HOME/.ssh/config"
 	fi
+	chmod 600 "$HOME/.ssh/config"
 	print_success "~/.ssh/config.d/00-dotfiles (via Include)"
 	# Linux: 安装 keychain（SSH agent 管理器，纯 shell 脚本）
 	if [[ "$(uname)" != "Darwin" ]] && ! command -v keychain &>/dev/null; then

@@ -744,7 +744,7 @@ install_mcp_servers() {
 
 	# TAVILY_API_KEY 通过 age-tokens 注入 shell 环境，MCP 子进程自动继承
 	if echo "$mcp_list" | grep -q "tavily:" || [[ $installed -gt 0 ]]; then
-		[[ -z "$TAVILY_API_KEY" ]] && print_warn "提醒: 请通过 edit-tokens 添加 TAVILY_API_KEY"
+		[[ -z "${TAVILY_API_KEY:-}" ]] && print_warn "提醒: 请通过 edit-tokens 添加 TAVILY_API_KEY"
 	fi
 
 	# 2) Open-WebSearch MCP（需要 claude mcp add-json，有自定义 env）

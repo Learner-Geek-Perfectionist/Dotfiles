@@ -34,7 +34,7 @@ check_pixi_installed() {
 install_pixi() {
 	# 被 install.sh 调用时，install.sh 已检查过，这里直接安装
 	# 独立运行时，需要检查
-	if [[ -z "$DOTFILES_DIR" ]]; then
+	if [[ -z "${DOTFILES_DIR:-}" ]]; then
 		print_info "🦀 安装 Pixi..."
 		print_dim "安装目录: $PIXI_HOME"
 		if check_pixi_installed; then
@@ -194,7 +194,7 @@ main() {
 	install_home_tools
 
 	# 独立运行时显示提示，被 install.sh 调用时不显示（避免重复）
-	if [[ -z "$DOTFILES_DIR" ]]; then
+	if [[ -z "${DOTFILES_DIR:-}" ]]; then
 		local rc_file="~/.bashrc"
 		[[ "$SHELL" == *zsh ]] && rc_file="~/.zshrc"
 		_echo_blank

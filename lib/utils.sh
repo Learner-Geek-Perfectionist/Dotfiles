@@ -192,7 +192,7 @@ detect_arch() {
 
 # 检测是否在远程服务器环境（VSCode/Cursor Remote SSH）
 is_remote_server() {
-	[[ -n "$VSCODE_IPC_HOOK_CLI" ]] && [[ -n "$SSH_CONNECTION" ]]
+	[[ -n "${VSCODE_IPC_HOOK_CLI:-}" ]] && [[ -n "${SSH_CONNECTION:-}" ]]
 }
 
 # ========================================

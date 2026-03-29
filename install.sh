@@ -36,7 +36,7 @@ DOTFILES_LOG_DIR="/tmp/dotfiles-logs-$(whoami)/install"
 # clone 完成后 source lib/utils.sh 会覆盖这些函数为完整版本
 # ========================================
 export CLICOLOR_FORCE=1
-[[ -z "$TERM" || "$TERM" == "dumb" ]] && export TERM="xterm-256color"
+[[ -z "${TERM:-}" || "${TERM:-}" == "dumb" ]] && export TERM="xterm-256color"
 
 export RED='\033[0;31m' GREEN='\033[0;32m' YELLOW='\033[1;33m'
 export BLUE='\033[0;34m' CYAN='\033[0;36m' PURPLE='\033[0;35m' NC='\033[0m'
@@ -59,12 +59,12 @@ _log() {
 		output="${color}[${level}] ${msg}${NC}"
 	fi
 	echo -e "$output"
-	[[ -n "$DOTFILES_LOG" ]] && echo -e "$output" >>"$DOTFILES_LOG"
+	[[ -n "${DOTFILES_LOG:-}" ]] && echo -e "$output" >>"$DOTFILES_LOG"
 }
 
 _echo_blank() {
 	echo ""
-	[[ -n "$DOTFILES_LOG" ]] && echo "" >>"$DOTFILES_LOG"
+	[[ -n "${DOTFILES_LOG:-}" ]] && echo "" >>"$DOTFILES_LOG"
 }
 
 print_info() { _log "INFO" "" "$CYAN" "$1"; }
@@ -91,7 +91,7 @@ print_banner() {
 	[[ $right_width -lt 0 ]] && right_width=0
 	local output="\033[45m$(printf "%${padding}s" "")${msg}$(printf "%${right_width}s" "")\033[0m"
 	echo -e "$output"
-	[[ -n "$DOTFILES_LOG" ]] && echo -e "$output" >>"$DOTFILES_LOG"
+	[[ -n "${DOTFILES_LOG:-}" ]] && echo -e "$output" >>"$DOTFILES_LOG"
 }
 
 # 显示帮助
@@ -300,7 +300,7 @@ install_vscode() {
 	fi
 
 	# SSH 环境下跳过（远程插件由宿主机 settings.json 的 remote.SSH.defaultExtensions 管理）
-	if [[ -n "$SSH_CONNECTION" ]]; then
+	if [[ -n "${SSH_CONNECTION:-}" ]]; then
 		print_warn "SSH 环境，跳过 VSCode 插件安装（由宿主机自动推送）"
 		return 0
 	fi

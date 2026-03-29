@@ -283,8 +283,6 @@ setup_dotfiles() {
 	else
 		print_warn "未找到 Dotfiles 安装脚本，跳过"
 	fi
-
-	print_success "Dotfiles 配置完成"
 }
 
 # ========================================

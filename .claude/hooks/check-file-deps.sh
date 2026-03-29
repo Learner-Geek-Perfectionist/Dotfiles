@@ -6,16 +6,17 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 DEPS_FILE="$SCRIPT_DIR/../file-deps.json"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd -P)"
 
 # 读取 stdin 中的 tool_input JSON
 input="$(cat)"
 
-# 提取 file_path
+# 提取 file_path（用 realpath 规范化，防止符号链接导致前缀匹配失败）
 file_path="$(echo "$input" | jq -r '.tool_input.file_path // empty' 2>/dev/null)" || true
 if [[ -z "$file_path" ]]; then
   exit 0
 fi
+file_path="$(realpath "$file_path" 2>/dev/null || echo "$file_path")"
 
 # 转为相对于项目根目录的路径
 rel_path="${file_path#"$PROJECT_ROOT"/}"

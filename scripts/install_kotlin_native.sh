@@ -4,7 +4,7 @@
 # 支持 macOS (aarch64/x86_64) 和 Linux (x86_64)
 # 注意: JetBrains 不提供 Linux aarch64 预编译包
 
-set -eo pipefail
+set -euo pipefail
 
 # ========================================
 # 加载工具函数
@@ -72,38 +72,24 @@ install_kotlin_native() {
 	local filename="kotlin-native-prebuilt-${platform}-${version}.tar.gz"
 	local download_url="https://github.com/${REPO}/releases/download/${latest}/${filename}"
 
-	# 下载
-	local tmp_dir
-	tmp_dir=$(mktemp -d)
+	# 下载并解压到临时 staging 目录
 	print_dim "下载 $filename ..."
-
-	if ! curl -fsSL "$download_url" -o "$tmp_dir/$filename"; then
-		print_warn "Kotlin/Native: 下载失败"
-		rm -rf "$tmp_dir"
+	if ! download_and_extract "$download_url" "$INSTALL_DIR" "tar.gz"; then
+		print_warn "Kotlin/Native: 下载或解压失败"
 		return 0
 	fi
 
-	# 解压到暂存目录
-	print_dim "解压中..."
-	if ! tar -xzf "$tmp_dir/$filename" -C "$tmp_dir"; then
-		print_warn "Kotlin/Native: 解压失败"
-		rm -rf "$tmp_dir"
-		return 0
-	fi
-
-	# 找到解压后的顶层目录 (格式: kotlin-native-prebuilt-<platform>-<version>)
+	# tar.gz 解压后有一个动态名称的顶层目录，需要提升一层
 	local extracted_dir
-	extracted_dir=$(find "$tmp_dir" -maxdepth 1 -type d -name "kotlin-native*" | head -1)
-	if [[ -z "$extracted_dir" ]]; then
-		print_warn "Kotlin/Native: 无法找到解压目录"
-		rm -rf "$tmp_dir"
-		return 0
+	extracted_dir=$(find "$INSTALL_DIR" -maxdepth 1 -type d -name "kotlin-native*" | head -1)
+	if [[ -n "$extracted_dir" && "$extracted_dir" != "$INSTALL_DIR" ]]; then
+		# 将顶层目录内容提升到 INSTALL_DIR
+		local tmp_move
+		tmp_move=$(mktemp -d)
+		mv "$extracted_dir"/* "$tmp_move"/ 2>/dev/null || true
+		rm -rf "$INSTALL_DIR"
+		mv "$tmp_move" "$INSTALL_DIR"
 	fi
-
-	# 替换旧安装
-	rm -rf "$INSTALL_DIR"
-	mv "$extracted_dir" "$INSTALL_DIR"
-	rm -rf "$tmp_dir"
 
 	# 创建符号链接
 	mkdir -p "$BIN_DIR"
@@ -123,9 +109,6 @@ install_kotlin_native() {
 # ========================================
 main() {
 	install_kotlin_native
-
-	print_success "Kotlin/Native 安装完成"
-	_echo_blank
 }
 
 main "$@"

@@ -17,11 +17,11 @@ _ice() {
 
 # 如果插件管理器 zinit 没有安装......
 if [[ ! -f "${ZINIT_HOME}/zinit.zsh" ]]; then
-	printf "\033[33m\033[220mInstalling ZDHARMA-CONTINUUM Initiative Plugin Manager...\033[0m\n"
+	printf "\033[33mInstalling ZDHARMA-CONTINUUM Initiative Plugin Manager...\033[0m\n"
 	if git clone --depth=1 https://github.com/zdharma-continuum/zinit "$ZINIT_HOME"; then
-		printf "\033[33m\033[34mInstallation successful.\033[0m\n"
+		printf "\033[34mInstallation successful.\033[0m\n"
 	else
-		printf "\033[160mThe clone has failed.\033[0m\n"
+		printf "\033[31mThe clone has failed.\033[0m\n"
 		return
 	fi
 fi
@@ -61,8 +61,10 @@ setopt share_history            # 多终端共享历史
 alias history='fc -l 1'
 
 # 内联原 OMZL::theme-and-appearance.zsh 的 eza 别名
-(( $+commands[eza] )) && alias ls="eza --icons -ha --time-style=iso"  # eza 已安装则替代 ls
-(( $+commands[eza] )) && alias ll="eza --icons -ha --long --time-style=iso"  # ll = ls 长格式
+if (( $+commands[eza] )); then
+	alias ls="eza --icons -ha --time-style=iso"
+	alias ll="eza --icons -ha --long --time-style=iso"
+fi
 
 # ============================================
 # Turbo 异步加载（prompt 显示后按优先级加载）

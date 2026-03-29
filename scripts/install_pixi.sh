@@ -5,15 +5,13 @@
 #
 # 文档: https://pixi.sh/
 
-set -eo pipefail
+set -euo pipefail
 
 # ========================================
 # 加载工具函数
 # ========================================
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [[ -f "$SCRIPT_DIR/../lib/utils.sh" ]]; then
-	source "$SCRIPT_DIR/../lib/utils.sh"
-fi
+source "$SCRIPT_DIR/../lib/utils.sh"
 
 # ========================================
 # 配置
@@ -118,8 +116,8 @@ install_home_tools() {
 	export PATH="$PIXI_HOME/bin:$PATH"
 
 	if ! command -v pixi &>/dev/null; then
-		print_error "Pixi 未找到，无法安装工具包"
-		return 1
+		print_warn "Pixi 未找到，跳过工具包安装"
+		return 0
 	fi
 
 	# 检查是否有 pixi.toml 文件
@@ -135,18 +133,18 @@ install_home_tools() {
 	print_dim "配置文件: $manifest"
 	print_info "安装工具包（预编译，无需本地编译）..."
 
-	if _run_and_log pixi install --manifest-path "$HOME"; then
+	if _run_and_log pixi install --manifest-path "$HOME/pixi.toml"; then
 		print_success "工具包安装完成"
 	else
 		print_error "Pixi 工具包安装失败"
-		print_dim "请检查网络，随后运行: pixi install --manifest-path ~"
+		print_dim "请检查网络，随后运行: pixi install --manifest-path ~/pixi.toml"
 		exit 1
 	fi
 
 	# 显示已安装的顶层工具
 	_echo_blank
 	print_info "已安装的顶层工具:"
-	(cd "$HOME" && _run_and_log pixi list --explicit 2>/dev/null) || print_dim "运行 'pixi list --explicit --manifest-path ~' 查看"
+	(cd "$HOME" && _run_and_log pixi list --explicit 2>/dev/null) || print_dim "运行 'pixi list --explicit --manifest-path ~/pixi.toml' 查看"
 }
 
 # ========================================
@@ -154,25 +152,15 @@ install_home_tools() {
 # ========================================
 show_help() {
 	cat <<HELP_EOF
-Pixi 安装脚本
+Pixi 安装脚本 — 一键安装 pixi + shell 集成 + 工具包
 
 用法: $0 [选项]
 
 选项:
-    --install-only      仅安装 pixi，不安装工具包
-    --tools-only        仅安装工具包（假设 pixi 已安装）
-    --shell-only        仅配置 shell 集成
     --help, -h          显示帮助信息
 
 环境变量:
     PIXI_HOME           Pixi 安装目录 (默认: ~/.pixi)
-
-示例:
-    # 完整安装
-    $0
-
-    # 仅安装 pixi
-    $0 --install-only
 
 常用 pixi 命令:
     pixi add <pkg>       - 添加包到 ~/pixi.toml
@@ -187,22 +175,8 @@ HELP_EOF
 # 主函数
 # ========================================
 main() {
-	local action="full"
-
 	while [[ $# -gt 0 ]]; do
 		case "$1" in
-		--install-only)
-			action="install"
-			shift
-			;;
-		--tools-only)
-			action="tools"
-			shift
-			;;
-		--shell-only)
-			action="shell"
-			shift
-			;;
 		--help | -h)
 			show_help
 			exit 0
@@ -215,23 +189,9 @@ main() {
 		esac
 	done
 
-	case "$action" in
-	full)
-		install_pixi
-		setup_shell_integration
-		install_home_tools
-		;;
-	install)
-		install_pixi
-		setup_shell_integration
-		;;
-	tools)
-		install_home_tools
-		;;
-	shell)
-		setup_shell_integration
-		;;
-	esac
+	install_pixi
+	setup_shell_integration
+	install_home_tools
 
 	# 独立运行时显示提示，被 install.sh 调用时不显示（避免重复）
 	if [[ -z "$DOTFILES_DIR" ]]; then

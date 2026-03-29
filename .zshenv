@@ -16,6 +16,9 @@ export ZSH_COMPDUMP="$ZSH_CACHE_DIR/.zcompdump"
 # 记录命令执行时间戳
 setopt EXTENDED_HISTORY
 
+# PATH 去重（尽早设置，确保 .zprofile 的 brew shellenv 等不会插入重复条目）
+typeset -U path fpath
+
 # 本地终端：跳过 p10k 的 SSH 检测（节省 ~30% 启动时间）
 # SSH 会话中 $SSH_CONNECTION 非空，p10k 会正常检测
 [[ -z "$SSH_CONNECTION" ]] && export P9K_SSH=0

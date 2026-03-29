@@ -1,7 +1,7 @@
 #!/bin/bash
 # macOS 安装脚本 - 使用 Homebrew
 
-set -eo pipefail
+set -euo pipefail
 
 # ========================================
 # 路径检测
@@ -14,6 +14,12 @@ LIB_DIR="$DOTFILES_DIR/lib"
 source "$LIB_DIR/utils.sh"
 source "$LIB_DIR/packages.sh"
 
+# 确保 brew tap 已添加（已 tap 则跳过）
+ensure_brew_tap() {
+	brew tap | grep -q "$1" || brew tap "$1"
+}
+
+main() {
 # ========================================
 # 开始安装
 # ========================================
@@ -34,8 +40,8 @@ fi
 
 print_success "Xcode Command Line Tools 已安装"
 
-# 重置 Xcode 路径
-sudo xcode-select --reset 2>/dev/null
+# 仅在 Xcode 路径无效时重置（避免覆盖用户自定义的 xcode-select -s 设置）
+xcode-select -p &>/dev/null || sudo xcode-select --reset 2>/dev/null
 
 # 2. 检查/安装 Homebrew
 print_info "检查 Homebrew..."
@@ -85,8 +91,8 @@ fi
 # 4. 安装 GUI 应用
 print_info "检查 GUI 应用..."
 
-# 添加第三方 tap（已 tap 则跳过 git fetch）
-brew tap | grep -q "mihomo-party-org/mihomo-party" || brew tap mihomo-party-org/mihomo-party
+# 添加第三方 tap
+ensure_brew_tap "mihomo-party-org/mihomo-party"
 
 # 一次性获取已安装列表，本地比对找出缺失项
 installed_casks=$(brew list --cask -1 2>/dev/null)
@@ -106,7 +112,7 @@ fi
 # 5. 配置 Homebrew 自动更新
 print_info "配置 Homebrew 自动更新..."
 
-brew tap | grep -q "homebrew/autoupdate" || brew tap homebrew/autoupdate
+ensure_brew_tap "homebrew/autoupdate"
 if brew autoupdate status 2>/dev/null | grep -q "running"; then
 	print_success "Homebrew autoupdate 已在运行，跳过"
 else
@@ -152,3 +158,6 @@ _echo_blank
 print_success "=========================================="
 print_success "macOS 安装完成！"
 print_success "=========================================="
+}
+
+main "$@"

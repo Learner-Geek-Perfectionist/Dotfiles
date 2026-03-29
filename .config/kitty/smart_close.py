@@ -13,16 +13,15 @@ def main(args):
 def handle_result(args, result, target_window_id, boss):
     tab = boss.active_tab
     if tab is None:
-        return  # No active tab found
-    if len(tab.windows) > 1:
-        boss.active_window.close()
+        return
+    window = boss.active_window
+    if window is None:
+        return
+    if len(tab.windows) == 1:
+        # 最后一个窗口，直接关闭整个 OS window
+        boss.close_os_window()
     else:
-        # 检查标签页是否还有其他窗口，如果没有则关闭整个窗口（即应用程序窗口）
-        window = boss.active_window
         window.close()
-        if len(tab.windows) == 0:
-            # 试图关闭整个应用程序窗口，如果是最后一个窗口
-            boss.window.close()
 
 
 if __name__ == '__main__':

@@ -1,8 +1,7 @@
 #!/bin/bash
 # Package definitions for macOS (Homebrew)
 # Linux 包管理已迁移到 devbox.json
-
-set -eo pipefail
+# 本文件仅定义包列表数组，通过 source 加载，不设置 set -e（由调用方负责）
 
 # ========================================
 # macOS Homebrew Casks (GUI 应用)
@@ -62,7 +61,7 @@ brew_casks=(
 
 	# 其他
 	anaconda
-	Eudic
+	eudic
 	videofusion
 	cmake-app
 )
@@ -100,9 +99,7 @@ brew_formulas=(
 	# 系统信息
 	fastfetch
 
-	# 开发工具
-	cmake
-	cmake-docs
+	# 开发工具（cmake CLI + GUI 由 cask cmake-app 提供）
 	ninja
 	make
 	autoconf
@@ -117,7 +114,6 @@ brew_formulas=(
 	nodejs
 	go
 	rustup
-	rust
 	ruby
 	kotlin
 	openjdk

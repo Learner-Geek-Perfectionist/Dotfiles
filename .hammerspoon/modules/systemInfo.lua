@@ -1,18 +1,24 @@
----@diagnostic disable: lowercase-global
-require 'modules.base'
+local base = require('modules.base')
 
 local menubaritem = hs.menubar.new()
 local menuData = {}
 
--- ipv4Interface ipv6Interface
-local interface = hs.network.primaryInterfaces()
+-- 每次 init() 时重新获取，网络切换后不会失效（H-007）
+local interface = nil
 
 -- 该对象用于存储全局变量，避免每次获取速度都创建新的局部变量
 local obj = {}
 
+-- menubar 文字样式（四处 styledtext 共用）
+local MENUBAR_STYLE = {
+    font = { size = 9 },
+    color = { hex = "#FFFFFF" },
+    paragraphStyle = { alignment = "left", maximumLineHeight = 18 }
+}
+
 local function formatPercent(percent)
     if percent <= 0 then
-        return "  1%"
+        return "  0%"
     elseif percent < 10 then
         return "  " .. string.format("%.f", percent) .. "%"
     elseif percent > 99 then
@@ -22,20 +28,18 @@ local function formatPercent(percent)
     end
 end
 
+-- 定时器间隔（秒），format_speed 和 hs.timer.doEvery 共用
+local INTERVAL = 3
+
 local function format_speed(bytes)
-    -- 单位 Byte/s
-    if bytes < 1024 then
-        return string.format("%6.0f", bytes) .. " B/s"
+    -- bytes 是 INTERVAL 秒内的累计字节数，需要除以间隔得到每秒速率
+    local per_sec = bytes / INTERVAL
+    if per_sec < 1024 then
+        return string.format("%6.0f", per_sec) .. " B/s"
+    elseif per_sec < 1048576 then
+        return string.format("%6.1f", per_sec / 1024) .. " KB/s"
     else
-        -- 单位 KB/s
-        if bytes < 1048576 then
-            -- 因为是每两秒刷新一次，所以要除以 （1024 * 2）
-            return string.format("%6.1f", bytes / 2048) .. " KB/s"
-            -- 单位 MB/s
-        else
-            -- 除以 （1024 * 1024 * 2）
-            return string.format("%6.1f", bytes / 2097152) .. " MB/s"
-        end
+        return string.format("%6.1f", per_sec / 1048576) .. " MB/s"
     end
 end
 
@@ -77,15 +81,16 @@ local function getRootVolumes()
 end
 
 local function init()
-    if menuData then
-        menuData = {}
-    end
+    -- 每次 init 刷新网络接口（H-007: 网络切换后不失效）
+    interface = hs.network.primaryInterfaces()
+
+    menuData = {}
 
     -- system load    
     ---@diagnostic disable-next-line: unused-local
     local loadResult, okLoad, _type, rcLoad = hs.execute("uptime |awk '{print $(NF-2),$(NF-1),$NF}'")
     if loadResult and okLoad and rcLoad == 0 then
-        local loadArr = split(loadResult, " ")
+        local loadArr = base.split(loadResult, " ")
         if not loadArr then
             return
         end
@@ -162,7 +167,7 @@ local function init()
         end
     else
         obj.last_down = 0
-        obj.last_down = 0
+        obj.last_up = 0
     end
 
     -- DateTime
@@ -192,27 +197,6 @@ local function init()
         title = "🔋电池状态: " .. batteryStatus .. " " .. bpercentage .. "%"
     })
 
-    -- table.insert(menuData, {
-    --     title = '打开:监  视  器    (⇧⌃A)',
-    --     tooltip = 'Show Activity Monitor',
-    --     fn = function()
-    --         bindActivityMonitorKey()
-    --     end
-    -- })
-    -- table.insert(menuData, {
-    --     title = '打开:磁盘工具    (⇧⌃D)',
-    --     tooltip = 'Show Disk Utility',
-    --     fn = function()
-    --         bindDiskKey()
-    --     end
-    -- })
-    -- table.insert(menuData, {
-    --     title = '打开:系统日历    (⇧⌃C)',
-    --     tooltip = 'Show calendar',
-    --     fn = function()
-    --         bindCalendarKey()
-    --     end
-    -- })
     menubaritem:setMenu(menuData)
 end
 
@@ -236,19 +220,19 @@ local function scan()
 
     obj.display_text = hs.styledtext.new(
             "▲ " .. obj.up_speed .. "\n" .. "▼ " .. obj.down_speed,
-            { font = { size = 9 }, color = { hex = "#FFFFFF" }, paragraphStyle = { alignment = "left", maximumLineHeight = 18 } }
+            MENUBAR_STYLE
     )
     obj.display_disk_text = hs.styledtext.new(
             obj.disk_used .. "\n" .. "SSD ",
-            { font = { size = 9 }, color = { hex = "#FFFFFF" }, paragraphStyle = { alignment = "left", maximumLineHeight = 18 } }
+            MENUBAR_STYLE
     )
     obj.display_mem_text = hs.styledtext.new(
             obj.mem_used .. "\n" .. "MEM ",
-            { font = { size = 9 }, color = { hex = "#FFFFFF" }, paragraphStyle = { alignment = "left", maximumLineHeight = 18 } }
+            MENUBAR_STYLE
     )
     obj.display_cpu_text = hs.styledtext.new(
             obj.cpu_used .. "\n" .. "CPU ",
-            { font = { size = 9 }, color = { hex = "#FFFFFF" }, paragraphStyle = { alignment = "left", maximumLineHeight = 18 } }
+            MENUBAR_STYLE
     )
 
     obj.last_down = obj.current_down
@@ -281,8 +265,8 @@ local function scan()
         frame = { x = 90, y = "0", h = "1", w = "1" },
     })
     menubaritem:setIcon(canvas:imageFromCanvas())
-    -- canvas:delete()
-    -- canvas = nil
+    canvas:delete()
+    canvas = nil
 end
 
 local setSysInfo = function()
@@ -291,13 +275,10 @@ local setSysInfo = function()
     init()
     scan()
 
-    if obj.timer or obj.timer1 then
-        obj.timer:stop()
-        obj.timer = nil
-        obj.timer1:stop()
-        obj.timer1 = nil
-    end
-    obj.timer = hs.timer.doEvery(3, scan)
+    if obj.timer then obj.timer:stop(); obj.timer = nil end
+    if obj.timer1 then obj.timer1:stop(); obj.timer1 = nil end
+
+    obj.timer = hs.timer.doEvery(INTERVAL, scan)
     obj.timer:start()
     obj.timer1 = hs.timer.doEvery(120, init)
     obj.timer1:start()
@@ -311,17 +292,4 @@ end
 
 -- 初始化
 initData()
-
--- 按下添加快捷键时映射到活动监视器快捷键
--- function bindActivityMonitorKey()
---     hs.eventtap.keyStroke({ "ctrl", "shift"}, "Q")
--- end
--- -- 按下添加快捷键时映射到磁盘工具快捷键
--- function bindDiskKey()
---     hs.eventtap.keyStroke({ "ctrl", "shift"}, "D")
--- end
--- -- 按下添加快捷键时映射到日历快捷键
--- function bindCalendarKey()
---     hs.eventtap.keyStroke({ "ctrl", "shift"}, "C")
--- end
 

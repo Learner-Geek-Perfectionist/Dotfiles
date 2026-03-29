@@ -96,6 +96,8 @@
     "autocorrect.enableLint": true,
     "autocorrect.formatOnSave": true,
     "git.ignoreRebaseWarning": true,
+    // ======================= Markdown 设置 =======================
+    "markdown.preview.doubleClickToSwitchToEditor": true,
     // ======================= Remote SSH 自动安装插件 =======================
     "remote.SSH.defaultExtensions": [
         // 中文语言包
@@ -109,10 +111,9 @@
         "tamasfe.even-better-toml",
         // Go
         "golang.go",
-        // Python
-        "ms-python.python",
+        // Python（cursorpyright 会自动安装 debugpy）
+        "anysphere.cursorpyright",
         "charliermarsh.ruff",
-        "ms-python.debugpy",
         // Java/Kotlin
         "vscjava.vscode-java-pack",
         "fwcd.kotlin",
@@ -126,5 +127,7 @@
         "mhutchie.git-graph",
         // Docker
         "ms-azuretools.vscode-docker"
+        // 注意: huacnlee.autocorrect 不在 Open VSX（Cursor Marketplace）中，
+        // 本地通过 VSIX 手动安装，远程 SSH 无法自动安装
     ]
 }

@@ -11,8 +11,6 @@
     "C_Cpp.errorSquiggles": "enabled",
     "C_Cpp.loggingLevel": "Information",
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
-    "C_Cpp.default.intelliSenseMode": "linux-gcc-arm64",
-    "C_Cpp.default.compilerPath": "/usr/bin/g++",
     "C_Cpp.default.cppStandard": "gnu++23",
     "C_Cpp.default.cStandard": "gnu17",
     "C_Cpp.codeAnalysis.clangTidy.enabled": true,
@@ -21,7 +19,6 @@
         "${workspaceFolder}/include",
         "${workspaceFolder}/**"
     ],
-    "C_Cpp.default.compileCommands": [],
     "shfmt.executablePath": "shfmt",
     // zsh/shell 脚本禁用保存时格式化
     "[shellscript]": {

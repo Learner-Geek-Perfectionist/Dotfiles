@@ -1,7 +1,9 @@
 # direnv 配置
 # 文档: https://direnv.net/man/direnv.toml.1.html
+#
+# ⚠ 注意: 此文件不能直接复制部署！
+# install_dotfiles.sh 会用 sed 将 __HOME__ 替换为实际 $HOME 路径
+# 直接 cp 会导致 direnv 白名单匹配字面量 "__HOME__"，所有 .envrc 加载失败且无错误提示
 
 [whitelist]
-# 信任 home 目录下所有的 .envrc
-# __HOME__ 会在安装时被替换为实际的 home 路径
 prefix = ["__HOME__"]

@@ -43,7 +43,7 @@ setopt rm_star_silent       # 取消 zsh 的安全防护功能（默认对 rm -r
 # PATH 与平台配置
 # ============================================
 
-typeset -U path  # -U = unique，path 数组自动去重（等效于 PATH 去重）
+# typeset -U path/fpath 已在 .zshenv 中设置（确保整个加载链去重）
 
 if [[ "$OSTYPE" == darwin* ]]; then
 	path=(
@@ -138,7 +138,8 @@ if (( $+commands[fzf] )); then  # fzf 是否已安装
 fi
 
 # fzf 默认选项：--exact 精确匹配（连续字符），搜索时加 ' 前缀可切换回模糊匹配
-export FZF_DEFAULT_OPTS='--no-mouse --exact --tac --preview "${HOME}/.config/zsh/fzf/fzf-preview.sh {}" --bind "shift-left:preview-page-up,shift-right:preview-page-down"'
+export FZF_DEFAULT_OPTS='--no-mouse --exact --preview "${HOME}/.config/zsh/fzf/fzf-preview.sh {}" --bind "shift-left:preview-page-up,shift-right:preview-page-down"'
+export FZF_CTRL_R_OPTS='--tac'
 
 # fd 基础参数（排除垃圾桶和系统目录）
 typeset -ga _fd_opts  # -g = 全局变量，-a = 数组类型
@@ -158,15 +159,16 @@ fd() {
 	"${pre[@]}" =fd --color=always "${_fd_opts[@]}" "$@" 2>/dev/null  # =fd: 展开为 fd 的绝对路径（绕过本函数自身的递归）
 }
 
-# fzf 包装函数：透明处理管道输入
+# fzf 包装函数：透明处理管道输入（用 always 块替代 trap，避免覆盖 shell 已有 trap）
 fzf() {
 	if [ -p /dev/stdin ]; then
 		local tmp=$(mktemp)
-		trap "rm -f '$tmp'" EXIT INT TERM
-		sed 's/\x1b\[[0-9;]*m//g' > "$tmp"
-		command fzf "$@" < "$tmp"
-		rm -f "$tmp"
-		trap - EXIT INT TERM
+		{
+			sed 's/\x1b\[[0-9;]*m//g' > "$tmp"
+			command fzf "$@" < "$tmp"
+		} always {
+			rm -f "$tmp"
+		}
 	else
 		command fzf "$@"
 	fi
@@ -183,10 +185,13 @@ if (( $+commands[bat] )); then
 		(( $# )) || { command cat; return }
 		local f
 		for f in "$@"; do
-			# 有标志(-x/--x/-)、非普通文件、含 ANSI 转义 → 回退
-			[[ "$f" == -* || ! -f "$f" ]] \
-				|| LC_ALL=C command grep -q $'\x1b' -- "$f" 2>/dev/null \
-				&& { command cat "$@"; return }
+			# 有标志(-x/--x/-)、非普通文件、含 ANSI 转义 → 回退系统 cat
+			if [[ "$f" == -* || ! -f "$f" ]]; then
+				command cat "$@"; return
+			fi
+			if LC_ALL=C command grep -q $'\x1b' -- "$f" 2>/dev/null; then
+				command cat "$@"; return
+			fi
 		done
 		command bat -- "$@"
 	}
@@ -204,11 +209,11 @@ alias getip="$HOME/sh-script/get-my-ip.sh"
 
 # 终端操作
 alias clear='clear && printf '\''\e[3J'\'''  # 清除整个屏幕（含回滚）
-alias reload="source ~/.zshenv;source ~/.zprofile;source ~/.zshrc"
+alias reload='exec zsh -l'
 
 # Dotfiles 管理
 alias upgrade='/bin/bash -c "$(curl -H '\''Cache-Control: no-cache'\'' -fsSL "https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/beta/install.sh?$(date +%s)")" -- --dotfiles-only && reload'
-alias uninstall='/bin/bash -c "$(curl -H '\''Cache-Control: no-cache'\'' -fsSL "https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/master/uninstall_dotfiles.sh?$(date +%s)")"'
+alias uninstall='/bin/bash -c "$(curl -H '\''Cache-Control: no-cache'\'' -fsSL "https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/beta/uninstall_dotfiles.sh?$(date +%s)")"'
 
 # 常用命令简化
 alias python=python3

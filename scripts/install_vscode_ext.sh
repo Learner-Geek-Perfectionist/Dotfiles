@@ -1,7 +1,7 @@
 #!/bin/bash
 # VSCode/Cursor 插件批量安装脚本
 # 远程服务器的插件通过 settings.json 的 remote.SSH.defaultExtensions 自动同步
-set -eo pipefail
+set -euo pipefail
 
 source "$(dirname "${BASH_SOURCE[0]}")/../lib/utils.sh"
 
@@ -77,16 +77,18 @@ install_vsix_from_github() {
 	local name="${repo#*/}"
 
 	local tag
-	tag=$(github_latest_release "$repo") || return 1
+	tag=$(github_latest_release "$repo") || { print_warn "$name: 无法获取 release"; return 0; }
 
 	local vsix_name="${name}-${tag#v}.vsix"
-	local tmp="/tmp/$vsix_name"
+	local tmp_dir
+	tmp_dir=$(mktemp -d)
+	local tmp="$tmp_dir/$vsix_name"
 	local url="https://github.com/${repo}/releases/download/${tag}/${vsix_name}"
 
-	curl -fsSL "$url" -o "$tmp" || return 1
+	curl -fsSL "$url" -o "$tmp" || { print_warn "$name: 下载失败"; rm -rf "$tmp_dir"; return 0; }
 	"$cmd" --install-extension "$tmp" --force &>/dev/null
 	local rc=$?
-	rm -f "$tmp"
+	rm -rf "$tmp_dir"
 	return $rc
 }
 
@@ -95,10 +97,12 @@ install_vsix_from_marketplace() {
 	local ext="$1" cmd="$2"
 	local publisher="${ext%%.*}"
 	local name="${ext#*.}"
-	local tmp="/tmp/${publisher}.${name}.vsix"
+	local tmp_dir
+	tmp_dir=$(mktemp -d)
+	local tmp="$tmp_dir/${publisher}.${name}.vsix"
 
 	curl -sL "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/${publisher}/vsextensions/${name}/latest/vspackage" \
-		-o "${tmp}.gz" || return 1
+		-o "${tmp}.gz" || { print_warn "${publisher}.${name}: 下载失败"; rm -rf "$tmp_dir"; return 0; }
 
 	if file "${tmp}.gz" | grep -q "gzip"; then
 		gunzip -c "${tmp}.gz" >"$tmp"
@@ -108,32 +112,26 @@ install_vsix_from_marketplace() {
 
 	"$cmd" --install-extension "$tmp" --force &>/dev/null
 	local rc=$?
-	rm -f "$tmp" "${tmp}.gz"
+	rm -rf "$tmp_dir"
 	return $rc
 }
 
-# 检测真实的编辑器类型（code 命令可能实际是 Cursor）
-detect_real_type() {
-	local cmd="$1"
-	if "$cmd" --help 2>&1 | head -1 | grep -qi "cursor"; then
-		echo "cursor"
-	else
-		echo "vscode"
-	fi
-}
+# detect_editor_type 已在 lib/utils.sh 中定义
 
-# 检测编辑器
+# 检测编辑器（基于二进制路径去重，避免 code/cursor 指向同一个二进制）
 editors=()
-if command -v code &>/dev/null; then
-	real_type=$(detect_real_type "code")
-	editors+=("$real_type:code")
-fi
-if command -v cursor &>/dev/null; then
-	# 避免重复（如果 code 已经是 cursor）
-	if [[ ! " ${editors[*]} " =~ "cursor:" ]]; then
-		editors+=("cursor:cursor")
-	fi
-fi
+declare -A _seen_paths=()
+for cmd in code cursor; do
+	command -v "$cmd" &>/dev/null || continue
+	local bin_path
+	bin_path=$(realpath "$(command -v "$cmd")" 2>/dev/null || command -v "$cmd")
+	[[ -n "${_seen_paths[$bin_path]:-}" ]] && continue
+	_seen_paths[$bin_path]=1
+	local real_type
+	real_type=$(detect_editor_type "$cmd")
+	editors+=("$real_type:$cmd")
+done
+unset _seen_paths
 
 if [[ ${#editors[@]} -eq 0 ]]; then
 	print_error "未找到 VSCode 或 Cursor"
@@ -218,23 +216,32 @@ for entry in "${editors[@]}"; do
 			ext="${item%%|*}"
 			tag="${item#*|}"
 			((++count))
+			# 进度条直接输出到终端（\r 覆盖行），有意不写入日志（避免日志中大量覆盖行）
 			printf "\r${CYAN}[%d/%d]${NC} 安装中: ${YELLOW}%s${NC}%-20s" "$count" "$total" "$ext" ""
-			# 尝试安装
+			# 尝试安装，捕获退出码
+			local install_rc=0
 			if [[ "$tag" == github-vsix:* ]]; then
 				repo="${tag#github-vsix:}"
-				install_vsix_from_github "$repo" "$cmd"
+				install_vsix_from_github "$repo" "$cmd" || install_rc=$?
 			elif [[ "$tag" == "cursor-vsix" ]]; then
-				install_vsix_from_marketplace "$ext" "$cmd"
+				install_vsix_from_marketplace "$ext" "$cmd" || install_rc=$?
 			else
-				"$cmd" --install-extension "$ext" --force &>/dev/null
+				"$cmd" --install-extension "$ext" --force &>/dev/null || install_rc=$?
+			fi
+			# 安装命令本身失败时立即记录
+			if [[ $install_rc -ne 0 ]]; then
+				failed+=("$item")
 			fi
 		done
 		echo ""
 
 		# 批量验证安装结果（一次 CLI 调用替代循环内 N 次）
+		# 跳过已在安装阶段标记为 failed 的项
+		local already_failed=" ${failed[*]} "
 		new_installed=$("$cmd" --list-extensions 2>/dev/null | tr '[:upper:]' '[:lower:]')
 		for item in "${to_install[@]}"; do
 			ext="${item%%|*}"
+			[[ "$already_failed" == *" $item "* ]] && continue
 			ext_lower=$(echo "$ext" | tr '[:upper:]' '[:lower:]')
 			if echo "$new_installed" | grep -Fxq "$ext_lower"; then
 				success+=("$ext")

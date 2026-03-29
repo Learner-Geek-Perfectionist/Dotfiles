@@ -31,7 +31,6 @@
     {
         "key": "ctrl+shift+-",
         "command": "-workbench.action.navigateForward"
-    },
-
+    }
 ]
 

@@ -2,21 +2,21 @@
 # Dotfiles 配置安装脚本
 # 只同步明确列出的文件/目录，避免覆盖用户的其它配置
 
-set -eo pipefail
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTFILES_DIR="$(dirname "$SCRIPT_DIR")"
 
 source "$SCRIPT_DIR/../lib/utils.sh"
 
-# 检测是否安装了 VSCode
+# 检测是否安装了 VSCode（code 命令存在且真实类型为 vscode）
 has_vscode() {
-	command -v code &>/dev/null && code --help 2>&1 | head -1 | grep -qi "code"
+	command -v code &>/dev/null && [[ "$(detect_editor_type code)" == "vscode" ]]
 }
 
-# 检测是否安装了 Cursor
+# 检测是否安装了 Cursor（cursor 命令存在，或 code 命令实际是 cursor）
 has_cursor() {
-	command -v cursor &>/dev/null && cursor --help 2>&1 | head -1 | grep -qi "cursor"
+	command -v cursor &>/dev/null || { command -v code &>/dev/null && [[ "$(detect_editor_type code)" == "cursor" ]]; }
 }
 
 copy_path() {
@@ -33,7 +33,51 @@ copy_path() {
 		cp -f "$src" "$dest"
 	fi
 
-	print_success "~/$2"
+	print_dim "~/$2"
+}
+
+# 部署 settings.json 并剥离项目级 hooks（jq → python3 → 原样拷贝）
+_deploy_without_hooks() {
+	local src="$1" dest="$2"
+	if command -v jq &>/dev/null; then
+		jq 'del(.hooks)' "$src" >"$dest" 2>/dev/null && return
+	fi
+	python3 -c "
+import json, sys
+with open(sys.argv[1]) as f: d = json.load(f)
+d.pop('hooks', None)
+with open(sys.argv[2], 'w') as f: json.dump(d, f, indent=4, ensure_ascii=False)
+" "$src" "$dest" 2>/dev/null && return
+	# 两者都不可用时保底拷贝（hooks 会泄漏到全局，但至少不丢配置）
+	cp -f "$src" "$dest"
+}
+
+# 部署 Claude Code settings.json（jq 合并：静态设置覆盖，动态字段保留）
+# repo 的 hooks 是项目级（如 check-file-deps.sh），不应提升到全局配置
+# 合并时排除 repo hooks，仅保留 home 已有的用户级 hooks（如 study-master）
+_deploy_claude_settings() {
+	local claude_src="$DOTFILES_DIR/.claude/settings.json"
+	local claude_dest="$HOME/.claude/settings.json"
+	[[ -f "$claude_src" ]] || return 0
+
+	mkdir -p "$HOME/.claude"
+	if [[ -f "$claude_dest" ]] && command -v jq &>/dev/null; then
+		local tmp_merged
+		tmp_merged=$(mktemp)
+		if jq -s '
+			.[0].hooks as $home_hooks |
+			(.[0] | del(.hooks)) * (.[1] | del(.hooks)) |
+			if $home_hooks then .hooks = $home_hooks else . end
+		' "$claude_dest" "$claude_src" >"$tmp_merged" 2>/dev/null; then
+			mv "$tmp_merged" "$claude_dest"
+		else
+			rm -f "$tmp_merged"
+			_deploy_without_hooks "$claude_src" "$claude_dest"
+		fi
+	else
+		_deploy_without_hooks "$claude_src" "$claude_dest"
+	fi
+	print_success "~/.claude/settings.json"
 }
 
 main() {
@@ -84,39 +128,7 @@ main() {
 	copy_path ".gitignore" ".gitignore"
 
 	# Claude Code 配置
-	# settings.json 使用 jq 合并：静态设置覆盖，动态字段（插件等）保留
-	local claude_src="$DOTFILES_DIR/.claude/settings.json"
-	local claude_dest="$HOME/.claude/settings.json"
-	if [[ -f "$claude_src" ]]; then
-		mkdir -p "$HOME/.claude"
-		if [[ -f "$claude_dest" ]] && command -v jq &>/dev/null; then
-			local tmp_merged
-			tmp_merged=$(mktemp)
-			# repo 的 hooks 是项目级（如 check-file-deps.sh），不应提升到全局配置
-			# 合并时排除 repo hooks，仅保留 home 已有的用户级 hooks（如 study-master）
-			if jq -s '
-				.[0].hooks as $home_hooks |
-				(.[0] | del(.hooks)) * (.[1] | del(.hooks)) |
-				if $home_hooks then .hooks = $home_hooks else . end
-			' "$claude_dest" "$claude_src" >"$tmp_merged" 2>/dev/null; then
-				mv "$tmp_merged" "$claude_dest"
-			else
-				rm -f "$tmp_merged"
-				# jq 合并失败；仍用 jq 剥离 repo 的项目级 hooks 后部署
-				jq 'del(.hooks)' "$claude_src" > "$claude_dest" 2>/dev/null \
-					|| cp -f "$claude_src" "$claude_dest"
-			fi
-		else
-			# 无已有配置或无 jq：部署时尽量剥离项目级 hooks
-			if command -v jq &>/dev/null; then
-				jq 'del(.hooks)' "$claude_src" > "$claude_dest" 2>/dev/null \
-					|| cp -f "$claude_src" "$claude_dest"
-			else
-				cp -f "$claude_src" "$claude_dest"
-			fi
-		fi
-		print_success "~/.claude/settings.json"
-	fi
+	_deploy_claude_settings
 	# SSH 配置：通过 Include 浅合并，避免覆盖机器本地的 Host 定义
 	mkdir -p "$HOME/.ssh/config.d"
 	cp -f "$DOTFILES_DIR/.ssh/config" "$HOME/.ssh/config.d/00-dotfiles"
@@ -156,6 +168,8 @@ main() {
 	else
 		print_warn "未找到 zsh，跳过 zinit 插件安装"
 	fi
+
+	print_success "Dotfiles 配置部署完成"
 }
 
 main

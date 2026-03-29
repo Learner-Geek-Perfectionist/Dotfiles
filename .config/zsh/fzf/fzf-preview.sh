@@ -15,18 +15,23 @@ fi
 
 file=${1/#\~\//$HOME/}
 
+# 检测 bat/batcat（只检测一次，后续复用）
+if command -v batcat > /dev/null; then
+  batname="batcat"
+elif command -v bat > /dev/null; then
+  batname="bat"
+else
+  batname=""
+fi
+
 # Check if the argument is an existing file
 if [[ ! -e "$file" ]]; then
   # Treat the argument as text content
-  if command -v batcat > /dev/null; then
-    batname="batcat"
-  elif command -v bat > /dev/null; then
-    batname="bat"
+  if [[ -n "$batname" ]]; then
+    echo "$1" | ${batname} --style="${BAT_STYLE:-numbers}" --color=always --pager=never -
   else
     echo "$1"
-    exit
   fi
-  echo "$1" | ${batname} --style="${BAT_STYLE:-numbers}" --color=always --pager=never -
   exit
 fi
 
@@ -38,17 +43,11 @@ if [[ ! $type =~ image/ ]]; then
     exit
   fi
 
-  # Sometimes bat is installed as batcat.
-  if command -v batcat > /dev/null; then
-    batname="batcat"
-  elif command -v bat > /dev/null; then
-    batname="bat"
+  if [[ -n "$batname" ]]; then
+    ${batname} --style="${BAT_STYLE:-numbers}" --color=always --pager=never -- "$file"
   else
     cat "$1"
-    exit
   fi
-
-  ${batname} --style="${BAT_STYLE:-numbers}" --color=always --pager=never -- "$file"
   exit
 fi
 

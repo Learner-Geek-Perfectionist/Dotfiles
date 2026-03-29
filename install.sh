@@ -6,7 +6,7 @@
 #
 # 支持: Linux (x86_64, aarch64) / macOS (x86_64, arm64)
 
-set -eo pipefail
+set -euo pipefail
 
 # ========================================
 # 版本和配置
@@ -31,33 +31,25 @@ DOTFILES_LOG_DIR="/tmp/dotfiles-logs-$(whoami)/install"
 # clone 后会 source lib/utils.sh 获取完整函数
 # ========================================
 
-# 强制颜色输出（即使在重定向场景下）
+# ========================================
+# Bootstrap 日志函数（clone 前的最小实现）
+# clone 完成后 source lib/utils.sh 会覆盖这些函数为完整版本
+# ========================================
 export CLICOLOR_FORCE=1
-
-# 确保 TERM 有值且不是 dumb（tput 和进度条需要）
 [[ -z "$TERM" || "$TERM" == "dumb" ]] && export TERM="xterm-256color"
 
-# 颜色定义
 export RED='\033[0;31m' GREEN='\033[0;32m' YELLOW='\033[1;33m'
 export BLUE='\033[0;34m' CYAN='\033[0;36m' PURPLE='\033[0;35m' NC='\033[0m'
 export DIM='\033[2m' BOLD='\033[1m' WHITE='\033[1;37m'
 
-# 检测是否有 sudo 权限
-# 返回 0: root / 免密 sudo / 在 sudo 组中
-# 返回 1: 无 sudo 权限或无 sudo 命令
 has_sudo() {
-	[[ $EUID -eq 0 ]] && return 0                              # root 用户
-	command -v sudo &>/dev/null || return 1                    # 无 sudo 命令
-	sudo -n true 2>/dev/null && return 0                       # 免密 sudo
-	# 检查用户是否在 sudo/wheel/admin 组中（有 sudo 权限但需要密码）
+	[[ $EUID -eq 0 ]] && return 0
+	command -v sudo &>/dev/null || return 1
+	sudo -n true 2>/dev/null && return 0
 	groups 2>/dev/null | grep -qwE 'sudo|wheel|admin' && return 0
 	return 1
 }
 
-# ========================================
-# 统一日志输出函数
-# - stdout 和日志文件都保留 ANSI 颜色
-# ========================================
 _log() {
 	local level="$1" prefix="$2" color="$3" msg="$4"
 	local output
@@ -67,60 +59,37 @@ _log() {
 		output="${color}[${level}] ${msg}${NC}"
 	fi
 	echo -e "$output"
-	# 日志文件可能在参数解析后才设置，避免写入空路径
 	[[ -n "$DOTFILES_LOG" ]] && echo -e "$output" >>"$DOTFILES_LOG"
 }
 
-# 输出空行到终端和日志
 _echo_blank() {
 	echo ""
 	[[ -n "$DOTFILES_LOG" ]] && echo "" >>"$DOTFILES_LOG"
 }
 
-# 打印函数（终端保留颜色，日志去除颜色）
 print_info() { _log "INFO" "" "$CYAN" "$1"; }
 print_success() { _log "INFO" "✓" "$GREEN" "$1"; }
 print_warn() { _log "WARN" "⚠" "$YELLOW" "$1"; }
 print_error() { _log "ERROR" "✗" "$RED" "$1"; }
 print_header() { _log "INFO" "" "$BLUE" "$1"; }
 
-# 计算字符串显示宽度（跨平台，考虑中文/emoji）
-# 注意：Pixi 环境可能覆盖 wc 命令，导致 wc -m 返回字节数
-# 使用 LC_ALL=C.UTF-8 bash 强制正确的 UTF-8 字符计数
-_display_width() {
-	local str="$1"
-	# 强制 UTF-8 locale 获取真实字符数（避免 Pixi 环境污染）
-	local char_count
-	char_count=$(LC_ALL=C.UTF-8 bash -c 'echo ${#1}' _ "$str")
-	# ASCII 字符数
-	local ascii_count
-	ascii_count=$(printf '%s' "$str" | LC_ALL=C tr -cd '\0-\177' | wc -c | tr -d ' ')
-	# 非 ASCII 字符数 (中文/emoji 等，显示宽度为 2)
-	local non_ascii_count=$((char_count - ascii_count))
-	# 显示宽度 = ASCII 字符数 + 非 ASCII 字符数 * 2
-	echo $((ascii_count + non_ascii_count * 2))
-}
-
-# 脚本标题横幅（背景色填充，文字居中）
+# 简化版 banner — 占满终端宽度，文字居中（clone 后由 lib/utils.sh 完整版覆盖）
 print_banner() {
 	local msg="$1"
-	# 获取终端宽度：优先从 /dev/tty 获取真实宽度，避免 tput 默认值问题
 	local width
-	# 1. 尝试从 /dev/tty 获取（最可靠，直接查询终端驱动）
-	if [[ -e /dev/tty ]]; then
-		width=$(stty size </dev/tty 2>/dev/null | awk '{print $2}')
-	fi
-	# 2. 如果失败，尝试 COLUMNS（交互式 shell 中可用）
-	[[ -z "$width" || "$width" -le 0 ]] 2>/dev/null && [[ "${COLUMNS:-0}" -gt 0 ]] && width="$COLUMNS"
-	# 3. 最后尝试 tput cols
-	[[ -z "$width" || "$width" -le 0 ]] 2>/dev/null && width="$(tput cols 2>/dev/null)"
-	local display_width=$(_display_width "$msg")
-	local padding=$(((width - display_width) / 2))
+	[[ -e /dev/tty ]] && width=$(stty size </dev/tty 2>/dev/null | awk '{print $2}')
+	[[ -z "$width" || "$width" -le 0 ]] 2>/dev/null && width="${COLUMNS:-80}"
+	[[ "$width" -le 0 ]] 2>/dev/null && width=80
+	# 宽度计算：ASCII 1 宽，非 ASCII（中文/emoji）2 宽
+	local ascii_count char_count
+	char_count=$(LC_ALL=C.UTF-8 bash -c 'echo ${#1}' _ "$msg")
+	ascii_count=$(printf '%s' "$msg" | LC_ALL=C tr -cd '\0-\177' | wc -c | tr -d ' ')
+	local display_width=$(( ascii_count + (char_count - ascii_count) * 2 ))
+	local padding=$(( (width - display_width) / 2 ))
 	[[ $padding -lt 0 ]] && padding=0
-	local left_pad=$(printf "%${padding}s" "")
-	local right_pad=$(printf "%$((width - padding - display_width))s" "")
-	[[ ${#right_pad} -lt 0 ]] && right_pad=""
-	local output="\033[45m${left_pad}${msg}${right_pad}\033[0m"
+	local right_width=$(( width - padding - display_width ))
+	[[ $right_width -lt 0 ]] && right_width=0
+	local output="\033[45m$(printf "%${padding}s" "")${msg}$(printf "%${right_width}s" "")\033[0m"
 	echo -e "$output"
 	[[ -n "$DOTFILES_LOG" ]] && echo -e "$output" >>"$DOTFILES_LOG"
 }
@@ -205,7 +174,9 @@ check_dependencies() {
 		for pm in "apt:apt install -y" "yum:yum install -y" "dnf:dnf install -y" "pacman:pacman -S --noconfirm" "zypper:zypper install -y"; do
 			if command -v "${pm%%:*}" &>/dev/null; then
 				print_info "安装依赖: ${missing[*]}"
-				sudo ${pm#*:} "${missing[@]}" && break
+				local -a install_cmd
+				read -ra install_cmd <<< "${pm#*:}"
+				sudo "${install_cmd[@]}" "${missing[@]}" && break
 			fi
 		done
 	fi
@@ -269,66 +240,26 @@ install_macos_homebrew() {
 # ========================================
 # Linux: 安装 Pixi
 # ========================================
-install_pixi_binary() {
+# ========================================
+# Linux: 安装 Pixi + Shell 集成 + 工具包（一步完成）
+# ========================================
+install_pixi_full() {
 	local dotfiles_dir="$1"
 	local step_num="$2"
 
-	print_section "步骤 ${step_num}: 🦀 安装 Pixi"
+	print_section "步骤 ${step_num}: 🦀 安装 Pixi + 工具包"
 
-	# 确保 pixi 在 PATH 中
-	export PATH="$HOME/.pixi/bin:$PATH"
-
-	# 检查是否已安装
-	if command -v pixi &>/dev/null; then
-		local version
-		version=$(pixi --version 2>/dev/null)
-		print_warn "Pixi 已安装 ($version)"
-	else
-		# 安装 Pixi
-		if [[ -f "$dotfiles_dir/scripts/install_pixi.sh" ]]; then
-			bash "$dotfiles_dir/scripts/install_pixi.sh" --install-only
-		else
-			print_error "未找到 Pixi 安装脚本"
-			exit 1
-		fi
-		print_success "Pixi 安装完成"
-	fi
-}
-
-# ========================================
-# Linux: 安装 Pixi Home 项目工具包
-# ========================================
-sync_pixi_tools() {
-	local dotfiles_dir="$1"
-	local step_num="$2"
-
-	print_section "步骤 ${step_num}: 📦 安装 Pixi 工具包"
-
-	export PATH="$HOME/.pixi/bin:$PATH"
-
-	if ! command -v pixi &>/dev/null; then
-		print_error "Pixi 未安装"
-		return 1
-	fi
-
-	# 部署 pixi.toml 到 home 目录
+	# 部署 pixi.toml 到 home 目录（install_pixi.sh 中 install_home_tools 依赖它）
 	local manifest_src="$dotfiles_dir/pixi.toml"
-	local manifest_dest="$HOME/pixi.toml"
-
 	if [[ -f "$manifest_src" ]]; then
-		print_dim "部署配置: $manifest_dest"
-		cp "$manifest_src" "$manifest_dest"
+		print_dim "部署配置: ~/pixi.toml"
+		cp "$manifest_src" "$HOME/pixi.toml"
 	fi
 
-	if [[ -f "$manifest_dest" ]]; then
-		# 调用 install_pixi.sh 安装工具包（复用逻辑，避免重复）
-		if [[ -f "$dotfiles_dir/scripts/install_pixi.sh" ]]; then
-			bash "$dotfiles_dir/scripts/install_pixi.sh" --tools-only || print_warn "部分工具安装失败"
-		else
-			print_error "未找到 Pixi 安装脚本"
-		fi
+	if [[ -f "$dotfiles_dir/scripts/install_pixi.sh" ]]; then
+		bash "$dotfiles_dir/scripts/install_pixi.sh" || print_warn "Pixi 安装过程中部分步骤失败"
 	else
-		print_warn "未找到 Pixi 配置文件: $manifest_dest"
+		print_error "未找到 Pixi 安装脚本"
 	fi
 }
 
@@ -458,46 +389,25 @@ setup_default_shell() {
 install_linux() {
 	local dotfiles_dir="$1"
 
-	# 仅安装 VSCode 插件模式
-	if [[ "$VSCODE_ONLY" == "true" ]]; then
-		install_vscode "$dotfiles_dir" "1/1"
-		return 0
-	fi
-
-	# 仅安装 Dotfiles 模式
-	if [[ "$DOTFILES_ONLY" == "true" ]]; then
-		setup_dotfiles "$dotfiles_dir" "1/1"
-		return 0
-	fi
-
-	# 仅安装 LSP 模式
-	if [[ "$LSP_ONLY" == "true" ]]; then
-		install_lsp_servers "$dotfiles_dir" "1/1"
-		return 0
-	fi
-
-	# 步骤 1: 安装 Pixi
-	install_pixi_binary "$dotfiles_dir" "1/6"
+	# 步骤 1: 安装 Pixi + 工具包
+	install_pixi_full "$dotfiles_dir" "1/5"
 
 	if [[ "$PIXI_ONLY" == "true" ]]; then
 		print_success "Pixi 安装完成（仅 Pixi 模式）"
 		return 0
 	fi
 
-	# 步骤 2: 同步 Pixi 工具包
-	sync_pixi_tools "$dotfiles_dir" "2/6"
+	# 步骤 2: 安装 LSP Servers 及工具
+	install_lsp_servers "$dotfiles_dir" "2/5"
 
-	# 步骤 3: 安装 LSP Servers 及工具
-	install_lsp_servers "$dotfiles_dir" "3/6"
+	# 步骤 3: 安装 Dotfiles 配置
+	setup_dotfiles "$dotfiles_dir" "3/5"
 
-	# 步骤 4: 安装 Dotfiles 配置
-	setup_dotfiles "$dotfiles_dir" "4/6"
+	# 步骤 4: 设置默认 shell
+	setup_default_shell "4/5"
 
-	# 步骤 5: 设置默认 shell
-	setup_default_shell "5/6"
-
-	# 步骤 6: VSCode 插件
-	install_vscode "$dotfiles_dir" "6/6"
+	# 步骤 5: VSCode 插件
+	install_vscode "$dotfiles_dir" "5/5"
 }
 
 # ========================================
@@ -505,24 +415,6 @@ install_linux() {
 # ========================================
 install_macos() {
 	local dotfiles_dir="$1"
-
-	# 仅安装 VSCode 插件模式
-	if [[ "$VSCODE_ONLY" == "true" ]]; then
-		install_vscode "$dotfiles_dir" "1/1"
-		return 0
-	fi
-
-	# 仅安装 Dotfiles 模式
-	if [[ "$DOTFILES_ONLY" == "true" ]]; then
-		setup_dotfiles "$dotfiles_dir" "1/1"
-		return 0
-	fi
-
-	# 仅安装 LSP 模式
-	if [[ "$LSP_ONLY" == "true" ]]; then
-		install_lsp_servers "$dotfiles_dir" "1/1"
-		return 0
-	fi
 
 	# 步骤 1: 安装 Homebrew 包
 	install_macos_homebrew "$dotfiles_dir" "1/4"
@@ -597,6 +489,8 @@ main() {
 	export DOTFILES_DIR="$dotfiles_dir"
 
 	# 克隆后 source lib/utils.sh，获取完整工具函数（print_dim, print_section 等）
+	# 注意: 这会覆盖上方 bootstrap 版的同名函数（_log, print_*, print_banner）
+	# 日志格式会从无缩进切换为 2 空格缩进，这是预期行为
 	if [[ -f "$dotfiles_dir/lib/utils.sh" ]]; then
 		source "$dotfiles_dir/lib/utils.sh"
 	else
@@ -618,7 +512,21 @@ main() {
 	fi
 	_echo_blank
 
-	# 根据操作系统执行安装
+	# *_ONLY 模式统一处理（不分平台）
+	if [[ "$VSCODE_ONLY" == "true" ]]; then
+		install_vscode "$dotfiles_dir" "1/1"
+		return 0
+	fi
+	if [[ "$DOTFILES_ONLY" == "true" ]]; then
+		setup_dotfiles "$dotfiles_dir" "1/1"
+		return 0
+	fi
+	if [[ "$LSP_ONLY" == "true" ]]; then
+		install_lsp_servers "$dotfiles_dir" "1/1"
+		return 0
+	fi
+
+	# 根据操作系统执行完整安装流程
 	case "$os" in
 	macos)
 		install_macos "$dotfiles_dir"

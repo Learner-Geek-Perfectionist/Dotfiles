@@ -10,7 +10,11 @@ fi
 
 # 启动时自动加载加密的 tokens
 if (( $+commands[age] )) && [[ -f "$AGE_TOKENS" && -f "$AGE_SSH_KEY" ]]; then
-  source <(age -d -i "$AGE_SSH_KEY" "$AGE_TOKENS" 2>/dev/null)
+  local _age_out
+  _age_out=$(age -d -i "$AGE_SSH_KEY" "$AGE_TOKENS" 2>&1) || {
+    print -P "%F{yellow}[age-tokens] 解密失败，tokens 未加载%f" >&2
+  }
+  [[ -n "$_age_out" ]] && eval "$_age_out"
 fi
 
 # 编辑 tokens 的便捷函数
@@ -26,9 +30,9 @@ edit-tokens() {
     return 1
   fi
 
-  local tmp=$(mktemp)
-  chmod 600 "$tmp"
-  trap "rm -f '$tmp'" EXIT INT TERM
+  local tmp tmp_age
+  (umask 077; tmp=$(mktemp)) || { echo "无法创建临时文件"; return 1; }
+  trap "rm -f ${(q)tmp}" EXIT INT TERM
 
   if [[ -f "$AGE_TOKENS" ]]; then
     age -d -i "$AGE_SSH_KEY" "$AGE_TOKENS" > "$tmp" || { echo "解密失败"; rm -f "$tmp"; trap - EXIT INT TERM; return 1; }
@@ -42,15 +46,15 @@ edit-tokens() {
     echo "错误：未找到 nvim 或 vim"
     rm -f "$tmp"; trap - EXIT INT TERM; return 1
   fi
-  "$editor" "$tmp"
 
-  if [[ $? -ne 0 ]]; then
+  if ! "$editor" "$tmp"; then
     echo "编辑器异常退出，放弃保存"
     rm -f "$tmp"; trap - EXIT INT TERM; return 1
   fi
 
   # 先加密到临时文件，成功后原子替换，避免损坏原文件
-  local tmp_age=$(mktemp)
+  tmp_age=$(mktemp)
+  trap "rm -f ${(q)tmp} ${(q)tmp_age}" EXIT INT TERM
   if age -R "$AGE_SSH_PUB" -o "$tmp_age" "$tmp"; then
     mv "$tmp_age" "$AGE_TOKENS"
   else

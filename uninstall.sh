@@ -55,7 +55,16 @@ confirm() {
 
 rm_path() {
 	local p="$1"
-	[[ -z "$p" || "$p" == "/" ]] && return
+	[[ -z "$p" ]] && return
+	# 规范化路径，防止 //、/tmp/../ 等变体绕过检查
+	local real_p
+	real_p="$(realpath -m "$p" 2>/dev/null || echo "$p")"
+	[[ -z "$real_p" || "$real_p" == "/" ]] && return
+	# 安全限制：只允许删除 $HOME 或 /tmp 下的路径
+	if [[ "$real_p" != "$HOME"* && "$real_p" != "/tmp"* ]]; then
+		print_warn "拒绝删除非 HOME/tmp 路径: $real_p"
+		return
+	fi
 	if [[ -e "$p" || -L "$p" ]]; then
 		rm -rf "$p" && print_dim "✓ $p"
 	fi
@@ -148,7 +157,27 @@ remove_claude() {
 		print_dim "✓ 已清理 settings.json 中的 statusLine"
 	fi
 
-	# 2) claude-hud 配置及旧版 wrapper 脚本
+	# 2) 实际卸载已安装的 Claude 插件和 Marketplace
+	if command -v claude &>/dev/null; then
+		# 卸载插件
+		local plugin_list
+		plugin_list=$(claude plugin list 2>/dev/null) || true
+		if [[ -n "$plugin_list" ]]; then
+			echo "$plugin_list" | grep -oP '(?<=❯ ).+' | while IFS= read -r plugin; do
+				[[ -n "$plugin" ]] && claude plugin uninstall "$plugin" &>/dev/null && print_dim "✓ 插件: $plugin 已卸载"
+			done
+		fi
+		# 移除 Marketplace
+		local marketplace_list
+		marketplace_list=$(claude plugin marketplace list 2>/dev/null) || true
+		if [[ -n "$marketplace_list" ]]; then
+			echo "$marketplace_list" | grep -oP '(?<=❯ ).+' | while IFS= read -r mp; do
+				[[ -n "$mp" ]] && claude plugin marketplace remove "$mp" &>/dev/null && print_dim "✓ Marketplace: $mp 已移除"
+			done
+		fi
+	fi
+
+	# 3) claude-hud 配置及旧版 wrapper 脚本
 	rm_path ~/.claude/plugins/claude-hud/config.json
 	rm_path ~/.claude/plugins/claude-hud/hud-wrapper.sh
 	rm_path ~/.claude/plugins/claude-hud/hud-proxy.mjs
@@ -162,7 +191,34 @@ remove_claude() {
 		rm_path ~/.local/bin/"$bin"
 	done
 
-	# 5) MCP Servers（通过 claude CLI 移除）
+	# 5) Kotlin/Native（由 install_kotlin_native.sh 安装）
+	rm_path ~/.local/share/kotlin-native
+	for bin in konanc cinterop klib; do
+		rm_path ~/.local/bin/"$bin"
+	done
+
+	# 6) npm 全局安装的 LSP servers
+	if command -v npm &>/dev/null; then
+		for pkg in typescript-language-server typescript intelephense; do
+			if npm ls -g "$pkg" &>/dev/null; then
+				npm uninstall -g "$pkg" &>/dev/null && print_dim "✓ npm: $pkg 已卸载"
+			fi
+		done
+	fi
+
+	# 7) Go 安装的 LSP（gopls）
+	if command -v go &>/dev/null; then
+		local gopath
+		gopath="$(go env GOPATH 2>/dev/null)"
+		[[ -n "$gopath" ]] && rm_path "$gopath/bin/gopls"
+	fi
+
+	# 8) dotnet 安装的 LSP（csharp-ls）
+	if command -v dotnet &>/dev/null; then
+		dotnet tool uninstall -g csharp-ls &>/dev/null && print_dim "✓ dotnet: csharp-ls 已卸载"
+	fi
+
+	# 9) MCP Servers（通过 claude CLI 移除）
 	if command -v claude &>/dev/null; then
 		for mcp in tavily fetch open-websearch; do
 			if claude mcp list 2>/dev/null | grep -q "^  $mcp:"; then
@@ -188,7 +244,7 @@ remove_dotfiles() {
 	rm_path ~/.config/direnv
 
 	# .config 目录下的配置
-	for p in ~/.config/{zsh,kitty}; do
+	for p in ~/.config/{zsh,kitty,ripgrep}; do
 		rm_path "$p"
 	done
 
@@ -201,6 +257,9 @@ remove_dotfiles() {
 
 	# 工具脚本
 	rm_path ~/sh-script
+
+	# Linux keychain（由 install_dotfiles.sh 安装）
+	rm_path ~/.local/bin/keychain
 
 	# 删除 zinit 相关目录（插件、补全、缓存等）
 	for p in ~/.local/share/zinit ~/.cache/zinit; do
@@ -232,30 +291,42 @@ remove_dotfiles() {
 		fi
 	fi
 
-	# 根据操作系统区分 VSCode/Cursor 配置路径
-	# 删除 settings.json 和 keybindings.json
+	# VSCode/Cursor 配置（路径数组抽出，删除逻辑只写一次）
+	local vscode_dirs=()
 	if [[ "$(uname -s)" == "Darwin" ]]; then
-		# macOS: Library 路径 + macOS 专属工具
-		for p in ~/"Library/Application Support"/{Code,Cursor}/User/{settings.json,keybindings.json}; do
-			rm_path "$p"
+		vscode_dirs=(~/"Library/Application Support"/{Code,Cursor}/User)
+	else
+		vscode_dirs=(~/.config/{Code,Cursor}/User)
+	fi
+	for dir in "${vscode_dirs[@]}"; do
+		for f in settings.json keybindings.json; do
+			rm_path "$dir/$f"
 		done
-		# macOS 专属工具
+	done
+
+	# macOS 专属清理
+	if [[ "$(uname -s)" == "Darwin" ]]; then
 		for p in ~/.config/karabiner ~/.hammerspoon; do
 			rm_path "$p"
 		done
 		# 恢复电源管理默认值
-		if pmset -g | awk '/^ sleep/ {print $2}' | grep -q '^0$'; then
+		if has_sudo && pmset -g | awk '/^ sleep/ {print $2}' | grep -q '^0$'; then
 			sudo pmset -a sleep 1 && print_dim "✓ 电源管理已恢复默认（sleep=1）"
+			sudo pmset -a tcpkeepalive 0 && print_dim "✓ 电源管理已恢复默认（tcpkeepalive=0）"
 		fi
 		# 停止 Homebrew autoupdate
 		if command -v brew &>/dev/null && brew commands 2>/dev/null | grep -q autoupdate; then
 			brew autoupdate delete &>/dev/null && print_dim "✓ Homebrew autoupdate 已停止并删除"
 		fi
-	else
-		# Linux: .config 路径
-		for p in ~/.config/{Code,Cursor}/User/{settings.json,keybindings.json}; do
-			rm_path "$p"
-		done
+		# 从 access_bpf 组移除用户
+		if has_sudo && dscl . -read /Groups/access_bpf GroupMembership 2>/dev/null | grep -qw "$(whoami)"; then
+			sudo dseditgroup -o edit -d "$(whoami)" -t user access_bpf 2>/dev/null && print_dim "✓ 已从 access_bpf 组移除"
+		fi
+		# Homebrew 包可能被其他软件依赖，不自动卸载，仅提示
+		if command -v brew &>/dev/null; then
+			print_dim "💡 Homebrew 包未自动卸载（可能被其他软件依赖）"
+			print_dim "   如需卸载，请参考 lib/packages.sh 中的包列表手动执行 brew uninstall"
+		fi
 	fi
 }
 
@@ -299,7 +370,8 @@ if [[ "$REMOVE_PIXI" == "false" && "$REMOVE_DOTFILES" == "false" && "$REMOVE_CLA
 		REMOVE_DOTFILES=true
 		REMOVE_CLAUDE=true
 		;;
-	*) exit 0 ;;
+	5) exit 0 ;;
+	*) print_error "无效选项: $c"; exit 1 ;;
 	esac
 fi
 

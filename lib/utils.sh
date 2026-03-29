@@ -1,6 +1,7 @@
 #!/bin/bash
-# 工具函数库
-# 所有脚本共用的函数和常量
+# 工具函数库 — 所有脚本共用的函数和常量
+# 注意: 本文件作为库被 source，不设置 set -e 以避免影响调用方控制流
+# 约定: return 0 = 已处理（含条件不满足），return 1 = 真正的错误（调用方需 if/|| 保护）
 
 # ========================================
 # 颜色配置（强制颜色输出，即使在重定向场景下）
@@ -30,8 +31,9 @@ export DOTFILES_VERSION="${DOTFILES_VERSION:-5.0.0}"
 export DOTFILES_LOG_DIR="${DOTFILES_LOG_DIR:-/tmp/dotfiles-logs-$(whoami)}"
 export DOTFILES_LOG="${DOTFILES_LOG:-$DOTFILES_LOG_DIR/dotfiles-$(whoami)-$(date '+%Y%m%d-%H%M%S').log}"
 
-# 确保日志目录存在（任何 source 此文件的脚本都会自动创建）
+# 确保日志目录存在并限制权限（仅属主可读写，防止多用户系统泄漏）
 mkdir -p "$DOTFILES_LOG_DIR"
+chmod 700 "$DOTFILES_LOG_DIR"
 
 # ========================================
 # 检测是否有 sudo 权限
@@ -64,8 +66,8 @@ _log() {
 	else
 		output="  ${color}[${level}] ${msg}${NC}"
 	fi
-	echo -e "$output"
-	echo -e "$output" >>"$DOTFILES_LOG"
+	printf '%b\n' "$output"
+	printf '%b\n' "$output" >>"$DOTFILES_LOG"
 }
 
 # ========================================
@@ -103,16 +105,16 @@ print_header() { _log "INFO" "" "$BLUE" "$1"; }
 print_dim() {
 	local msg="$1"
 	local output="${DIM}     ${msg}${NC}"
-	echo -e "$output"
-	echo -e "$output" >>"$DOTFILES_LOG"
+	printf '%b\n' "$output"
+	printf '%b\n' "$output" >>"$DOTFILES_LOG"
 }
 
 # 列表项（用于工具列表等）
 print_item() {
 	local msg="$1"
 	local output="${DIM}     • ${msg}${NC}"
-	echo -e "$output"
-	echo -e "$output" >>"$DOTFILES_LOG"
+	printf '%b\n' "$output"
+	printf '%b\n' "$output" >>"$DOTFILES_LOG"
 }
 
 # 计算字符串显示宽度（跨平台，考虑中文/emoji）
@@ -152,8 +154,8 @@ print_banner() {
 	local right_pad=$(printf "%$((width - padding - display_width))s" "")
 	[[ ${#right_pad} -lt 0 ]] && right_pad=""
 	local output="\033[45m${left_pad}${msg}${right_pad}\033[0m"
-	echo -e "$output"
-	echo -e "$output" >>"$DOTFILES_LOG"
+	printf '%b\n' "$output"
+	printf '%b\n' "$output" >>"$DOTFILES_LOG"
 }
 
 # 步骤标题（轻量箭头样式）
@@ -161,15 +163,16 @@ print_section() {
 	local title="$1"
 	local output="${BOLD}${WHITE}▶ ${title}${NC}"
 	echo ""
-	echo -e "$output"
+	printf '%b\n' "$output"
 	echo "" >>"$DOTFILES_LOG"
-	echo -e "$output" >>"$DOTFILES_LOG"
+	printf '%b\n' "$output" >>"$DOTFILES_LOG"
 }
 
 # 分隔线（仅用于重要分隔）
 print_divider() {
 	local width
 	[[ "${COLUMNS:-0}" -gt 0 ]] && width="$COLUMNS" || width="$(tput cols 2>/dev/null)"
+	[[ -z "$width" || "$width" -le 0 ]] 2>/dev/null && width=80
 	local line
 	printf -v line "%*s" "$width" ""
 	line="${line// /─}"
@@ -242,7 +245,7 @@ check_github_update() {
 get_local_version() {
 	local version_file="$1/.version"
 	if [[ -f "$version_file" ]]; then
-		cat "$version_file"
+		<"$version_file" read -r version && echo "$version"
 	else
 		echo ""
 	fi
@@ -253,4 +256,83 @@ get_local_version() {
 save_local_version() {
 	mkdir -p "$1"
 	echo "$2" >"$1/.version"
+}
+
+# ========================================
+# 从 URL 下载并解压到指定目录
+# 参数: $1=下载URL $2=目标目录 $3=解压格式(tar.gz|zip|gz)
+# 返回: 0=成功 1=失败
+# 成功后目标目录会被替换为新内容
+# ========================================
+download_and_extract() {
+	local url="$1" dest="$2" format="${3:-tar.gz}"
+	local tmp_dir filename
+	tmp_dir=$(mktemp -d)
+	filename=$(basename "$url")
+
+	if ! curl -fsSL "$url" -o "$tmp_dir/$filename"; then
+		rm -rf "$tmp_dir"
+		return 1
+	fi
+
+	case "$format" in
+		tar.gz)
+			mkdir -p "$tmp_dir/staging"
+			if ! tar -xzf "$tmp_dir/$filename" -C "$tmp_dir/staging"; then
+				rm -rf "$tmp_dir"
+				return 1
+			fi
+			rm -rf "$dest"
+			mv "$tmp_dir/staging" "$dest"
+			;;
+		zip)
+			mkdir -p "$tmp_dir/staging"
+			if ! unzip -qo "$tmp_dir/$filename" -d "$tmp_dir/staging"; then
+				rm -rf "$tmp_dir"
+				return 1
+			fi
+			rm -rf "$dest"
+			mv "$tmp_dir/staging" "$dest"
+			;;
+		gz)
+			local base="${filename%.gz}"
+			if ! gunzip "$tmp_dir/$filename"; then
+				rm -rf "$tmp_dir"
+				return 1
+			fi
+			chmod +x "$tmp_dir/$base"
+			mkdir -p "$(dirname "$dest")"
+			mv "$tmp_dir/$base" "$dest"
+			;;
+	esac
+
+	rm -rf "$tmp_dir"
+	return 0
+}
+
+# ========================================
+# 检测编辑器真实类型（code 命令可能实际是 Cursor）
+# 参数: $1 = 命令名（code 或 cursor）
+# 输出: "vscode" 或 "cursor"
+# ========================================
+# ========================================
+# 获取 Rust 风格的平台 triple（如 aarch64-apple-darwin）
+# 参数: $1 = OS (macos/linux), $2 = ARCH (aarch64/x86_64)
+# ========================================
+get_platform_triple() {
+	local os="$1" arch="$2"
+	if [[ "$os" == "macos" ]]; then
+		echo "${arch}-apple-darwin"
+	else
+		echo "${arch}-unknown-linux-gnu"
+	fi
+}
+
+detect_editor_type() {
+	local cmd="$1"
+	if "$cmd" --help 2>&1 | head -1 | grep -qi "cursor"; then
+		echo "cursor"
+	else
+		echo "vscode"
+	fi
 }

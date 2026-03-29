@@ -1,17 +1,18 @@
--- 全局变量来保存防休眠的状态
-caffeinateMode = false
+-- caffeinate.lua — 防休眠切换
 
--- 封装设置防休眠状态的函数
-function toggleCaffeinateMode()
-    caffeinateMode = not caffeinateMode  -- 切换防休眠状态
+local M = {}
+local caffeinateMode = false
+
+function M.toggle()
+    caffeinateMode = not caffeinateMode
 
     if caffeinateMode then
-        -- 启用防休眠
         hs.caffeinate.set("displayIdle", true, true)
         hs.alert.show("Caffeinate Mode: ON ✅")
     else
-        -- 禁用防休眠
         hs.caffeinate.set("displayIdle", false, true)
         hs.alert.show("Caffeinate Mode: OFF ❌")
     end
 end
+
+return M

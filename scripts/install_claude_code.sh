@@ -8,7 +8,7 @@
 #
 # macOS 通过 brew cask 安装 CLI（见 lib/packages.sh），此脚本仅负责 Linux 安装 + 全平台插件配置
 
-set -eo pipefail
+set -euo pipefail
 
 # ========================================
 # 加载工具函数
@@ -16,9 +16,16 @@ set -eo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../lib/utils.sh"
 
+# 清理 jq 操作残留的 .tmp 文件（Ctrl+C 中断时可能残留）
+trap 'rm -f "$HOME/.claude/settings.json.tmp"' EXIT
+
 # ========================================
 # 配置
 # ========================================
+
+# 平台信息（由 main() 初始化，多个安装函数隐式引用）
+OS=""
+ARCH=""
 
 # LSP 安装目录
 LSP_DIR="$HOME/.local/share/lsp"
@@ -26,7 +33,6 @@ LSP_BIN="$HOME/.local/bin"
 
 # Claude Code 插件配置目录
 CLAUDE_PLUGINS_DIR="$HOME/.claude/plugins"
-INSTALLED_PLUGINS_JSON="$CLAUDE_PLUGINS_DIR/installed_plugins.json"
 KNOWN_MARKETPLACES_JSON="$CLAUDE_PLUGINS_DIR/known_marketplaces.json"
 
 # 插件 Marketplace 列表 (GitHub owner/repo)
@@ -101,48 +107,22 @@ install_rust_analyzer() {
 	check_github_update "$name" "$repo" "$LSP_DIR/$name" || return 0
 	local latest="$_GITHUB_LATEST"
 
-	# 确定平台和架构
 	local platform
-	if [[ "$OS" == "macos" ]]; then
-		if [[ "$ARCH" == "aarch64" ]]; then
-			platform="aarch64-apple-darwin"
-		else
-			platform="x86_64-apple-darwin"
-		fi
-	else
-		if [[ "$ARCH" == "aarch64" ]]; then
-			platform="aarch64-unknown-linux-gnu"
-		else
-			platform="x86_64-unknown-linux-gnu"
-		fi
-	fi
+	platform=$(get_platform_triple "$OS" "$ARCH")
 
 	local download_url="https://github.com/${repo}/releases/download/${latest}/rust-analyzer-${platform}.gz"
-	local tmp_dir
-	tmp_dir=$(mktemp -d)
 
-	if ! curl -fsSL "$download_url" -o "$tmp_dir/rust-analyzer.gz"; then
-		print_warn "$name: 下载失败"
-		rm -rf "$tmp_dir"
+	if ! download_and_extract "$download_url" "$LSP_BIN/rust-analyzer" "gz"; then
+		print_warn "$name: 下载或解压失败"
 		return 0
 	fi
-
-	# 解压 .gz 并安装到 ~/.local/bin
-	gunzip "$tmp_dir/rust-analyzer.gz"
-	chmod +x "$tmp_dir/rust-analyzer"
-	mv "$tmp_dir/rust-analyzer" "$LSP_BIN/rust-analyzer"
-	rm -rf "$tmp_dir"
 
 	save_local_version "$LSP_DIR/$name" "$latest"
 	print_success "$name $latest 安装完成"
 }
 
-# 2. gopls (Linux only, macOS uses brew)
+# 2. gopls (Linux only — 由 main() 按平台调用)
 install_gopls() {
-	if [[ "$OS" == "macos" ]]; then
-		return 0
-	fi
-
 	print_info "安装 gopls..."
 	if ! command -v go &>/dev/null; then
 		print_warn "go 未找到，跳过 gopls"
@@ -164,29 +144,26 @@ install_npm_lsps() {
 
 	print_info "安装 npm LSP servers..."
 
-	# typescript-language-server
-	if command -v typescript-language-server &>/dev/null; then
-		print_success "typescript-language-server 已安装"
-	else
-		print_info "安装 typescript-language-server..."
-		if npm install -g typescript-language-server typescript >/dev/null; then
-			print_success "typescript-language-server 安装完成"
-		else
-			print_warn "typescript-language-server 安装失败"
-		fi
-	fi
+	# 命令名:安装包（命令名用于检测是否已安装，安装包可含多个空格分隔）
+	local npm_lsps=(
+		"typescript-language-server:typescript-language-server typescript"
+		"intelephense:intelephense"
+	)
 
-	# intelephense
-	if command -v intelephense &>/dev/null; then
-		print_success "intelephense 已安装"
-	else
-		print_info "安装 intelephense..."
-		if npm install -g intelephense >/dev/null; then
-			print_success "intelephense 安装完成"
+	for entry in "${npm_lsps[@]}"; do
+		local cmd_name="${entry%%:*}"
+		local packages="${entry#*:}"
+		if command -v "$cmd_name" &>/dev/null; then
+			print_success "$cmd_name 已安装"
 		else
-			print_warn "intelephense 安装失败"
+			print_info "安装 $cmd_name..."
+			if npm install -g $packages &>/dev/null; then
+				print_success "$cmd_name 安装完成"
+			else
+				print_warn "$cmd_name 安装失败"
+			fi
 		fi
-	fi
+	done
 }
 
 # 4. csharp-ls (Both platforms)
@@ -196,7 +173,7 @@ install_csharp_ls() {
 		print_warn "dotnet 未找到，跳过 csharp-ls"
 		return 0
 	fi
-	if dotnet tool install -g csharp-ls >/dev/null; then
+	if dotnet tool install -g csharp-ls &>/dev/null; then
 		print_success "csharp-ls 安装完成"
 	else
 		# 已安装时 install 会失败，尝试 update
@@ -217,26 +194,12 @@ install_kotlin_ls() {
 	check_github_update "$name" "$repo" "$LSP_DIR/$name" || return 0
 	local latest="$_GITHUB_LATEST"
 
-	local tmp_dir
-	tmp_dir=$(mktemp -d)
 	local download_url="https://github.com/${repo}/releases/download/${latest}/server.zip"
 
-	if ! curl -fsSL "$download_url" -o "$tmp_dir/server.zip"; then
-		print_warn "$name: 下载失败"
-		rm -rf "$tmp_dir"
+	if ! download_and_extract "$download_url" "$LSP_DIR/$name" "zip"; then
+		print_warn "$name: 下载或解压失败"
 		return 0
 	fi
-
-	# 解压到暂存目录（成功后再替换旧安装，避免解压失败丢失已有版本）
-	mkdir -p "$tmp_dir/staging"
-	if ! unzip -qo "$tmp_dir/server.zip" -d "$tmp_dir/staging"; then
-		print_warn "$name: 解压失败"
-		rm -rf "$tmp_dir"
-		return 0
-	fi
-	rm -rf "$LSP_DIR/$name"
-	mv "$tmp_dir/staging" "$LSP_DIR/$name"
-	rm -rf "$tmp_dir"
 
 	# 创建符号链接
 	chmod +x "$LSP_DIR/$name/server/bin/kotlin-language-server"
@@ -246,12 +209,8 @@ install_kotlin_ls() {
 	print_success "$name $latest 安装完成"
 }
 
-# 6. lua-language-server (Linux only, macOS uses brew)
+# 6. lua-language-server (Linux only — 由 main() 按平台调用)
 install_lua_ls() {
-	if [[ "$OS" == "macos" ]]; then
-		return 0
-	fi
-
 	local name="lua-language-server"
 	local repo="LuaLS/lua-language-server"
 
@@ -259,38 +218,19 @@ install_lua_ls() {
 	check_github_update "$name" "$repo" "$LSP_DIR/$name" || return 0
 	local latest="$_GITHUB_LATEST"
 
-	# 确定平台标识
+	# lua-ls 使用简化格式（linux-arm64 / linux-x64），不同于 Rust triple
 	local platform
-	if [[ "$ARCH" == "aarch64" ]]; then
-		platform="linux-arm64"
-	else
-		platform="linux-x64"
-	fi
+	[[ "$ARCH" == "aarch64" ]] && platform="linux-arm64" || platform="linux-x64"
 
 	# 版本号去掉开头的 v
 	local ver_without_v="${latest#v}"
 	local tarball="lua-language-server-${ver_without_v}-${platform}.tar.gz"
 	local download_url="https://github.com/${repo}/releases/download/${latest}/${tarball}"
 
-	local tmp_dir
-	tmp_dir=$(mktemp -d)
-
-	if ! curl -fsSL "$download_url" -o "$tmp_dir/$tarball"; then
-		print_warn "$name: 下载失败"
-		rm -rf "$tmp_dir"
+	if ! download_and_extract "$download_url" "$LSP_DIR/$name" "tar.gz"; then
+		print_warn "$name: 下载或解压失败"
 		return 0
 	fi
-
-	# 解压到暂存目录（成功后再替换旧安装，避免解压失败丢失已有版本）
-	mkdir -p "$tmp_dir/staging"
-	if ! tar -xzf "$tmp_dir/$tarball" -C "$tmp_dir/staging"; then
-		print_warn "$name: 解压失败"
-		rm -rf "$tmp_dir"
-		return 0
-	fi
-	rm -rf "$LSP_DIR/$name"
-	mv "$tmp_dir/staging" "$LSP_DIR/$name"
-	rm -rf "$tmp_dir"
 
 	# 创建 wrapper 脚本
 	cat >"$LSP_BIN/lua-language-server" <<-'WRAPPER'
@@ -307,10 +247,6 @@ install_lua_ls() {
 # jdtls 不使用 GitHub Releases 发布正式版本，从 Eclipse 官方镜像下载
 # 通过 Homebrew API 获取最新版本号（与 brew install jdtls 保持一致）
 install_jdtls() {
-	if [[ "$OS" == "macos" ]]; then
-		return 0
-	fi
-
 	local name="jdtls"
 
 	print_info "安装 $name..."
@@ -346,66 +282,19 @@ install_jdtls() {
 
 	print_dim "版本: ${local_ver:-无} -> $latest"
 
-	local tmp_dir
-	tmp_dir=$(mktemp -d)
-
-	if ! curl -fsSL "$download_url" -o "$tmp_dir/jdtls.tar.gz"; then
-		print_warn "$name: 下载失败"
-		rm -rf "$tmp_dir"
+	if ! download_and_extract "$download_url" "$LSP_DIR/$name" "tar.gz"; then
+		print_warn "$name: 下载或解压失败"
 		return 0
 	fi
 
-	# 解压到暂存目录（成功后再替换旧安装，避免解压失败丢失已有版本）
-	mkdir -p "$tmp_dir/staging"
-	if ! tar -xzf "$tmp_dir/jdtls.tar.gz" -C "$tmp_dir/staging"; then
-		print_warn "$name: 解压失败"
-		rm -rf "$tmp_dir"
-		return 0
+	# 安装 wrapper 脚本（从仓库独立文件复制，便于 ShellCheck 检查和独立维护）
+	local wrapper_src="$SCRIPT_DIR/wrappers/jdtls"
+	if [[ -f "$wrapper_src" ]]; then
+		cp "$wrapper_src" "$LSP_BIN/jdtls"
+		chmod +x "$LSP_BIN/jdtls"
+	else
+		print_warn "jdtls wrapper 脚本不存在: $wrapper_src"
 	fi
-	rm -rf "$LSP_DIR/$name"
-	mv "$tmp_dir/staging" "$LSP_DIR/$name"
-	rm -rf "$tmp_dir"
-
-	# 创建 wrapper 脚本
-	cat >"$LSP_BIN/jdtls" <<-'WRAPPER'
-	#!/bin/bash
-	# jdtls wrapper script
-	# 自动查找 equinox launcher jar 并启动 Eclipse JDT Language Server
-
-	JDTLS_HOME="$HOME/.local/share/lsp/jdtls"
-
-	# 查找 equinox launcher jar
-	LAUNCHER_JAR=$(find "$JDTLS_HOME/plugins" -name 'org.eclipse.equinox.launcher_*.jar' -print -quit 2>/dev/null)
-	if [[ -z "$LAUNCHER_JAR" ]]; then
-	    echo "Error: Cannot find equinox launcher jar" >&2
-	    exit 1
-	fi
-
-	# 配置目录
-	CONFIG_DIR="$JDTLS_HOME/config_linux"
-
-	# 每个项目使用独立的 data 目录（基于工作目录的哈希）
-	PROJECT_HASH=$(echo -n "$(pwd)" | md5sum | cut -d' ' -f1)
-	DATA_DIR="$HOME/.cache/jdtls/workspace-${PROJECT_HASH}"
-	mkdir -p "$DATA_DIR"
-
-	exec java \
-	    -Declipse.application=org.eclipse.jdt.ls.core.id1 \
-	    -Dosgi.bundles.defaultStartLevel=4 \
-	    -Declipse.product=org.eclipse.jdt.ls.core.product \
-	    -Dlog.protocol=true \
-	    -Dlog.level=ALL \
-	    -Xms1g \
-	    -Xmx2G \
-	    --add-modules=ALL-SYSTEM \
-	    --add-opens java.base/java.util=ALL-UNNAMED \
-	    --add-opens java.base/java.lang=ALL-UNNAMED \
-	    -jar "$LAUNCHER_JAR" \
-	    -configuration "$CONFIG_DIR" \
-	    -data "$DATA_DIR" \
-	    "$@"
-	WRAPPER
-	chmod +x "$LSP_BIN/jdtls"
 
 	save_local_version "$LSP_DIR/$name" "$latest"
 	print_success "$name $latest 安装完成"
@@ -427,7 +316,7 @@ is_marketplace_installed() {
 # 参数: $1 = plugin@marketplace (例如 pyright-lsp@claude-plugins-official)
 is_plugin_installed() {
 	local plugin="$1"
-	claude plugin list 2>/dev/null | grep -q "^  ❯ ${plugin}$"
+	claude plugin list 2>/dev/null | grep -qF "$plugin"
 }
 
 # ========================================
@@ -554,12 +443,12 @@ enable_plugins() {
 
 	if [[ ! -f "$settings_file" ]]; then
 		print_warn "settings.json 不存在，跳过插件激活"
-		return 1
+		return 0
 	fi
 
 	if ! command -v jq &>/dev/null; then
 		print_warn "jq 未安装，跳过插件激活"
-		return 1
+		return 0
 	fi
 
 	local plugins=("$@")
@@ -571,9 +460,12 @@ enable_plugins() {
 			continue
 		fi
 
-		# 启用插件
-		jq --arg p "$plugin" '.enabledPlugins[$p] = true' "$settings_file" > "$settings_file.tmp" && \
+		# 启用插件（非空检查防止 jq 失败时用空文件覆盖）
+		if jq --arg p "$plugin" '.enabledPlugins[$p] = true' "$settings_file" > "$settings_file.tmp" && [[ -s "$settings_file.tmp" ]]; then
 			mv "$settings_file.tmp" "$settings_file"
+		else
+			rm -f "$settings_file.tmp"
+		fi
 		enabled=$((enabled + 1))
 	done
 
@@ -602,7 +494,8 @@ ensure_study_master_hooks() {
 		return 0
 	fi
 
-	# 注册 hook：matcher 存在则追加，否则新建 matcher
+	# 注册 hook
+	# jq 逻辑: 确保 .hooks.PostToolUse 路径存在 → matcher 已有则追加 command，否则新建条目
 	jq --arg m "$hook_matcher" --arg cmd "$hook_cmd" '
 		.hooks //= {} |
 		.hooks.PostToolUse //= [] |
@@ -611,8 +504,14 @@ ensure_study_master_hooks() {
 		else
 			.hooks.PostToolUse += [{"matcher":$m,"hooks":[{"type":"command","command":$cmd,"timeout":10}]}]
 		end
-	' "$settings_file" > "$settings_file.tmp" && mv "$settings_file.tmp" "$settings_file"
-	print_dim "  study-master hooks 已注册"
+	' "$settings_file" > "$settings_file.tmp"
+	if [[ -s "$settings_file.tmp" ]]; then
+		mv "$settings_file.tmp" "$settings_file"
+		print_dim "  study-master hooks 已注册"
+	else
+		rm -f "$settings_file.tmp"
+		print_warn "  study-master hooks 注册失败"
+	fi
 }
 
 # 在线 clone 仓库，手动部署文件并注册 hooks
@@ -680,38 +579,34 @@ install_study_master_skill() {
 # ========================================
 
 # 等价于 /claude-hud:setup：检测 runtime → 生成动态命令 → 写入 settings.json
-setup_claude_hud() {
-	local settings_file="$HOME/.claude/settings.json"
-	local plugin_base="$HOME/.claude/plugins/cache/claude-hud/claude-hud"
-
-	# 检查插件是否已安装
-	if [[ ! -d "$plugin_base" ]]; then
-		print_warn "claude-hud 插件未安装，跳过 statusLine 配置"
-		return 0
-	fi
-
-	# 部署 HUD 显示偏好（jq 合并：保留用户自定义，补充 Dotfiles 新增选项）
+# 部署 HUD 显示偏好配置（jq 合并：保留用户自定义，补充 Dotfiles 新增选项）
+_deploy_hud_config() {
 	local hud_config_src="$SCRIPT_DIR/../.claude/plugins/claude-hud/config.json"
 	local hud_config_dir="$HOME/.claude/plugins/claude-hud"
 	local hud_config="$hud_config_dir/config.json"
-	if [[ -f "$hud_config_src" ]]; then
-		mkdir -p "$hud_config_dir"
-		if [[ -f "$hud_config" ]] && command -v jq &>/dev/null; then
-			# 用户配置优先（.[1] 覆盖 .[0]），Dotfiles 作为基底补充缺失项
-			local tmp_merged
-			tmp_merged=$(mktemp)
-			if jq -s '.[0] * .[1]' "$hud_config_src" "$hud_config" >"$tmp_merged" 2>/dev/null; then
-				mv "$tmp_merged" "$hud_config"
-			else
-				rm -f "$tmp_merged"
-			fi
+	[[ -f "$hud_config_src" ]] || return 0
+
+	mkdir -p "$hud_config_dir"
+	if [[ -f "$hud_config" ]] && command -v jq &>/dev/null; then
+		local tmp_merged
+		tmp_merged=$(mktemp)
+		if jq -s '.[0] * .[1]' "$hud_config_src" "$hud_config" >"$tmp_merged" 2>/dev/null; then
+			mv "$tmp_merged" "$hud_config"
 		else
-			cp "$hud_config_src" "$hud_config"
-			print_success "claude-hud config.json 已部署"
+			rm -f "$tmp_merged"
 		fi
+	else
+		cp "$hud_config_src" "$hud_config"
+		print_success "claude-hud config.json 已部署"
 	fi
 
-	# 检测 runtime（优先 bun，回退 node）
+	# 清理旧版 wrapper 脚本（已改为直接命令方式）
+	rm -f "$hud_config_dir/hud-wrapper.sh" "$hud_config_dir/hud-proxy.mjs"
+}
+
+# 检测 runtime 并生成 HUD statusLine 命令
+# 设置全局变量 _HUD_CMD 供调用方使用
+_detect_hud_runtime() {
 	local runtime source
 	if command -v bun &>/dev/null; then
 		runtime="$(command -v bun)"
@@ -721,19 +616,20 @@ setup_claude_hud() {
 		source="dist/index.js"
 	else
 		print_warn "未找到 node 或 bun，跳过 claude-hud statusLine 配置"
-		return 0
+		return 1
 	fi
 
-	# 清理旧版 wrapper 脚本（已改为直接命令方式）
-	rm -f "$hud_config_dir/hud-wrapper.sh" "$hud_config_dir/hud-proxy.mjs"
-
-	# 生成动态版本查找命令（自动适配插件更新，无需硬编码版本号）
-	local hud_cmd
-	printf -v hud_cmd \
+	printf -v _HUD_CMD \
 		'bash -c '\''base="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/plugins/cache/claude-hud/claude-hud"; latest=$(ls "$base" | sort -t. -k1,1n -k2,2n -k3,3n -k4,4n | tail -1); exec "%s" "$base/$latest/%s"'\''' \
 		"$runtime" "$source"
+}
 
-	# 检查是否已经配置为相同命令（避免重复写入）
+# 写入 statusLine 到 settings.json
+_write_hud_statusline() {
+	local hud_cmd="$1"
+	local settings_file="$HOME/.claude/settings.json"
+
+	# 检查是否已配置为相同命令
 	if [[ -f "$settings_file" ]] && command -v jq &>/dev/null && \
 		jq -e --arg cmd "$hud_cmd" '.statusLine.command == $cmd' "$settings_file" &>/dev/null; then
 		print_success "claude-hud statusLine 已配置"
@@ -741,6 +637,7 @@ setup_claude_hud() {
 	fi
 
 	# 测试命令是否可用
+	# 安全: $hud_cmd 由 _detect_hud_runtime() 内部 printf -v 构建，内容完全由脚本控制，无注入风险
 	local test_output
 	test_output=$(eval "$hud_cmd" 2>&1) || true
 	if [[ -z "$test_output" ]]; then
@@ -748,14 +645,31 @@ setup_claude_hud() {
 		return 0
 	fi
 
-	# 写入 settings.json
+	# 写入（非空检查防止 jq 失败时覆盖）
 	if [[ -f "$settings_file" ]] && command -v jq &>/dev/null; then
-		jq --arg cmd "$hud_cmd" '.statusLine = {"type": "command", "command": $cmd}' \
-			"$settings_file" > "$settings_file.tmp" && mv "$settings_file.tmp" "$settings_file"
-		print_success "claude-hud statusLine 配置完成"
+		if jq --arg cmd "$hud_cmd" '.statusLine = {"type": "command", "command": $cmd}' \
+			"$settings_file" > "$settings_file.tmp" && [[ -s "$settings_file.tmp" ]]; then
+			mv "$settings_file.tmp" "$settings_file"
+			print_success "claude-hud statusLine 配置完成"
+		else
+			rm -f "$settings_file.tmp"
+			print_warn "claude-hud statusLine 写入失败"
+		fi
 	else
 		print_warn "无法写入 settings.json（文件不存在或缺少 jq）"
 	fi
+}
+
+setup_claude_hud() {
+	local plugin_base="$HOME/.claude/plugins/cache/claude-hud/claude-hud"
+	if [[ ! -d "$plugin_base" ]]; then
+		print_warn "claude-hud 插件未安装，跳过 statusLine 配置"
+		return 0
+	fi
+
+	_deploy_hud_config
+	_detect_hud_runtime || return 0
+	_write_hud_statusline "$_HUD_CMD"
 }
 
 # ========================================
@@ -822,7 +736,7 @@ install_mcp_servers() {
 				"DEFAULT_SEARCH_ENGINE": "duckduckgo",
 				"ALLOWED_SEARCH_ENGINES": "bing,baidu,duckduckgo,csdn,juejin",
 				"USE_PROXY": "true",
-				"PROXY_URL": "http://127.0.0.1:7890"
+				"PROXY_URL": "${PROXY_URL:-http://127.0.0.1:7890}"
 			}
 		}' --scope user 2>&1)"; then
 			print_success "MCP: open-websearch"
@@ -858,12 +772,15 @@ main() {
 	# 1) 安装 LSP 二进制
 	ensure_lsp_dirs
 	install_rust_analyzer
-	install_gopls
 	install_npm_lsps
 	install_csharp_ls
 	install_kotlin_ls
-	install_lua_ls
-	install_jdtls
+	# gopls / lua-ls / jdtls 仅 Linux（macOS 通过 brew 安装）
+	if [[ "$OS" != "macos" ]]; then
+		install_gopls
+		install_lua_ls
+		install_jdtls
+	fi
 	print_success "LSP Servers 安装完成"
 	_echo_blank
 

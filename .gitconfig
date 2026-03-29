@@ -2,5 +2,7 @@
 	name = 信萌新
 	email = 1273730703@qq.com
 
+# 全局将 GitHub HTTPS 转为 SSH（依赖 SSH key 已配置）
+# 无 SSH key 环境中绕过: git -c url."https://github.com/".insteadOf="" clone ...
 [url "git@github.com:"]
 	insteadOf = https://github.com/

@@ -251,20 +251,11 @@ for entry in "${editors[@]}"; do
 		done
 	fi
 
-	# 打印简洁结果
-	if [[ ${#success[@]} -gt 0 ]]; then
-		print_success "新安装 ${#success[@]} 个插件"
-	fi
-	if [[ ${#skipped[@]} -gt 0 ]]; then
-		print_dim "已安装 ${#skipped[@]} 个 (跳过)"
-	fi
-	if [[ ${#failed[@]} -gt 0 ]]; then
-		print_error "失败 ${#failed[@]} 个"
-		for item in "${failed[@]}"; do
-			ext="${item%%|*}"
-			print_dim "  ✗ $ext"
-		done
-	fi
+	# 打印汇总
+	print_install_summary "${type} 插件" "${#success[@]}" "${#skipped[@]}" "${#failed[@]}"
+	for item in "${failed[@]}"; do
+		print_dim "  ✗ ${item%%|*}"
+	done
 done
 
 _echo_blank

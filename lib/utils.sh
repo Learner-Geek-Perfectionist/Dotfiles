@@ -71,7 +71,8 @@ _log() {
 }
 
 # ========================================
-# 运行命令并同时输出到终端和日志（使用 script 伪造 TTY 保留进度条）
+# 运行命令并同时输出到终端和日志（使用 script 伪造 PTY 保留进度条/颜色）
+# 不用 tee/管道：很多程序检测到非 TTY 会关闭颜色和进度条
 # 支持复杂引号命令，如: _run_and_log zsh -c "ZINIT_SYNC=1 source '~/.zshrc'"
 # ========================================
 _run_and_log() {
@@ -79,7 +80,9 @@ _run_and_log() {
 		# macOS: script -q -a logfile command args...
 		script -q -a "$DOTFILES_LOG" "$@"
 	else
-		# Linux: 用 printf %q 正确转义每个参数，保留引号
+		# Linux script 不支持直接传命令参数，必须用 -c "string"
+		# printf %q 对每个参数做 shell 转义后拼接，经 -c 重新解析可还原原始参数
+		# 注：实际调用参数均为 ASCII 路径/命令，不受 locale 边缘情况影响
 		script -q -a "$DOTFILES_LOG" -c "$(printf '%q ' "$@")"
 	fi
 }
@@ -117,45 +120,33 @@ print_item() {
 	printf '%b\n' "$output" >>"$DOTFILES_LOG"
 }
 
-# 计算字符串显示宽度（跨平台，考虑中文/emoji）
-# 注意：Pixi 环境可能覆盖 wc 命令，导致 wc -m 返回字节数
-# 使用 LC_ALL=C.UTF-8 bash 强制正确的 UTF-8 字符计数
-_display_width() {
-	local str="$1"
-	# 强制 UTF-8 locale 获取真实字符数（避免 Pixi 环境污染）
-	local char_count
-	char_count=$(LC_ALL=C.UTF-8 bash -c 'echo ${#1}' _ "$str")
-	# ASCII 字符数
-	local ascii_count
-	ascii_count=$(printf '%s' "$str" | LC_ALL=C tr -cd '\0-\177' | wc -c | tr -d ' ')
-	# 非 ASCII 字符数 (中文/emoji 等，显示宽度为 2)
-	local non_ascii_count=$((char_count - ascii_count))
-	# 显示宽度 = ASCII 字符数 + 非 ASCII 字符数 * 2
-	echo $((ascii_count + non_ascii_count * 2))
-}
-
 # 脚本标题横幅（背景色填充，文字居中）
 print_banner() {
 	local msg="$1"
-	# 获取终端宽度：优先从 /dev/tty 获取真实宽度，避免 tput 默认值问题
-	local width
-	# 1. 尝试从 /dev/tty 获取（最可靠，直接查询终端驱动）
-	if [[ -e /dev/tty ]]; then
-		width=$(stty size </dev/tty 2>/dev/null | awk '{print $2}')
-	fi
-	# 2. 如果失败，尝试 COLUMNS（交互式 shell 中可用）
-	[[ -z "$width" || "$width" -le 0 ]] 2>/dev/null && [[ "${COLUMNS:-0}" -gt 0 ]] && width="$COLUMNS"
-	# 3. 最后尝试 tput cols
-	[[ -z "$width" || "$width" -le 0 ]] 2>/dev/null && width="$(tput cols 2>/dev/null)"
-	local display_width=$(_display_width "$msg")
-	local padding=$(((width - display_width) / 2))
-	[[ $padding -lt 0 ]] && padding=0
-	local left_pad=$(printf "%${padding}s" "")
-	local right_pad=$(printf "%$((width - padding - display_width))s" "")
-	[[ ${#right_pad} -lt 0 ]] && right_pad=""
-	local output="\033[45m${left_pad}${msg}${right_pad}\033[0m"
+	local width=$(tput cols 2>/dev/null || echo 80)
+	# 显示宽度：非 ASCII（中文/emoji）占 2 列，纯 bash 无需 fork
+	local ascii="${msg//[^[:ascii:]]/}"
+	local dw=$(( 2 * ${#msg} - ${#ascii} ))
+	local pad=$(( (width - dw) / 2 ))
+	[[ $pad -lt 0 ]] && pad=0
+	local right=$(( width - pad - dw ))
+	[[ $right -lt 0 ]] && right=0
+	local output="\033[45m$(printf "%${pad}s")${msg}$(printf "%${right}s")\033[0m"
 	printf '%b\n' "$output"
 	printf '%b\n' "$output" >>"$DOTFILES_LOG"
+}
+
+# 安装汇总报告（通用）
+# 用法: print_install_summary <label> <installed> <skipped> <failed>
+print_install_summary() {
+	local label="$1" installed="$2" skipped="$3" failed="$4"
+	if [[ $installed -eq 0 && $failed -eq 0 ]]; then
+		print_success "所有${label}已就绪 ($skipped 个)"
+	elif [[ $failed -eq 0 ]]; then
+		print_success "${label}: 新增 $installed, 跳过 $skipped"
+	else
+		print_warn "${label}: 新增 $installed, 跳过 $skipped, 失败 $failed"
+	fi
 }
 
 # 步骤标题（轻量箭头样式）

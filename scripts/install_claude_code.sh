@@ -397,11 +397,7 @@ add_marketplaces() {
 		fi
 	done
 
-	if [[ $failed -eq 0 && $skipped -gt 0 && $added -eq 0 ]]; then
-		print_success "所有 Marketplace 已配置 (${#MARKETPLACES[@]} 个)"
-	elif [[ $skipped -gt 0 ]]; then
-		print_dim "跳过 $skipped 个已存在的 Marketplace"
-	fi
+	print_install_summary "Marketplace" "$added" "$skipped" "$failed"
 }
 
 # ========================================
@@ -429,11 +425,7 @@ install_plugins() {
 		fi
 	done
 
-	if [[ $skipped -gt 0 && $installed -eq 0 && $failed -eq 0 ]]; then
-		print_success "所有${label}插件已安装 (${#plugins[@]} 个)"
-	elif [[ $skipped -gt 0 ]]; then
-		print_dim "跳过 $skipped 个已安装的插件"
-	fi
+	print_install_summary "${label}插件" "$installed" "$skipped" "$failed"
 }
 
 # ========================================
@@ -784,14 +776,7 @@ install_mcp_servers() {
 		fi
 	fi
 
-	# 汇总
-	if [[ $failed -eq 0 && $skipped -gt 0 && $installed -eq 0 ]]; then
-		print_success "所有 MCP Servers 已配置 ($((installed + skipped)) 个)"
-	elif [[ $installed -gt 0 ]]; then
-		print_success "MCP Servers: 新增 $installed, 跳过 $skipped, 失败 $failed"
-	elif [[ $failed -gt 0 ]]; then
-		print_warn "MCP Servers: $failed 个安装失败"
-	fi
+	print_install_summary "MCP Servers" "$installed" "$skipped" "$failed"
 }
 
 # ========================================

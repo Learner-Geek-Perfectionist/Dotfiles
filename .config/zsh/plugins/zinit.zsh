@@ -64,9 +64,10 @@ alias history='fc -l 1'
 alias sudo='sudo '
 
 # 内联原 OMZL::theme-and-appearance.zsh 的 eza 别名
+# $commands[eza] 展开为绝对路径，确保 sudo ls/ll 也能找到 eza
 if (( $+commands[eza] )); then
-	alias ls="eza --icons -ha --time-style=iso"
-	alias ll="eza --icons -ha --long --time-style=iso"
+	alias ls="$commands[eza] --icons -ha --time-style=iso"
+	alias ll="$commands[eza] --icons -ha --long --time-style=iso"
 fi
 
 # ============================================

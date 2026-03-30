@@ -11,20 +11,16 @@ source "$SCRIPT_DIR/../lib/utils.sh"
 
 sync_directory_contents() {
 	local src="$1" dest="$2"
-	local rel
 
 	mkdir -p "$dest"
 
 	if command -v rsync &>/dev/null; then
-		rsync -a --delete "$src/" "$dest/"
+		# 非破坏性合并：更新仓库内文件，但保留目标目录里的本机私有文件。
+		rsync -a "$src/" "$dest/"
 		return 0
 	fi
 
-	# 兜底：先删除源目录中不存在的旧文件，再做覆盖复制。
-	while IFS= read -r -d '' rel; do
-		[[ -e "$src/$rel" || -L "$src/$rel" ]] || rm -rf "$dest/$rel"
-	done < <(cd "$dest" && find . -mindepth 1 -depth -print0)
-
+	# 兜底：仅覆盖仓库提供的内容，不删除目标目录里的额外文件。
 	cp -PRf "$src/." "$dest/"
 }
 

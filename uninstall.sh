@@ -33,6 +33,40 @@ REMOVE_DOTFILES=false
 REMOVE_CLAUDE=false
 FORCE=false
 
+CLAUDE_MANAGED_MARKETPLACES=(
+	anthropics/claude-plugins-official
+	anthropics/skills
+	obra/superpowers-marketplace
+	jarrodwatts/claude-hud
+)
+
+CLAUDE_MANAGED_PLUGINS=(
+	pyright-lsp@claude-plugins-official
+	typescript-lsp@claude-plugins-official
+	gopls-lsp@claude-plugins-official
+	rust-analyzer-lsp@claude-plugins-official
+	jdtls-lsp@claude-plugins-official
+	clangd-lsp@claude-plugins-official
+	csharp-lsp@claude-plugins-official
+	php-lsp@claude-plugins-official
+	kotlin-lsp@claude-plugins-official
+	swift-lsp@claude-plugins-official
+	lua-lsp@claude-plugins-official
+	github@claude-plugins-official
+	commit-commands@claude-plugins-official
+	code-simplifier@claude-plugins-official
+	claude-hud@claude-hud
+	example-skills@anthropic-agent-skills
+	superpowers@superpowers-marketplace
+)
+
+CLAUDE_MANAGED_MCPS=(
+	tavily
+	fetch
+	open-websearch
+	exa
+)
+
 show_help() {
 	cat <<'EOF'
 用法: ./uninstall.sh [选项]
@@ -40,7 +74,7 @@ show_help() {
 选项:
     --pixi       仅删除 Pixi (~/.pixi 等)
     --dotfiles   仅删除 Dotfiles 配置
-    --claude     仅删除 Claude Code 配置（插件/Skill/Hook/LSP/MCP）
+    --claude     仅删除 Claude Code 用户配置（插件/Skill/Hook/Marketplace/MCP）
     --all        同时删除三者
     -f, --force  跳过确认
     -h, --help   显示帮助
@@ -135,17 +169,19 @@ remove_pixi() {
 }
 
 remove_claude() {
-	print_info "🤖 删除 Claude Code 配置（由 install_claude_code.sh 安装的内容）..."
+	print_info "🤖 删除 Claude Code 用户配置（仅限 Dotfiles 管理的 Claude 项）..."
 
 	# 1) study-master Skill + Hooks
 	rm_path ~/.claude/skills/study-master
 	rm_path ~/.claude/hooks/check-study_master.sh
 
-	# 清理 settings.json 中的 study-master hooks
+	# 清理 settings.json 中的 Dotfiles 管理项，避免误删用户自定义配置
 	local settings_file="$HOME/.claude/settings.json"
 	if [[ -f "$settings_file" ]] && command -v jq &>/dev/null; then
 		local hook_cmd='bash "$HOME/.claude/hooks/check-study_master.sh"'
-		jq --arg cmd "$hook_cmd" '
+		local managed_plugins_json
+		managed_plugins_json=$(printf '%s\n' "${CLAUDE_MANAGED_PLUGINS[@]}" | jq -R . | jq -s .)
+		jq --arg cmd "$hook_cmd" --argjson managed_plugins "$managed_plugins_json" '
 			if .hooks.PostToolUse then
 				.hooks.PostToolUse |= map(
 					.hooks |= map(select(.command != $cmd))
@@ -153,44 +189,31 @@ remove_claude() {
 				.hooks.PostToolUse |= map(select(.hooks | length > 0)) |
 				if (.hooks.PostToolUse | length) == 0 then del(.hooks.PostToolUse) else . end |
 				if (.hooks | length) == 0 then del(.hooks) else . end
+			else . end |
+			if (.enabledPlugins | type) == "object" then
+				.enabledPlugins |= with_entries(select(.key as $k | $managed_plugins | index($k) | not)) |
+				if (.enabledPlugins | length) == 0 then del(.enabledPlugins) else . end
+			else . end |
+			if (.statusLine?.type == "command") and (
+				(.statusLine.command // "") | test("claude-hud/claude-hud|claude-hud/hud-wrapper\\.sh|\\.claude/statusline\\.sh")
+			) then
+				del(.statusLine)
 			else . end
 		' "$settings_file" > "$settings_file.tmp" && mv "$settings_file.tmp" "$settings_file"
-		print_dim "✓ 已清理 settings.json 中的 hooks"
-
-		# 清理 enabledPlugins
-		jq 'del(.enabledPlugins)' "$settings_file" > "$settings_file.tmp" && \
-			mv "$settings_file.tmp" "$settings_file"
-		print_dim "✓ 已清理 settings.json 中的 enabledPlugins"
-
-		# 清理 extraKnownMarketplaces
-		jq 'del(.extraKnownMarketplaces)' "$settings_file" > "$settings_file.tmp" && \
-			mv "$settings_file.tmp" "$settings_file"
-		print_dim "✓ 已清理 settings.json 中的 extraKnownMarketplaces"
-
-		# 清理 statusLine
-		jq 'del(.statusLine)' "$settings_file" > "$settings_file.tmp" && \
-			mv "$settings_file.tmp" "$settings_file"
-		print_dim "✓ 已清理 settings.json 中的 statusLine"
+		print_dim "✓ 已定向清理 settings.json 中的 Dotfiles 管理项"
 	fi
 
-	# 2) 实际卸载已安装的 Claude 插件和 Marketplace
+	# 2) 实际卸载 Dotfiles 安装的 Claude 插件和 Marketplace
 	if command -v claude &>/dev/null; then
-		# 卸载插件
-		local plugin_list
-		plugin_list=$(claude plugin list 2>/dev/null) || true
-		if [[ -n "$plugin_list" ]]; then
-			echo "$plugin_list" | sed -n 's/^.*❯ //p' | while IFS= read -r plugin; do
-				[[ -n "$plugin" ]] && claude plugin uninstall "$plugin" &>/dev/null && print_dim "✓ 插件: $plugin 已卸载"
-			done
-		fi
-		# 移除 Marketplace
-		local marketplace_list
-		marketplace_list=$(claude plugin marketplace list 2>/dev/null) || true
-		if [[ -n "$marketplace_list" ]]; then
-			echo "$marketplace_list" | sed -n 's/^.*❯ //p' | while IFS= read -r mp; do
-				[[ -n "$mp" ]] && claude plugin marketplace remove "$mp" &>/dev/null && print_dim "✓ Marketplace: $mp 已移除"
-			done
-		fi
+		local plugin
+		for plugin in "${CLAUDE_MANAGED_PLUGINS[@]}"; do
+			claude plugin uninstall "$plugin" &>/dev/null && print_dim "✓ 插件: $plugin 已卸载"
+		done
+
+		local marketplace
+		for marketplace in "${CLAUDE_MANAGED_MARKETPLACES[@]}"; do
+			claude plugin marketplace remove "$marketplace" &>/dev/null && print_dim "✓ Marketplace: $marketplace 已移除"
+		done
 	fi
 
 	# 3) claude-hud 配置及旧版 wrapper 脚本
@@ -201,44 +224,12 @@ remove_claude() {
 	# 3) 旧 statusline.sh
 	rm_path ~/.claude/statusline.sh
 
-	# 4) LSP Servers（由 install_claude_code.sh 安装）
-	rm_path ~/.local/share/lsp
-	for bin in rust-analyzer kotlin-language-server lua-language-server jdtls; do
-		rm_path ~/.local/bin/"$bin"
-	done
-
-	# 5) Kotlin/Native（由 install_kotlin_native.sh 安装）
-	rm_path ~/.local/share/kotlin-native
-	for bin in konanc cinterop klib; do
-		rm_path ~/.local/bin/"$bin"
-	done
-
-	# 6) npm 全局安装的 LSP servers
-	if command -v npm &>/dev/null; then
-		for pkg in typescript-language-server typescript intelephense; do
-			if npm ls -g "$pkg" &>/dev/null; then
-				npm uninstall -g "$pkg" &>/dev/null && print_dim "✓ npm: $pkg 已卸载"
-			fi
-		done
-	fi
-
-	# 7) Go 安装的 LSP（gopls）
-	if command -v go &>/dev/null; then
-		local gopath
-		gopath="$(go env GOPATH 2>/dev/null)"
-		[[ -n "$gopath" ]] && rm_path "$gopath/bin/gopls"
-	fi
-
-	# 8) dotnet 安装的 LSP（csharp-ls）
-	if command -v dotnet &>/dev/null; then
-		dotnet tool uninstall -g csharp-ls &>/dev/null && print_dim "✓ dotnet: csharp-ls 已卸载"
-	fi
-
-	# 9) MCP Servers（通过 claude CLI 移除）
+	# 4) MCP Servers（通过 claude CLI 定向移除 Dotfiles 安装的项）
 	if command -v claude &>/dev/null; then
 		local mcp_list
 		mcp_list=$(claude mcp list 2>/dev/null) || true
-		for mcp in tavily fetch open-websearch exa; do
+		local mcp
+		for mcp in "${CLAUDE_MANAGED_MCPS[@]}"; do
 			if echo "$mcp_list" | grep -Eq "^[[:space:]]*${mcp}:"; then
 				claude mcp remove "$mcp" --scope user &>/dev/null && print_dim "✓ MCP: $mcp 已移除"
 			fi
@@ -247,6 +238,7 @@ remove_claude() {
 
 	print_success "Claude Code 配置已清理"
 	print_dim "💡 Claude Code CLI 本身未卸载，如需卸载请运行: npm uninstall -g @anthropic-ai/claude-code"
+	print_dim "💡 共享语言工具链（LSP / Kotlin/Native / npm/go/dotnet 全局工具）已保留，避免影响其它编辑器和工作流"
 }
 
 remove_dotfiles() {

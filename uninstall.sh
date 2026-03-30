@@ -220,7 +220,7 @@ remove_claude() {
 
 	# 9) MCP Servers（通过 claude CLI 移除）
 	if command -v claude &>/dev/null; then
-		for mcp in tavily fetch open-websearch; do
+		for mcp in tavily fetch open-websearch exa; do
 			if claude mcp list 2>/dev/null | grep -q "^  $mcp:"; then
 				claude mcp remove "$mcp" --scope user &>/dev/null && print_dim "✓ MCP: $mcp 已移除"
 			fi

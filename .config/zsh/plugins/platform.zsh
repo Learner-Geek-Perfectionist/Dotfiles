@@ -16,6 +16,7 @@ if [[ "$OSTYPE" == darwin* ]]; then
 	export HOMEBREW_BOTTLE_DOMAIN=https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles
 	export HOMEBREW_API_DOMAIN=https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles/api
 	export HOMEBREW_PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple
+	export HOMEBREW_CLEANUP_MAX_AGE_DAYS=0
 
 fi
 

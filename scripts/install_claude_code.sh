@@ -707,6 +707,11 @@ MCP_SERVERS=(
 	"fetch:@kazuph/mcp-fetch"
 )
 
+# HTTP MCP Servers（name:url 格式，用 claude mcp add --transport http 安装）
+HTTP_MCP_SERVERS=(
+	"exa:https://mcp.exa.ai/mcp"
+)
+
 # 安装 MCP Servers
 install_mcp_servers() {
 	print_info "配置 MCP Servers..."
@@ -747,7 +752,31 @@ install_mcp_servers() {
 		[[ -z "${TAVILY_API_KEY:-}" ]] && print_warn "提醒: 请通过 edit-tokens 添加 TAVILY_API_KEY"
 	fi
 
-	# 2) Open-WebSearch MCP（需要 claude mcp add-json，有自定义 env）
+	# 2) HTTP MCP Servers（远程 URL，无需本地 npx 进程）
+	for entry in "${HTTP_MCP_SERVERS[@]}"; do
+		local name="${entry%%:*}"
+		local url="${entry#*:}"
+
+		if echo "$mcp_list" | grep -q "$name:"; then
+			skipped=$((skipped + 1))
+			continue
+		fi
+
+		local output
+		if output="$(claude mcp add "$name" --transport http "$url" --scope user 2>&1)"; then
+			print_success "MCP: $name (HTTP)"
+			installed=$((installed + 1))
+		else
+			if [[ "$output" == *"already exists"* ]]; then
+				skipped=$((skipped + 1))
+			else
+				print_warn "MCP $name 安装失败: $output"
+				failed=$((failed + 1))
+			fi
+		fi
+	done
+
+	# 3) Open-WebSearch MCP（需要 claude mcp add-json，有自定义 env）
 	if echo "$mcp_list" | grep -q "open-websearch:"; then
 		skipped=$((skipped + 1))
 	else

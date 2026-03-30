@@ -302,11 +302,6 @@ download_and_extract() {
 }
 
 # ========================================
-# 检测编辑器真实类型（code 命令可能实际是 Cursor）
-# 参数: $1 = 命令名（code 或 cursor）
-# 输出: "vscode" 或 "cursor"
-# ========================================
-# ========================================
 # 获取 Rust 风格的平台 triple（如 aarch64-apple-darwin）
 # 参数: $1 = OS (macos/linux), $2 = ARCH (aarch64/x86_64)
 # ========================================
@@ -319,6 +314,11 @@ get_platform_triple() {
 	fi
 }
 
+# ========================================
+# 检测编辑器真实类型（code 命令可能实际是 Cursor）
+# 参数: $1 = 命令路径或命令名
+# 输出: "vscode" 或 "cursor"
+# ========================================
 detect_editor_type() {
 	local cmd="$1"
 	if "$cmd" --help 2>&1 | head -1 | grep -qi "cursor"; then
@@ -326,4 +326,250 @@ detect_editor_type() {
 	else
 		echo "vscode"
 	fi
+}
+
+# 枚举可用的编辑器 CLI 路径
+# 优先使用 PATH，其次回退到 macOS App bundle 内置 CLI
+editor_cli_candidates() {
+	local candidate
+
+	if command -v code &>/dev/null; then
+		command -v code
+	fi
+	if command -v cursor &>/dev/null; then
+		command -v cursor
+	fi
+
+	if [[ "$(uname -s)" == "Darwin" ]]; then
+		for candidate in \
+			"/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code" \
+			"$HOME/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code" \
+			"/Applications/Cursor.app/Contents/Resources/app/bin/cursor" \
+			"$HOME/Applications/Cursor.app/Contents/Resources/app/bin/cursor"; do
+			[[ -x "$candidate" ]] && echo "$candidate"
+		done
+	fi
+}
+
+# 按真实类型查找编辑器 CLI
+# 参数: $1 = vscode 或 cursor
+find_editor_cli() {
+	local target_type="$1"
+	local candidate resolved_type bin_path
+	local seen_paths=""
+
+	while IFS= read -r candidate; do
+		[[ -z "$candidate" ]] && continue
+		bin_path=$(realpath "$candidate" 2>/dev/null || echo "$candidate")
+		case $'\n'"$seen_paths" in
+		*$'\n'"$bin_path"$'\n'*) continue ;;
+		esac
+		seen_paths+="${bin_path}"$'\n'
+
+		resolved_type=$(detect_editor_type "$candidate" 2>/dev/null || true)
+		[[ "$resolved_type" == "$target_type" ]] || continue
+		echo "$candidate"
+		return 0
+	done < <(editor_cli_candidates)
+
+	return 1
+}
+
+# ========================================
+# macOS pmset 状态保存/恢复
+# ========================================
+pmset_state_file() {
+	echo "$HOME/.local/state/dotfiles/macos-pmset.env"
+}
+
+save_pmset_state() {
+	command -v pmset &>/dev/null || return 1
+
+	local state_file tmp
+	state_file="$(pmset_state_file)"
+	[[ -f "$state_file" ]] && return 0
+
+	mkdir -p "$(dirname "$state_file")"
+	tmp="$(mktemp)"
+
+	{
+		echo "# Saved by Dotfiles install on $(date)"
+		pmset -g custom | awk '
+			/^Battery Power:/ { scope="BATTERY"; next }
+			/^AC Power:/ { scope="AC"; next }
+			/^UPS Power:/ { scope="UPS"; next }
+			($1 == "sleep" || $1 == "tcpkeepalive") && scope != "" {
+				printf "%s_%s=%s\n", scope, toupper($1), $2
+			}
+		'
+	} >"$tmp" || {
+		rm -f "$tmp"
+		return 1
+	}
+
+	if ! grep -q '^[A-Z_]\+=' "$tmp"; then
+		rm -f "$tmp"
+		return 1
+	fi
+
+	chmod 600 "$tmp"
+	mv "$tmp" "$state_file"
+	return 0
+}
+
+restore_pmset_state() {
+	command -v pmset &>/dev/null || return 1
+	has_sudo || return 1
+
+	local state_file
+	state_file="$(pmset_state_file)"
+	[[ -f "$state_file" ]] || return 1
+
+	# shellcheck disable=SC1090
+	source "$state_file"
+
+	local restored=0
+	local scope_flag scope_name sleep_value tcpkeepalive_value
+	for scope_flag in "-b" "-c" "-u"; do
+		case "$scope_flag" in
+		-b)
+			scope_name="电池"
+			sleep_value="${BATTERY_SLEEP:-}"
+			tcpkeepalive_value="${BATTERY_TCPKEEPALIVE:-}"
+			;;
+		-c)
+			scope_name="交流电"
+			sleep_value="${AC_SLEEP:-}"
+			tcpkeepalive_value="${AC_TCPKEEPALIVE:-}"
+			;;
+		-u)
+			scope_name="UPS"
+			sleep_value="${UPS_SLEEP:-}"
+			tcpkeepalive_value="${UPS_TCPKEEPALIVE:-}"
+			;;
+		esac
+
+		[[ -z "$sleep_value" && -z "$tcpkeepalive_value" ]] && continue
+		[[ -n "$sleep_value" ]] && sudo pmset "$scope_flag" sleep "$sleep_value"
+		[[ -n "$tcpkeepalive_value" ]] && sudo pmset "$scope_flag" tcpkeepalive "$tcpkeepalive_value"
+		print_dim "✓ 已恢复 ${scope_name} pmset 配置"
+		restored=1
+	done
+
+	[[ $restored -eq 1 ]]
+}
+
+# ========================================
+# Pixi manifest 托管状态
+# ========================================
+pixi_manifest_path() {
+	echo "$HOME/pixi.toml"
+}
+
+pixi_lock_path() {
+	echo "$HOME/pixi.lock"
+}
+
+pixi_manifest_state_file() {
+	echo "$HOME/.local/state/dotfiles/pixi-manifest.env"
+}
+
+file_fingerprint() {
+	local file="$1"
+	[[ -f "$file" ]] || return 1
+
+	if command -v shasum &>/dev/null; then
+		shasum -a 256 "$file" | awk '{print $1}'
+	elif command -v sha256sum &>/dev/null; then
+		sha256sum "$file" | awk '{print $1}'
+	elif command -v openssl &>/dev/null; then
+		openssl dgst -sha256 "$file" | awk '{print $NF}'
+	elif command -v cksum &>/dev/null; then
+		cksum "$file" | awk '{print $1 "-" $2}'
+	else
+		return 1
+	fi
+}
+
+read_managed_pixi_manifest_hash() {
+	local state_file
+	state_file="$(pixi_manifest_state_file)"
+	[[ -f "$state_file" ]] || return 1
+	awk -F= '/^MANAGED_SHA256=/{print $2; exit}' "$state_file"
+}
+
+write_managed_pixi_manifest_state() {
+	local managed_hash="$1"
+	local state_file tmp
+	state_file="$(pixi_manifest_state_file)"
+
+	mkdir -p "$(dirname "$state_file")"
+	tmp="$(mktemp)"
+	{
+		echo "# Managed by Dotfiles on $(date)"
+		echo "MANAGED_SHA256=$managed_hash"
+	} >"$tmp"
+	chmod 600 "$tmp"
+	mv "$tmp" "$state_file"
+}
+
+clear_managed_pixi_manifest_state() {
+	rm -f "$(pixi_manifest_state_file)"
+}
+
+pixi_manifest_is_managed() {
+	local manifest="${1:-$(pixi_manifest_path)}"
+	local current_hash managed_hash
+
+	[[ -f "$manifest" ]] || return 1
+	current_hash=$(file_fingerprint "$manifest") || return 1
+	managed_hash=$(read_managed_pixi_manifest_hash) || return 1
+	[[ -n "$managed_hash" && "$current_hash" == "$managed_hash" ]]
+}
+
+# 同步 Dotfiles 托管的 pixi.toml。
+# - 未存在时：创建并纳入托管
+# - 仍处于托管状态时：允许覆盖更新
+# - 已被用户修改时：自动脱管并跳过覆盖
+# - 与仓库内容重新一致时：重新纳入托管
+sync_managed_pixi_manifest() {
+	local src="$1"
+	local dest="${2:-$(pixi_manifest_path)}"
+	local src_hash dest_hash managed_hash
+
+	[[ -f "$src" ]] || return 1
+	src_hash=$(file_fingerprint "$src") || return 1
+	managed_hash=$(read_managed_pixi_manifest_hash 2>/dev/null || true)
+
+	if [[ ! -f "$dest" ]]; then
+		mkdir -p "$(dirname "$dest")"
+		cp "$src" "$dest"
+		write_managed_pixi_manifest_state "$src_hash"
+		print_dim "部署托管配置: ~/pixi.toml"
+		return 0
+	fi
+
+	dest_hash=$(file_fingerprint "$dest") || return 1
+
+	if [[ "$dest_hash" == "$src_hash" ]]; then
+		write_managed_pixi_manifest_state "$src_hash"
+		print_dim "pixi.toml 与仓库一致，保持托管"
+		return 0
+	fi
+
+	if [[ -n "$managed_hash" && "$dest_hash" == "$managed_hash" ]]; then
+		cp "$src" "$dest"
+		write_managed_pixi_manifest_state "$src_hash"
+		print_dim "更新托管配置: ~/pixi.toml"
+		return 0
+	fi
+
+	if [[ -n "$managed_hash" ]]; then
+		clear_managed_pixi_manifest_state
+		print_warn "检测到本地修改的 ~/pixi.toml，已脱管，跳过覆盖"
+	else
+		print_warn "检测到用户自维护的 ~/pixi.toml，跳过覆盖"
+	fi
+
+	return 3
 }

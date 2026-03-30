@@ -142,11 +142,30 @@ setup_logging() {
 }
 
 # 检查并安装依赖
+install_linux_packages() {
+	local packages=("$@")
+
+	[[ ${#packages[@]} -eq 0 ]] && return 0
+	has_sudo || return 1
+
+	local pm
+	for pm in "apt:apt install -y" "yum:yum install -y" "dnf:dnf install -y" "pacman:pacman -S --noconfirm" "zypper:zypper install -y"; do
+		if command -v "${pm%%:*}" &>/dev/null; then
+			local -a install_cmd
+			read -ra install_cmd <<< "${pm#*:}"
+			sudo "${install_cmd[@]}" "${packages[@]}"
+			return $?
+		fi
+	done
+
+	return 1
+}
+
 check_dependencies() {
 	local missing=()
 
-	# 检查所有依赖
-	for cmd in git curl zsh; do
+	# Bootstrap 仅要求 git 和 curl；zsh 在真正设置默认 shell 时再检查
+	for cmd in git curl; do
 		command -v "$cmd" &>/dev/null || missing+=("$cmd")
 	done
 
@@ -170,15 +189,9 @@ check_dependencies() {
 	fi
 
 	# Linux: 一次性安装所有缺失的依赖
-	if has_sudo; then
-		for pm in "apt:apt install -y" "yum:yum install -y" "dnf:dnf install -y" "pacman:pacman -S --noconfirm" "zypper:zypper install -y"; do
-			if command -v "${pm%%:*}" &>/dev/null; then
-				print_info "安装依赖: ${missing[*]}"
-				local -a install_cmd
-				read -ra install_cmd <<< "${pm#*:}"
-				sudo "${install_cmd[@]}" "${missing[@]}" && break
-			fi
-		done
+	if [[ "$(uname)" == "Linux" ]] && has_sudo; then
+		print_info "安装依赖: ${missing[*]}"
+		install_linux_packages "${missing[@]}" || true
 	fi
 
 	# 重新检查所有依赖
@@ -252,8 +265,7 @@ install_pixi_full() {
 	# 部署 pixi.toml 到 home 目录（install_pixi.sh 中 install_home_tools 依赖它）
 	local manifest_src="$dotfiles_dir/pixi.toml"
 	if [[ -f "$manifest_src" ]]; then
-		print_dim "部署配置: ~/pixi.toml"
-		cp "$manifest_src" "$HOME/pixi.toml"
+		sync_managed_pixi_manifest "$manifest_src" || print_warn "pixi.toml 托管状态更新失败"
 	fi
 
 	if [[ -f "$dotfiles_dir/scripts/install_pixi.sh" ]]; then
@@ -348,8 +360,19 @@ setup_default_shell() {
 
 	# 检测 zsh
 	if ! command -v zsh &>/dev/null; then
-		print_warn "未找到 zsh，请先安装: sudo apt install zsh"
-		return 0
+		if [[ "$(uname)" == "Linux" ]] && has_sudo; then
+			print_info "未找到 zsh，尝试安装..."
+			if install_linux_packages zsh && command -v zsh &>/dev/null; then
+				print_success "zsh 安装完成"
+			else
+				print_warn "zsh 安装失败，请手动安装后再设置默认 shell"
+				return 0
+			fi
+		else
+			print_warn "未找到 zsh，跳过默认 shell 设置"
+			print_dim "可在后续手动安装 zsh 后运行: chsh -s \$(command -v zsh)"
+			return 0
+		fi
 	fi
 
 	local zsh_path
@@ -478,7 +501,7 @@ main() {
 	print_banner "🚀 Dotfiles 安装脚本 v${DOTFILES_VERSION}"
 	_echo_blank
 
-	# 检查依赖（需要 git, curl, zsh）
+	# 检查依赖（bootstrap 仅需要 git 和 curl）
 	check_dependencies
 
 	# 克隆仓库（尽早执行，以便后续可以 source lib/utils.sh）
@@ -551,6 +574,12 @@ main() {
 	fi
 
 	# 完成提示
+	local shell_hint="~/.profile"
+	case "$(basename "$SHELL")" in
+	zsh) shell_hint="~/.zshrc" ;;
+	bash) shell_hint="~/.bashrc" ;;
+	esac
+
 	_echo_blank
 	print_divider
 	print_success "安装完成！"
@@ -558,7 +587,7 @@ main() {
 	print_dim "📝 日志: $DOTFILES_LOG"
 	_echo_blank
 	print_info "下一步:"
-	print_dim "1. 重新打开终端（或 source ~/.zshrc）"
+	print_dim "1. 重新打开终端（或 source $shell_hint）"
 
 	if [[ "$os" == "linux" ]]; then
 		print_dim "2. 查看工具: cd ~ && pixi list"

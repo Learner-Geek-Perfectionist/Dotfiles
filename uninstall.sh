@@ -112,8 +112,24 @@ remove_pixi() {
 	done
 
 	# 删除 pixi 项目配置文件
-	rm_path ~/pixi.toml
-	rm_path ~/pixi.lock
+	local manifest_path lock_path manifest_state
+	manifest_path="$(pixi_manifest_path)"
+	lock_path="$(pixi_lock_path)"
+	manifest_state="$(pixi_manifest_state_file)"
+
+	if [[ -f "$manifest_state" ]]; then
+		if [[ ! -f "$manifest_path" ]] || pixi_manifest_is_managed "$manifest_path"; then
+			rm_path "$manifest_path"
+			rm_path "$lock_path"
+			rm_path "$manifest_state"
+			print_dim "✓ 已删除 Dotfiles 托管的 pixi manifest"
+		else
+			print_warn "检测到已脱管的 ~/pixi.toml，保留 ~/pixi.toml 和 ~/pixi.lock"
+			rm_path "$manifest_state"
+		fi
+	elif [[ -f "$manifest_path" || -f "$lock_path" ]]; then
+		print_warn "检测到用户自维护的 ~/pixi.toml，保留 ~/pixi.toml 和 ~/pixi.lock"
+	fi
 
 	print_success "Pixi 及所有工具已删除"
 }
@@ -163,7 +179,7 @@ remove_claude() {
 		local plugin_list
 		plugin_list=$(claude plugin list 2>/dev/null) || true
 		if [[ -n "$plugin_list" ]]; then
-			echo "$plugin_list" | grep -oP '(?<=❯ ).+' | while IFS= read -r plugin; do
+			echo "$plugin_list" | sed -n 's/^.*❯ //p' | while IFS= read -r plugin; do
 				[[ -n "$plugin" ]] && claude plugin uninstall "$plugin" &>/dev/null && print_dim "✓ 插件: $plugin 已卸载"
 			done
 		fi
@@ -171,7 +187,7 @@ remove_claude() {
 		local marketplace_list
 		marketplace_list=$(claude plugin marketplace list 2>/dev/null) || true
 		if [[ -n "$marketplace_list" ]]; then
-			echo "$marketplace_list" | grep -oP '(?<=❯ ).+' | while IFS= read -r mp; do
+			echo "$marketplace_list" | sed -n 's/^.*❯ //p' | while IFS= read -r mp; do
 				[[ -n "$mp" ]] && claude plugin marketplace remove "$mp" &>/dev/null && print_dim "✓ Marketplace: $mp 已移除"
 			done
 		fi
@@ -220,8 +236,10 @@ remove_claude() {
 
 	# 9) MCP Servers（通过 claude CLI 移除）
 	if command -v claude &>/dev/null; then
+		local mcp_list
+		mcp_list=$(claude mcp list 2>/dev/null) || true
 		for mcp in tavily fetch open-websearch exa; do
-			if claude mcp list 2>/dev/null | grep -q "^  $mcp:"; then
+			if echo "$mcp_list" | grep -Eq "^[[:space:]]*${mcp}:"; then
 				claude mcp remove "$mcp" --scope user &>/dev/null && print_dim "✓ MCP: $mcp 已移除"
 			fi
 		done
@@ -309,10 +327,15 @@ remove_dotfiles() {
 		for p in ~/.config/karabiner ~/.hammerspoon; do
 			rm_path "$p"
 		done
-		# 恢复电源管理默认值
-		if has_sudo && pmset -g | awk '/^ sleep/ {print $2}' | grep -q '^0$'; then
-			sudo pmset -a sleep 1 && print_dim "✓ 电源管理已恢复默认（sleep=1）"
-			sudo pmset -a tcpkeepalive 0 && print_dim "✓ 电源管理已恢复默认（tcpkeepalive=0）"
+		# 恢复安装前保存的电源管理配置
+		if [[ -f "$(pmset_state_file)" ]]; then
+			if restore_pmset_state; then
+				rm_path "$(pmset_state_file)"
+			else
+				print_warn "检测到 pmset 备份，但未能恢复（可能缺少 sudo 权限）"
+			fi
+		elif command -v pmset &>/dev/null && pmset -g | awk '/^ sleep/ {print $2}' | grep -q '^0$'; then
+			print_warn "未找到 pmset 备份，跳过恢复"
 		fi
 		# 停止 Homebrew autoupdate
 		if command -v brew &>/dev/null && brew commands 2>/dev/null | grep -q autoupdate; then

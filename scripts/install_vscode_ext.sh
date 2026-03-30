@@ -118,145 +118,165 @@ install_vsix_from_marketplace() {
 
 # detect_editor_type 已在 lib/utils.sh 中定义
 
-# 检测编辑器（基于二进制路径去重，避免 code/cursor 指向同一个二进制）
-editors=()
-declare -A _seen_paths=()
-for cmd in code cursor; do
-	command -v "$cmd" &>/dev/null || continue
-	local bin_path
-	bin_path=$(realpath "$(command -v "$cmd")" 2>/dev/null || command -v "$cmd")
-	[[ -n "${_seen_paths[$bin_path]:-}" ]] && continue
-	_seen_paths[$bin_path]=1
-	local real_type
-	real_type=$(detect_editor_type "$cmd")
-	editors+=("$real_type:$cmd")
-done
-unset _seen_paths
+main() {
+	local editors=()
+	local type
 
-if [[ ${#editors[@]} -eq 0 ]]; then
-	print_error "未找到 VSCode 或 Cursor"
-	exit 1
-fi
+	# 检测编辑器（优先 PATH，macOS 下回退到 App bundle 内置 CLI）
+	for type in vscode cursor; do
+		local editor_cmd
+		editor_cmd=$(find_editor_cli "$type" 2>/dev/null || true)
+		[[ -n "$editor_cmd" ]] && editors+=("$type:$editor_cmd")
+	done
 
-print_dim "检测到 ${#editors[@]} 个编辑器"
-
-for entry in "${editors[@]}"; do
-	type="${entry%%:*}" cmd="${entry#*:}"
-	_echo_blank
-	print_info ">>> $type ($cmd)"
-
-	# 获取已安装的插件（带版本号，一次 CLI 调用同时满足存在性检查和版本比较）
-	if ! installed_ver=$("$cmd" --list-extensions --show-versions 2>/dev/null | tr '[:upper:]' '[:lower:]'); then
-		print_warn "$type ($cmd) 无法获取插件列表，跳过"
-		continue
-	fi
-	installed=$(echo "$installed_ver" | cut -d@ -f1)
-
-	# 收集要安装的插件：ext|tag (tag: common/vscode/cursor/cursor-vsix)
-	all_exts=()
-	if [[ "$REMOTE_SERVER" == true ]]; then
-		# 远程环境：仅安装 Open VSX 缺失的 VSIX 插件
-		if [[ "$type" == "cursor" ]]; then
-			for ext in "${CURSOR_VSIX[@]}"; do
-				all_exts+=("$ext|cursor-vsix")
-			done
-		fi
-	else
-		for ext in "${EXTENSIONS[@]}"; do
-			all_exts+=("$ext|common")
-		done
-		for item in "${SPECIFIC[@]}"; do
-			t="${item%%:*}" e="${item#*:}"
-			[[ "$t" == "$type" ]] && all_exts+=("$e|$t")
-		done
-		if [[ "$type" == "cursor" ]]; then
-			for ext in "${CURSOR_VSIX[@]}"; do
-				all_exts+=("$ext|cursor-vsix")
-			done
-		fi
-		# GitHub Release 分发的 VSIX（VSCode 和 Cursor 通用）
-		for item in "${GITHUB_VSIX[@]}"; do
-			ext_id="${item#*:}"
-			all_exts+=("$ext_id|github-vsix:${item%%:*}")
-		done
+	if [[ ${#editors[@]} -eq 0 ]]; then
+		print_error "未找到 VSCode 或 Cursor"
+		exit 1
 	fi
 
-	# 分类：已安装、待安装
-	skipped=() to_install=()
-	for item in "${all_exts[@]}"; do
-		ext="${item%%|*}"
-		tag="${item#*|}"
-		ext_lower=$(echo "$ext" | tr '[:upper:]' '[:lower:]')
-		if [[ "$tag" == github-vsix:* ]]; then
-			# GitHub VSIX：比较已安装版本与最新 Release，一致则跳过
-			repo="${tag#github-vsix:}"
-			local_ver=$(echo "$installed_ver" | grep -i "^${ext_lower}@" | cut -d@ -f2)
-			if [[ -n "$local_ver" ]]; then
-				latest_tag=$(github_latest_release "$repo" 2>/dev/null) || true
-				if [[ "${latest_tag#v}" == "$local_ver" ]]; then
-					skipped+=("$ext")
-					continue
-				fi
+	print_dim "检测到 ${#editors[@]} 个编辑器"
+
+	local entry
+	for entry in "${editors[@]}"; do
+		local type="${entry%%:*}"
+		local cmd_name="${entry#*:}"
+		_echo_blank
+		print_info ">>> $type ($cmd_name)"
+
+		# 获取已安装的插件（带版本号，一次 CLI 调用同时满足存在性检查和版本比较）
+		local installed_ver
+		if ! installed_ver=$("$cmd_name" --list-extensions --show-versions 2>/dev/null | tr '[:upper:]' '[:lower:]'); then
+			print_warn "$type ($cmd_name) 无法获取插件列表，跳过"
+			continue
+		fi
+		local installed
+		installed=$(echo "$installed_ver" | cut -d@ -f1)
+
+		# 收集要安装的插件：ext|tag (tag: common/vscode/cursor/cursor-vsix)
+		local all_exts=()
+		local item
+		if [[ "$REMOTE_SERVER" == true ]]; then
+			# 远程环境：仅安装 Open VSX 缺失的 VSIX 插件
+			if [[ "$type" == "cursor" ]]; then
+				local ext
+				for ext in "${CURSOR_VSIX[@]}"; do
+					all_exts+=("$ext|cursor-vsix")
+				done
 			fi
-			to_install+=("$item")
-		elif echo "$installed" | grep -Fxq "$ext_lower"; then
-			skipped+=("$ext")
 		else
-			to_install+=("$item")
+			local ext
+			for ext in "${EXTENSIONS[@]}"; do
+				all_exts+=("$ext|common")
+			done
+			for item in "${SPECIFIC[@]}"; do
+				local target_type="${item%%:*}"
+				local target_ext="${item#*:}"
+				[[ "$target_type" == "$type" ]] && all_exts+=("$target_ext|$target_type")
+			done
+			if [[ "$type" == "cursor" ]]; then
+				for ext in "${CURSOR_VSIX[@]}"; do
+					all_exts+=("$ext|cursor-vsix")
+				done
+			fi
+			# GitHub Release 分发的 VSIX（VSCode 和 Cursor 通用）
+			for item in "${GITHUB_VSIX[@]}"; do
+				local ext_id="${item#*:}"
+				all_exts+=("$ext_id|github-vsix:${item%%:*}")
+			done
+		fi
+
+		# 分类：已安装、待安装
+		local skipped=()
+		local to_install=()
+		if [[ ${#all_exts[@]} -gt 0 ]]; then
+			for item in "${all_exts[@]}"; do
+				local ext="${item%%|*}"
+				local tag="${item#*|}"
+				local ext_lower
+				ext_lower=$(echo "$ext" | tr '[:upper:]' '[:lower:]')
+				if [[ "$tag" == github-vsix:* ]]; then
+					# GitHub VSIX：比较已安装版本与最新 Release，一致则跳过
+					local repo="${tag#github-vsix:}"
+					local local_ver
+					local_ver=$(echo "$installed_ver" | grep -i "^${ext_lower}@" | cut -d@ -f2)
+					if [[ -n "$local_ver" ]]; then
+						local latest_tag
+						latest_tag=$(github_latest_release "$repo" 2>/dev/null) || true
+						if [[ "${latest_tag#v}" == "$local_ver" ]]; then
+							skipped+=("$ext")
+							continue
+						fi
+					fi
+					to_install+=("$item")
+				elif echo "$installed" | grep -Fxq "$ext_lower"; then
+					skipped+=("$ext")
+				else
+					to_install+=("$item")
+				fi
+			done
+		fi
+
+		# 安装并记录结果
+		local success=()
+		local failed=()
+		local total=${#to_install[@]}
+		local count=0
+
+		if [[ $total -gt 0 ]]; then
+			for item in "${to_install[@]}"; do
+				local ext="${item%%|*}"
+				local tag="${item#*|}"
+				((++count))
+				# 进度条直接输出到终端（\r 覆盖行），有意不写入日志（避免日志中大量覆盖行）
+				printf "\r${CYAN}[%d/%d]${NC} 安装中: ${YELLOW}%s${NC}%-20s" "$count" "$total" "$ext" ""
+
+				# 尝试安装，捕获退出码
+				local install_rc=0
+				if [[ "$tag" == github-vsix:* ]]; then
+					local repo="${tag#github-vsix:}"
+					install_vsix_from_github "$repo" "$cmd_name" || install_rc=$?
+				elif [[ "$tag" == "cursor-vsix" ]]; then
+					install_vsix_from_marketplace "$ext" "$cmd_name" || install_rc=$?
+				else
+					"$cmd_name" --install-extension "$ext" --force &>/dev/null || install_rc=$?
+				fi
+
+				# 安装命令本身失败时立即记录
+				if [[ $install_rc -ne 0 ]]; then
+					failed+=("$item")
+				fi
+			done
+			echo ""
+
+			# 批量验证安装结果（一次 CLI 调用替代循环内 N 次）
+			# 跳过已在安装阶段标记为 failed 的项
+			local already_failed=" ${failed[*]-} "
+			local new_installed
+			new_installed=$("$cmd_name" --list-extensions 2>/dev/null | tr '[:upper:]' '[:lower:]')
+			for item in "${to_install[@]}"; do
+				local ext="${item%%|*}"
+				[[ "$already_failed" == *" $item "* ]] && continue
+				local ext_lower
+				ext_lower=$(echo "$ext" | tr '[:upper:]' '[:lower:]')
+				if echo "$new_installed" | grep -Fxq "$ext_lower"; then
+					success+=("$ext")
+				else
+					failed+=("$item")
+				fi
+			done
+		fi
+
+		# 打印汇总
+		print_install_summary "${type} 插件" "${#success[@]}" "${#skipped[@]}" "${#failed[@]}"
+		if [[ ${#failed[@]} -gt 0 ]]; then
+			for item in "${failed[@]}"; do
+				print_dim "  ✗ ${item%%|*}"
+			done
 		fi
 	done
 
-	# 安装并记录结果
-	success=() failed=()
-	total=${#to_install[@]}
-	count=0
+	_echo_blank
+	print_success "编辑器插件安装完成"
+}
 
-	if [[ $total -gt 0 ]]; then
-		for item in "${to_install[@]}"; do
-			ext="${item%%|*}"
-			tag="${item#*|}"
-			((++count))
-			# 进度条直接输出到终端（\r 覆盖行），有意不写入日志（避免日志中大量覆盖行）
-			printf "\r${CYAN}[%d/%d]${NC} 安装中: ${YELLOW}%s${NC}%-20s" "$count" "$total" "$ext" ""
-			# 尝试安装，捕获退出码
-			local install_rc=0
-			if [[ "$tag" == github-vsix:* ]]; then
-				repo="${tag#github-vsix:}"
-				install_vsix_from_github "$repo" "$cmd" || install_rc=$?
-			elif [[ "$tag" == "cursor-vsix" ]]; then
-				install_vsix_from_marketplace "$ext" "$cmd" || install_rc=$?
-			else
-				"$cmd" --install-extension "$ext" --force &>/dev/null || install_rc=$?
-			fi
-			# 安装命令本身失败时立即记录
-			if [[ $install_rc -ne 0 ]]; then
-				failed+=("$item")
-			fi
-		done
-		echo ""
-
-		# 批量验证安装结果（一次 CLI 调用替代循环内 N 次）
-		# 跳过已在安装阶段标记为 failed 的项
-		local already_failed=" ${failed[*]} "
-		new_installed=$("$cmd" --list-extensions 2>/dev/null | tr '[:upper:]' '[:lower:]')
-		for item in "${to_install[@]}"; do
-			ext="${item%%|*}"
-			[[ "$already_failed" == *" $item "* ]] && continue
-			ext_lower=$(echo "$ext" | tr '[:upper:]' '[:lower:]')
-			if echo "$new_installed" | grep -Fxq "$ext_lower"; then
-				success+=("$ext")
-			else
-				failed+=("$item")
-			fi
-		done
-	fi
-
-	# 打印汇总
-	print_install_summary "${type} 插件" "${#success[@]}" "${#skipped[@]}" "${#failed[@]}"
-	for item in "${failed[@]}"; do
-		print_dim "  ✗ ${item%%|*}"
-	done
-done
-
-_echo_blank
-print_success "编辑器插件安装完成"
+main "$@"

@@ -168,6 +168,10 @@ Pixi 安装脚本 — 一键安装 pixi + shell 集成 + 工具包
     pixi list            - 列出已安装的包
     pixi update          - 升级所有包
     pixi shell           - 进入 pixi 环境
+
+说明:
+    首次安装时，~/pixi.toml 默认由 Dotfiles 托管。
+    若你手动修改该文件，下次 install.sh 会自动跳过覆盖，视为你已接管维护。
 HELP_EOF
 }
 

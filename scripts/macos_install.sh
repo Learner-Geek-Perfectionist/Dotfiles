@@ -19,6 +19,81 @@ ensure_brew_tap() {
 	brew tap | grep -q "$1" || brew tap "$1"
 }
 
+autoupdate_script_path() {
+	echo "$HOME/Library/Application Support/com.github.domt4.homebrew-autoupdate/brew_autoupdate"
+}
+
+# Homebrew autoupdate 只会生成固定的 `brew cleanup`，不会带上我们 shell 里的
+# `HOMEBREW_CLEANUP_MAX_AGE_DAYS`。这里直接把后台脚本改成 `--prune=all`。
+ensure_autoupdate_prune_all() {
+	local script tmp
+	script="$(autoupdate_script_path)"
+
+	if [[ ! -f "$script" ]]; then
+		print_warn "未找到 Homebrew autoupdate 脚本，无法启用全量 cleanup"
+		return 1
+	fi
+
+	if grep -q 'brew cleanup --prune=all' "$script"; then
+		print_success "Homebrew autoupdate 已启用全量 cleanup"
+		return 0
+	fi
+
+	tmp="$(mktemp)"
+	if sed -E \
+		-e 's@(/[^[:space:]]*/brew) cleanup([[:space:]]*&&)@\1 cleanup --prune=all\2@' \
+		-e 's@(/[^[:space:]]*/brew) cleanup$@\1 cleanup --prune=all@' \
+		"$script" > "$tmp" && ! cmp -s "$script" "$tmp"; then
+		chmod 0555 "$tmp"
+		mv "$tmp" "$script"
+		print_success "Homebrew autoupdate 已启用全量 cleanup (--prune=all)"
+		return 0
+	fi
+
+	rm -f "$tmp"
+	print_warn "未能更新 Homebrew autoupdate 脚本的 cleanup 模式"
+	return 1
+}
+
+configure_brew_autoupdate() {
+	ensure_brew_tap "homebrew/autoupdate"
+
+	if brew autoupdate status 2>/dev/null | grep -q "running"; then
+		print_success "Homebrew autoupdate 已在运行，校验 cleanup 配置"
+	else
+		brew autoupdate start 3600 --upgrade --greedy --cleanup
+		print_success "Homebrew autoupdate 已配置（每 1 小时自动更新）"
+	fi
+
+	if ! ensure_autoupdate_prune_all; then
+		print_info "重建 Homebrew autoupdate 任务以启用全量 cleanup..."
+		brew autoupdate delete &>/dev/null || true
+		brew autoupdate start 3600 --upgrade --greedy --cleanup
+		ensure_autoupdate_prune_all || print_warn "Homebrew autoupdate 未能启用全量 cleanup"
+	fi
+}
+
+configure_pmset() {
+	print_info "配置电源管理..."
+
+	if ! has_sudo; then
+		print_warn "无 sudo 权限，跳过电源管理配置"
+		return 0
+	fi
+
+	if save_pmset_state; then
+		print_dim "已保存原始 pmset 配置"
+	elif [[ -f "$(pmset_state_file)" ]]; then
+		print_dim "沿用已保存的原始 pmset 配置"
+	else
+		print_warn "保存原始 pmset 配置失败，仍继续应用目标设置"
+	fi
+
+	sudo pmset -a sleep 0
+	sudo pmset -a tcpkeepalive 1
+	print_success "电源管理已配置（合盖不睡眠，TCP 保活开启）"
+}
+
 main() {
 # ========================================
 # 开始安装
@@ -112,29 +187,14 @@ fi
 # 5. 配置 Homebrew 自动更新
 print_info "配置 Homebrew 自动更新..."
 
-ensure_brew_tap "homebrew/autoupdate"
-if brew autoupdate status 2>/dev/null | grep -q "running"; then
-	print_success "Homebrew autoupdate 已在运行，跳过"
-else
-	brew autoupdate start 3600 --upgrade --greedy --cleanup
-	print_success "Homebrew autoupdate 已配置（每 1 小时自动更新）"
-fi
+configure_brew_autoupdate
 
 # 6. 清理 Homebrew 缓存
 print_info "清理 Homebrew 缓存..."
 brew cleanup --prune=all
 
 # 7. 配置电源管理（合盖不睡眠，保持 SSH 连接）
-print_info "配置电源管理..."
-
-current_sleep=$(pmset -g | awk '/^ sleep/ {print $2}')
-if [[ "$current_sleep" == "0" ]]; then
-	print_success "sleep 已设为 0，跳过"
-else
-	sudo pmset -a sleep 0
-	sudo pmset -a tcpkeepalive 1
-	print_success "电源管理已配置（合盖不睡眠，TCP 保活开启）"
-fi
+configure_pmset
 
 # 8. 配置网络抓包工具权限
 print_info "配置网络工具权限..."

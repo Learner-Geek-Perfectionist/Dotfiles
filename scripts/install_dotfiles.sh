@@ -9,14 +9,23 @@ DOTFILES_DIR="$(dirname "$SCRIPT_DIR")"
 
 source "$SCRIPT_DIR/../lib/utils.sh"
 
-# 检测是否安装了 VSCode（code 命令存在且真实类型为 vscode）
-has_vscode() {
-	command -v code &>/dev/null && [[ "$(detect_editor_type code)" == "vscode" ]]
-}
+sync_directory_contents() {
+	local src="$1" dest="$2"
+	local rel
 
-# 检测是否安装了 Cursor（cursor 命令存在，或 code 命令实际是 cursor）
-has_cursor() {
-	command -v cursor &>/dev/null || { command -v code &>/dev/null && [[ "$(detect_editor_type code)" == "cursor" ]]; }
+	mkdir -p "$dest"
+
+	if command -v rsync &>/dev/null; then
+		rsync -a --delete "$src/" "$dest/"
+		return 0
+	fi
+
+	# 兜底：先删除源目录中不存在的旧文件，再做覆盖复制。
+	while IFS= read -r -d '' rel; do
+		[[ -e "$src/$rel" || -L "$src/$rel" ]] || rm -rf "$dest/$rel"
+	done < <(cd "$dest" && find . -mindepth 1 -depth -print0)
+
+	cp -PRf "$src/." "$dest/"
 }
 
 copy_path() {
@@ -26,8 +35,7 @@ copy_path() {
 	[[ ! -e "$src" ]] && return 0
 
 	if [[ -d "$src" ]]; then
-		mkdir -p "$dest"
-		cp -rf "$src/." "$dest/"
+		sync_directory_contents "$src" "$dest"
 	else
 		mkdir -p "$(dirname "$dest")"
 		cp -f "$src" "$dest"
@@ -81,7 +89,12 @@ _deploy_claude_settings() {
 }
 
 main() {
+	local vscode_cmd="" cursor_cmd=""
+
 	print_info "📁 Dotfiles 配置安装"
+
+	vscode_cmd="$(find_editor_cli vscode 2>/dev/null || true)"
+	cursor_cmd="$(find_editor_cli cursor 2>/dev/null || true)"
 
 	# 点文件
 	copy_path ".zshrc" ".zshrc"
@@ -104,10 +117,10 @@ main() {
 	# VSCode/Cursor 配置（只复制 settings.json 和 keybindings.json，避免覆盖用户的其它配置）
 	if [[ "$(uname)" == "Darwin" ]]; then
 		# macOS: ~/Library/Application Support/
-		has_vscode && copy_path "Library/Application Support/Code/User/settings.json" "Library/Application Support/Code/User/settings.json"
-		has_vscode && copy_path "Library/Application Support/Code/User/keybindings.json" "Library/Application Support/Code/User/keybindings.json"
-		has_cursor && copy_path "Library/Application Support/Cursor/User/settings.json" "Library/Application Support/Cursor/User/settings.json"
-		has_cursor && copy_path "Library/Application Support/Cursor/User/keybindings.json" "Library/Application Support/Cursor/User/keybindings.json"
+		[[ -n "$vscode_cmd" ]] && copy_path "Library/Application Support/Code/User/settings.json" "Library/Application Support/Code/User/settings.json"
+		[[ -n "$vscode_cmd" ]] && copy_path "Library/Application Support/Code/User/keybindings.json" "Library/Application Support/Code/User/keybindings.json"
+		[[ -n "$cursor_cmd" ]] && copy_path "Library/Application Support/Cursor/User/settings.json" "Library/Application Support/Cursor/User/settings.json"
+		[[ -n "$cursor_cmd" ]] && copy_path "Library/Application Support/Cursor/User/keybindings.json" "Library/Application Support/Cursor/User/keybindings.json"
 		# macOS 专属
 		copy_path ".config/karabiner" ".config/karabiner"
 		copy_path ".hammerspoon" ".hammerspoon"
@@ -116,10 +129,10 @@ main() {
 		if is_remote_server; then
 			print_info "检测到远程服务器环境，跳过 VSCode/Cursor 设置（设置从本地自动同步）"
 		else
-			has_vscode && copy_path ".config/Code/User/settings.json" ".config/Code/User/settings.json"
-			has_vscode && copy_path ".config/Code/User/keybindings.json" ".config/Code/User/keybindings.json"
-			has_cursor && copy_path ".config/Cursor/User/settings.json" ".config/Cursor/User/settings.json"
-			has_cursor && copy_path ".config/Cursor/User/keybindings.json" ".config/Cursor/User/keybindings.json"
+			[[ -n "$vscode_cmd" ]] && copy_path ".config/Code/User/settings.json" ".config/Code/User/settings.json"
+			[[ -n "$vscode_cmd" ]] && copy_path ".config/Code/User/keybindings.json" ".config/Code/User/keybindings.json"
+			[[ -n "$cursor_cmd" ]] && copy_path ".config/Cursor/User/settings.json" ".config/Cursor/User/settings.json"
+			[[ -n "$cursor_cmd" ]] && copy_path ".config/Cursor/User/keybindings.json" ".config/Cursor/User/keybindings.json"
 		fi
 	fi
 

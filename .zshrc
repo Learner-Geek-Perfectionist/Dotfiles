@@ -221,7 +221,7 @@ alias reload='exec zsh -l'
 
 # Dotfiles 管理
 alias upgrade='/bin/bash -c "$(curl -H '\''Cache-Control: no-cache'\'' -fsSL "https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/beta/install.sh?$(date +%s)")" -- --dotfiles-only && reload'
-alias uninstall='/bin/bash -c "$(curl -H '\''Cache-Control: no-cache'\'' -fsSL "https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/beta/uninstall_dotfiles.sh?$(date +%s)")"'
+alias uninstall='/bin/bash -c "$(curl -H '\''Cache-Control: no-cache'\'' -fsSL "https://raw.githubusercontent.com/Learner-Geek-Perfectionist/Dotfiles/refs/heads/beta/uninstall.sh?$(date +%s)")"'
 
 # 常用命令简化
 alias python=python3

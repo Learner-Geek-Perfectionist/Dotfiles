@@ -71,13 +71,19 @@ end
 
 local function getRootVolumes()
     local vols = hs.fs.volume.allVolumes()
-    for _, vol in pairs(vols) do
+    local fallback = nil
+    for path, vol in pairs(vols) do
         local totalSize = vol.NSURLVolumeTotalCapacityKey
         local freeSize = vol.NSURLVolumeAvailableCapacityKey
-        local usedSSD = (1 - freeSize / totalSize) * 100
-        return formatPercent(usedSSD)
+        if totalSize and freeSize and totalSize > 0 then
+            local usedSSD = formatPercent((1 - freeSize / totalSize) * 100)
+            if path == "/" or vol.NSURLVolumeIsRootFileSystemKey then
+                return usedSSD
+            end
+            fallback = fallback or usedSSD
+        end
     end
-    return " 0%"
+    return fallback or " 0%"
 end
 
 local function init()
@@ -292,4 +298,3 @@ end
 
 -- 初始化
 initData()
-

@@ -40,10 +40,19 @@ function M.switchFocusedAppWindow()
         end)
         table.sort(allWinIds)
 
-        local currWinIdx = hs.fnutils.indexOf(allWinIds, currApp:focusedWindow():id())
+        local focusedWin = currApp:focusedWindow()
+        local targetScreen = focusedWin and focusedWin:screen()
+            or hs.mouse.getCurrentScreen()
+            or hs.screen.mainScreen()
+
+        local currWinIdx = hs.fnutils.indexOf(allWinIds, focusedWin and focusedWin:id())
         local nextWinIdx = currWinIdx and (currWinIdx % #allWinIds) + 1 or 1
 
-        hs.window.get(allWinIds[nextWinIdx]):focus()
+        local nextWin = hs.window.get(allWinIds[nextWinIdx])
+        if targetScreen and nextWin:screen() ~= targetScreen then
+            nextWin:moveToScreen(targetScreen, false, true)
+        end
+        nextWin:focus()
     end
 end
 

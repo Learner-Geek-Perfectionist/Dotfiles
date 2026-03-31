@@ -5,7 +5,7 @@ local M = {}
 M.keyConfig = {
     { 'w', 'com.tencent.xinWeChat' },           -- "W" for "WeChat"
     { 'f', 'com.apple.finder' },                -- "F" for "Finder"
-    { 'g', 'com.openai.chat' },                 -- "G" for "ChatGPT"
+    { 'g', 'com.google.Chrome' },                -- "G" for "Google Chrome"
     { 's', 'com.apple.Safari' },                -- "S" for "Safari"
     { 't', 'net.kovidgoyal.kitty' },            -- "T" for "kitty"
     { 'v', 'com.microsoft.VSCode' },            -- "V" for "VSCode"

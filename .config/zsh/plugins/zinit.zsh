@@ -17,6 +17,10 @@ _ice() {
 
 # 如果插件管理器 zinit 没有安装......
 if [[ ! -f "${ZINIT_HOME}/zinit.zsh" ]]; then
+	[[ -d "${ZINIT_HOME:h}" ]] || mkdir -p "${ZINIT_HOME:h}" || {
+		printf "\033[31mFailed to create %s.\033[0m\n" "${ZINIT_HOME:h}"
+		return 1
+	}
 	printf "\033[33mInstalling ZDHARMA-CONTINUUM Initiative Plugin Manager...\033[0m\n"
 	if git clone --depth=1 https://github.com/zdharma-continuum/zinit "$ZINIT_HOME"; then
 		printf "\033[34mInstallation successful.\033[0m\n"
@@ -48,8 +52,17 @@ zinit light romkatv/powerlevel10k
 autoload -Uz up-line-or-beginning-search down-line-or-beginning-search
 zle -N up-line-or-beginning-search
 zle -N down-line-or-beginning-search
-bindkey '^[[A' up-line-or-beginning-search
-bindkey '^[[B' down-line-or-beginning-search
+zmodload zsh/terminfo 2>/dev/null || :
+if [[ -n "${terminfo[kcuu1]-}" ]]; then
+	bindkey -- "${terminfo[kcuu1]}" up-line-or-beginning-search
+else
+	bindkey '^[[A' up-line-or-beginning-search
+fi
+if [[ -n "${terminfo[kcud1]-}" ]]; then
+	bindkey -- "${terminfo[kcud1]}" down-line-or-beginning-search
+else
+	bindkey '^[[B' down-line-or-beginning-search
+fi
 
 # 内联原 OMZL::history.zsh 的必要设置（HIST* 变量已在 .zshrc 开头重设）
 # setopt extended_history 已在 .zshenv 中设置，此处不重复
@@ -74,8 +87,9 @@ fi
 # Turbo 异步加载（prompt 显示后按优先级加载）
 # ============================================
 # 排序约束：
-#   0a: 补全定义 → 0b: compinit + fzf-tab → 0c: 功能插件 → 0d: autosuggestions
-#   F-Sy-H(0c) 必须在 autosuggestions(0d) 之前：
+#   0a: 补全定义 → 0b: compinit + fzf-tab → 0c: 其余插件（按声明顺序）
+#   zinit 只支持 a/b/c 三个子槽位，没有 0d
+#   F-Sy-H 与 autosuggestions 共享 0c，需保持声明顺序：F-Sy-H 在前
 #     F-Sy-H source 时绑定 widget 一次；autosuggestions 后加载直接包在外层，
 #     产生干净的 autosuggest → fsh → 原始 调用链，无冗余包装层。
 
@@ -90,13 +104,11 @@ zinit light zsh-users/zsh-completions
 # ── wait'0b'：补全系统激活 ──
 
 _ice wait'0b' atinit'
-    # 补全 matcher：移除 -_ 等价性，只保留大小写不敏感（修复 Fedora 兼容性）
-    zstyle ":completion:*" matcher-list "m:{[:lower:][:upper:]}={[:upper:][:lower:]}" "r:|=*" "l:|=* r:|=*"
     autoload -Uz compinit
     local zcd="${ZSH_COMPDUMP:-$HOME/.cache/zsh/.zcompdump}"
     local need_update=0
     if [[ -f "$zcd" ]]; then
-        for dir in ${(s.:.)FPATH}; do
+        for dir in $fpath; do
             [[ -d "$dir" && "$dir" -nt "$zcd" ]] && { need_update=1; break }
         done
     fi
@@ -124,8 +136,13 @@ zinit light Aloxaf/fzf-tab
 
 # OMZP::git 的别名（ggpush, gpsup 等）依赖此函数，原定义在 OMZL::git.zsh 中
 git_current_branch() {
-	local ref
-	ref=$(command git symbolic-ref --quiet HEAD 2>/dev/null) || return
+	local ref ret
+	ref=$(command git symbolic-ref --quiet HEAD 2>/dev/null)
+	ret=$?
+	if [[ $ret != 0 ]]; then
+		[[ $ret == 128 ]] && return
+		ref=$(command git rev-parse --short HEAD 2>/dev/null) || return
+	fi
 	echo ${ref#refs/heads/}
 }
 
@@ -135,9 +152,12 @@ zinit snippet OMZP::git/git.plugin.zsh
 _ice wait'0c' atload'FAST_HIGHLIGHT[chroma-which]="→chroma/-precommand.ch"'
 zinit light zdharma-continuum/fast-syntax-highlighting
 
-# ── wait'0d'：自动建议（最外层 widget 包装）──
+# ── wait'0c'：自动建议（最外层 widget 包装）──
 
-_ice wait'0d' atload'!_zsh_autosuggest_start'
+# widget 只绑定一次，避免每个 precmd 都重绑 autosuggestions。
+typeset -g ZSH_AUTOSUGGEST_MANUAL_REBIND=1
+# 修复 fzf-tab 唯一补全后偶发残留的 autosuggestion 灰字：将 fzf-tab-complete 视为 clear widget，并在加载后立即重绑。
+_ice wait'0c' atload'(( ${ZSH_AUTOSUGGEST_CLEAR_WIDGETS[(Ie)fzf-tab-complete]} )) || ZSH_AUTOSUGGEST_CLEAR_WIDGETS+=(fzf-tab-complete); _zsh_autosuggest_start'
 zinit light zsh-users/zsh-autosuggestions
 
 # 清理：_ice 仅在 zinit.zsh 加载期间使用

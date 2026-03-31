@@ -6,6 +6,7 @@
 *.exe
 *.o
 *.so
+*.zwc
 # .vscode/ # 取消排除，用于 Remote SSH 时 ~ 目录配置
 /.vs/
 /.settings

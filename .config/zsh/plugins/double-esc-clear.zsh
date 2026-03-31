@@ -10,14 +10,13 @@ else
 fi
 
 typeset -g _esc_pressed=0
-typeset -g _esc_timer_fd
+typeset -gi _esc_timer_job=0
 
 _reset_esc_flag() {
 	_esc_pressed=0
-	if [[ -n "$_esc_timer_fd" ]]; then
-		zle -F "$_esc_timer_fd" 2>/dev/null
-		exec {_esc_timer_fd}<&- 2>/dev/null
-		unset _esc_timer_fd
+	if (( _esc_timer_job > 0 )); then
+		sched -$_esc_timer_job 2>/dev/null || :
+		_esc_timer_job=0
 	fi
 }
 
@@ -28,10 +27,15 @@ double-esc-clear() {
 		_reset_esc_flag
 		zle reset-prompt
 	else
+		# 用 zsh/sched 避免每次按 ESC 都 fork 一个 sleep 进程。
+		if ! zmodload -F zsh/sched b:sched 2>/dev/null; then
+			_esc_pressed=1
+			return 0
+		fi
+		_reset_esc_flag
 		_esc_pressed=1
-		# 使用管道作为定时器
-		exec {_esc_timer_fd}< <(sleep 0.5)
-		zle -F "$_esc_timer_fd" _reset_esc_flag
+		sched +0.5 _reset_esc_flag
+		_esc_timer_job=${${(k)zsh_scheduled_events}[-1]}
 	fi
 }
 

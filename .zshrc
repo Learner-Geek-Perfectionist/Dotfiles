@@ -2,8 +2,13 @@
 # 终端环境
 # ============================================
 
-# 确保 TERM 有值（空或 dumb 时设置默认值）
-[[ -z "$TERM" || "$TERM" == "dumb" ]] && export TERM="xterm-256color"
+# TERM 为空时补默认值；TERM=dumb 时保持极简，避免 prompt / pager 输出控制序列。
+[[ -z "$TERM" ]] && export TERM="xterm-256color"
+if [[ "$TERM" == "dumb" ]]; then
+	PROMPT='%n@%m:%~$ '
+	RPROMPT=
+	return
+fi
 
 # 在 kitty 终端中自动用 kitten ssh（自动传 terminfo + shell integration）
 if [[ -n "$KITTY_WINDOW_ID" ]]; then
@@ -48,7 +53,6 @@ if [[ "$OSTYPE" == darwin* ]]; then
 		"$HOME/.local/bin"
 		"$HOME/.cargo/bin"
 		/opt/homebrew/opt/openjdk/bin
-		/opt/homebrew/anaconda3/bin
 		"/Applications/IntelliJ IDEA.app/Contents/MacOS"
 		"/Applications/PyCharm.app/Contents/MacOS"
 		"/Applications/CLion.app/Contents/MacOS"
@@ -114,9 +118,8 @@ fi
 # 测试：ssh-add -l && ssh -T git@github.com
 _kc_cache="$ZSH_CACHE_DIR/keychain-env.zsh"
 if [[ -z "$SSH_CONNECTION" && -f "$HOME/.ssh/id_ed25519" ]] && (( $+commands[keychain] )); then  # $+commands[]: PATH 中是否存在
-	if [[ -f "$_kc_cache" ]] && source "$_kc_cache" 2>/dev/null && kill -0 "$SSH_AGENT_PID" 2>/dev/null; then
-		: # agent alive, cache valid
-	else
+	if ! { [[ -f "$_kc_cache" ]] && source "$_kc_cache" 2>/dev/null \
+		&& [[ -S "$SSH_AUTH_SOCK" ]] && kill -0 "$SSH_AGENT_PID" 2>/dev/null; }; then
 		eval "$(keychain --eval --quiet --inherit any --agents ssh id_ed25519 2>/dev/null)" \
 			&& typeset -p SSH_AUTH_SOCK SSH_AGENT_PID > "$_kc_cache" 2>/dev/null  # typeset -p: 输出变量的声明语句（可直接 source 还原）
 	fi
@@ -149,7 +152,7 @@ fi
 export FZF_DEFAULT_OPTS='--no-mouse --exact --preview "${HOME}/.config/zsh/fzf/fzf-preview.sh {}" --bind "shift-left:preview-page-up,shift-right:preview-page-down"'
 export FZF_CTRL_R_OPTS='--tac'
 
-# fd 基础参数（排除垃圾桶和系统目录）
+# fd 基础参数（手动调用时保持激进搜索）
 typeset -ga _fd_opts  # -g = 全局变量，-a = 数组类型
 _fd_opts=( -g -H -I -i -a )
 if [[ "$OSTYPE" == darwin* ]]; then
@@ -158,11 +161,16 @@ else
 	_fd_opts+=( -E .local/share/Trash )
 fi
 
+# fzf 的默认源额外排除常见大目录，避免 Ctrl+T 在大仓库里遍历过慢。
+typeset -ga _fd_fzf_opts
+_fd_fzf_opts=( "${_fd_opts[@]}" -E .git -E node_modules -E dist -E target )
+
 # fzf 读取列表时不要走包装函数（避免任何额外输出）
-export FZF_DEFAULT_COMMAND="command fd --color=never ${(j: :)_fd_opts}"  # ${(j: :)arr}: 用空格拼接数组元素为字符串
+export FZF_DEFAULT_COMMAND="command fd --color=never ${(j: :)_fd_fzf_opts}"  # ${(j: :)arr}: 用空格拼接数组元素为字符串
 
 # fd 智能函数：有免密 sudo 就提权，否则回退普通模式
 fd() {
+	emulate -L zsh
 	local -a pre; sudo -n true 2>/dev/null && pre=(sudo)
 	"${pre[@]}" =fd --color=always "${_fd_opts[@]}" "$@" 2>/dev/null  # =fd: 展开为 fd 的绝对路径（绕过本函数自身的递归）
 }
@@ -172,7 +180,8 @@ fzf() {
 	if [ -p /dev/stdin ]; then
 		local tmp=$(mktemp)
 		{
-			sed 's/\x1b\[[0-9;]*m//g' > "$tmp"
+			# 清除常见 ANSI 控制序列，避免 fzf 读取到颜色码或终端控制指令。
+			command perl -pe 's/\e\[[0-?]*[ -\/]*[@-~]//g; s/\e\][^\a]*(?:\a|\e\\\\)//g; s/\e[P^_][^\e]*(?:\e\\\\)//g; s/\e[@-_]//g' > "$tmp"
 			command fzf "$@" < "$tmp"
 		} always {
 			rm -f "$tmp"

@@ -11,10 +11,11 @@ fi
 # 启动时自动加载加密的 tokens
 if (( $+commands[age] )) && [[ -f "$AGE_TOKENS" && -f "$AGE_SSH_KEY" ]]; then
   local _age_out
-  _age_out=$(age -d -i "$AGE_SSH_KEY" "$AGE_TOKENS" 2>&1) || {
+  if _age_out=$(age -d -i "$AGE_SSH_KEY" "$AGE_TOKENS" 2>/dev/null); then
+    [[ -n "$_age_out" ]] && eval "$_age_out"
+  else
     print -P "%F{yellow}[age-tokens] 解密失败，tokens 未加载%f" >&2
-  }
-  [[ -n "$_age_out" ]] && eval "$_age_out"
+  fi
 fi
 
 # 编辑 tokens 的便捷函数

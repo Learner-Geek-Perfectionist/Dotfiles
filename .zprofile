@@ -24,5 +24,5 @@ fi
 
 # 添加 orbstack 的环境变量
 if [[ -f "$HOME/.orbstack/shell/init.zsh" ]]; then
-	source $HOME/.orbstack/shell/init.zsh 2>/dev/null || :  # || : 静默忽略错误（: 是 true 的别名）
+	source "$HOME/.orbstack/shell/init.zsh" 2>/dev/null || :  # || : 静默忽略错误（: 是 true 的别名）
 fi

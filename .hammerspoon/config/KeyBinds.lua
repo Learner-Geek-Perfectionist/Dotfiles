@@ -20,8 +20,11 @@ for _, key in ipairs(cfg.windowsConfig) do
     end)
 end
 
--- HyperKey + ` 切换 App 窗口
+-- HyperKey + ` / Cmd + ` 切换 App 窗口（覆盖系统默认行为，将目标窗口拉到当前屏幕）
 hs.hotkey.bind(cfg.HyperKey, '`', function()
+    winMgmt.switchFocusedAppWindow()
+end)
+hs.hotkey.bind({ "cmd" }, '`', function()
     winMgmt.switchFocusedAppWindow()
 end)
 

@@ -9,6 +9,20 @@ DOTFILES_DIR="$(dirname "$SCRIPT_DIR")"
 
 source "$SCRIPT_DIR/../lib/utils.sh"
 
+record_deployed_path() {
+	local src="$1" dest="$2"
+
+	if [[ -d "$src" ]]; then
+		local file rel
+		while IFS= read -r file; do
+			rel="${file#"$src"/}"
+			dotfiles_manifest_add_file "$dest/$rel"
+		done < <(find "$src" -type f | sort)
+	else
+		dotfiles_manifest_add_file "$dest"
+	fi
+}
+
 sync_directory_contents() {
 	local src="$1" dest="$2"
 
@@ -37,12 +51,15 @@ copy_path() {
 		cp -f "$src" "$dest"
 	fi
 
+	record_deployed_path "$src" "$dest"
+
 	print_dim "~/$2"
 }
 
 # 部署 settings.json 并剥离项目级 hooks（jq → python3 → 原样拷贝）
 _deploy_without_hooks() {
 	local src="$1" dest="$2"
+	local fallback_template="$DOTFILES_DIR/.claude/settings.global.json"
 	if command -v jq &>/dev/null; then
 		jq 'del(.hooks)' "$src" >"$dest" 2>/dev/null && return
 	fi
@@ -52,8 +69,9 @@ with open(sys.argv[1]) as f: d = json.load(f)
 d.pop('hooks', None)
 with open(sys.argv[2], 'w') as f: json.dump(d, f, indent=4, ensure_ascii=False)
 " "$src" "$dest" 2>/dev/null && return
-	# 两者都不可用时保底拷贝（hooks 会泄漏到全局，但至少不丢配置）
-	cp -f "$src" "$dest"
+	# 兜底：使用仓库内的无 hooks 模板，避免把项目级 hooks 泄漏到全局配置
+	[[ -f "$fallback_template" ]] && cp -f "$fallback_template" "$dest" && return
+	return 1
 }
 
 # 部署 Claude Code settings.json（jq 合并：静态设置覆盖，动态字段保留）
@@ -76,18 +94,54 @@ _deploy_claude_settings() {
 			mv "$tmp_merged" "$claude_dest"
 		else
 			rm -f "$tmp_merged"
-			_deploy_without_hooks "$claude_src" "$claude_dest"
+			_deploy_without_hooks "$claude_src" "$claude_dest" || {
+				print_warn "无法安全部署 ~/.claude/settings.json，跳过"
+				return 0
+			}
 		fi
 	else
-		_deploy_without_hooks "$claude_src" "$claude_dest"
+		_deploy_without_hooks "$claude_src" "$claude_dest" || {
+			print_warn "无法安全部署 ~/.claude/settings.json，跳过"
+			return 0
+		}
 	fi
 	print_success "~/.claude/settings.json"
+}
+
+ensure_ssh_include_block() {
+	local ssh_config="$HOME/.ssh/config"
+	local start_marker end_marker tmp
+	start_marker="$(dotfiles_ssh_include_block_start)"
+	end_marker="$(dotfiles_ssh_include_block_end)"
+
+	if [[ ! -f "$ssh_config" ]]; then
+		printf "%s\nInclude config.d/*\n%s\n" "$start_marker" "$end_marker" >"$ssh_config"
+		return 0
+	fi
+
+	if grep -qF "$start_marker" "$ssh_config"; then
+		return 0
+	fi
+
+	if grep -qF "Include config.d/*" "$ssh_config"; then
+		print_warn "~/.ssh/config 已存在 Include config.d/*，保留现有配置"
+		return 0
+	fi
+
+	tmp=$(mktemp)
+	{
+		printf "%s\nInclude config.d/*\n%s\n\n" "$start_marker" "$end_marker"
+		cat "$ssh_config"
+	} >"$tmp"
+	mv "$tmp" "$ssh_config"
 }
 
 main() {
 	local vscode_cmd="" cursor_cmd=""
 
 	print_info "📁 Dotfiles 配置安装"
+	dotfiles_manifest_begin
+	trap 'dotfiles_manifest_discard' EXIT
 
 	vscode_cmd="$(find_editor_cli vscode 2>/dev/null || true)"
 	cursor_cmd="$(find_editor_cli cursor 2>/dev/null || true)"
@@ -107,6 +161,7 @@ main() {
 	if [[ -f "$DOTFILES_DIR/.config/direnv/direnv.toml" ]]; then
 		mkdir -p "$HOME/.config/direnv"
 		sed "s|__HOME__|$HOME|g" "$DOTFILES_DIR/.config/direnv/direnv.toml" > "$HOME/.config/direnv/direnv.toml"
+		dotfiles_manifest_add_file "$HOME/.config/direnv/direnv.toml"
 		print_success "~/.config/direnv/direnv.toml"
 	fi
 
@@ -141,16 +196,9 @@ main() {
 	# SSH 配置：通过 Include 浅合并，避免覆盖机器本地的 Host 定义
 	mkdir -p "$HOME/.ssh/config.d"
 	cp -f "$DOTFILES_DIR/.ssh/config" "$HOME/.ssh/config.d/00-dotfiles"
+	dotfiles_manifest_add_file "$HOME/.ssh/config.d/00-dotfiles"
 	chmod 600 "$HOME/.ssh/config.d/00-dotfiles"
-	if [[ ! -f "$HOME/.ssh/config" ]]; then
-		printf "# Dotfiles 共享配置（优先加载）\nInclude config.d/*\n\n# === 以下为本机特有配置 ===\n" > "$HOME/.ssh/config"
-	elif ! grep -qF "config.d/" "$HOME/.ssh/config"; then
-		# 插入到文件开头，确保 Dotfiles 的 Host * 全局配置优先生效
-		local tmp_ssh
-		tmp_ssh=$(mktemp)
-		printf "# Dotfiles 共享配置（优先加载）\nInclude config.d/*\n\n" | cat - "$HOME/.ssh/config" > "$tmp_ssh"
-		mv "$tmp_ssh" "$HOME/.ssh/config"
-	fi
+	ensure_ssh_include_block
 	chmod 600 "$HOME/.ssh/config"
 	print_success "~/.ssh/config.d/00-dotfiles (via Include)"
 	# Linux: 安装 keychain（SSH agent 管理器，纯 shell 脚本）
@@ -158,6 +206,7 @@ main() {
 		mkdir -p "$HOME/.local/bin"
 		if curl -fsSL "https://github.com/funtoo/keychain/raw/master/keychain.sh" -o "$HOME/.local/bin/keychain"; then
 			chmod +x "$HOME/.local/bin/keychain"
+			dotfiles_manifest_add_file "$HOME/.local/bin/keychain"
 			print_success "keychain (SSH agent manager)"
 		else
 			print_warn "keychain 下载失败，SSH agent 需手动管理"
@@ -170,6 +219,8 @@ main() {
 	[[ -d "$HOME/.ssh" ]] && chmod 700 "$HOME/.ssh" && find "$HOME/.ssh" -maxdepth 2 -type f -exec chmod 600 {} + 2>/dev/null
 	[[ -f "$HOME/.config/zsh/fzf/fzf-preview.sh" ]] && chmod +x "$HOME/.config/zsh/fzf/fzf-preview.sh"
 	[[ -d "$HOME/sh-script" ]] && chmod +x "$HOME/sh-script"/*.sh 2>/dev/null
+	dotfiles_manifest_commit
+	trap - EXIT
 
 	# 安装 zinit 插件
 	_echo_blank

@@ -332,9 +332,9 @@ install_cli() {
 	fi
 
 	if [[ "$OS" == "macos" ]]; then
-		# macOS 由 brew cask 安装，此处不处理
-		print_warn "Claude Code CLI 未安装，请先运行 brew install --cask claude-code"
-		return 1
+		# macOS 由 brew cask 安装。未安装时跳过 Claude 专属配置，不阻断主安装流程。
+		print_warn "Claude Code CLI 未安装，跳过 Claude 插件/MCP 配置；如需启用请先运行 brew install --cask claude-code"
+		return 0
 	fi
 
 	# Linux: 使用原生安装器
@@ -344,8 +344,8 @@ install_cli() {
 		export PATH="$HOME/.local/bin:$HOME/.claude/bin:$PATH"
 		print_success "Claude Code CLI 安装完成"
 	else
-		print_warn "Claude Code CLI 安装失败"
-		return 1
+		print_warn "Claude Code CLI 安装失败，跳过 Claude 插件/MCP 配置"
+		return 0
 	fi
 }
 
@@ -355,24 +355,42 @@ install_cli() {
 
 # Claude CLI 内部 git clone 使用 -c core.sshCommand="ssh -o StrictHostKeyChecking=yes"，
 # 要求 host key 必须已存在于 known_hosts 中，否则连接被拒绝。
-# 通过 ssh-keyscan 预先获取 GitHub 的 host key 来满足此要求。
+# 这里直接写入 GitHub 官方文档公布的 host keys，避免运行时 ssh-keyscan 的 TOFU 风险。
+# 对 [ssh.github.com]:443 使用与 github.com 相同的官方 host keys。
 ensure_github_host_keys() {
 	local known_hosts="$HOME/.ssh/known_hosts"
 	mkdir -p -m 700 "$HOME/.ssh"
+	local tmp_known_hosts added=0 entry
+	tmp_known_hosts=$(mktemp)
+	[[ -f "$known_hosts" ]] && cat "$known_hosts" >"$tmp_known_hosts"
 
-	local added=0
-	# 分别检查并填充每个 host key，避免重复追加
-	if ! grep -q "^github\.com " "$known_hosts" 2>/dev/null; then
-		ssh-keyscan github.com >>"$known_hosts" 2>/dev/null && ((added++))
+	while IFS= read -r entry; do
+		[[ -n "$entry" ]] || continue
+		if ! grep -qxF "$entry" "$tmp_known_hosts" 2>/dev/null; then
+			printf '%s\n' "$entry" >>"$tmp_known_hosts"
+			((added++))
+		fi
+	done <<'EOF'
+github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl
+github.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEmKSENjQEezOmxkZMy7opKgwFB9nkt5YRrYMjNuG5N87uRgg6CLrbo5wAdT/y6v0mKV0U2w0WZ2YB/++Tpockg=
+github.com ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCj7ndNxQowgcQnjshcLrqPEiiphnt+VTTvDP6mHBL9j1aNUkY4Ue1gvwnGLVlOhGeYrnZaMgRK6+PKCUXaDbC7qtbW8gIkhL7aGCsOr/C56SJMy/BCZfxd1nWzAOxSDPgVsmerOBYfNqltV9/hWCqBywINIR+5dIg6JTJ72pcEpEjcYgXkE2YEFXV1JHnsKgbLWNlhScqb2UmyRkQyytRLtL+38TGxkxCflmO+5Z8CSSNY7GidjMIZ7Q4zMjA2n1nGrlTDkzwDCsw+wqFPGQA179cnfGWOWRVruj16z6XyvxvjJwbz0wQZ75XK5tKSb7FNyeIEs4TT4jk+S4dhPeAUC5y+bDYirYgM4GC7uEnztnZyaVWQ7B381AK4Qdrwt51ZqExKbQpTUNn+EjqoTwvqNj4kqx5QUCI0ThS/YkOxJCXmPUWZbhjpCg56i+2aB6CmK2JGhn57K5mj0MNdBXA4/WnwH6XoPWJzK5Nyu2zB3nAZp+S5hpQs+p1vN1/wsjk=
+[ssh.github.com]:443 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl
+[ssh.github.com]:443 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEmKSENjQEezOmxkZMy7opKgwFB9nkt5YRrYMjNuG5N87uRgg6CLrbo5wAdT/y6v0mKV0U2w0WZ2YB/++Tpockg=
+[ssh.github.com]:443 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCj7ndNxQowgcQnjshcLrqPEiiphnt+VTTvDP6mHBL9j1aNUkY4Ue1gvwnGLVlOhGeYrnZaMgRK6+PKCUXaDbC7qtbW8gIkhL7aGCsOr/C56SJMy/BCZfxd1nWzAOxSDPgVsmerOBYfNqltV9/hWCqBywINIR+5dIg6JTJ72pcEpEjcYgXkE2YEFXV1JHnsKgbLWNlhScqb2UmyRkQyytRLtL+38TGxkxCflmO+5Z8CSSNY7GidjMIZ7Q4zMjA2n1nGrlTDkzwDCsw+wqFPGQA179cnfGWOWRVruj16z6XyvxvjJwbz0wQZ75XK5tKSb7FNyeIEs4TT4jk+S4dhPeAUC5y+bDYirYgM4GC7uEnztnZyaVWQ7B381AK4Qdrwt51ZqExKbQpTUNn+EjqoTwvqNj4kqx5QUCI0ThS/YkOxJCXmPUWZbhjpCg56i+2aB6CmK2JGhn57K5mj0MNdBXA4/WnwH6XoPWJzK5Nyu2zB3nAZp+S5hpQs+p1vN1/wsjk=
+EOF
+
+	if [[ -e "$known_hosts" || -L "$known_hosts" ]]; then
+		cat "$tmp_known_hosts" >"$known_hosts"
+		rm -f "$tmp_known_hosts"
+	else
+		mv "$tmp_known_hosts" "$known_hosts"
 	fi
-	if ! grep -q "^\[ssh\.github\.com\]:443 " "$known_hosts" 2>/dev/null; then
-		ssh-keyscan -p 443 ssh.github.com >>"$known_hosts" 2>/dev/null && ((added++))
-	fi
+	chmod 600 "$known_hosts"
 
 	if ((added > 0)); then
-		print_success "GitHub host key 已添加 ($added)"
+		print_success "GitHub 官方 host keys 已写入 known_hosts ($added)"
 	else
-		print_success "GitHub host key 已存在"
+		print_success "GitHub 官方 host keys 已存在"
 	fi
 }
 
@@ -434,9 +452,9 @@ install_plugins() {
 configure_auto_updates() {
 	local config_file="$HOME/.claude.json"
 
-	# ~/.claude.json 由 CLI 首次运行自动创建
 	if [[ ! -f "$config_file" ]]; then
-		print_dim "~/.claude.json 不存在（CLI 尚未运行过），跳过"
+		printf '{\n  "autoUpdates": true\n}\n' >"$config_file"
+		print_success "已创建 ~/.claude.json 并启用自动更新"
 		return 0
 	fi
 
@@ -458,6 +476,51 @@ configure_auto_updates() {
 		rm -f "$config_file.tmp"
 		print_warn "自动更新配置写入失败"
 	fi
+}
+
+ensure_claude_settings_file() {
+	local settings_file="$HOME/.claude/settings.json"
+	local repo_settings="$SCRIPT_DIR/../.claude/settings.json"
+	local global_settings_template="$SCRIPT_DIR/../.claude/settings.global.json"
+	local tmp_settings
+
+	[[ -f "$settings_file" ]] && return 0
+
+	mkdir -p "$HOME/.claude"
+	tmp_settings=$(mktemp)
+
+	if [[ -f "$repo_settings" ]]; then
+		if command -v jq &>/dev/null; then
+			if jq 'del(.hooks)' "$repo_settings" >"$tmp_settings" 2>/dev/null && [[ -s "$tmp_settings" ]]; then
+				mv "$tmp_settings" "$settings_file"
+				print_dim "~/.claude/settings.json 已创建（不含项目级 hooks）"
+				return 0
+			fi
+		fi
+
+		if command -v python3 &>/dev/null; then
+			if python3 -c "
+import json, sys
+with open(sys.argv[1]) as f: d = json.load(f)
+d.pop('hooks', None)
+with open(sys.argv[2], 'w') as f: json.dump(d, f, indent=4, ensure_ascii=False)
+" "$repo_settings" "$tmp_settings" 2>/dev/null && [[ -s "$tmp_settings" ]]; then
+				mv "$tmp_settings" "$settings_file"
+				print_dim "~/.claude/settings.json 已创建（不含项目级 hooks）"
+				return 0
+			fi
+		fi
+	fi
+
+	if [[ -f "$global_settings_template" ]]; then
+		cp "$global_settings_template" "$tmp_settings"
+		mv "$tmp_settings" "$settings_file"
+		print_warn "无法从仓库安全剥离 hooks，已写入 hook-free 全局 Claude 配置模板"
+		return 0
+	fi
+
+	rm -f "$tmp_settings"
+	print_warn "未找到 hook-free Claude 配置模板，跳过 settings.json 初始化"
 }
 
 # ========================================
@@ -780,19 +843,23 @@ install_mcp_servers() {
 	if echo "$mcp_list" | grep -q "open-websearch:"; then
 		skipped=$((skipped + 1))
 	else
-		local output
-		if output="$(claude mcp add-json open-websearch '{
-			"type": "stdio",
-			"command": "npx",
-			"args": ["-y", "open-websearch@latest"],
-			"env": {
-				"MODE": "stdio",
-				"DEFAULT_SEARCH_ENGINE": "duckduckgo",
-				"ALLOWED_SEARCH_ENGINES": "bing,baidu,duckduckgo,csdn,juejin",
-				"USE_PROXY": "true",
-				"PROXY_URL": "${PROXY_URL:-http://127.0.0.1:7890}"
-			}
-		}' --scope user 2>&1)"; then
+		local output open_websearch_json
+		open_websearch_json=$(cat <<EOF
+{
+	"type": "stdio",
+	"command": "npx",
+	"args": ["-y", "open-websearch@latest"],
+	"env": {
+		"MODE": "stdio",
+		"DEFAULT_SEARCH_ENGINE": "duckduckgo",
+		"ALLOWED_SEARCH_ENGINES": "bing,baidu,duckduckgo,csdn,juejin",
+		"USE_PROXY": "true",
+		"PROXY_URL": "${PROXY_URL:-http://127.0.0.1:7890}"
+	}
+}
+EOF
+)
+		if output="$(claude mcp add-json open-websearch "$open_websearch_json" --scope user 2>&1)"; then
 			print_success "MCP: open-websearch"
 			installed=$((installed + 1))
 		else
@@ -832,13 +899,15 @@ main() {
 	_echo_blank
 
 	# 2) 安装 CLI
-	install_cli || return 0
+	install_cli
 
 	# 确认 claude 可用
 	if ! command -v claude &>/dev/null; then
 		print_warn "Claude Code CLI 不在 PATH 中，跳过插件配置"
 		return 0
 	fi
+
+	ensure_claude_settings_file
 
 	# 3) 启用自动更新（写入 ~/.claude.json 运行时偏好）
 	configure_auto_updates

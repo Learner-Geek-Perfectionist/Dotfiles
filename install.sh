@@ -269,7 +269,7 @@ install_pixi_full() {
 	fi
 
 	if [[ -f "$dotfiles_dir/scripts/install_pixi.sh" ]]; then
-		bash "$dotfiles_dir/scripts/install_pixi.sh" || print_warn "Pixi 安装过程中部分步骤失败"
+		bash "$dotfiles_dir/scripts/install_pixi.sh"
 	else
 		print_error "未找到 Pixi 安装脚本"
 	fi
@@ -418,11 +418,11 @@ install_linux() {
 		return 0
 	fi
 
-	# 步骤 2: 安装 LSP Servers 及工具
-	install_lsp_servers "$dotfiles_dir" "2/5"
+	# 步骤 2: 安装 Dotfiles 配置
+	setup_dotfiles "$dotfiles_dir" "2/5"
 
-	# 步骤 3: 安装 Dotfiles 配置
-	setup_dotfiles "$dotfiles_dir" "3/5"
+	# 步骤 3: 安装 LSP Servers 及工具
+	install_lsp_servers "$dotfiles_dir" "3/5"
 
 	# 步骤 4: 设置默认 shell
 	setup_default_shell "4/5"
@@ -440,11 +440,11 @@ install_macos() {
 	# 步骤 1: 安装 Homebrew 包
 	install_macos_homebrew "$dotfiles_dir" "1/4"
 
-	# 步骤 2: 安装 LSP Servers 及工具
-	install_lsp_servers "$dotfiles_dir" "2/4"
+	# 步骤 2: 安装 Dotfiles 配置（已包含 SSH config）
+	setup_dotfiles "$dotfiles_dir" "2/4"
 
-	# 步骤 3: 安装 Dotfiles 配置（已包含 SSH config）
-	setup_dotfiles "$dotfiles_dir" "3/4"
+	# 步骤 3: 安装 LSP Servers 及工具
+	install_lsp_servers "$dotfiles_dir" "3/4"
 
 	# 步骤 4: VSCode 插件
 	install_vscode "$dotfiles_dir" "4/4"

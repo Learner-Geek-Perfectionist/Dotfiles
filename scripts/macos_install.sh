@@ -19,58 +19,78 @@ ensure_brew_tap() {
 	brew tap | grep -q "$1" || brew tap "$1"
 }
 
-autoupdate_script_path() {
-	echo "$HOME/Library/Application Support/com.github.domt4.homebrew-autoupdate/brew_autoupdate"
+brew_cleanup_launchagent_path() {
+	echo "$HOME/Library/LaunchAgents/com.dotfiles.brew-cleanup.plist"
 }
 
-# Homebrew autoupdate 只会生成固定的 `brew cleanup`，不会带上我们 shell 里的
-# `HOMEBREW_CLEANUP_MAX_AGE_DAYS`。这里直接把后台脚本改成 `--prune=all`。
-ensure_autoupdate_prune_all() {
-	local script tmp
-	script="$(autoupdate_script_path)"
+configure_brew_cleanup_launchagent() {
+	local plist tmp brew_bin
+	plist="$(brew_cleanup_launchagent_path)"
+	brew_bin="$(command -v brew)"
 
-	if [[ ! -f "$script" ]]; then
-		print_warn "未找到 Homebrew autoupdate 脚本，无法启用全量 cleanup"
+	if [[ -z "$brew_bin" ]]; then
+		print_warn "未找到 brew，跳过 Homebrew cleanup 定时任务"
 		return 1
 	fi
 
-	if grep -q 'brew cleanup --prune=all' "$script"; then
-		print_success "Homebrew autoupdate 已启用全量 cleanup"
-		return 0
-	fi
-
 	tmp="$(mktemp)"
-	if sed -E \
-		-e 's@(/[^[:space:]]*/brew) cleanup([[:space:]]*&&)@\1 cleanup --prune=all\2@' \
-		-e 's@(/[^[:space:]]*/brew) cleanup$@\1 cleanup --prune=all@' \
-		"$script" > "$tmp" && ! cmp -s "$script" "$tmp"; then
-		chmod 0555 "$tmp"
-		mv "$tmp" "$script"
-		print_success "Homebrew autoupdate 已启用全量 cleanup (--prune=all)"
-		return 0
+	mkdir -p "$(dirname "$plist")" "$HOME/Library/Logs"
+	cat >"$tmp" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.dotfiles.brew-cleanup</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>${brew_bin}</string>
+		<string>cleanup</string>
+		<string>--prune=all</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>StartInterval</key>
+	<integer>3600</integer>
+	<key>StandardOutPath</key>
+	<string>${HOME}/Library/Logs/com.dotfiles.brew-cleanup.log</string>
+	<key>StandardErrorPath</key>
+	<string>${HOME}/Library/Logs/com.dotfiles.brew-cleanup.err.log</string>
+</dict>
+</plist>
+EOF
+
+	if [[ -f "$plist" ]] && cmp -s "$plist" "$tmp"; then
+		rm -f "$tmp"
+	else
+		mv "$tmp" "$plist"
 	fi
 
-	rm -f "$tmp"
-	print_warn "未能更新 Homebrew autoupdate 脚本的 cleanup 模式"
-	return 1
+	chmod 644 "$plist"
+
+	if command -v launchctl &>/dev/null; then
+		launchctl unload "$plist" &>/dev/null || true
+		if launchctl load -w "$plist" &>/dev/null; then
+			print_success "Homebrew cleanup 定时任务已配置（每 1 小时执行 brew cleanup --prune=all）"
+		else
+			print_warn "Homebrew cleanup LaunchAgent 已写入，但加载失败，请手动运行 launchctl load -w \"$plist\""
+		fi
+	else
+		print_warn "未找到 launchctl，已写入 Homebrew cleanup LaunchAgent: $plist"
+	fi
 }
 
 configure_brew_autoupdate() {
 	ensure_brew_tap "homebrew/autoupdate"
 
-	if brew autoupdate status 2>/dev/null | grep -q "running"; then
-		print_success "Homebrew autoupdate 已在运行，校验 cleanup 配置"
+	if brew autoupdate status 2>/dev/null | grep -qi "running"; then
+		print_success "Homebrew autoupdate 已在运行，保留现有配置"
 	else
-		brew autoupdate start 3600 --upgrade --greedy --cleanup
+		brew autoupdate start 3600 --upgrade --greedy
 		print_success "Homebrew autoupdate 已配置（每 1 小时自动更新）"
 	fi
 
-	if ! ensure_autoupdate_prune_all; then
-		print_info "重建 Homebrew autoupdate 任务以启用全量 cleanup..."
-		brew autoupdate delete &>/dev/null || true
-		brew autoupdate start 3600 --upgrade --greedy --cleanup
-		ensure_autoupdate_prune_all || print_warn "Homebrew autoupdate 未能启用全量 cleanup"
-	fi
+	configure_brew_cleanup_launchagent
 }
 
 configure_pmset() {

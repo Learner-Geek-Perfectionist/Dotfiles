@@ -382,6 +382,22 @@ pmset_state_file() {
 	echo "$HOME/.local/state/dotfiles/macos-pmset.env"
 }
 
+dotfiles_state_dir() {
+	echo "$HOME/.local/state/dotfiles"
+}
+
+dotfiles_manifest_file() {
+	echo "$(dotfiles_state_dir)/dotfiles-manifest.tsv"
+}
+
+dotfiles_ssh_include_block_start() {
+	echo "# >>> Dotfiles SSH Include >>>"
+}
+
+dotfiles_ssh_include_block_end() {
+	echo "# <<< Dotfiles SSH Include <<<"
+}
+
 save_pmset_state() {
 	command -v pmset &>/dev/null || return 1
 
@@ -489,6 +505,52 @@ file_fingerprint() {
 	else
 		return 1
 	fi
+}
+
+dotfiles_manifest_begin() {
+	local manifest_dir tmp manifest
+	manifest_dir="$(dirname "$(dotfiles_manifest_file)")"
+	manifest="$(dotfiles_manifest_file)"
+	mkdir -p "$manifest_dir"
+	tmp="$(mktemp)"
+	[[ -f "$manifest" ]] && cat "$manifest" >"$tmp" || : >"$tmp"
+	DOTFILES_MANIFEST_TMP="$tmp"
+	export DOTFILES_MANIFEST_TMP
+}
+
+dotfiles_manifest_add_file() {
+	local path="$1"
+	local fingerprint_file="${2:-$1}"
+	local hash
+
+	[[ -n "${DOTFILES_MANIFEST_TMP:-}" && -f "${DOTFILES_MANIFEST_TMP:-}" ]] || return 1
+	hash=$(file_fingerprint "$fingerprint_file") || return 1
+	awk -F'\t' -v path="$path" '!(NF >= 2 && $2 == path)' "$DOTFILES_MANIFEST_TMP" >"$DOTFILES_MANIFEST_TMP.filtered"
+	mv "$DOTFILES_MANIFEST_TMP.filtered" "$DOTFILES_MANIFEST_TMP"
+	printf 'file\t%s\t%s\n' "$path" "$hash" >>"$DOTFILES_MANIFEST_TMP"
+	dotfiles_manifest_flush
+}
+
+dotfiles_manifest_flush() {
+	local manifest tmp
+	manifest="$(dotfiles_manifest_file)"
+	tmp="${DOTFILES_MANIFEST_TMP:-}"
+
+	[[ -n "$tmp" && -f "$tmp" ]] || return 1
+	cp "$tmp" "$manifest"
+	chmod 600 "$manifest"
+}
+
+dotfiles_manifest_commit() {
+	dotfiles_manifest_flush || return 1
+	dotfiles_manifest_discard
+}
+
+dotfiles_manifest_discard() {
+	local tmp="${DOTFILES_MANIFEST_TMP:-}"
+	[[ -n "$tmp" ]] && rm -f "$tmp"
+	unset DOTFILES_MANIFEST_TMP
+	export DOTFILES_MANIFEST_TMP
 }
 
 read_managed_pixi_manifest_hash() {

@@ -24,25 +24,22 @@ PIXI_BIN="$PIXI_HOME/bin/pixi"
 # ========================================
 check_pixi_installed() {
 	# 先尝试添加 pixi 到 PATH（非交互式 shell 可能没有）
-	[[ -d "$HOME/.pixi/bin" ]] && export PATH="$HOME/.pixi/bin:$PATH"
-	command -v pixi &>/dev/null
+	[[ -x "$PIXI_BIN" ]] && export PATH="$PIXI_HOME/bin:$PATH"
+	[[ -x "$PIXI_BIN" ]]
 }
 
 # ========================================
 # 安装 Pixi
 # ========================================
 install_pixi() {
-	# 被 install.sh 调用时，install.sh 已检查过，这里直接安装
-	# 独立运行时，需要检查
-	if [[ -z "${DOTFILES_DIR:-}" ]]; then
-		print_info "🦀 安装 Pixi..."
-		print_dim "安装目录: $PIXI_HOME"
-		if check_pixi_installed; then
-			local version
-			version=$(pixi --version 2>/dev/null)
-			print_warn "Pixi 已安装 ($version)"
-			return 0
-		fi
+	print_info "🦀 安装 Pixi..."
+	print_dim "安装目录: $PIXI_HOME"
+
+	if check_pixi_installed; then
+		local version
+		version=$("$PIXI_BIN" --version 2>/dev/null)
+		print_success "Pixi 已安装 ($version)"
+		return 0
 	fi
 
 	# 使用官方安装脚本

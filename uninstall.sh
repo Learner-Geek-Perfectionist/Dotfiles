@@ -104,6 +104,79 @@ rm_path() {
 	fi
 }
 
+prune_empty_parents() {
+	local dir="$1"
+	while [[ "$dir" == "$HOME"* && "$dir" != "$HOME" ]]; do
+		rmdir "$dir" 2>/dev/null || break
+		dir="$(dirname "$dir")"
+	done
+}
+
+remove_manifested_dotfiles() {
+	local manifest pending_manifest kind path expected_hash current_hash
+	manifest="$(dotfiles_manifest_file)"
+
+	if [[ ! -f "$manifest" ]]; then
+		print_warn "未找到 Dotfiles 托管清单，跳过托管文件删除"
+		return 0
+	fi
+
+	pending_manifest=$(mktemp)
+	: >"$pending_manifest"
+
+	while IFS=$'\t' read -r kind path expected_hash; do
+		[[ "$kind" == "file" && -n "$path" && -n "$expected_hash" ]] || continue
+		[[ "$path" == "$HOME/.claude/settings.json" ]] && continue
+		[[ -f "$path" ]] || continue
+
+		current_hash=$(file_fingerprint "$path" 2>/dev/null || true)
+		if [[ "$current_hash" != "$expected_hash" ]]; then
+			print_warn "保留已修改文件: $path"
+			printf 'file\t%s\t%s\n' "$path" "$expected_hash" >>"$pending_manifest"
+			continue
+		fi
+
+		rm_path "$path"
+		prune_empty_parents "$(dirname "$path")"
+	done <"$manifest"
+
+	if [[ -s "$pending_manifest" ]]; then
+		chmod 600 "$pending_manifest"
+		mv "$pending_manifest" "$manifest"
+	else
+		rm -f "$pending_manifest"
+		rm_path "$manifest"
+	fi
+}
+
+remove_dotfiles_ssh_include_block() {
+	local ssh_config="$HOME/.ssh/config"
+	local start_marker end_marker tmp
+	start_marker="$(dotfiles_ssh_include_block_start)"
+	end_marker="$(dotfiles_ssh_include_block_end)"
+
+	[[ -f "$ssh_config" ]] || return 0
+	grep -qF "$start_marker" "$ssh_config" || return 0
+
+	tmp=$(mktemp)
+	awk -v start="$start_marker" -v end="$end_marker" '
+		$0 == start { skip = 1; next }
+		$0 == end { skip = 0; next }
+		!skip { print }
+	' "$ssh_config" >"$tmp"
+
+	if grep -q '[^[:space:]]' "$tmp"; then
+		mv "$tmp" "$ssh_config"
+		chmod 600 "$ssh_config"
+	else
+		rm -f "$tmp"
+		rm_path "$ssh_config"
+		prune_empty_parents "$(dirname "$ssh_config")"
+	fi
+
+	print_dim "✓ 已清理 ~/.ssh/config 中的 Dotfiles Include 块"
+}
+
 remove_pixi() {
 	print_info "🧹 删除 Pixi 及其安装的所有工具..."
 
@@ -244,81 +317,11 @@ remove_claude() {
 remove_dotfiles() {
 	print_info "🗑️ 删除 Dotfiles..."
 
-	# Zsh 配置
-	for p in ~/.zshrc ~/.zprofile ~/.zshenv; do
-		rm_path "$p"
-	done
-
-	# direnv 配置
-	rm_path ~/.envrc
-	rm_path ~/.config/direnv
-
-	# .config 目录下的配置
-	for p in ~/.config/{zsh,kitty,ripgrep}; do
-		rm_path "$p"
-	done
-
-	# Git 配置
-	rm_path ~/.gitconfig
-	rm_path ~/.gitignore
-
-	# SSH 配置（只移除 dotfiles 部分，保留机器本地配置）
-	rm_path ~/.ssh/config.d/00-dotfiles
-
-	# 工具脚本
-	rm_path ~/sh-script
-
-	# Linux keychain（由 install_dotfiles.sh 安装）
-	rm_path ~/.local/bin/keychain
-
-	# 删除 zinit 相关目录（插件、补全、缓存等）
-	for p in ~/.local/share/zinit ~/.cache/zinit; do
-		rm_path "$p"
-	done
-
-	# 删除 p10k 缓存
-	for p in ~/.cache/p10k-instant-prompt-*.zsh; do
-		[[ -e "$p" ]] && rm -f "$p" && print_success "已删除: $p"
-	done
-
-	# 删除 ~/.cache/zsh 目录（但保留 .zsh_history）
-	if [[ -d ~/.cache/zsh ]]; then
-		print_dim "清理 ~/.cache/zsh（保留历史记录）"
-		# 备份 history 文件
-		local history_file=~/.cache/zsh/.zsh_history
-		local history_backup=""
-		if [[ -f "$history_file" ]]; then
-			history_backup=$(mktemp)
-			cp "$history_file" "$history_backup"
-		fi
-		# 删除整个目录
-		rm -rf ~/.cache/zsh
-		# 恢复 history 文件
-		if [[ -n "$history_backup" && -f "$history_backup" ]]; then
-			mkdir -p ~/.cache/zsh
-			mv "$history_backup" "$history_file"
-			print_dim "✓ 已保留: $history_file"
-		fi
-	fi
-
-	# VSCode/Cursor 配置（路径数组抽出，删除逻辑只写一次）
-	local vscode_dirs=()
-	if [[ "$(uname -s)" == "Darwin" ]]; then
-		vscode_dirs=(~/"Library/Application Support"/{Code,Cursor}/User)
-	else
-		vscode_dirs=(~/.config/{Code,Cursor}/User)
-	fi
-	for dir in "${vscode_dirs[@]}"; do
-		for f in settings.json keybindings.json; do
-			rm_path "$dir/$f"
-		done
-	done
+	remove_manifested_dotfiles
+	remove_dotfiles_ssh_include_block
 
 	# macOS 专属清理
 	if [[ "$(uname -s)" == "Darwin" ]]; then
-		for p in ~/.config/karabiner ~/.hammerspoon; do
-			rm_path "$p"
-		done
 		# 恢复安装前保存的电源管理配置
 		if [[ -f "$(pmset_state_file)" ]]; then
 			if restore_pmset_state; then
@@ -333,6 +336,12 @@ remove_dotfiles() {
 		if command -v brew &>/dev/null && brew commands 2>/dev/null | grep -q autoupdate; then
 			brew autoupdate delete &>/dev/null && print_dim "✓ Homebrew autoupdate 已停止并删除"
 		fi
+		local brew_cleanup_plist="$HOME/Library/LaunchAgents/com.dotfiles.brew-cleanup.plist"
+		if [[ -f "$brew_cleanup_plist" ]]; then
+			launchctl unload "$brew_cleanup_plist" &>/dev/null || true
+			rm_path "$brew_cleanup_plist"
+			print_dim "✓ Homebrew cleanup LaunchAgent 已移除"
+		fi
 		# 从 access_bpf 组移除用户
 		if has_sudo && dscl . -read /Groups/access_bpf GroupMembership 2>/dev/null | grep -qw "$(whoami)"; then
 			sudo dseditgroup -o edit -d "$(whoami)" -t user access_bpf 2>/dev/null && print_dim "✓ 已从 access_bpf 组移除"
@@ -343,6 +352,8 @@ remove_dotfiles() {
 			print_dim "   如需卸载，请参考 lib/packages.sh 中的包列表手动执行 brew uninstall"
 		fi
 	fi
+
+	print_dim "💡 Zinit、p10k、zsh 缓存等运行时目录已保留；如需清理请手动删除对应缓存目录"
 }
 
 # 解析参数

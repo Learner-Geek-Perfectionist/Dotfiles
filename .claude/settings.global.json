@@ -1,0 +1,9 @@
+{
+    "permissions": {},
+    "model": "opus[1m]",
+    "outputStyle": "Explanatory",
+    "language": "中文",
+    "alwaysThinkingEnabled": true,
+    "skipDangerousModePermissionPrompt": true,
+    "effortLevel": "high"
+}

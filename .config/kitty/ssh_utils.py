@@ -47,24 +47,30 @@ def extract_ssh_destination(window):
     return None
 
 
-def smart_launch(boss, launch_type):
+def smart_launch(boss, launch_type, target_window_id=None):
     """智能启动新 tab 或 os-window。SSH 中先连远程，exit 后回落本地 zsh。
 
     Args:
         boss: kitty.boss.Boss 实例
         launch_type: "tab" 或 "os-window"
+        target_window_id: 触发当前 kitten 的源窗口 id
     """
-    window = boss.active_window
+    window = None
+    if target_window_id is not None:
+        window = boss.window_id_map.get(target_window_id)
+    if window is None:
+        window = boss.active_window
     if window is None:
         return
 
     destination = extract_ssh_destination(window)
+    source_window_arg = f'--source-window=id:{window.id}'
 
     if destination is not None:
         ssh_cmd = f'kitten ssh {shlex.quote(destination)}; exec zsh -i'
-        launch_args = [f'--type={launch_type}', 'zsh', '-c', ssh_cmd]
+        launch_args = [f'--type={launch_type}', source_window_arg, 'zsh', '-c', ssh_cmd]
     else:
-        launch_args = [f'--type={launch_type}', '--cwd=last_reported']
+        launch_args = [f'--type={launch_type}', source_window_arg, '--cwd=last_reported']
 
     opts, remaining = parse_launch_args(launch_args)
     kitty_launch(boss, opts, remaining)

@@ -4,9 +4,12 @@
 # 这样 exit 退出 SSH 后，回落到本地 zsh，tab 不会消失
 
 import sys
+from importlib import reload
 
 from kittens.tui.handler import result_handler
-from ssh_utils import smart_launch
+import ssh_utils
+
+smart_launch = reload(ssh_utils).smart_launch
 
 
 def main(args):
@@ -15,7 +18,7 @@ def main(args):
 
 @result_handler(no_ui=True)
 def handle_result(args, result, target_window_id, boss):
-    smart_launch(boss, "tab")
+    smart_launch(boss, "tab", target_window_id)
 
 
 if __name__ == '__main__':

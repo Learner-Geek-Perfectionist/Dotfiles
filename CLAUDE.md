@@ -28,7 +28,7 @@ install.sh <-> uninstall.sh
   调用 -> scripts/install_claude_code.sh  -- Claude Code LSP/MCP/Skills/Hooks
   调用 -> scripts/install_pixi.sh         -- Pixi 包管理器（Linux）
   调用 -> scripts/install_kotlin_native.sh  -- Kotlin Native 工具链
-  调用 -> scripts/macos_install.sh        -- Homebrew 包安装（macOS）
+  调用 -> scripts/install_macos.sh        -- Homebrew 包安装（macOS）
   依赖 -> lib/utils.sh                    -- 通用工具函数（颜色、日志、权限）
   依赖 -> lib/packages.sh                 -- Homebrew 包列表定义
 

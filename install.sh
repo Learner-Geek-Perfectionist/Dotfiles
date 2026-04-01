@@ -241,8 +241,8 @@ install_macos_homebrew() {
 
 	print_section "步骤 ${step_num}: 🍺 安装 Homebrew 包"
 
-	if [[ -f "$dotfiles_dir/scripts/macos_install.sh" ]]; then
-		bash "$dotfiles_dir/scripts/macos_install.sh"
+	if [[ -f "$dotfiles_dir/scripts/install_macos.sh" ]]; then
+		bash "$dotfiles_dir/scripts/install_macos.sh"
 	else
 		print_warn "未找到 macOS 安装脚本，跳过 Homebrew 包安装"
 	fi

@@ -37,7 +37,7 @@
     "scripts/install_claude_code.sh",
     "scripts/install_pixi.sh",
     "scripts/install_kotlin_native.sh",
-    "scripts/macos_install.sh"
+    "scripts/install_macos.sh"
   ],
   "uninstall.sh": [
     "install.sh",
@@ -45,7 +45,7 @@
   ],
   "lib/packages.sh": [
     "install.sh",
-    "scripts/macos_install.sh"
+    "scripts/install_macos.sh"
   ],
   "lib/utils.sh": [
     "install.sh",
@@ -68,7 +68,7 @@
   "scripts/install_kotlin_native.sh": [
     "install.sh"
   ],
-  "scripts/macos_install.sh": [
+  "scripts/install_macos.sh": [
     "install.sh",
     "lib/packages.sh"
   ],

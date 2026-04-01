@@ -412,11 +412,11 @@ exit 1
 EOF
 	chmod +x "$fake_bin/xcode-select" "$fake_bin/brew" "$fake_bin/launchctl" "$fake_bin/dscl"
 
-	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
-		bash "$REPO_ROOT/scripts/macos_install.sh" >"$log" 2>&1; then
-		cat "$log" >&2
-		fail "macos_install.sh failed"
-	fi
+		if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+			bash "$REPO_ROOT/scripts/install_macos.sh" >"$log" 2>&1; then
+			cat "$log" >&2
+			fail "install_macos.sh failed"
+		fi
 
 	plist="$tmp_home/Library/LaunchAgents/com.dotfiles.brew-cleanup.plist"
 	assert_file_exists "$plist"

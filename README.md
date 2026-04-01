@@ -49,7 +49,7 @@ bash install.sh --skip-vscode     # 跳过 VSCode 插件
 
 - **[Karabiner-Elements](https://karabiner-elements.pqrs.org/)** 键盘改键
 - **[Hammerspoon](https://www.hammerspoon.org/)** 窗口管理与自动化
-- Homebrew 自动更新（`brew autoupdate`）
+- Homebrew 自动维护（每小时顺序执行 `brew update` / `brew upgrade --greedy` / `brew cleanup --prune=all`）
 
 ### AI 工具链
 

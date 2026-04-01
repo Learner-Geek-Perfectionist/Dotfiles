@@ -23,47 +23,138 @@ brew_cleanup_launchagent_path() {
 	echo "$HOME/Library/LaunchAgents/com.dotfiles.brew-cleanup.plist"
 }
 
-configure_brew_cleanup_launchagent() {
-	local plist tmp brew_bin
-	plist="$(brew_cleanup_launchagent_path)"
-	brew_bin="$(command -v brew)"
+brew_maintenance_support_dir() {
+	echo "$HOME/Library/Application Support/com.dotfiles"
+}
 
-	if [[ -z "$brew_bin" ]]; then
-		print_warn "未找到 brew，跳过 Homebrew cleanup 定时任务"
+brew_maintenance_script_path() {
+	echo "$(brew_maintenance_support_dir)/brew-maintenance.sh"
+}
+
+brew_maintenance_launchagent_path() {
+	echo "$HOME/Library/LaunchAgents/com.dotfiles.brew-maintenance.plist"
+}
+
+legacy_brew_autoupdate_launchagent_path() {
+	echo "$HOME/Library/LaunchAgents/com.github.domt4.homebrew-autoupdate.plist"
+}
+
+remove_launchagent_plist() {
+	local plist="$1"
+
+	if [[ ! -f "$plist" ]]; then
 		return 1
 	fi
 
-	tmp="$(mktemp)"
-	mkdir -p "$(dirname "$plist")" "$HOME/Library/Logs"
-	cat >"$tmp" <<EOF
+	if command -v launchctl &>/dev/null; then
+		launchctl unload "$plist" &>/dev/null || true
+	fi
+
+	rm -f "$plist"
+}
+
+disable_legacy_brew_automation() {
+	local legacy_cleanup_plist legacy_autoupdate_plist
+	legacy_cleanup_plist="$(brew_cleanup_launchagent_path)"
+	legacy_autoupdate_plist="$(legacy_brew_autoupdate_launchagent_path)"
+
+	if [[ -f "$legacy_autoupdate_plist" ]] && command -v brew &>/dev/null &&
+		brew commands 2>/dev/null | grep -q '^autoupdate$'; then
+		if brew autoupdate delete &>/dev/null; then
+			print_dim "✓ 已移除旧版 Homebrew autoupdate 配置"
+		else
+			print_warn "brew autoupdate delete 失败，继续手动移除旧版 Homebrew autoupdate LaunchAgent"
+		fi
+	fi
+
+	if remove_launchagent_plist "$legacy_autoupdate_plist"; then
+		print_dim "✓ 已移除旧版 Homebrew autoupdate LaunchAgent"
+	fi
+
+	if remove_launchagent_plist "$legacy_cleanup_plist"; then
+		print_dim "✓ 已移除旧版 Homebrew cleanup LaunchAgent"
+	fi
+}
+
+configure_brew_maintenance_launchagent() {
+	local plist script support_dir tmp_plist tmp_script brew_bin
+	plist="$(brew_maintenance_launchagent_path)"
+	script="$(brew_maintenance_script_path)"
+	support_dir="$(brew_maintenance_support_dir)"
+	brew_bin="$(command -v brew)"
+
+	if [[ -z "$brew_bin" ]]; then
+		print_warn "未找到 brew，跳过 Homebrew 自动维护定时任务"
+		return 1
+	fi
+
+	disable_legacy_brew_automation
+
+	tmp_script="$(mktemp)"
+	mkdir -p "$(dirname "$plist")" "$support_dir" "$HOME/Library/Logs"
+	cat >"$tmp_script" <<EOF
+#!/bin/bash
+set -uo pipefail
+
+status=0
+
+run_step() {
+	"\$@"
+	local rc=\$?
+	if [[ \$rc -ne 0 && \$status -eq 0 ]]; then
+		status=\$rc
+	fi
+	return \$rc
+}
+
+echo "==> \$(/bin/date '+%Y-%m-%d %H:%M:%S %z')"
+
+if run_step "${brew_bin}" update; then
+	run_step "${brew_bin}" upgrade --formula -v
+	run_step "${brew_bin}" upgrade --cask -v --greedy
+fi
+
+run_step "${brew_bin}" cleanup --prune=all
+
+exit "\$status"
+EOF
+
+	if [[ -f "$script" ]] && cmp -s "$script" "$tmp_script"; then
+		rm -f "$tmp_script"
+	else
+		mv "$tmp_script" "$script"
+	fi
+	chmod 755 "$script"
+
+	tmp_plist="$(mktemp)"
+	cat >"$tmp_plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
 	<key>Label</key>
-	<string>com.dotfiles.brew-cleanup</string>
+	<string>com.dotfiles.brew-maintenance</string>
 	<key>ProgramArguments</key>
 	<array>
-		<string>${brew_bin}</string>
-		<string>cleanup</string>
-		<string>--prune=all</string>
+		<string>/bin/bash</string>
+		<string>${script}</string>
 	</array>
 	<key>RunAtLoad</key>
 	<true/>
 	<key>StartInterval</key>
 	<integer>3600</integer>
 	<key>StandardOutPath</key>
-	<string>${HOME}/Library/Logs/com.dotfiles.brew-cleanup.log</string>
+	<string>${HOME}/Library/Logs/com.dotfiles.brew-maintenance.log</string>
 	<key>StandardErrorPath</key>
-	<string>${HOME}/Library/Logs/com.dotfiles.brew-cleanup.err.log</string>
+	<string>${HOME}/Library/Logs/com.dotfiles.brew-maintenance.err.log</string>
 </dict>
 </plist>
 EOF
 
-	if [[ -f "$plist" ]] && cmp -s "$plist" "$tmp"; then
-		rm -f "$tmp"
+	if [[ -f "$plist" ]] && cmp -s "$plist" "$tmp_plist"; then
+		rm -f "$tmp_plist"
 	else
-		mv "$tmp" "$plist"
+		mv "$tmp_plist" "$plist"
 	fi
 
 	chmod 644 "$plist"
@@ -71,26 +162,17 @@ EOF
 	if command -v launchctl &>/dev/null; then
 		launchctl unload "$plist" &>/dev/null || true
 		if launchctl load -w "$plist" &>/dev/null; then
-			print_success "Homebrew cleanup 定时任务已配置（每 1 小时执行 brew cleanup --prune=all）"
+			print_success "Homebrew 自动维护定时任务已配置（每 1 小时顺序执行 update/upgrade/cleanup --prune=all）"
 		else
-			print_warn "Homebrew cleanup LaunchAgent 已写入，但加载失败，请手动运行 launchctl load -w \"$plist\""
+			print_warn "Homebrew 自动维护 LaunchAgent 已写入，但加载失败，请手动运行 launchctl load -w \"$plist\""
 		fi
 	else
-		print_warn "未找到 launchctl，已写入 Homebrew cleanup LaunchAgent: $plist"
+		print_warn "未找到 launchctl，已写入 Homebrew 自动维护 LaunchAgent: $plist"
 	fi
 }
 
-configure_brew_autoupdate() {
-	ensure_brew_tap "homebrew/autoupdate"
-
-	if brew autoupdate status 2>/dev/null | grep -qi "running"; then
-		print_success "Homebrew autoupdate 已在运行，保留现有配置"
-	else
-		brew autoupdate start 3600 --upgrade --greedy
-		print_success "Homebrew autoupdate 已配置（每 1 小时自动更新）"
-	fi
-
-	configure_brew_cleanup_launchagent
+configure_brew_maintenance() {
+	configure_brew_maintenance_launchagent
 }
 
 configure_pmset() {
@@ -204,10 +286,10 @@ else
 	print_success "GUI 应用安装完成"
 fi
 
-# 5. 配置 Homebrew 自动更新
-print_info "配置 Homebrew 自动更新..."
+# 5. 配置 Homebrew 自动维护
+print_info "配置 Homebrew 自动维护..."
 
-configure_brew_autoupdate
+configure_brew_maintenance
 
 # 6. 清理 Homebrew 缓存
 print_info "清理 Homebrew 缓存..."

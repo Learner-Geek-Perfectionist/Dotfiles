@@ -352,8 +352,8 @@ EOF
 	assert_grep '^github.com ssh-ed25519 ' "$real_known_hosts"
 }
 
-test_macos_cleanup_launchagent_created() {
-	local tmp_home fake_bin log plist
+test_macos_brew_maintenance_launchagent_created() {
+	local tmp_home fake_bin log plist script legacy_cleanup_plist legacy_autoupdate_plist
 	tmp_home=$(make_temp_dir)
 	fake_bin=$(make_temp_dir)
 	log="$tmp_home/macos-install.log"
@@ -385,13 +385,11 @@ case "$cmd" in
   ls)
     exit 1
     ;;
-  install|cleanup)
+  install|cleanup|update|upgrade)
     exit 0
     ;;
   autoupdate)
     case "$1" in
-      status) echo 'Autoupdate is stopped'; exit 0 ;;
-      start) exit 0 ;;
       delete) exit 0 ;;
     esac
     ;;
@@ -412,16 +410,30 @@ exit 1
 EOF
 	chmod +x "$fake_bin/xcode-select" "$fake_bin/brew" "$fake_bin/launchctl" "$fake_bin/dscl"
 
-		if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
-			bash "$REPO_ROOT/scripts/install_macos.sh" >"$log" 2>&1; then
-			cat "$log" >&2
-			fail "install_macos.sh failed"
-		fi
+	legacy_cleanup_plist="$tmp_home/Library/LaunchAgents/com.dotfiles.brew-cleanup.plist"
+	legacy_autoupdate_plist="$tmp_home/Library/LaunchAgents/com.github.domt4.homebrew-autoupdate.plist"
+	mkdir -p "$(dirname "$legacy_cleanup_plist")"
+	printf 'legacy cleanup\n' >"$legacy_cleanup_plist"
+	printf 'legacy autoupdate\n' >"$legacy_autoupdate_plist"
 
-	plist="$tmp_home/Library/LaunchAgents/com.dotfiles.brew-cleanup.plist"
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		bash "$REPO_ROOT/scripts/install_macos.sh" >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "install_macos.sh failed"
+	fi
+
+	plist="$tmp_home/Library/LaunchAgents/com.dotfiles.brew-maintenance.plist"
+	script="$tmp_home/Library/Application Support/com.dotfiles/brew-maintenance.sh"
 	assert_file_exists "$plist"
-	assert_contains "<string>cleanup</string>" "$plist"
-	assert_contains "<string>--prune=all</string>" "$plist"
+	assert_file_exists "$script"
+	assert_contains "<string>com.dotfiles.brew-maintenance</string>" "$plist"
+	assert_contains "<string>/bin/bash</string>" "$plist"
+	assert_contains "$script" "$plist"
+	assert_contains 'upgrade --formula -v' "$script"
+	assert_contains 'upgrade --cask -v --greedy' "$script"
+	assert_contains 'cleanup --prune=all' "$script"
+	assert_file_missing "$legacy_cleanup_plist"
+	assert_file_missing "$legacy_autoupdate_plist"
 }
 
 run_test "Dotfiles manifest and SSH include block" test_dotfiles_manifest_and_ssh_block
@@ -432,7 +444,7 @@ run_test "Pixi prefers managed install" test_pixi_prefers_managed_install_over_s
 run_test "Claude optional on macOS" test_claude_optional_on_macos_when_missing
 run_test "Claude optional on Linux" test_claude_optional_on_linux_when_install_fails
 run_test "Claude known_hosts preserves symlink" test_claude_known_hosts_preserves_symlink
-run_test "macOS cleanup LaunchAgent" test_macos_cleanup_launchagent_created
+run_test "macOS brew maintenance LaunchAgent" test_macos_brew_maintenance_launchagent_created
 
 section "Done"
 pass "Smoke checks completed"

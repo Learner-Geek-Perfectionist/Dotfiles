@@ -322,6 +322,11 @@ remove_dotfiles() {
 
 	# macOS 专属清理
 	if [[ "$(uname -s)" == "Darwin" ]]; then
+		local brew_maintenance_plist="$HOME/Library/LaunchAgents/com.dotfiles.brew-maintenance.plist"
+		local brew_maintenance_script="$HOME/Library/Application Support/com.dotfiles/brew-maintenance.sh"
+		local legacy_brew_cleanup_plist="$HOME/Library/LaunchAgents/com.dotfiles.brew-cleanup.plist"
+		local legacy_brew_autoupdate_plist="$HOME/Library/LaunchAgents/com.github.domt4.homebrew-autoupdate.plist"
+		local removed_legacy_autoupdate=false
 		# 恢复安装前保存的电源管理配置
 		if [[ -f "$(pmset_state_file)" ]]; then
 			if restore_pmset_state; then
@@ -332,14 +337,30 @@ remove_dotfiles() {
 		elif command -v pmset &>/dev/null && pmset -g | awk '/^ sleep/ {print $2}' | grep -q '^0$'; then
 			print_warn "未找到 pmset 备份，跳过恢复"
 		fi
-		# 停止 Homebrew autoupdate
-		if command -v brew &>/dev/null && brew commands 2>/dev/null | grep -q autoupdate; then
-			brew autoupdate delete &>/dev/null && print_dim "✓ Homebrew autoupdate 已停止并删除"
+		if [[ -f "$brew_maintenance_plist" ]]; then
+			launchctl unload "$brew_maintenance_plist" &>/dev/null || true
+			rm_path "$brew_maintenance_plist"
+			print_dim "✓ Homebrew 自动维护 LaunchAgent 已移除"
 		fi
-		local brew_cleanup_plist="$HOME/Library/LaunchAgents/com.dotfiles.brew-cleanup.plist"
-		if [[ -f "$brew_cleanup_plist" ]]; then
-			launchctl unload "$brew_cleanup_plist" &>/dev/null || true
-			rm_path "$brew_cleanup_plist"
+		if [[ -f "$brew_maintenance_script" ]]; then
+			rm_path "$brew_maintenance_script"
+			print_dim "✓ Homebrew 自动维护脚本已移除"
+		fi
+		# 停止旧版 Homebrew autoupdate
+		if command -v brew &>/dev/null && brew commands 2>/dev/null | grep -q autoupdate; then
+			if brew autoupdate delete &>/dev/null; then
+				print_dim "✓ Homebrew autoupdate 已停止并删除"
+				removed_legacy_autoupdate=true
+			fi
+		fi
+		if [[ "$removed_legacy_autoupdate" == false && -f "$legacy_brew_autoupdate_plist" ]]; then
+			launchctl unload "$legacy_brew_autoupdate_plist" &>/dev/null || true
+			rm_path "$legacy_brew_autoupdate_plist"
+			print_dim "✓ 旧版 Homebrew autoupdate LaunchAgent 已移除"
+		fi
+		if [[ -f "$legacy_brew_cleanup_plist" ]]; then
+			launchctl unload "$legacy_brew_cleanup_plist" &>/dev/null || true
+			rm_path "$legacy_brew_cleanup_plist"
 			print_dim "✓ Homebrew cleanup LaunchAgent 已移除"
 		fi
 		# 从 access_bpf 组移除用户

@@ -52,17 +52,34 @@ zinit light romkatv/powerlevel10k
 autoload -Uz up-line-or-beginning-search down-line-or-beginning-search
 zle -N up-line-or-beginning-search
 zle -N down-line-or-beginning-search
+autoload -Uz add-zle-hook-widget
 zmodload zsh/terminfo 2>/dev/null || :
-if [[ -n "${terminfo[kcuu1]-}" ]]; then
-	bindkey -- "${terminfo[kcuu1]}" up-line-or-beginning-search
-else
-	bindkey '^[[A' up-line-or-beginning-search
-fi
-if [[ -n "${terminfo[kcud1]-}" ]]; then
-	bindkey -- "${terminfo[kcud1]}" down-line-or-beginning-search
-else
-	bindkey '^[[B' down-line-or-beginning-search
-fi
+_bind_history_prefix_search() {
+	emulate -L zsh
+	local keymap
+	# 很多终端会在普通/应用 cursor 模式之间切换，方向键可能发出两套序列：
+	# `^[[A/^[[B`（CSI）或 `^[OA/^[OB`（SS3）。两套都绑定，避免前缀搜索失效。
+	for keymap in emacs viins vicmd; do
+		[[ -n "${terminfo[kcuu1]-}" ]] && bindkey -M "$keymap" -- "${terminfo[kcuu1]}" up-line-or-beginning-search
+		[[ -n "${terminfo[kcud1]-}" ]] && bindkey -M "$keymap" -- "${terminfo[kcud1]}" down-line-or-beginning-search
+		bindkey -M "$keymap" '^[[A' up-line-or-beginning-search
+		bindkey -M "$keymap" '^[[B' down-line-or-beginning-search
+		bindkey -M "$keymap" '^[OA' up-line-or-beginning-search
+		bindkey -M "$keymap" '^[OB' down-line-or-beginning-search
+	done
+}
+_history_prefix_search_line_init() {
+	(( ${+terminfo[smkx]} )) && echoti smkx
+	_bind_history_prefix_search
+}
+_history_prefix_search_line_finish() {
+	(( ${+terminfo[rmkx]} )) && echoti rmkx
+}
+_bind_history_prefix_search
+add-zle-hook-widget -d line-init _history_prefix_search_line_init 2>/dev/null
+add-zle-hook-widget -d line-finish _history_prefix_search_line_finish 2>/dev/null
+add-zle-hook-widget line-init _history_prefix_search_line_init
+add-zle-hook-widget line-finish _history_prefix_search_line_finish
 
 # 内联原 OMZL::history.zsh 的必要设置（HIST* 变量已在 .zshrc 开头重设）
 # setopt extended_history 已在 .zshenv 中设置，此处不重复

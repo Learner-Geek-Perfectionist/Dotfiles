@@ -123,12 +123,15 @@ zinit light zsh-users/zsh-completions
 
 # 对文件候选做“普通文件在前、dotfiles 在后”，并保留 zsh 已生成的顺序。
 # 这里依赖 `file-sort modification` 先让标准文件补全按 mtime 产出候选，
-# 然后在 fzf-tab 捕获到的原始 `_ftb_compcap` 上做稳定分桶。
+# 然后在 fzf-tab 捕获到的原始 `_ftb_compcap` 上做稳定分桶，并对文件补全临时
+# 关闭 fzf 自己的匹配分数排序，避免输入 query 后又把 dotfiles 顶回前面。
 # 注意：这里直接依赖 fzf-tab 当前内部协议（`_ftb_compcap` 用 `\2` / `\0`
-# 分隔，且文件候选带 `realdir`、插入词存于 `word`）；升级 fzf-tab 时要一并复查。
+# 分隔，且文件候选带 `realdir` 键、插入词存于 `word`。`realdir` 在当前目录补全时
+# 可能是空串，因此要判断键是否存在，不能判断值是否非空）；升级 fzf-tab 时要一并复查。
 _ftb_reorder_file_candidates() {
 	# 直接读源文件定义 orig 函数，绕开 autoload stub 无法复制的问题
 	functions[-ftb-generate-complist-orig]=$(<"$FZF_TAB_HOME/lib/-ftb-generate-complist")
+	functions[-ftb-fzf-orig]=$(<"$FZF_TAB_HOME/lib/-ftb-fzf")
 	-ftb-generate-complist() {
 		local -a _ndot=() _dot=()
 		local -a _prev_sort=()
@@ -139,7 +142,7 @@ _ftb_reorder_file_candidates() {
 		for _cap in "${_ftb_compcap[@]}"; do
 			_meta=${_cap#*$'\2'}
 			_v=("${(@0)_meta}")
-			if [[ -z ${_v[realdir]:-} ]]; then
+			if (( ! ${+_v[realdir]} )); then
 				_all_files=0
 				break
 			fi
@@ -151,6 +154,7 @@ _ftb_reorder_file_candidates() {
 		done
 
 		if (( _has_compcap && _all_files )); then
+			typeset -gi _ftb_file_completion_preserve_order=1
 			_ftb_compcap=("${_ndot[@]}" "${_dot[@]}")
 			_ctx_sort_line=$(zstyle -L ":completion:$_ftb_curcontext" sort)
 			if [[ -n $_ctx_sort_line ]]; then
@@ -161,6 +165,8 @@ _ftb_reorder_file_candidates() {
 			# 仅对当前文件补全上下文临时关闭 fzf-tab 的二次字典序重排，
 			# 让 `_ftb_compcap` 的 mtime 顺序完整保留下来。
 			zstyle ":completion:$_ftb_curcontext" sort false
+		else
+			unset _ftb_file_completion_preserve_order 2>/dev/null
 		fi
 
 		-ftb-generate-complist-orig "$@"
@@ -173,6 +179,38 @@ _ftb_reorder_file_candidates() {
 				zstyle -d ":completion:$_ftb_curcontext" sort
 			fi
 		fi
+
+		return _ret
+	}
+	-ftb-fzf() {
+		local -a _prev_fzf_flags=()
+		local _ctx_fzf_flags_line
+		local -i _had_exact_fzf_flags=0 _had_no_sort=0
+
+		if (( ${_ftb_file_completion_preserve_order:-0} )); then
+			_ctx_fzf_flags_line=$(zstyle -L ":fzf-tab:$_ftb_curcontext" fzf-flags)
+			if [[ -n $_ctx_fzf_flags_line ]]; then
+				_had_exact_fzf_flags=1
+				_prev_fzf_flags=(${(z)_ctx_fzf_flags_line})
+				_prev_fzf_flags=("${_prev_fzf_flags[@]:3}")
+				(( ${_prev_fzf_flags[(Ie)--no-sort]} )) && _had_no_sort=1
+			fi
+			if (( ! _had_no_sort )); then
+				zstyle ":fzf-tab:$_ftb_curcontext" fzf-flags "${_prev_fzf_flags[@]}" --no-sort
+			fi
+		fi
+
+		-ftb-fzf-orig "$@"
+		local _ret=$?
+
+		if (( ${_ftb_file_completion_preserve_order:-0} && ! _had_no_sort )); then
+			if (( _had_exact_fzf_flags )); then
+				zstyle ":fzf-tab:$_ftb_curcontext" fzf-flags "${_prev_fzf_flags[@]}"
+			else
+				zstyle -d ":fzf-tab:$_ftb_curcontext" fzf-flags
+			fi
+		fi
+		unset _ftb_file_completion_preserve_order 2>/dev/null
 
 		return _ret
 	}

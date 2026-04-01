@@ -121,13 +121,78 @@ zinit light zsh-users/zsh-completions
 
 # ── wait'0b'：补全系统激活 ──
 
+# 对文件候选做“普通文件在前、dotfiles 在后”，并保留 zsh 已生成的顺序。
+# 这里依赖 `file-sort modification` 先让标准文件补全按 mtime 产出候选，
+# 然后在 fzf-tab 捕获到的原始 `_ftb_compcap` 上做稳定分桶。
+# 注意：这里直接依赖 fzf-tab 当前内部协议（`_ftb_compcap` 用 `\2` / `\0`
+# 分隔，且文件候选带 `realdir`、插入词存于 `word`）；升级 fzf-tab 时要一并复查。
+_ftb_reorder_file_candidates() {
+	# 直接读源文件定义 orig 函数，绕开 autoload stub 无法复制的问题
+	functions[-ftb-generate-complist-orig]=$(<"$FZF_TAB_HOME/lib/-ftb-generate-complist")
+	-ftb-generate-complist() {
+		local -a _ndot=() _dot=()
+		local -a _prev_sort=()
+		local _ctx_sort_line _cap _meta
+		local -A _v
+		local -i _all_files=1 _has_compcap=$(( $#_ftb_compcap != 0 )) _had_exact_sort=0
+
+		for _cap in "${_ftb_compcap[@]}"; do
+			_meta=${_cap#*$'\2'}
+			_v=("${(@0)_meta}")
+			if [[ -z ${_v[realdir]:-} ]]; then
+				_all_files=0
+				break
+			fi
+			if [[ ${_v[word]} == .* ]]; then
+				_dot+=("$_cap")
+			else
+				_ndot+=("$_cap")
+			fi
+		done
+
+		if (( _has_compcap && _all_files )); then
+			_ftb_compcap=("${_ndot[@]}" "${_dot[@]}")
+			_ctx_sort_line=$(zstyle -L ":completion:$_ftb_curcontext" sort)
+			if [[ -n $_ctx_sort_line ]]; then
+				_had_exact_sort=1
+				_prev_sort=(${(z)_ctx_sort_line})
+				_prev_sort=("${_prev_sort[@]:3}")
+			fi
+			# 仅对当前文件补全上下文临时关闭 fzf-tab 的二次字典序重排，
+			# 让 `_ftb_compcap` 的 mtime 顺序完整保留下来。
+			zstyle ":completion:$_ftb_curcontext" sort false
+		fi
+
+		-ftb-generate-complist-orig "$@"
+		local _ret=$?
+
+		if (( _has_compcap && _all_files )); then
+			if (( _had_exact_sort )); then
+				zstyle ":completion:$_ftb_curcontext" sort "${_prev_sort[@]}"
+			else
+				zstyle -d ":completion:$_ftb_curcontext" sort
+			fi
+		fi
+
+		return _ret
+	}
+}
+
 _ice wait'0b' atinit'
     # 恢复之前由 completion 框架提供的基础行为：
     # 1. 大小写不敏感 + 子串匹配
     # 2. 关闭 zsh 自带菜单，让 fzf-tab 接管候选展示
     # 3. 为 fzf-tab 提供描述和文件类型颜色
-    zstyle ":completion:*" matcher-list "m:{[:lower:][:upper:]}={[:upper:][:lower:]}" "r:|=*" "l:|=* r:|=*"
+    # matcher-list 的每个元素都会单独跑一轮匹配，不能把“忽略大小写”和“子串匹配”拆开，
+    # 否则 `cd W<Tab>` 这类大写子串只会落到区分大小写的子串轮次里。
+    zstyle ":completion:*" matcher-list \
+        "m:{[:lower:][:upper:]}={[:upper:][:lower:]}" \
+        "m:{[:lower:][:upper:]}={[:upper:][:lower:]} r:|=*" \
+        "m:{[:lower:][:upper:]}={[:upper:][:lower:]} l:|=* r:|=*"
     zstyle ":completion:*" menu no
+    # 仅标准文件补全使用此样式；非文件补全会忽略它。
+    # `modification` 默认是最近修改的排前面。
+    zstyle ":completion:*" file-sort modification
     zstyle ":completion:*:descriptions" format "[%d]"
     if [[ -n "${LS_COLORS:-}" ]]; then
         zstyle ":completion:*" list-colors ${(s.:.)LS_COLORS}
@@ -159,9 +224,12 @@ _ice wait'0b' atinit'
     zstyle ":fzf-tab:complete:cd:*" popup-pad 30 0
     zstyle ":fzf-tab:complete:code:*" fzf-preview "eza -1 --color=always \$realpath"
     zstyle ":fzf-tab:complete:code:*" popup-pad 30 0
-    # fzf 0.70+ 会在 NO_COLOR 存在时默认退化成黑白主题，这里显式指定彩色基线。
-    zstyle ":fzf-tab:*" fzf-flags --color=dark,bg+:23
+    # fzf-tab 会把当前输入作为 fzf query；加 -i 避免大写输入触发 smart-case，
+    # 例如 `cd W<Tab>` 也能匹配 `mihomo-party-wcloud/`。
+    # 仅作用于 fzf-tab，不改变普通 fzf 的全局搜索习惯。
+    zstyle ":fzf-tab:*" fzf-flags --color=dark,bg+:23 -i
     zstyle ":fzf-tab:*" switch-group "<" ">"
+    _ftb_reorder_file_candidates; unfunction _ftb_reorder_file_candidates
 '
 zinit light Aloxaf/fzf-tab
 

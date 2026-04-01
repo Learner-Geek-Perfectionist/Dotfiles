@@ -52,7 +52,8 @@
     "uninstall.sh"
   ],
   "scripts/install_dotfiles.sh": [
-    "install.sh"
+    "install.sh",
+    "scripts/deploy_codex_config.sh"
   ],
   "scripts/install_vscode_ext.sh": [
     "install.sh"
@@ -81,6 +82,16 @@
   ],
   ".config/direnv/direnv.toml": [
     "scripts/install_dotfiles.sh"
+  ],
+  ".codex/config.toml": [
+    "scripts/install_dotfiles.sh",
+    ".claude/hooks/sync-dotfile.sh",
+    "scripts/deploy_codex_config.sh"
+  ],
+  "scripts/deploy_codex_config.sh": [
+    "scripts/install_dotfiles.sh",
+    ".claude/hooks/sync-dotfile.sh",
+    ".codex/config.toml"
   ],
   ".config/Code/User/settings.json": [
     ".config/Cursor/User/settings.json",

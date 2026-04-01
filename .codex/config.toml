@@ -1,0 +1,39 @@
+# Codex CLI Configuration
+
+model = "gpt-5.4"
+model_context_window = 1050000
+model_auto_compact_token_limit = 900000
+model_reasoning_effort = "xhigh"
+model_reasoning_summary = "detailed"
+model_verbosity = "low"
+approvals_reviewer = "guardian_subagent"
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+file_opener = "vscode"
+hide_agent_reasoning = false
+show_raw_agent_reasoning = false
+suppress_unstable_features_warning = true
+service_tier = "fast"
+
+[notice]
+hide_full_access_warning = true
+hide_rate_limit_model_nudge = true
+
+[features]
+skills = true
+unified_exec = true
+shell_snapshot = true
+multi_agent = true
+steer = true
+collaboration_modes = true
+personality = true
+js_repl = true
+guardian_approval = true
+prevent_idle_sleep = true
+codex_hooks = true
+
+[sandbox_workspace_write]
+network_access = true
+
+[tui]
+status_line = ["model-with-reasoning", "used-tokens", "context-remaining", "context-window-size", "current-dir", "git-branch", "five-hour-limit", "weekly-limit", "codex-version"]

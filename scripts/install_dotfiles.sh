@@ -108,6 +108,19 @@ _deploy_claude_settings() {
 	print_success "~/.claude/settings.json"
 }
 
+_deploy_codex_config() {
+	local codex_src="$DOTFILES_DIR/.codex/config.toml"
+	local codex_dest="$HOME/.codex/config.toml"
+	[[ -f "$codex_src" ]] || return 0
+
+	if bash "$SCRIPT_DIR/deploy_codex_config.sh" "$codex_src" "$codex_dest" "$HOME"; then
+		dotfiles_manifest_add_file "$codex_dest"
+		print_success "~/.codex/config.toml"
+	else
+		print_warn "无法部署 ~/.codex/config.toml，跳过"
+	fi
+}
+
 ensure_ssh_include_block() {
 	local ssh_config="$HOME/.ssh/config"
 	local start_marker end_marker tmp
@@ -193,6 +206,8 @@ main() {
 
 	# Claude Code 配置
 	_deploy_claude_settings
+	# Codex CLI 配置
+	_deploy_codex_config
 	# SSH 配置：通过 Include 浅合并，避免覆盖机器本地的 Host 定义
 	mkdir -p "$HOME/.ssh/config.d"
 	cp -f "$DOTFILES_DIR/.ssh/config" "$HOME/.ssh/config.d/00-dotfiles"

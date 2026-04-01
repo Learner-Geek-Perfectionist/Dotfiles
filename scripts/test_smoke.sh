@@ -32,7 +32,10 @@ EOF
 
 	assert_file_exists "$manifest"
 	assert_contains "$tmp_home/.zshrc" "$manifest"
+	assert_contains "$tmp_home/.codex/config.toml" "$manifest"
 	assert_contains "$tmp_home/.ssh/config.d/00-dotfiles" "$manifest"
+	assert_file_exists "$tmp_home/.codex/config.toml"
+	assert_contains 'model = "gpt-5.4"' "$tmp_home/.codex/config.toml"
 	assert_file_exists "$tmp_home/.ssh/config"
 	assert_contains "# >>> Dotfiles SSH Include >>>" "$tmp_home/.ssh/config"
 	assert_contains "Include config.d/*" "$tmp_home/.ssh/config"
@@ -72,6 +75,7 @@ EOF
 
 	assert_file_exists "$tmp_home/.zshrc"
 	assert_file_missing "$tmp_home/.gitconfig"
+	assert_file_missing "$tmp_home/.codex/config.toml"
 	assert_file_exists "$tmp_home/.claude/settings.json"
 	if [[ -f "$tmp_home/.ssh/config" ]]; then
 		assert_not_contains "# >>> Dotfiles SSH Include >>>" "$tmp_home/.ssh/config"
@@ -111,6 +115,48 @@ EOF
 
 	assert_file_exists "$tmp_home/.claude/settings.json"
 	assert_not_contains "PostToolUse" "$tmp_home/.claude/settings.json"
+}
+
+test_codex_config_preserves_projects_and_adds_home_trust() {
+	local tmp_home fake_bin log external_project redundant_project
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install-codex.log"
+	external_project="/tmp/codex-external-project"
+	redundant_project="$tmp_home/redundant-project"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	mkdir -p "$tmp_home/.codex"
+	cat >"$tmp_home/.codex/config.toml" <<EOF
+model = "legacy"
+
+[projects."$external_project"]
+trust_level = "trusted"
+
+[projects."$redundant_project"]
+trust_level = "trusted"
+EOF
+
+	cat >"$fake_bin/zsh" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/keychain" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$fake_bin/zsh" "$fake_bin/keychain"
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" DOTFILES_DIR="$REPO_ROOT" \
+		bash "$REPO_ROOT/scripts/install_dotfiles.sh" >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "install_dotfiles.sh codex merge failed"
+	fi
+
+	assert_contains 'model = "gpt-5.4"' "$tmp_home/.codex/config.toml"
+	assert_contains "[projects.\"$external_project\"]" "$tmp_home/.codex/config.toml"
+	assert_contains "[projects.\"$tmp_home\"]" "$tmp_home/.codex/config.toml"
+	assert_not_contains "[projects.\"$redundant_project\"]" "$tmp_home/.codex/config.toml"
 }
 
 test_pixi_prefers_managed_install_over_system_binary() {
@@ -381,6 +427,7 @@ EOF
 run_test "Dotfiles manifest and SSH include block" test_dotfiles_manifest_and_ssh_block
 run_test "Dotfiles uninstall preserves modified files" test_dotfiles_uninstall_preserves_modified_files
 run_test "Dotfiles hook-free fallback" test_dotfiles_hook_free_fallback
+run_test "Codex config preserves projects" test_codex_config_preserves_projects_and_adds_home_trust
 run_test "Pixi prefers managed install" test_pixi_prefers_managed_install_over_system_binary
 run_test "Claude optional on macOS" test_claude_optional_on_macos_when_missing
 run_test "Claude optional on Linux" test_claude_optional_on_linux_when_install_fails

@@ -19,6 +19,10 @@ REL="${FILE_PATH#"$REPO"/}"
 
 # 只同步已知的复制部署路径（与 install_dotfiles.sh 对应）
 case "$REL" in
+    .codex/config.toml)
+        bash "$REPO/scripts/deploy_codex_config.sh" "$FILE_PATH" "$HOME/.codex/config.toml" "$HOME"
+        printf '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"[sync-dotfile] auto-synced: .codex/config.toml -> ~/.codex/config.toml"}}\n'
+        ;;
     .config/kitty/*|\
     .config/karabiner/*|\
     .config/zsh/*|\

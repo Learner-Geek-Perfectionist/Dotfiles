@@ -1,7 +1,7 @@
 #!/bin/bash
 # 部署 Codex CLI 配置：
 # 1) 以仓库内 config.toml 为基线
-# 2) 保留本机已有的 [projects."..."] 项（但移除当前 HOME 下的冗余子目录）
+# 2) 保留本机已有的 [projects."..."] 项（仅去重当前 HOME 项）
 # 3) 自动确保当前 HOME 被标记为 trusted
 
 set -euo pipefail
@@ -50,7 +50,6 @@ if [[ -f "$dest" ]]; then
 			block_header = $0
 			block_body = ""
 			skip_block = ($0 == "[projects.\"" trust_path "\"]")
-			if (!skip_block && index($0, "[projects.\"" trust_path "/") == 1) skip_block = 1
 			next
 		}
 

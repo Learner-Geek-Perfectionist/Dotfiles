@@ -117,13 +117,13 @@ EOF
 	assert_not_contains "PostToolUse" "$tmp_home/.claude/settings.json"
 }
 
-test_codex_config_preserves_projects_and_adds_home_trust() {
-	local tmp_home fake_bin log external_project redundant_project
+test_codex_config_preserves_projects_and_keeps_home_subprojects() {
+	local tmp_home fake_bin log external_project child_project
 	tmp_home=$(make_temp_dir)
 	fake_bin=$(make_temp_dir)
 	log="$tmp_home/install-codex.log"
 	external_project="/tmp/codex-external-project"
-	redundant_project="$tmp_home/redundant-project"
+	child_project="$tmp_home/redundant-project"
 	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
 
 	mkdir -p "$tmp_home/.codex"
@@ -133,7 +133,7 @@ model = "legacy"
 [projects."$external_project"]
 trust_level = "trusted"
 
-[projects."$redundant_project"]
+[projects."$child_project"]
 trust_level = "trusted"
 EOF
 
@@ -156,7 +156,7 @@ EOF
 	assert_contains 'model = "gpt-5.4"' "$tmp_home/.codex/config.toml"
 	assert_contains "[projects.\"$external_project\"]" "$tmp_home/.codex/config.toml"
 	assert_contains "[projects.\"$tmp_home\"]" "$tmp_home/.codex/config.toml"
-	assert_not_contains "[projects.\"$redundant_project\"]" "$tmp_home/.codex/config.toml"
+	assert_contains "[projects.\"$child_project\"]" "$tmp_home/.codex/config.toml"
 }
 
 test_pixi_prefers_managed_install_over_system_binary() {
@@ -427,7 +427,7 @@ EOF
 run_test "Dotfiles manifest and SSH include block" test_dotfiles_manifest_and_ssh_block
 run_test "Dotfiles uninstall preserves modified files" test_dotfiles_uninstall_preserves_modified_files
 run_test "Dotfiles hook-free fallback" test_dotfiles_hook_free_fallback
-run_test "Codex config preserves projects" test_codex_config_preserves_projects_and_adds_home_trust
+run_test "Codex config preserves subprojects" test_codex_config_preserves_projects_and_keeps_home_subprojects
 run_test "Pixi prefers managed install" test_pixi_prefers_managed_install_over_system_binary
 run_test "Claude optional on macOS" test_claude_optional_on_macos_when_missing
 run_test "Claude optional on Linux" test_claude_optional_on_linux_when_install_fails

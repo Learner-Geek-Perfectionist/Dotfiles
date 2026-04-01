@@ -165,6 +165,12 @@ git_current_branch() {
 _ice wait'0c'
 zinit snippet OMZP::git/git.plugin.zsh
 
+# F-Sy-H 默认会在 YANK_ACTIVE 时给整段粘贴内容套上 `paste standout`，
+# 多行代码粘贴时会显得整块过亮；预先覆盖 zle 的 paste 样式，保留语法色。
+zmodload zsh/zleparameter 2>/dev/null || :
+typeset -ga zle_highlight
+zle_highlight=(${zle_highlight:#paste:*} "paste:none")
+
 _ice wait'0c' atload'FAST_HIGHLIGHT[chroma-which]="→chroma/-precommand.ch"'
 zinit light zdharma-continuum/fast-syntax-highlighting
 

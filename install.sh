@@ -587,7 +587,7 @@ main() {
 	print_dim "📝 日志: $DOTFILES_LOG"
 	_echo_blank
 	print_info "下一步:"
-	print_dim "1. 重新打开终端（或 source $shell_hint）"
+	print_dim "1. 重新打开终端（或 source ${shell_hint}）"
 
 	if [[ "$os" == "linux" ]]; then
 		print_dim "2. 查看工具: cd ~ && pixi list"

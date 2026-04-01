@@ -78,9 +78,10 @@ alias sudo='sudo '
 
 # 内联原 OMZL::theme-and-appearance.zsh 的 eza 别名
 # $commands[eza] 展开为绝对路径，确保 sudo ls/ll 也能找到 eza
+# 显式开启颜色，避免外部环境的 NO_COLOR 让交互式 ls/ll 退化成纯色输出。
 if (( $+commands[eza] )); then
-	alias ls="$commands[eza] --icons -ha --time-style=iso"
-	alias ll="$commands[eza] --icons -ha --long --time-style=iso"
+	alias ls="$commands[eza] --color=always --icons -ha --time-style=iso"
+	alias ll="$commands[eza] --color=always --icons -ha --long --time-style=iso"
 fi
 
 # ============================================
@@ -104,6 +105,20 @@ zinit light zsh-users/zsh-completions
 # ── wait'0b'：补全系统激活 ──
 
 _ice wait'0b' atinit'
+    # 恢复之前由 completion 框架提供的基础行为：
+    # 1. 大小写不敏感 + 子串匹配
+    # 2. 关闭 zsh 自带菜单，让 fzf-tab 接管候选展示
+    # 3. 为 fzf-tab 提供描述和文件类型颜色
+    zstyle ":completion:*" matcher-list "m:{[:lower:][:upper:]}={[:upper:][:lower:]}" "r:|=*" "l:|=* r:|=*"
+    zstyle ":completion:*" menu no
+    zstyle ":completion:*:descriptions" format "[%d]"
+    if [[ -n "${LS_COLORS:-}" ]]; then
+        zstyle ":completion:*" list-colors ${(s.:.)LS_COLORS}
+    else
+        zstyle ":completion:*" list-colors \
+            "fi=0" "di=1;34" "ln=1;36" "pi=33" "so=1;35" "bd=1;33" "cd=1;33" \
+            "or=31" "mi=0" "ex=1;32" "su=37;41" "sg=30;43" "tw=30;42" "ow=34;42" "st=37;44"
+    fi
     autoload -Uz compinit
     local zcd="${ZSH_COMPDUMP:-$HOME/.cache/zsh/.zcompdump}"
     local need_update=0
@@ -127,7 +142,8 @@ _ice wait'0b' atinit'
     zstyle ":fzf-tab:complete:cd:*" popup-pad 30 0
     zstyle ":fzf-tab:complete:code:*" fzf-preview "eza -1 --color=always \$realpath"
     zstyle ":fzf-tab:complete:code:*" popup-pad 30 0
-    zstyle ":fzf-tab:*" fzf-flags --color=bg+:23
+    # fzf 0.70+ 会在 NO_COLOR 存在时默认退化成黑白主题，这里显式指定彩色基线。
+    zstyle ":fzf-tab:*" fzf-flags --color=dark,bg+:23
     zstyle ":fzf-tab:*" switch-group "<" ">"
 '
 zinit light Aloxaf/fzf-tab

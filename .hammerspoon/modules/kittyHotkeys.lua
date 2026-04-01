@@ -1,12 +1,49 @@
--- kittyHotkeys.lua — only enable Cmd+N / Cmd+E when Kitty is frontmost
+-- kittyHotkeys.lua — intercept Cmd+N / Cmd+E before Kitty consumes them
 
 local M = {}
 
 local KITTY_BUNDLE_ID = 'net.kovidgoyal.kitty'
-local KITTY_BIN = '/opt/homebrew/bin/kitty'
+local KEY_CODE_TO_SCRIPT = {
+    [hs.keycodes.map.n] = './smart_window.py',
+    [hs.keycodes.map.e] = './smart_tab.py',
+}
+local KITTY_BIN_CANDIDATES = {
+    '/Applications/kitty.app/Contents/MacOS/kitty',
+    '/opt/homebrew/bin/kitty',
+    '/usr/local/bin/kitty',
+}
 
-local hotkeys = {}
 local runningTasks = {}
+local interceptionTap = nil
+local interceptionEnabled = nil
+local resolvedKittyBin = nil
+
+local function resolveKittyBin()
+    if resolvedKittyBin and hs.fs.attributes(resolvedKittyBin) then
+        return resolvedKittyBin
+    end
+
+    local app = hs.application.frontmostApplication()
+    if app and app:bundleID() == KITTY_BUNDLE_ID then
+        local appPath = app:path()
+        if appPath then
+            local bundleBinary = appPath .. '/Contents/MacOS/kitty'
+            if hs.fs.attributes(bundleBinary) then
+                resolvedKittyBin = bundleBinary
+                return resolvedKittyBin
+            end
+        end
+    end
+
+    for _, candidate in ipairs(KITTY_BIN_CANDIDATES) do
+        if hs.fs.attributes(candidate) then
+            resolvedKittyBin = candidate
+            return resolvedKittyBin
+        end
+    end
+
+    return nil
+end
 
 local function getKittySocket()
     local app = hs.application.frontmostApplication()
@@ -25,16 +62,6 @@ local function getKittySocket()
     return nil
 end
 
-local function setEnabled(enabled)
-    for _, hotkey in pairs(hotkeys) do
-        if enabled then
-            hotkey:enable()
-        else
-            hotkey:disable()
-        end
-    end
-end
-
 local function frontmostIsKitty()
     local app = hs.application.frontmostApplication()
     if not app then
@@ -44,7 +71,22 @@ local function frontmostIsKitty()
     return app:bundleID() == KITTY_BUNDLE_ID
 end
 
+local function hasOnlyCommandModifier(event)
+    local flags = event:getFlags()
+    if not flags.cmd then
+        return false
+    end
+
+    return not flags.alt and not flags.ctrl and not flags.shift and not flags.fn
+end
+
 local function runKittyKitten(script)
+    local kittyBin = resolveKittyBin()
+    if not kittyBin then
+        hs.printf('kittyHotkeys: no usable Kitty binary, skip %s', script)
+        return
+    end
+
     local socket = getKittySocket()
     if not socket then
         hs.printf('kittyHotkeys: no usable Kitty socket, skip %s', script)
@@ -52,7 +94,7 @@ local function runKittyKitten(script)
     end
 
     local task
-    task = hs.task.new(KITTY_BIN, function(exitCode, stdOut, stdErr)
+    task = hs.task.new(kittyBin, function(exitCode, stdOut, stdErr)
         runningTasks[task] = nil
 
         if exitCode ~= 0 then
@@ -75,16 +117,45 @@ local function runKittyKitten(script)
     task:start()
 end
 
+local function triggerScript(script)
+    if not script then
+        return false
+    end
+
+    runKittyKitten(script)
+    return true
+end
+
+local function setEnabled(enabled)
+    if enabled == interceptionEnabled then
+        return
+    end
+
+    interceptionEnabled = enabled
+
+    if enabled then
+        interceptionTap:start()
+    else
+        interceptionTap:stop()
+    end
+end
+
 local function syncHotkeys()
     setEnabled(frontmostIsKitty())
 end
 
-hotkeys.newWindow = hs.hotkey.new({ 'cmd' }, 'n', function()
-    runKittyKitten('./smart_window.py')
-end)
+interceptionTap = hs.eventtap.new({ hs.eventtap.event.types.keyDown }, function(event)
+    if not frontmostIsKitty() or not hasOnlyCommandModifier(event) then
+        return false
+    end
 
-hotkeys.newTab = hs.hotkey.new({ 'cmd' }, 'e', function()
-    runKittyKitten('./smart_tab.py')
+    local script = KEY_CODE_TO_SCRIPT[event:getKeyCode()]
+    if not script then
+        return false
+    end
+
+    triggerScript(script)
+    return true
 end)
 
 local watcher = hs.application.watcher.new(function(_, eventType, _)
@@ -99,9 +170,18 @@ end)
 watcher:start()
 syncHotkeys()
 
-M._hotkeys = hotkeys
+function M.newWindow()
+    return triggerScript(KEY_CODE_TO_SCRIPT[hs.keycodes.map.n])
+end
+
+function M.newTab()
+    return triggerScript(KEY_CODE_TO_SCRIPT[hs.keycodes.map.e])
+end
+
+M._eventtap = interceptionTap
 M._watcher = watcher
 M._runningTasks = runningTasks
 M._getKittySocket = getKittySocket
+M._resolveKittyBin = resolveKittyBin
 
 return M

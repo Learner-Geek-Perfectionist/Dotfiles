@@ -182,12 +182,12 @@ fzf() {
 		{
 			# 清除常见 ANSI 控制序列，避免 fzf 读取到颜色码或终端控制指令。
 			command perl -pe 's/\e\[[0-?]*[ -\/]*[@-~]//g; s/\e\][^\a]*(?:\a|\e\\\\)//g; s/\e[P^_][^\e]*(?:\e\\\\)//g; s/\e[@-_]//g' > "$tmp"
-			command fzf "$@" < "$tmp"
+			env -u NO_COLOR command fzf "$@" < "$tmp"
 		} always {
 			rm -f "$tmp"
 		}
 	else
-		command fzf "$@"
+		env -u NO_COLOR command fzf "$@"
 	fi
 }
 

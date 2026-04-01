@@ -8,6 +8,49 @@ from kitty.launch import launch as kitty_launch, parse_launch_args
 _SSH_OPTS_WITH_ARG = frozenset('bcDEeFIiJLlmOopQRSWw')
 
 
+def _extract_kitty_ssh_destination(cmdline):
+    """只识别 kitty kitten ssh 启动的交互式远程 shell。"""
+    try:
+        dash_idx = cmdline.index('--')
+        destination = cmdline[dash_idx + 1]
+    except (ValueError, IndexError):
+        return None
+
+    remote_cmd = cmdline[dash_idx + 2:]
+    if remote_cmd[:3] == ['exec', 'sh', '-c']:
+        return destination
+    return None
+
+
+def _extract_plain_ssh_destination(cmdline):
+    """只把 `ssh host` 视为交互式 SSH，会忽略 git-over-ssh 等远程命令。"""
+    args = cmdline[1:]
+    skip_next = False
+
+    for idx, arg in enumerate(args):
+        if skip_next:
+            skip_next = False
+            continue
+
+        if arg == '--':
+            if idx + 1 < len(args):
+                destination = args[idx + 1]
+                remote_cmd = args[idx + 2:]
+                return destination if not remote_cmd else None
+            return None
+
+        if arg.startswith('-'):
+            if len(arg) == 2 and arg[1] in _SSH_OPTS_WITH_ARG:
+                skip_next = True
+            continue
+
+        destination = arg
+        remote_cmd = args[idx + 1:]
+        return destination if not remote_cmd else None
+
+    return None
+
+
 def extract_ssh_destination(window):
     """从前台进程中提取 SSH 目标地址（user@host 或 hostname）。找到返回字符串，否则返回 None。"""
     try:
@@ -23,26 +66,13 @@ def extract_ssh_destination(window):
         if basename != 'ssh':
             continue
 
-        # kitten ssh 生成的 cmdline 格式：
-        # /usr/bin/ssh -t -o ... -- user@host exec sh -c '...'
-        # 只需要 '--' 后面的第一个参数（目标地址）
-        try:
-            dash_idx = cmdline.index('--')
-            return cmdline[dash_idx + 1]
-        except (ValueError, IndexError):
-            pass
+        destination = _extract_kitty_ssh_destination(cmdline)
+        if destination is not None:
+            return destination
 
-        # 没有 '--'，按 SSH 参数语法解析，找第一个非选项参数（即目标主机）
-        skip_next = False
-        for arg in cmdline[1:]:
-            if skip_next:
-                skip_next = False
-                continue
-            if arg.startswith('-'):
-                if len(arg) == 2 and arg[1] in _SSH_OPTS_WITH_ARG:
-                    skip_next = True
-                continue
-            return arg
+        destination = _extract_plain_ssh_destination(cmdline)
+        if destination is not None:
+            return destination
 
     return None
 

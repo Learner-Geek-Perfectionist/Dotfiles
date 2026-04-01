@@ -4,21 +4,58 @@
 # 这样 exit 退出 SSH 后，回落到本地 zsh，window 不会消失
 
 import sys
-from importlib import reload
+import traceback
+import inspect
+from importlib.util import module_from_spec, spec_from_file_location
+from pathlib import Path
 
 from kittens.tui.handler import result_handler
-import ssh_utils
-
-smart_launch = reload(ssh_utils).smart_launch
 
 
 def main(args):
     pass
 
 
+def current_script_path():
+    for candidate in (
+        globals().get('__file__'),
+        inspect.getsourcefile(load_ssh_utils),
+        inspect.getfile(load_ssh_utils),
+        sys.argv[0] if sys.argv else None,
+    ):
+        if candidate:
+            return Path(candidate).resolve()
+
+    raise RuntimeError('Unable to determine smart_window.py path')
+
+
+def load_ssh_utils():
+    module_path = current_script_path().with_name('ssh_utils.py')
+    spec = spec_from_file_location('kitty_smart_ssh_utils', module_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f'Unable to load ssh_utils from {module_path}')
+
+    module = module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 @result_handler(no_ui=True)
 def handle_result(args, result, target_window_id, boss):
-    smart_launch(boss, "os-window", target_window_id)
+    try:
+        load_ssh_utils().smart_launch(boss, "os-window", target_window_id)
+    except Exception:
+        tb = traceback.format_exc()
+        print(tb, file=sys.stderr, end='')
+
+        show_error = getattr(boss, 'show_error', None)
+        if callable(show_error):
+            try:
+                show_error('Kitty smart window failed', tb)
+            except Exception:
+                pass
+
+        raise
 
 
 if __name__ == '__main__':

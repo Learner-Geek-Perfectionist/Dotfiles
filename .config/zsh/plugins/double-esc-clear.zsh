@@ -9,33 +9,32 @@ else
 	KEYTIMEOUT=1   # 10ms（本地终端，double-esc 响应更快）
 fi
 
-typeset -g _esc_pressed=0
-typeset -gi _esc_timer_job=0
+typeset -gF _esc_last_pressed_at=0
+typeset -gF _esc_double_window=0.5
+typeset -gi _esc_uses_realtime=0
 
-_reset_esc_flag() {
-	_esc_pressed=0
-	if (( _esc_timer_job > 0 )); then
-		sched -$_esc_timer_job 2>/dev/null || :
-		_esc_timer_job=0
-	fi
-}
+if zmodload -F zsh/datetime p:EPOCHREALTIME 2>/dev/null; then
+	_esc_uses_realtime=1
+else
+	_esc_double_window=1
+fi
 
 double-esc-clear() {
-	if (( _esc_pressed )); then
+	local -F now
+
+	if (( _esc_uses_realtime )); then
+		now=$EPOCHREALTIME
+	else
+		now=$SECONDS
+	fi
+
+	if (( _esc_last_pressed_at > 0 && now - _esc_last_pressed_at <= _esc_double_window )); then
 		BUFFER=""
 		CURSOR=0
-		_reset_esc_flag
+		_esc_last_pressed_at=0
 		zle reset-prompt
 	else
-		# 用 zsh/sched 避免每次按 ESC 都 fork 一个 sleep 进程。
-		if ! zmodload -F zsh/sched b:sched 2>/dev/null; then
-			_esc_pressed=1
-			return 0
-		fi
-		_reset_esc_flag
-		_esc_pressed=1
-		sched +0.5 _reset_esc_flag
-		_esc_timer_job=${${(k)zsh_scheduled_events}[-1]}
+		_esc_last_pressed_at=$now
 	fi
 }
 

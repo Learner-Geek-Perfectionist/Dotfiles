@@ -2,6 +2,10 @@
 **/Applications/**
 **/Contents/Resources/*.lproj/**
 
+# 常见隐藏目录（保留 .config，可搜索；排除仓库元数据和缓存）
+**/.git/**
+**/.cache/**
+
 # macOS 系统目录
 **/System/**
 **/Volumes/**

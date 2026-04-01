@@ -1,6 +1,9 @@
 # 大小写不敏感
 --ignore-case
 
+# 搜索隐藏文件/目录（由 ignore 文件显式排除噪音目录）
+--hidden
+
 # 多线程
 --threads=0
 

@@ -12,7 +12,6 @@
 /.settings
 /.project
 /.cproject
-/doc
 /daemon/CMakeFiles
 /examples/CMakeFiles
 /implementation/configuration/include/internal.hpp
@@ -109,7 +108,10 @@ pixi.lock
 !.pixi/config.toml
 
 # 本地 review / plan / notes 文档，不纳入版本控制
-docs/
+/docs/
+**/docs/
+/doc/
+**/doc/
 
 # age 加密的 tokens（机器绑定，不跨机器同步）
 .tokens.sh.age

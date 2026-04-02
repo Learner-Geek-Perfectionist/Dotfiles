@@ -165,7 +165,7 @@ remove_bb_browser() {
 	if [[ -f "$state_file" ]]; then
 		# shellcheck disable=SC1090
 		source "$state_file"
-		if [[ -z "${PREEXISTING_BB_BROWSER:-}" || "${PREEXISTING_BB_BROWSER:-}" == "0" ]] && command -v npm &>/dev/null; then
+		if [[ "${PREEXISTING_BB_BROWSER:-}" == "0" ]] && command -v npm &>/dev/null; then
 			npm uninstall -g bb-browser >/dev/null 2>&1 || true
 		fi
 	fi

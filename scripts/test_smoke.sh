@@ -85,6 +85,48 @@ EOF
 	assert_contains "$tmp_home/.config/zsh/plugins/bb-browser.zsh" "$manifest"
 }
 
+test_bb_browser_install_uses_latest_and_deploys_wrapper() {
+	local tmp_home fake_bin log npm_log
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install-bb-browser.log"
+	npm_log="$tmp_home/npm.log"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	cat >"$fake_bin/npm" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >>"$npm_log"
+if [ "\$1" = "install" ] && [ "\$2" = "-g" ] && [ "\$3" = "bb-browser@latest" ]; then
+  cat >"$fake_bin/bb-browser" <<'INNER'
+#!/bin/sh
+case "\$1" in
+  --version) echo 'bb-browser 9.9.9' ;;
+  *) exit 0 ;;
+esac
+INNER
+  chmod +x "$fake_bin/bb-browser"
+fi
+exit 0
+EOF
+	cat >"$fake_bin/node" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$fake_bin/npm" "$fake_bin/node"
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		BB_BROWSER_CDP_URL="http://127.0.0.1:19825" \
+		bash "$REPO_ROOT/scripts/install_bb_browser.sh" >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "install_bb_browser.sh failed"
+	fi
+
+	assert_executable "$tmp_home/.local/bin/bb-browser-user"
+	assert_file_exists "$tmp_home/.local/state/dotfiles/bb-browser.env"
+	assert_contains "install" "$npm_log"
+	assert_contains "bb-browser@latest" "$npm_log"
+}
+
 test_dotfiles_uninstall_preserves_modified_files() {
 	local tmp_home fake_bin install_log uninstall_log superpowers_repo
 	tmp_home=$(make_temp_dir)
@@ -651,6 +693,7 @@ EOF
 
 run_test "Dotfiles manifest and SSH include block" test_dotfiles_manifest_and_ssh_block
 run_test "Dotfiles deploys bb-browser shell plugin" test_dotfiles_deploys_bb_browser_shell_plugin
+run_test "bb-browser install uses latest and deploys wrapper" test_bb_browser_install_uses_latest_and_deploys_wrapper
 run_test "Dotfiles uninstall preserves modified files" test_dotfiles_uninstall_preserves_modified_files
 run_test "Claude runtime config preserves existing state" test_claude_runtime_config_preserves_existing_state
 run_test "Git config identity migrates to local include" test_gitconfig_identity_migrates_to_local

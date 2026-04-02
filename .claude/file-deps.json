@@ -40,6 +40,7 @@
     "scripts/install_dotfiles.sh",
     "scripts/install_vscode_ext.sh",
     "scripts/install_claude_code.sh",
+    "scripts/install_bb_browser.sh",
     "scripts/install_pixi.sh",
     "scripts/install_kotlin_native.sh",
     "scripts/install_macos.sh"
@@ -67,6 +68,17 @@
   ],
   "scripts/install_claude_code.sh": [
     "install.sh"
+  ],
+  "scripts/install_bb_browser.sh": [
+    "install.sh",
+    "uninstall.sh",
+    "lib/utils.sh",
+    "scripts/bb-browser-user.sh"
+  ],
+  "scripts/bb-browser-user.sh": [
+    "scripts/install_bb_browser.sh",
+    "lib/utils.sh",
+    ".config/zsh/plugins/bb-browser.zsh"
   ],
   "scripts/install_pixi.sh": [
     "install.sh",

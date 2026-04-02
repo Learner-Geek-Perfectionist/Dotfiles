@@ -92,6 +92,22 @@ require_npm() {
 	return 1
 }
 
+read_existing_install_state() {
+	[[ -f "$STATE_FILE" ]] || return 0
+
+	(
+		set +u
+		# shellcheck disable=SC1090
+		source "$STATE_FILE"
+		printf '%s\n' \
+			"${PREEXISTING_BB_BROWSER:-}" \
+			"${PREEXISTING_BB_BROWSER_PATH:-}" \
+			"${PREEXISTING_WRAPPER:-}" \
+			"${PREEXISTING_WRAPPER_BACKUP_PATH:-}" \
+			"${REAL_BB_BROWSER_PATH:-}"
+	)
+}
+
 write_state_file() {
 	local preexisting_marker="$1"
 	local preexisting_path="$2"
@@ -127,9 +143,12 @@ refresh_codex_config() {
 }
 
 prepare_wrapper_backup() {
-	local preexisting_wrapper_marker="$1"
+	local preexisting_wrapper_marker="$1" tracked_preexisting_wrapper="$2"
 
 	if [[ "$preexisting_wrapper_marker" == "1" ]]; then
+		if [[ "$tracked_preexisting_wrapper" == "1" && -e "$WRAPPER_BACKUP_PATH" ]]; then
+			return 0
+		fi
 		mkdir -p "$(dirname "$WRAPPER_BACKUP_PATH")"
 		cp -p "$WRAPPER_PATH" "$WRAPPER_BACKUP_PATH"
 		return 0
@@ -169,13 +188,32 @@ main() {
 	local preexisting_wrapper_marker
 	local installed_version real_bb_browser_path managed_prefix
 	local managed_bb_browser managed_bb_browser_backup wrapper_backup_backup state_backup
+	local recorded_preexisting_bb recorded_preexisting_bb_path recorded_preexisting_wrapper
+	local recorded_wrapper_backup_path recorded_real_bb_browser_path
 
 	require_npm || return 0
+
+	{
+		IFS= read -r recorded_preexisting_bb || true
+		IFS= read -r recorded_preexisting_bb_path || true
+		IFS= read -r recorded_preexisting_wrapper || true
+		IFS= read -r recorded_wrapper_backup_path || true
+		IFS= read -r recorded_real_bb_browser_path || true
+	} < <(read_existing_install_state || true)
+	if [[ -n "$recorded_wrapper_backup_path" ]]; then
+		WRAPPER_BACKUP_PATH="$recorded_wrapper_backup_path"
+	fi
 
 	preexisting_bb_browser="$(command -v bb-browser 2>/dev/null || true)"
 	preexisting_bb_browser_marker=0
 	preexisting_bb_browser_path=""
-	if [[ -n "$preexisting_bb_browser" ]]; then
+	if [[ "$recorded_preexisting_bb" == "0" && -n "$recorded_real_bb_browser_path" && "$preexisting_bb_browser" == "$recorded_real_bb_browser_path" ]]; then
+		preexisting_bb_browser_marker=0
+		preexisting_bb_browser_path=""
+	elif [[ "$recorded_preexisting_bb" == "1" && -n "$recorded_preexisting_bb_path" ]]; then
+		preexisting_bb_browser_marker=1
+		preexisting_bb_browser_path="$recorded_preexisting_bb_path"
+	elif [[ -n "$preexisting_bb_browser" ]]; then
 		preexisting_bb_browser_marker=1
 		preexisting_bb_browser_path="$preexisting_bb_browser"
 	fi
@@ -196,13 +234,17 @@ main() {
 	fi
 
 	preexisting_wrapper_marker=0
-	if [[ -e "$WRAPPER_PATH" ]]; then
+	if [[ "$recorded_preexisting_wrapper" == "1" ]]; then
+		preexisting_wrapper_marker=1
+	elif [[ "$recorded_preexisting_wrapper" == "0" && -e "$WRAPPER_PATH" ]]; then
+		preexisting_wrapper_marker=0
+	elif [[ -e "$WRAPPER_PATH" ]]; then
 		preexisting_wrapper_marker=1
 	fi
 	wrapper_backup_backup="$(backup_artifact "$WRAPPER_BACKUP_PATH")"
 	state_backup="$(backup_artifact "$STATE_FILE")"
 
-	if ! prepare_wrapper_backup "$preexisting_wrapper_marker"; then
+	if ! prepare_wrapper_backup "$preexisting_wrapper_marker" "$recorded_preexisting_wrapper"; then
 		rollback_managed_bb_browser "$managed_prefix" "$preexisting_bb_browser" "$managed_bb_browser" "$managed_bb_browser_backup"
 		rollback_install_artifacts "$preexisting_wrapper_marker" "$wrapper_backup_backup" "$state_backup"
 		cleanup_artifact_backup "$wrapper_backup_backup"

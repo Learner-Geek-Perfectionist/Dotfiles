@@ -667,6 +667,88 @@ EOF
 	assert_contains "uninstall" "$npm_log"
 }
 
+test_bb_browser_reinstall_preserves_managed_ownership() {
+	local tmp_home fake_bin managed_prefix install_log reinstall_log uninstall_log npm_log state_file wrapper_path
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	managed_prefix=$(make_temp_dir)
+	install_log="$tmp_home/install-bb-browser-reinstall.log"
+	reinstall_log="$tmp_home/reinstall-bb-browser.log"
+	uninstall_log="$tmp_home/uninstall-bb-browser-reinstall.log"
+	npm_log="$tmp_home/npm-reinstall.log"
+	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
+	wrapper_path="$tmp_home/.local/bin/bb-browser-user"
+	trap "rm -rf '$tmp_home' '$fake_bin' '$managed_prefix'" RETURN
+
+	cat >"$fake_bin/npm" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >>"$npm_log"
+if [ "\$1" = "prefix" ] && [ "\$2" = "-g" ]; then
+  printf '%s\n' "$managed_prefix"
+  exit 0
+fi
+if [ "\$1" = "install" ] && [ "\$2" = "-g" ] && [ "\$3" = "bb-browser@latest" ]; then
+  mkdir -p "$managed_prefix/bin"
+  cat >"$managed_prefix/bin/bb-browser" <<'INNER'
+#!/bin/sh
+case "\$1" in
+  --version) echo 'bb-browser 9.9.9' ;;
+  *) exit 0 ;;
+esac
+INNER
+  chmod +x "$managed_prefix/bin/bb-browser"
+  exit 0
+fi
+if [ "\$1" = "--prefix" ] && [ "\$2" = "$managed_prefix" ] && [ "\$3" = "uninstall" ] && [ "\$4" = "-g" ] && [ "\$5" = "bb-browser" ]; then
+  rm -f "$managed_prefix/bin/bb-browser"
+  exit 0
+fi
+exit 0
+EOF
+	cat >"$fake_bin/node" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$fake_bin/npm" "$fake_bin/node"
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		BB_BROWSER_CDP_URL="http://127.0.0.1:19825" \
+		bash "$REPO_ROOT/scripts/install_bb_browser.sh" >"$install_log" 2>&1; then
+		cat "$install_log" >&2
+		fail "install_bb_browser.sh initial managed reinstall test failed"
+	fi
+
+	assert_file_exists "$state_file"
+	assert_contains "PREEXISTING_BB_BROWSER=0" "$state_file"
+	assert_contains "PREEXISTING_WRAPPER=0" "$state_file"
+	assert_contains "REAL_BB_BROWSER_PATH=$managed_prefix/bin/bb-browser" "$state_file"
+	assert_file_exists "$wrapper_path"
+
+	if ! HOME="$tmp_home" PATH="$managed_prefix/bin:$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		BB_BROWSER_CDP_URL="http://127.0.0.1:19825" \
+		bash "$REPO_ROOT/scripts/install_bb_browser.sh" >"$reinstall_log" 2>&1; then
+		cat "$reinstall_log" >&2
+		fail "install_bb_browser.sh second managed reinstall test failed"
+	fi
+
+	assert_contains "PREEXISTING_BB_BROWSER=0" "$state_file"
+	assert_contains 'PREEXISTING_BB_BROWSER_PATH=' "$state_file"
+	assert_contains "PREEXISTING_WRAPPER=0" "$state_file"
+	assert_contains "REAL_BB_BROWSER_PATH=$managed_prefix/bin/bb-browser" "$state_file"
+
+	if ! HOME="$tmp_home" PATH="$managed_prefix/bin:$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		bash "$REPO_ROOT/uninstall.sh" --dotfiles --force >"$uninstall_log" 2>&1; then
+		cat "$uninstall_log" >&2
+		fail "uninstall.sh managed reinstall ownership test failed"
+	fi
+
+	assert_file_missing "$state_file"
+	assert_file_missing "$wrapper_path"
+	assert_file_missing "$managed_prefix/bin/bb-browser"
+	assert_contains "$managed_prefix" "$npm_log"
+	assert_contains "uninstall" "$npm_log"
+}
+
 test_bb_browser_uninstall_removes_managed_global_install() {
 	local tmp_home fake_bin log npm_log wrapper_path config_file state_file
 	tmp_home=$(make_temp_dir)
@@ -1846,6 +1928,7 @@ run_test "bb-browser install preserves preexisting managed package on failure" t
 run_test "bb-browser wrapper uses managed path over preexisting path" test_bb_browser_wrapper_uses_managed_path_over_preexisting_path
 run_test "bb-browser uninstall preserves preexisting global install" test_bb_browser_uninstall_preserves_preexisting_global_install
 run_test "bb-browser install/uninstall restores preexisting wrapper" test_bb_browser_install_and_uninstall_restore_preexisting_wrapper
+run_test "bb-browser reinstall preserves managed ownership" test_bb_browser_reinstall_preserves_managed_ownership
 run_test "bb-browser uninstall removes managed global install" test_bb_browser_uninstall_removes_managed_global_install
 run_test "bb-browser uninstall skips missing or empty preexisting marker" test_bb_browser_uninstall_skips_missing_or_empty_preexisting_marker
 run_test "bb-browser uninstall targets recorded prefix on drift" test_bb_browser_uninstall_targets_recorded_prefix_on_drift

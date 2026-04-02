@@ -466,6 +466,8 @@ remove_claude() {
 	# 1) study-master Skill + Hooks
 	rm_path ~/.claude/skills/study-master
 	rm_path ~/.claude/hooks/check-study_master.sh
+	rm_path ~/.claude/vendor/agent-study-skills
+	rmdir ~/.claude/vendor 2>/dev/null || true
 
 	# 清理 settings.json 中的 Dotfiles 管理项，避免误删用户自定义配置
 	local settings_file="$HOME/.claude/settings.json"

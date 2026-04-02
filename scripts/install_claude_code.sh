@@ -36,6 +36,8 @@ LSP_BIN="$HOME/.local/bin"
 CLAUDE_PLUGINS_DIR="$HOME/.claude/plugins"
 KNOWN_MARKETPLACES_JSON="$CLAUDE_PLUGINS_DIR/known_marketplaces.json"
 CLAUDE_BB_BROWSER_MCP_STATE_FILE="$(claude_bb_browser_mcp_state_file)"
+CLAUDE_VENDOR_DIR="$HOME/.claude/vendor"
+STUDY_MASTER_REPO_DIR="$CLAUDE_VENDOR_DIR/agent-study-skills"
 
 # 插件 Marketplace 列表 (GitHub owner/repo)
 MARKETPLACES=(
@@ -432,20 +434,36 @@ add_marketplaces() {
 	print_install_summary "Marketplace" "$added" "$skipped" "$failed"
 }
 
+update_marketplaces() {
+	print_info "同步插件 Marketplace..."
+
+	local output
+	if output="$(claude plugin marketplace update 2>&1)"; then
+		print_success "Marketplace 已同步到最新"
+	else
+		print_warn "Marketplace 更新失败: $output"
+	fi
+}
+
 # ========================================
-# 安装插件（通用函数）
+# 同步插件（已安装则更新，缺失则安装）
 # ========================================
-install_plugins() {
+sync_plugins() {
 	local label="$1"
 	shift
 	local plugins=("$@")
 
-	print_info "安装${label}插件..."
+	print_info "同步${label}插件..."
 
-	local installed=0 skipped=0 failed=0
+	local installed=0 updated=0 failed=0
 	for plugin in "${plugins[@]}"; do
 		if is_plugin_installed "$plugin"; then
-			skipped=$((skipped + 1))
+			if claude plugin update "$plugin" &>/dev/null; then
+				updated=$((updated + 1))
+			else
+				print_warn "更新失败: $plugin"
+				failed=$((failed + 1))
+			fi
 			continue
 		fi
 		if claude plugin install "$plugin" &>/dev/null; then
@@ -457,7 +475,11 @@ install_plugins() {
 		fi
 	done
 
-	print_install_summary "${label}插件" "$installed" "$skipped" "$failed"
+	if [[ $failed -eq 0 ]]; then
+		print_success "${label}插件: 新增 $installed, 更新 $updated"
+	else
+		print_warn "${label}插件: 新增 $installed, 更新 $updated, 失败 $failed"
+	fi
 }
 
 # ========================================
@@ -568,6 +590,40 @@ enable_plugins() {
 # study-master Skill 安装（独立 GitHub 仓库）
 # ========================================
 
+sync_study_master_repo() {
+	local repo_url="$1"
+	local repo_dir="$2"
+
+	if [[ -d "$repo_dir/.git" ]]; then
+		local origin normalized_origin normalized_repo_url
+		origin=$(git -C "$repo_dir" remote get-url origin 2>/dev/null || true)
+		normalized_origin=$(normalize_git_remote "$origin" 2>/dev/null || true)
+		normalized_repo_url=$(normalize_git_remote "$repo_url" 2>/dev/null || true)
+		if [[ -n "$origin" && "$normalized_origin" != "$normalized_repo_url" ]]; then
+			print_warn "study-master 仓库 origin 不匹配，跳过更新: $repo_dir"
+			return 1
+		fi
+		if git -C "$repo_dir" pull --ff-only >/dev/null 2>&1; then
+			return 0
+		fi
+		print_warn "study-master 仓库更新失败，跳过: $repo_dir"
+		return 1
+	fi
+
+	if [[ -e "$repo_dir" ]]; then
+		print_warn "study-master 源目录已存在且不是 Git 仓库，跳过: $repo_dir"
+		return 1
+	fi
+
+	mkdir -p "$(dirname "$repo_dir")"
+	if git clone --depth 1 "$repo_url" "$repo_dir" >/dev/null 2>&1; then
+		return 0
+	fi
+
+	print_warn "study-master: clone 失败"
+	return 1
+}
+
 # 确保 study-master hooks 已在 settings.json 中注册
 # 独立于文件部署——每次安装都执行，防止 install_dotfiles.sh 的 jq 合并覆盖动态 hooks
 ensure_study_master_hooks() {
@@ -608,55 +664,56 @@ ensure_study_master_hooks() {
 # 不使用上游 install.sh（其 hook 注册路径和格式有误）
 install_study_master_skill() {
 	local repo="Learner-Geek-Perfectionist/agent-study-skills"
+	local repo_url="https://github.com/${repo}.git"
+	local repo_dir="$STUDY_MASTER_REPO_DIR"
 	local skill_dir="$HOME/.claude/skills/study-master"
 	local hooks_dir="$HOME/.claude/hooks"
 	local settings_file="$HOME/.claude/settings.json"
 	local hook_matcher="Write|Edit"
 	local hook_cmd='bash "$HOME/.claude/hooks/check-study_master.sh"'
+	local had_skill=false
 
-	# 1) 部署 Skill 文件（幂等：已存在则跳过 clone）
-	if [[ -d "$skill_dir" && -f "$skill_dir/SKILL.md" ]]; then
-		print_success "study-master Skill 已安装"
+	[[ -f "$skill_dir/SKILL.md" ]] && had_skill=true
+
+	if ! sync_study_master_repo "$repo_url" "$repo_dir"; then
+		ensure_study_master_hooks "$settings_file" "$hook_matcher" "$hook_cmd"
+		return 0
+	fi
+
+	local src="$repo_dir/study-master-skill"
+	if [[ ! -f "$src/SKILL.md" ]]; then
+		print_warn "study-master 源目录缺少 SKILL.md，跳过: $src"
+		ensure_study_master_hooks "$settings_file" "$hook_matcher" "$hook_cmd"
+		return 0
+	fi
+
+	# 1) 部署 Skill 文件
+	mkdir -p "$skill_dir"
+	cp "$src/SKILL.md" "$skill_dir/"
+	print_dim "  Skill: $skill_dir/SKILL.md"
+
+	# 2) 部署 Hook 脚本
+	if [[ -d "$src/hooks" ]]; then
+		mkdir -p "$hooks_dir"
+		for file in "$src/hooks"/*; do
+			[[ -f "$file" ]] || continue
+			cp "$file" "$hooks_dir/"
+			chmod +x "$hooks_dir/$(basename "$file")"
+		done
+		print_dim "  Hooks: $(ls "$src/hooks" | tr '\n' ' ')"
+	fi
+
+	# 清理上游 install.sh 遗留的错误配置
+	local dead_settings="$HOME/.claude/settings/settings.json"
+	if [[ -f "$dead_settings" ]]; then
+		rm -f "$dead_settings"
+		rmdir "$HOME/.claude/settings" 2>/dev/null || true
+		print_dim "  已清理无效的 ~/.claude/settings/settings.json"
+	fi
+
+	if [[ "$had_skill" == true ]]; then
+		print_success "study-master Skill 已更新"
 	else
-		print_info "安装 study-master Skill..."
-
-		local tmp_dir
-		tmp_dir=$(mktemp -d)
-
-		if ! git clone --depth 1 "https://github.com/${repo}.git" "$tmp_dir" &>/dev/null; then
-			print_warn "study-master: clone 失败"
-			rm -rf "$tmp_dir"
-			return 0
-		fi
-
-		local src="$tmp_dir/study-master-skill"
-
-		# 复制 Skill 文件
-		mkdir -p "$skill_dir"
-		cp "$src/SKILL.md" "$skill_dir/"
-		print_dim "  Skill: $skill_dir/SKILL.md"
-
-		# 复制 Hook 脚本
-		if [[ -d "$src/hooks" ]]; then
-			mkdir -p "$hooks_dir"
-			for file in "$src/hooks"/*; do
-				[[ -f "$file" ]] || continue
-				cp "$file" "$hooks_dir/"
-				chmod +x "$hooks_dir/$(basename "$file")"
-			done
-			print_dim "  Hooks: $(ls "$src/hooks" | tr '\n' ' ')"
-		fi
-
-		rm -rf "$tmp_dir"
-
-		# 清理上游 install.sh 遗留的错误配置
-		local dead_settings="$HOME/.claude/settings/settings.json"
-		if [[ -f "$dead_settings" ]]; then
-			rm -f "$dead_settings"
-			rmdir "$HOME/.claude/settings" 2>/dev/null || true
-			print_dim "  已清理无效的 ~/.claude/settings/settings.json"
-		fi
-
 		print_success "study-master Skill 安装完成"
 	fi
 
@@ -965,17 +1022,18 @@ main() {
 
 	# 5) 添加 Marketplace
 	add_marketplaces
+	update_marketplaces
 
 	# 6) 安装 LSP 插件
-	install_plugins "LSP " "${LSP_PLUGINS[@]}"
+	sync_plugins "LSP " "${LSP_PLUGINS[@]}"
 	enable_plugins "${LSP_PLUGINS[@]}"
 
 	# 7) 安装工具插件
-	install_plugins "Tool " "${TOOL_PLUGINS[@]}"
+	sync_plugins "Tool " "${TOOL_PLUGINS[@]}"
 	enable_plugins "${TOOL_PLUGINS[@]}"
 
 	# 8) 安装 Skill 插件
-	install_plugins "Skill " "${SKILL_PLUGINS[@]}"
+	sync_plugins "Skill " "${SKILL_PLUGINS[@]}"
 	enable_plugins "${SKILL_PLUGINS[@]}"
 
 	# 9) 安装 study-master Skill（独立 GitHub 仓库，在线 clone 安装）

@@ -67,6 +67,114 @@ EOF
 	chmod +x "$fake_bin/claude"
 }
 
+write_fake_claude_cli_with_update_logs() {
+	local fake_bin="$1" plugin_list_output="$2" mcp_list_output="$3" add_json_log="$4" remove_log="$5"
+	local plugin_install_log="$6" plugin_update_log="$7" marketplace_update_log="$8"
+	cat >"$fake_bin/claude" <<EOF
+#!/bin/sh
+case "\$1" in
+  --version)
+    echo 'claude 1.0.0'
+    exit 0
+    ;;
+  plugin)
+    case "\$2" in
+      list)
+        cat <<'INNER'
+$plugin_list_output
+INNER
+        exit 0
+        ;;
+      install)
+        mkdir -p "$(dirname "$plugin_install_log")"
+        printf '%s\n' "\$3" >>"$plugin_install_log"
+        exit 0
+        ;;
+      update)
+        mkdir -p "$(dirname "$plugin_update_log")"
+        printf '%s\n' "\$3" >>"$plugin_update_log"
+        exit 0
+        ;;
+      uninstall)
+        exit 0
+        ;;
+      marketplace)
+        case "\$3" in
+          add|remove)
+            exit 0
+            ;;
+          update)
+            mkdir -p "$(dirname "$marketplace_update_log")"
+            if [ -n "\${4:-}" ]; then
+              printf '%s\n' "\$4" >>"$marketplace_update_log"
+            else
+              printf '%s\n' "__all__" >>"$marketplace_update_log"
+            fi
+            exit 0
+            ;;
+        esac
+        ;;
+    esac
+    ;;
+  mcp)
+    case "\$2" in
+      list)
+        cat <<'INNER'
+$mcp_list_output
+INNER
+        exit 0
+        ;;
+      add)
+        exit 0
+        ;;
+      add-json)
+        mkdir -p "$(dirname "$add_json_log")"
+        printf '%s\n' "\$4" >"$add_json_log"
+        exit 0
+        ;;
+      remove)
+        mkdir -p "$(dirname "$remove_log")"
+        printf '%s\n' "\$3" >>"$remove_log"
+        exit 0
+        ;;
+    esac
+    ;;
+esac
+exit 0
+EOF
+	chmod +x "$fake_bin/claude"
+}
+
+write_fake_study_master_git() {
+	local fake_bin="$1" expected_repo="$2" clone_content="$3" pull_content="$4" git_log="$5"
+	cat >"$fake_bin/git" <<EOF
+#!/bin/sh
+if [ "\$1" = "clone" ] && [ "\$2" = "--depth" ] && [ "\$3" = "1" ] && [ "\$4" = "$expected_repo" ]; then
+  dest="\$5"
+  mkdir -p "\$dest/.git" "\$dest/study-master-skill/hooks"
+  printf '%s\n' '$clone_content' >"\$dest/study-master-skill/SKILL.md"
+  printf '#!/bin/sh\nexit 0\n' >"\$dest/study-master-skill/hooks/check-study_master.sh"
+  mkdir -p "$(dirname "$git_log")"
+  printf 'clone %s\n' "\$dest" >>"$git_log"
+  exit 0
+fi
+if [ "\$1" = "-C" ] && [ "\$3" = "remote" ] && [ "\$4" = "get-url" ] && [ "\$5" = "origin" ]; then
+  printf '%s\n' "$expected_repo"
+  exit 0
+fi
+if [ "\$1" = "-C" ] && [ "\$3" = "pull" ] && [ "\$4" = "--ff-only" ]; then
+  repo_dir="\$2"
+  printf '%s\n' '$pull_content' >"\$repo_dir/study-master-skill/SKILL.md"
+  printf '#!/bin/sh\nexit 0\n' >"\$repo_dir/study-master-skill/hooks/check-study_master.sh"
+  mkdir -p "$(dirname "$git_log")"
+  printf 'pull %s\n' "\$repo_dir" >>"$git_log"
+  exit 0
+fi
+exit 1
+EOF
+	chmod +x "$fake_bin/git"
+}
+
 test_dotfiles_manifest_and_ssh_block() {
 	local tmp_home fake_bin log manifest superpowers_repo superpowers_state
 	tmp_home=$(make_temp_dir)
@@ -2486,6 +2594,35 @@ EOF
 	assert_not_contains "bb-browser" "$remove_log"
 }
 
+test_uninstall_claude_removes_study_master_vendor_repo() {
+	local tmp_home fake_bin log remove_log vendor_repo sibling_dir sibling_file
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/uninstall-claude-study-master-vendor.log"
+	remove_log="$tmp_home/claude-mcp-remove.log"
+	vendor_repo="$tmp_home/.claude/vendor/agent-study-skills"
+	sibling_dir="$tmp_home/.claude/vendor/keep"
+	sibling_file="$sibling_dir/marker.txt"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	write_fake_claude_cli "$fake_bin" $'fetch: stdio' "$tmp_home/claude-mcp-add-json.json" "$remove_log"
+
+	mkdir -p "$vendor_repo/.git" "$tmp_home/.claude/skills/study-master" "$tmp_home/.claude/hooks" "$sibling_dir"
+	printf 'repo\n' >"$vendor_repo/README.md"
+	printf '# study-master\n' >"$tmp_home/.claude/skills/study-master/SKILL.md"
+	printf '#!/bin/sh\nexit 0\n' >"$tmp_home/.claude/hooks/check-study_master.sh"
+	printf 'keep\n' >"$sibling_file"
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		bash "$REPO_ROOT/uninstall.sh" --claude --force >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "uninstall.sh --claude vendor cleanup test failed"
+	fi
+
+	assert_file_missing "$vendor_repo"
+	assert_file_exists "$sibling_file"
+}
+
 test_dotfiles_uninstall_removes_wrapper_integrations() {
 	local tmp_home fake_bin log remove_log wrapper_path state_file codex_config mcp_state_file
 	tmp_home=$(make_temp_dir)
@@ -2722,6 +2859,148 @@ EOF
 	assert_contains "study-master Skill 安装完成" "$log"
 }
 
+test_claude_updates_marketplaces_and_plugins() {
+	local tmp_home fake_bin log install_log update_log marketplace_log expected_repo
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install-claude-updates.log"
+	install_log="$tmp_home/claude-plugin-install.log"
+	update_log="$tmp_home/claude-plugin-update.log"
+	marketplace_log="$tmp_home/claude-marketplace-update.log"
+	expected_repo="https://github.com/Learner-Geek-Perfectionist/agent-study-skills.git"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	write_fake_claude_cli_with_update_logs \
+		"$fake_bin" \
+		$'github@claude-plugins-official\nsuperpowers@superpowers-marketplace\nexample-skills@anthropic-agent-skills' \
+		$'tavily: stdio\nfetch: stdio\nopen-websearch: stdio\nbb-browser: stdio' \
+		"$tmp_home/claude-mcp-add-json.json" \
+		"$tmp_home/claude-mcp-remove.log" \
+		"$install_log" \
+		"$update_log" \
+		"$marketplace_log"
+
+	cat >"$fake_bin/rustup" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/npm" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/dotnet" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/curl" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	write_fake_study_master_git "$fake_bin" "$expected_repo" "# study-master v1" "# study-master v2" "$tmp_home/git.log"
+	chmod +x "$fake_bin/rustup" "$fake_bin/npm" "$fake_bin/dotnet" "$fake_bin/curl"
+
+	mkdir -p "$tmp_home/.claude/plugins" "$tmp_home/.claude/skills" "$tmp_home/.claude/hooks"
+	cat >"$tmp_home/.claude/plugins/known_marketplaces.json" <<'EOF'
+{
+  "anthropic-agent-skills": {
+    "source": {
+      "source": "github",
+      "repo": "anthropics/skills"
+    }
+  },
+  "superpowers-marketplace": {
+    "source": {
+      "source": "github",
+      "repo": "obra/superpowers-marketplace"
+    }
+  },
+  "claude-plugins-official": {
+    "source": {
+      "source": "github",
+      "repo": "anthropics/claude-plugins-official"
+    }
+  },
+  "claude-hud": {
+    "source": {
+      "source": "github",
+      "repo": "jarrodwatts/claude-hud"
+    }
+  }
+}
+EOF
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		bash "$REPO_ROOT/scripts/install_claude_code.sh" >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "install_claude_code.sh update test failed"
+	fi
+
+	assert_file_exists "$marketplace_log"
+	assert_contains "__all__" "$marketplace_log"
+	assert_file_exists "$update_log"
+	assert_contains "github@claude-plugins-official" "$update_log"
+	assert_contains "superpowers@superpowers-marketplace" "$update_log"
+	assert_contains "example-skills@anthropic-agent-skills" "$update_log"
+	assert_file_exists "$install_log"
+	assert_contains "pyright-lsp@claude-plugins-official" "$install_log"
+}
+
+test_claude_refreshes_study_master_on_rerun() {
+	local tmp_home fake_bin log_first log_second expected_repo
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log_first="$tmp_home/install-claude-study-master-first.log"
+	log_second="$tmp_home/install-claude-study-master-second.log"
+	expected_repo="https://github.com/Learner-Geek-Perfectionist/agent-study-skills.git"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	write_fake_claude_cli_with_update_logs \
+		"$fake_bin" \
+		'' \
+		$'tavily: stdio\nfetch: stdio\nopen-websearch: stdio\nbb-browser: stdio' \
+		"$tmp_home/claude-mcp-add-json.json" \
+		"$tmp_home/claude-mcp-remove.log" \
+		"$tmp_home/claude-plugin-install.log" \
+		"$tmp_home/claude-plugin-update.log" \
+		"$tmp_home/claude-marketplace-update.log"
+
+	cat >"$fake_bin/rustup" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/npm" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/dotnet" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/curl" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	write_fake_study_master_git "$fake_bin" "$expected_repo" "# study-master v1" "# study-master v2" "$tmp_home/git.log"
+	chmod +x "$fake_bin/rustup" "$fake_bin/npm" "$fake_bin/dotnet" "$fake_bin/curl"
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		bash "$REPO_ROOT/scripts/install_claude_code.sh" >"$log_first" 2>&1; then
+		cat "$log_first" >&2
+		fail "install_claude_code.sh initial study-master refresh test failed"
+	fi
+
+	assert_contains "# study-master v1" "$tmp_home/.claude/skills/study-master/SKILL.md"
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		bash "$REPO_ROOT/scripts/install_claude_code.sh" >"$log_second" 2>&1; then
+		cat "$log_second" >&2
+		fail "install_claude_code.sh rerun study-master refresh test failed"
+	fi
+
+	assert_contains "# study-master v2" "$tmp_home/.claude/skills/study-master/SKILL.md"
+	assert_contains "pull " "$tmp_home/git.log"
+}
+
 test_macos_brew_maintenance_launchagent_created() {
 	local tmp_home fake_bin log plist script legacy_cleanup_plist legacy_autoupdate_plist
 	tmp_home=$(make_temp_dir)
@@ -2842,10 +3121,13 @@ run_test "Claude skips bb-browser MCP without wrapper" test_claude_skips_bb_brow
 run_test "Claude removes managed bb-browser MCP without wrapper" test_claude_removes_managed_bb_browser_mcp_without_wrapper
 run_test "Claude uninstall removes bb-browser MCP" test_uninstall_claude_removes_bb_browser_mcp
 run_test "Claude uninstall preserves user-owned bb-browser MCP" test_uninstall_claude_preserves_user_owned_bb_browser_mcp
+run_test "Claude uninstall removes study-master vendor repo" test_uninstall_claude_removes_study_master_vendor_repo
 run_test "Dotfiles uninstall removes wrapper integrations" test_dotfiles_uninstall_removes_wrapper_integrations
 run_test "Dotfiles uninstall preserves user-owned bb-browser MCP" test_dotfiles_uninstall_preserves_user_owned_bb_browser_mcp
 run_test "Claude known_hosts preserves symlink" test_claude_known_hosts_preserves_symlink
 run_test "Claude installs study-master from new repo" test_claude_installs_study_master_from_new_repo
+run_test "Claude updates marketplaces and plugins" test_claude_updates_marketplaces_and_plugins
+run_test "Claude refreshes study-master on rerun" test_claude_refreshes_study_master_on_rerun
 run_test "macOS brew maintenance LaunchAgent" test_macos_brew_maintenance_launchagent_created
 
 section "Done"

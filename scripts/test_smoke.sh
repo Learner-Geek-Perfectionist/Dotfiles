@@ -308,6 +308,132 @@ EOF
 	assert_contains "REAL_BB_BROWSER_PATH=$fake_bin/bb-browser" "$state_file"
 }
 
+test_bb_browser_install_patches_managed_cli_and_mcp_dist_files() {
+	local tmp_home fake_bin log npm_log state_file cli_file mcp_file real_node
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install-bb-browser-patch.log"
+	npm_log="$tmp_home/npm-patch.log"
+	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
+	cli_file="$tmp_home/fake-node-modules/bb-browser/dist/cli.js"
+	mcp_file="$tmp_home/fake-node-modules/bb-browser/dist/mcp.js"
+	real_node="$(command -v node)"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	mkdir -p "$tmp_home/.config/google-chrome"
+cat >"$fake_bin/npm" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >>"$npm_log"
+if [ "\$1" = "root" ] && [ "\$2" = "-g" ]; then
+  printf '%s\n' "$tmp_home/fake-node-modules"
+  exit 0
+fi
+if [ "\$1" = "install" ] && [ "\$2" = "-g" ] && [ "\$3" = "bb-browser@latest" ]; then
+  cat >"$fake_bin/bb-browser" <<'INNER'
+#!/bin/sh
+case "\$1" in
+  --version) echo 'bb-browser 9.9.9' ;;
+  *) exit 0 ;;
+esac
+INNER
+  chmod +x "$fake_bin/bb-browser"
+  mkdir -p "$tmp_home/fake-node-modules/bb-browser/dist"
+  : >"$tmp_home/fake-node-modules/bb-browser/dist/daemon.js"
+  cat >"$cli_file" <<'INNER'
+import { spawn } from "child_process";
+import { readFile } from "fs/promises";
+import path from "path";
+var DAEMON_DIR = path.join(os.homedir(), ".bb-browser");
+var TOKEN_FILE = path.join(DAEMON_DIR, "daemon.token");
+var cachedToken = null;
+var daemonReady = false;
+async function readToken() {
+  try {
+    return (await readFile(TOKEN_FILE, "utf8")).trim();
+  } catch {
+    return null;
+  }
+}
+const child = spawn(process.execPath, [daemonPath], {
+  detached: true,
+  stdio: "ignore"
+});
+INNER
+  cat >"$mcp_file" <<'INNER'
+import { execFile, spawn } from "child_process";
+import { existsSync } from "fs";
+import { dirname, resolve } from "path";
+var sessionOpenedTabs = /* @__PURE__ */ new Set();
+async function isDaemonRunning() {
+  try {
+    const controller = new AbortController();
+    const t = setTimeout(() => controller.abort(), 2000);
+    const res = await fetch(\`\${DAEMON_BASE_URL}/status\`, { signal: controller.signal });
+    clearTimeout(t);
+    return res.ok;
+  } catch { return false; }
+}
+async function ensureDaemon() {
+  if (await isDaemonRunning()) return;
+  const child = spawn(process.execPath, [getDaemonPath()], {
+    detached: true, stdio: "ignore", env: { ...process.env },
+  });
+  child.unref();
+}
+async function sendCommand(request) {
+  await ensureDaemon();
+  const response = await fetch(\`\${DAEMON_BASE_URL}/command\`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+  return await response.json();
+}
+INNER
+fi
+exit 0
+EOF
+	cat >"$fake_bin/node" <<EOF
+#!/bin/sh
+case "\$1" in
+  "$REPO_ROOT/scripts/patch_bb_browser_dist.mjs")
+    exec "$real_node" "\$@"
+    ;;
+  -e)
+    exit 0
+    ;;
+esac
+exit 0
+EOF
+	cat >"$fake_bin/google-chrome" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/uname" <<'EOF'
+#!/bin/sh
+echo 'Linux'
+EOF
+	chmod +x "$fake_bin/npm" "$fake_bin/node" "$fake_bin/google-chrome" "$fake_bin/uname"
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		BB_BROWSER_CDP_URL="http://127.0.0.1:19825" \
+		bash "$REPO_ROOT/scripts/install_bb_browser.sh" >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "install_bb_browser.sh patch case failed"
+	fi
+
+	assert_executable "$tmp_home/.local/bin/bb-browser-user"
+	assert_file_exists "$state_file"
+	assert_contains 'import { execFile, spawn } from "child_process";' "$cli_file"
+	assert_contains 'var PID_FILES = [path.join(DAEMON_DIR, "daemon.pid"), "/tmp/bb-browser.pid"];' "$cli_file"
+	assert_contains 'spawn(process.execPath, [daemonPath, "--host", "127.0.0.1"], {' "$cli_file"
+	assert_contains 'import { readFile } from "fs/promises";' "$mcp_file"
+	assert_contains 'var MCP_DAEMON_BASE_URL = DAEMON_BASE_URL.replace("://localhost:", "://127.0.0.1:");' "$mcp_file"
+	assert_contains 'if (res.status === 401 && cachedDaemonToken && !retrying) {' "$mcp_file"
+	assert_contains 'Authorization: `Bearer ${token}`' "$mcp_file"
+	assert_contains '// If bb-browser already uses daemon.json config, it has native token/host support.' "$REPO_ROOT/scripts/patch_bb_browser_dist.mjs"
+}
+
 test_bb_browser_fresh_install_marker_drives_managed_uninstall() {
 	local tmp_home fake_bin managed_prefix install_log uninstall_log npm_log state_file
 	tmp_home=$(make_temp_dir)
@@ -2188,8 +2314,8 @@ EOF
 }
 
 test_file_deps_include_codex_deploy_for_bb_browser_install() {
-	local has_dep
-	has_dep="$(
+	local has_codex_dep has_patch_dep
+	has_codex_dep="$(
 		node -e '
 const fs = require("fs");
 const deps = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
@@ -2197,7 +2323,16 @@ const list = deps["scripts/install_bb_browser.sh"] || [];
 process.stdout.write(list.includes("scripts/deploy_codex_config.sh") ? "yes" : "no");
 ' "$REPO_ROOT/.claude/file-deps.json"
 	)"
-	assert_equal "yes" "$has_dep" "install_bb_browser file-deps entry"
+	has_patch_dep="$(
+		node -e '
+const fs = require("fs");
+const deps = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+const list = deps["scripts/install_bb_browser.sh"] || [];
+process.stdout.write(list.includes("scripts/patch_bb_browser_dist.mjs") ? "yes" : "no");
+' "$REPO_ROOT/.claude/file-deps.json"
+	)"
+	assert_equal "yes" "$has_codex_dep" "install_bb_browser codex deploy dependency"
+	assert_equal "yes" "$has_patch_dep" "install_bb_browser patch helper dependency"
 }
 
 test_pixi_prefers_managed_install_over_system_binary() {
@@ -3088,6 +3223,7 @@ EOF
 run_test "Dotfiles manifest and SSH include block" test_dotfiles_manifest_and_ssh_block
 run_test "Dotfiles deploys bb-browser shell plugin" test_dotfiles_deploys_bb_browser_shell_plugin
 run_test "bb-browser install uses latest and deploys wrapper" test_bb_browser_install_uses_latest_and_deploys_wrapper
+run_test "bb-browser install patches managed cli and mcp dist files" test_bb_browser_install_patches_managed_cli_and_mcp_dist_files
 run_test "bb-browser fresh install marker drives managed uninstall" test_bb_browser_fresh_install_marker_drives_managed_uninstall
 run_test "bb-browser install discovers browser and launches CDP" test_bb_browser_install_discovers_browser_and_launches_cdp
 run_test "bb-browser install keeps token private when chmod fails" test_bb_browser_install_keeps_token_private_when_chmod_fails

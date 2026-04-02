@@ -74,7 +74,8 @@
     "uninstall.sh",
     "lib/utils.sh",
     "scripts/bb-browser-user.sh",
-    "scripts/deploy_codex_config.sh"
+    "scripts/deploy_codex_config.sh",
+    "scripts/patch_bb_browser_dist.mjs"
   ],
   "scripts/bb-browser-user.sh": [
     "scripts/install_bb_browser.sh",

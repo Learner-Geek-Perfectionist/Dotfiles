@@ -10,6 +10,15 @@ WRAPPER_PATH="$HOME/.local/bin/bb-browser-user"
 WRAPPER_BACKUP_PATH="$(bb_browser_wrapper_backup_file)"
 STATE_FILE="$(bb_browser_state_file)"
 
+managed_npm_root() {
+	local npm_root
+
+	npm_root="$(npm root -g 2>/dev/null || true)"
+	npm_root="${npm_root%/}"
+	[[ -n "$npm_root" ]] || return 1
+	printf '%s\n' "$npm_root"
+}
+
 managed_npm_prefix() {
 	local npm_prefix
 
@@ -180,6 +189,15 @@ install_wrapper() {
 	chmod 755 "$WRAPPER_PATH"
 }
 
+apply_managed_dist_patches() {
+	local npm_root="$1" dist_dir
+	[[ -n "$npm_root" ]] || return 0
+	dist_dir="$npm_root/bb-browser/dist"
+	[[ -d "$dist_dir" ]] || return 0
+
+	node "$SCRIPT_DIR/patch_bb_browser_dist.mjs" "$dist_dir" >>"$DOTFILES_LOG" 2>&1
+}
+
 installed_bb_browser_path() {
 	local npm_prefix candidate
 
@@ -204,7 +222,7 @@ main() {
 	local preexisting_bb_browser preexisting_bb_browser_marker preexisting_bb_browser_path
 	local preexisting_wrapper_marker
 	local installed_version real_bb_browser_path managed_prefix
-	local managed_bb_browser managed_bb_browser_backup wrapper_backup_backup state_backup
+	local managed_bb_browser managed_bb_browser_backup wrapper_backup_backup state_backup managed_root
 	local recorded_preexisting_bb recorded_preexisting_bb_path recorded_preexisting_wrapper
 	local recorded_wrapper_backup_path recorded_real_bb_browser_path
 
@@ -270,6 +288,14 @@ main() {
 	if ! install_wrapper; then
 		rollback_install_attempt "$managed_prefix" "$preexisting_bb_browser" "$managed_bb_browser" "$managed_bb_browser_backup" \
 			"$preexisting_wrapper_marker" "$wrapper_backup_backup" "$state_backup"
+		return 1
+	fi
+
+	managed_root="$(managed_npm_root || true)"
+	if ! apply_managed_dist_patches "$managed_root"; then
+		rollback_install_attempt "$managed_prefix" "$preexisting_bb_browser" "$managed_bb_browser" "$managed_bb_browser_backup" \
+			"$preexisting_wrapper_marker" "$wrapper_backup_backup" "$state_backup"
+		print_error "bb-browser dist 补丁应用失败"
 		return 1
 	fi
 

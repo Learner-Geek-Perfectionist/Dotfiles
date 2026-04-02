@@ -75,12 +75,16 @@
     "lib/utils.sh",
     "scripts/bb-browser-user.sh",
     "scripts/deploy_codex_config.sh",
-    "scripts/patch_bb_browser_dist.mjs"
+    "scripts/patch_bb_browser_dist.mjs",
+    "scripts/bb-browser-sites/xiaohongshu/search.js"
   ],
   "scripts/bb-browser-user.sh": [
     "scripts/install_bb_browser.sh",
     "lib/utils.sh",
     ".config/zsh/plugins/bb-browser.zsh"
+  ],
+  "scripts/bb-browser-sites/xiaohongshu/search.js": [
+    "scripts/install_bb_browser.sh"
   ],
   "scripts/install_pixi.sh": [
     "install.sh",

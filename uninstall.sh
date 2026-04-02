@@ -163,7 +163,9 @@ read_bb_browser_install_state() {
 			"${PREEXISTING_BB_BROWSER:-}" \
 			"${PREEXISTING_WRAPPER:-}" \
 			"${PREEXISTING_WRAPPER_BACKUP_PATH:-}" \
-			"${REAL_BB_BROWSER_PATH:-}"
+			"${REAL_BB_BROWSER_PATH:-}" \
+			"${PREEXISTING_XIAOHONGSHU_SEARCH:-}" \
+			"${PREEXISTING_XIAOHONGSHU_SEARCH_BACKUP_PATH:-}"
 	)
 }
 
@@ -264,13 +266,29 @@ restore_bb_browser_wrapper() {
 	print_warn "检测到预装 bb-browser wrapper，但未找到备份；保留当前 wrapper: $wrapper_path"
 }
 
+restore_bb_browser_managed_file() {
+	local target_path="$1" backup_path="$2" label="$3"
+
+	if [[ -n "$backup_path" && -e "$backup_path" ]]; then
+		mkdir -p "$(dirname "$target_path")"
+		cp -p "$backup_path" "$target_path"
+		rm_path "$backup_path"
+		prune_empty_parents "$(dirname "$backup_path")"
+		return 0
+	fi
+
+	print_warn "检测到预装 ${label}，但未找到备份；保留当前文件: $target_path"
+}
+
 remove_bb_browser() {
-	local state_file config_file wrapper_path wrapper_backup_path
-	local preexisting_bb_browser preexisting_wrapper real_bb_browser_path target_prefix
+	local state_file config_file wrapper_path wrapper_backup_path xiaohongshu_search_path xiaohongshu_search_backup_path
+	local preexisting_bb_browser preexisting_wrapper preexisting_xiaohongshu_search real_bb_browser_path target_prefix
 	state_file="$(bb_browser_state_file)"
 	config_file="$(bb_browser_config_file)"
 	wrapper_path="$HOME/.local/bin/bb-browser-user"
 	wrapper_backup_path="$(bb_browser_wrapper_backup_file)"
+	xiaohongshu_search_path="$(bb_browser_xiaohongshu_search_file)"
+	xiaohongshu_search_backup_path="$(bb_browser_xiaohongshu_search_backup_file)"
 	stop_bb_browser_daemon
 	rm_path "$config_file"
 	prune_empty_parents "$(dirname "$config_file")"
@@ -281,8 +299,11 @@ remove_bb_browser() {
 			IFS= read -r preexisting_wrapper || true
 			IFS= read -r wrapper_backup_path || true
 			IFS= read -r real_bb_browser_path || true
+			IFS= read -r preexisting_xiaohongshu_search || true
+			IFS= read -r xiaohongshu_search_backup_path || true
 		} < <(read_bb_browser_install_state "$state_file" || true)
 		[[ -n "$wrapper_backup_path" ]] || wrapper_backup_path="$(bb_browser_wrapper_backup_file)"
+		[[ -n "$xiaohongshu_search_backup_path" ]] || xiaohongshu_search_backup_path="$(bb_browser_xiaohongshu_search_backup_file)"
 		if [[ "$preexisting_bb_browser" == "0" && -n "$real_bb_browser_path" ]]; then
 			target_prefix="$(dirname "$(dirname "$real_bb_browser_path")")"
 			if [[ -n "$target_prefix" && "$target_prefix" != "/" ]]; then
@@ -299,6 +320,15 @@ remove_bb_browser() {
 			prune_empty_parents "$(dirname "$wrapper_path")"
 			rm_path "$wrapper_backup_path"
 			prune_empty_parents "$(dirname "$wrapper_backup_path")"
+		fi
+
+		if [[ "$preexisting_xiaohongshu_search" == "1" ]]; then
+			restore_bb_browser_managed_file "$xiaohongshu_search_path" "$xiaohongshu_search_backup_path" "小红书 adapter"
+		else
+			rm_path "$xiaohongshu_search_path"
+			prune_empty_parents "$(dirname "$xiaohongshu_search_path")"
+			rm_path "$xiaohongshu_search_backup_path"
+			prune_empty_parents "$(dirname "$xiaohongshu_search_backup_path")"
 		fi
 	else
 		rm_path "$wrapper_path"

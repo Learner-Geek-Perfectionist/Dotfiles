@@ -73,18 +73,80 @@ print_warn() { _log "WARN" "⚠" "$YELLOW" "$1"; }
 print_error() { _log "ERROR" "✗" "$RED" "$1"; }
 print_header() { _log "INFO" "" "$BLUE" "$1"; }
 
+_string_display_width() {
+	local msg="$1"
+	local width ascii_count char_count
+
+	if command -v perl &>/dev/null; then
+		if width="$(
+			perl -CS - "$msg" 2>/dev/null <<'PERL'
+use strict;
+use warnings;
+use utf8;
+
+my $s = shift // q{};
+utf8::decode($s);
+my $width = 0;
+
+while ($s =~ /(\X)/g) {
+	my $cluster = $1;
+	my @cp = unpack('W*', $cluster);
+	next unless @cp;
+
+	my @base = grep {
+		my $cp = $_;
+		my $ch = chr($cp);
+		$cp != 0x200D &&
+		$cp != 0xFE0E &&
+		$cp != 0xFE0F &&
+		!($cp >= 0xE0020 && $cp <= 0xE007F) &&
+		!($cp >= 0x1F3FB && $cp <= 0x1F3FF) &&
+		$ch !~ /\p{Mn}|\p{Me}|\p{Cf}/;
+	} @cp;
+	next unless @base;
+
+	my $has_keycap = $cluster =~ /\x{20E3}/ ? 1 : 0;
+	my $ep_count = scalar grep { chr($_) =~ /\p{Extended_Pictographic}/ } @base;
+	my $ri_count = scalar grep { chr($_) =~ /\p{Regional_Indicator}/ } @base;
+
+	if ($has_keycap || $ep_count > 0 || $ri_count >= 2) {
+		$width += 2;
+		next;
+	}
+
+	my $cluster_width = 1;
+	for my $cp (@base) {
+		my $ch = chr($cp);
+		if ($ch =~ /\p{East_Asian_Width=Wide}|\p{East_Asian_Width=Fullwidth}/) {
+			$cluster_width = 2;
+			last;
+		}
+	}
+
+	$width += $cluster_width;
+}
+
+print "$width\n";
+PERL
+		)"; then
+			printf '%s\n' "$width"
+			return 0
+		fi
+	fi
+
+	char_count=$(LC_ALL=C.UTF-8 bash -c 'echo ${#1}' _ "$msg")
+	ascii_count=$(printf '%s' "$msg" | LC_ALL=C tr -cd '\0-\177' | wc -c | tr -d ' ')
+	printf '%s\n' "$(( ascii_count + (char_count - ascii_count) * 2 ))"
+}
+
 # 简化版 banner — 占满终端宽度，文字居中（clone 后由 lib/utils.sh 完整版覆盖）
 print_banner() {
 	local msg="$1"
-	local width
-	[[ -e /dev/tty ]] && width=$(stty size </dev/tty 2>/dev/null | awk '{print $2}')
+	local width display_width
+	width=$(stty size 2>/dev/null | awk '{print $2}' || true)
 	[[ -z "$width" || "$width" -le 0 ]] 2>/dev/null && width="${COLUMNS:-80}"
 	[[ "$width" -le 0 ]] 2>/dev/null && width=80
-	# 宽度计算：ASCII 1 宽，非 ASCII（中文/emoji）2 宽
-	local ascii_count char_count
-	char_count=$(LC_ALL=C.UTF-8 bash -c 'echo ${#1}' _ "$msg")
-	ascii_count=$(printf '%s' "$msg" | LC_ALL=C tr -cd '\0-\177' | wc -c | tr -d ' ')
-	local display_width=$(( ascii_count + (char_count - ascii_count) * 2 ))
+	display_width="$(_string_display_width "$msg")"
 	local padding=$(( (width - display_width) / 2 ))
 	[[ $padding -lt 0 ]] && padding=0
 	local right_width=$(( width - padding - display_width ))

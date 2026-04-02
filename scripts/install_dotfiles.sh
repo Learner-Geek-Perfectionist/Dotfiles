@@ -56,6 +56,47 @@ copy_path() {
 	print_dim "~/$2"
 }
 
+write_gitconfig_local() {
+	local dest="$1" name="$2" email="$3" tmp
+	tmp=$(mktemp)
+	git config --file "$tmp" user.name "$name"
+	git config --file "$tmp" user.email "$email"
+	mkdir -p "$(dirname "$dest")"
+	mv "$tmp" "$dest"
+	chmod 600 "$dest"
+}
+
+_deploy_gitconfig_identity() {
+	local gitconfig_local="$HOME/.gitconfig.local"
+	local current_gitconfig="$HOME/.gitconfig"
+	local name="" email=""
+
+	[[ -f "$gitconfig_local" ]] && return 0
+
+	if [[ -n "${DOTFILES_GIT_USER_NAME:-}" && -n "${DOTFILES_GIT_USER_EMAIL:-}" ]]; then
+		name="$DOTFILES_GIT_USER_NAME"
+		email="$DOTFILES_GIT_USER_EMAIL"
+	elif [[ -n "${GIT_USER_NAME:-}" && -n "${GIT_USER_EMAIL:-}" ]]; then
+		name="$GIT_USER_NAME"
+		email="$GIT_USER_EMAIL"
+	elif [[ -f "$current_gitconfig" ]]; then
+		name=$(git config --file "$current_gitconfig" user.name 2>/dev/null || true)
+		email=$(git config --file "$current_gitconfig" user.email 2>/dev/null || true)
+	fi
+
+	if [[ -n "$name" && -n "$email" ]]; then
+		write_gitconfig_local "$gitconfig_local" "$name" "$email"
+		print_success "~/.gitconfig.local"
+	else
+		print_warn "未检测到 Git 身份；请创建 ~/.gitconfig.local（可参考 ~/Dotfiles/.gitconfig.local.example）"
+	fi
+}
+
+_deploy_gitconfig() {
+	_deploy_gitconfig_identity
+	copy_path ".gitconfig" ".gitconfig"
+}
+
 # 部署 settings.json 并剥离项目级 hooks（jq → python3 → 原样拷贝）
 _deploy_without_hooks() {
 	local src="$1" dest="$2"
@@ -108,6 +149,20 @@ _deploy_claude_settings() {
 	print_success "~/.claude/settings.json"
 }
 
+_deploy_claude_runtime_config() {
+	local claude_runtime_src="$DOTFILES_DIR/.claude/runtime.json"
+	local claude_runtime_dest="$HOME/.claude.json"
+	[[ -f "$claude_runtime_src" ]] || return 0
+
+	if ! merge_json_object_file "$claude_runtime_dest" "$claude_runtime_src"; then
+		print_warn "无法安全部署 ~/.claude.json，跳过"
+		return 0
+	fi
+
+	dotfiles_manifest_add_file "$claude_runtime_dest"
+	print_success "~/.claude.json"
+}
+
 _deploy_codex_config() {
 	local codex_src="$DOTFILES_DIR/.codex/config.toml"
 	local codex_dest="$HOME/.codex/config.toml"
@@ -116,8 +171,23 @@ _deploy_codex_config() {
 	if bash "$SCRIPT_DIR/deploy_codex_config.sh" "$codex_src" "$codex_dest" "$HOME"; then
 		dotfiles_manifest_add_file "$codex_dest"
 		print_success "~/.codex/config.toml"
+		[[ -n "${GITHUB_PERSONAL_ACCESS_TOKEN:-}" ]] || print_warn "GitHub MCP 已写入 ~/.codex/config.toml，但未检测到 GITHUB_PERSONAL_ACCESS_TOKEN"
+		[[ -n "${TAVILY_API_KEY:-}" ]] || print_warn "Tavily MCP 已写入 ~/.codex/config.toml，但未检测到 TAVILY_API_KEY"
 	else
 		print_warn "无法部署 ~/.codex/config.toml，跳过"
+	fi
+}
+
+_deploy_superpowers_skills() {
+	local clone_dir="$HOME/.codex/superpowers"
+	local link_dir="$HOME/.agents/skills/superpowers"
+	local state_file
+	state_file="$(superpowers_state_file)"
+
+	if bash "$SCRIPT_DIR/deploy_superpowers_skills.sh" "$clone_dir" "$link_dir" "$state_file"; then
+		print_success "~/.agents/skills/superpowers"
+	else
+		print_warn "无法部署 superpowers skills，跳过"
 	fi
 }
 
@@ -201,13 +271,15 @@ main() {
 	fi
 
 	# Git 配置
-	copy_path ".gitconfig" ".gitconfig"
+	_deploy_gitconfig
 	copy_path ".gitignore" ".gitignore"
 
 	# Claude Code 配置
 	_deploy_claude_settings
+	_deploy_claude_runtime_config
 	# Codex CLI 配置
 	_deploy_codex_config
+	_deploy_superpowers_skills
 	# SSH 配置：通过 Include 浅合并，避免覆盖机器本地的 Host 定义
 	mkdir -p "$HOME/.ssh/config.d"
 	cp -f "$DOTFILES_DIR/.ssh/config" "$HOME/.ssh/config.d/00-dotfiles"

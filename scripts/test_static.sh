@@ -22,6 +22,85 @@ run_shell_syntax_checks() {
 	done
 }
 
+capture_bootstrap_banner() {
+	local width="$1" msg="$2"
+	local temp_source log_file
+	temp_source="$(mktemp)"
+	log_file="$(mktemp)"
+
+	sed '$d' "$REPO_ROOT/install.sh" >"$temp_source"
+	(
+		export COLUMNS="$width" DOTFILES_LOG="$log_file" TERM="xterm-256color"
+		# shellcheck source=/dev/null
+		source "$temp_source"
+		print_banner "$msg"
+	)
+
+	rm -f "$temp_source" "$log_file"
+}
+
+capture_utils_banner() {
+	local width="$1" msg="$2"
+	local log_file
+	log_file="$(mktemp)"
+
+	(
+		export COLUMNS="$width" DOTFILES_LOG="$log_file" TERM="xterm-256color"
+		# shellcheck source=../lib/utils.sh
+		source "$REPO_ROOT/lib/utils.sh"
+		print_banner "$msg"
+	)
+
+	rm -f "$log_file"
+}
+
+inspect_banner_output() {
+	python3 - "$1" <<'PY'
+import re
+import sys
+
+line = re.sub(r'\x1b\[[0-9;]*m', '', sys.argv[1]).rstrip('\n')
+leading = len(line) - len(line.lstrip(' '))
+trailing = len(line) - len(line.rstrip(' '))
+core_end = len(line) - trailing if trailing else len(line)
+print(f"{leading}|{trailing}|{line[leading:core_end]}")
+PY
+}
+
+assert_banner_layout() {
+	local label="$1" output="$2" expected_left="$3" expected_right="$4" expected_text="$5"
+	local actual left right text
+
+	actual="$(inspect_banner_output "$output")"
+	IFS='|' read -r left right text <<<"$actual"
+
+	assert_equal "$expected_left" "$left" "$label left padding"
+	assert_equal "$expected_right" "$right" "$label right padding"
+	assert_equal "$expected_text" "$text" "$label content"
+}
+
+run_banner_regression_checks() {
+	local output
+
+	output="$(capture_bootstrap_banner 10 $'e\u0301')"
+	assert_banner_layout "bootstrap combining mark" "$output" 4 5 $'e\u0301'
+
+	output="$(capture_bootstrap_banner 10 '🇨🇳')"
+	assert_banner_layout "bootstrap flag emoji" "$output" 4 4 '🇨🇳'
+
+	output="$(capture_bootstrap_banner 10 '👨‍👩‍👧‍👦')"
+	assert_banner_layout "bootstrap zwj emoji" "$output" 4 4 '👨‍👩‍👧‍👦'
+
+	output="$(capture_utils_banner 10 $'e\u0301')"
+	assert_banner_layout "utils combining mark" "$output" 4 5 $'e\u0301'
+
+	output="$(capture_utils_banner 10 '🇨🇳')"
+	assert_banner_layout "utils flag emoji" "$output" 4 4 '🇨🇳'
+
+	output="$(capture_utils_banner 10 '👨‍👩‍👧‍👦')"
+	assert_banner_layout "utils zwj emoji" "$output" 4 4 '👨‍👩‍👧‍👦'
+}
+
 run_python_checks() {
 	cd "$REPO_ROOT"
 	if ! command -v python3 &>/dev/null; then
@@ -62,6 +141,7 @@ run_shellcheck() {
 }
 
 run_test "Shell syntax" run_shell_syntax_checks
+run_test "Banner width" run_banner_regression_checks
 run_test "Python syntax" run_python_checks
 run_test "Lua syntax" run_lua_checks
 run_test "ShellCheck" run_shellcheck

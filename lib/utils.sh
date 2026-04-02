@@ -104,6 +104,72 @@ print_warn() { _log "WARN" "⚠" "$YELLOW" "$1"; }
 print_error() { _log "ERROR" "✗" "$RED" "$1"; }
 print_header() { _log "INFO" "" "$BLUE" "$1"; }
 
+_string_display_width() {
+	local msg="$1"
+	local width ascii_count char_count
+
+	if command -v perl &>/dev/null; then
+		if width="$(
+			perl -CS - "$msg" 2>/dev/null <<'PERL'
+use strict;
+use warnings;
+use utf8;
+
+my $s = shift // q{};
+utf8::decode($s);
+my $width = 0;
+
+while ($s =~ /(\X)/g) {
+	my $cluster = $1;
+	my @cp = unpack('W*', $cluster);
+	next unless @cp;
+
+	my @base = grep {
+		my $cp = $_;
+		my $ch = chr($cp);
+		$cp != 0x200D &&
+		$cp != 0xFE0E &&
+		$cp != 0xFE0F &&
+		!($cp >= 0xE0020 && $cp <= 0xE007F) &&
+		!($cp >= 0x1F3FB && $cp <= 0x1F3FF) &&
+		$ch !~ /\p{Mn}|\p{Me}|\p{Cf}/;
+	} @cp;
+	next unless @base;
+
+	my $has_keycap = $cluster =~ /\x{20E3}/ ? 1 : 0;
+	my $ep_count = scalar grep { chr($_) =~ /\p{Extended_Pictographic}/ } @base;
+	my $ri_count = scalar grep { chr($_) =~ /\p{Regional_Indicator}/ } @base;
+
+	if ($has_keycap || $ep_count > 0 || $ri_count >= 2) {
+		$width += 2;
+		next;
+	}
+
+	my $cluster_width = 1;
+	for my $cp (@base) {
+		my $ch = chr($cp);
+		if ($ch =~ /\p{East_Asian_Width=Wide}|\p{East_Asian_Width=Fullwidth}/) {
+			$cluster_width = 2;
+			last;
+		}
+	}
+
+	$width += $cluster_width;
+}
+
+print "$width\n";
+PERL
+		)"; then
+			printf '%s\n' "$width"
+			return 0
+		fi
+	fi
+
+	char_count=$(LC_ALL=C.UTF-8 bash -c 'echo ${#1}' _ "$msg")
+	ascii_count=$(printf '%s' "$msg" | LC_ALL=C tr -cd '\0-\177' | wc -c | tr -d ' ')
+	printf '%s\n' "$(( ascii_count + (char_count - ascii_count) * 2 ))"
+}
+
 # 次要信息（灰色，无前缀，带缩进 — 比 _log 多一级）
 print_dim() {
 	local msg="$1"
@@ -124,9 +190,8 @@ print_item() {
 print_banner() {
 	local msg="$1"
 	local width=$(tput cols 2>/dev/null || echo 80)
-	# 显示宽度：非 ASCII（中文/emoji）占 2 列，纯 bash 无需 fork
-	local ascii="${msg//[^[:ascii:]]/}"
-	local dw=$(( 2 * ${#msg} - ${#ascii} ))
+	local dw
+	dw="$(_string_display_width "$msg")"
 	local pad=$(( (width - dw) / 2 ))
 	[[ $pad -lt 0 ]] && pad=0
 	local right=$(( width - pad - dw ))
@@ -247,6 +312,52 @@ get_local_version() {
 save_local_version() {
 	mkdir -p "$1"
 	echo "$2" >"$1/.version"
+}
+
+# ========================================
+# JSON 合并
+# 参数: $1 = 目标文件, $2 = 源文件
+# 语义: 保留目标文件已有字段，源文件中的同名字段覆盖目标值
+# 返回: 0=成功 1=无法安全合并
+# ========================================
+merge_json_object_file() {
+	local dest="$1" src="$2" tmp
+
+	[[ -f "$src" ]] || return 1
+
+	if [[ ! -f "$dest" ]]; then
+		mkdir -p "$(dirname "$dest")"
+		cp -f "$src" "$dest"
+		return 0
+	fi
+
+	if command -v jq &>/dev/null; then
+		tmp=$(mktemp)
+		if jq -s '.[0] * .[1]' "$dest" "$src" >"$tmp" 2>/dev/null && [[ -s "$tmp" ]]; then
+			mv "$tmp" "$dest"
+			return 0
+		fi
+		rm -f "$tmp"
+	fi
+
+	if command -v python3 &>/dev/null; then
+		python3 -c "
+import json, sys
+dest_path, src_path = sys.argv[1], sys.argv[2]
+with open(dest_path) as f:
+    dest = json.load(f)
+with open(src_path) as f:
+    src = json.load(f)
+if not isinstance(dest, dict) or not isinstance(src, dict):
+    raise SystemExit(1)
+dest.update(src)
+with open(dest_path, 'w') as f:
+    json.dump(dest, f, indent=2, ensure_ascii=False)
+    f.write('\n')
+" "$dest" "$src" 2>/dev/null && return 0
+	fi
+
+	return 1
 }
 
 # ========================================
@@ -488,6 +599,31 @@ pixi_lock_path() {
 
 pixi_manifest_state_file() {
 	echo "$HOME/.local/state/dotfiles/pixi-manifest.env"
+}
+
+superpowers_state_file() {
+	echo "$HOME/.local/state/dotfiles/superpowers.env"
+}
+
+normalize_git_remote() {
+	local url="$1"
+	[[ -n "$url" ]] || return 1
+
+	case "$url" in
+	git@*:* )
+		url="${url#git@}"
+		url="${url/:/\/}"
+		;;
+	ssh://git@* )
+		url="${url#ssh://git@}"
+		;;
+	http://* | https://* )
+		url="${url#http://}"
+		url="${url#https://}"
+		;;
+	esac
+
+	printf '%s\n' "${url%.git}"
 }
 
 file_fingerprint() {

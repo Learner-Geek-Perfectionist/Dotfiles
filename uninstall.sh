@@ -127,6 +127,7 @@ remove_manifested_dotfiles() {
 	while IFS=$'\t' read -r kind path expected_hash; do
 		[[ "$kind" == "file" && -n "$path" && -n "$expected_hash" ]] || continue
 		[[ "$path" == "$HOME/.claude/settings.json" ]] && continue
+		[[ "$path" == "$HOME/.claude.json" ]] && continue
 		[[ -f "$path" ]] || continue
 
 		current_hash=$(file_fingerprint "$path" 2>/dev/null || true)
@@ -175,6 +176,64 @@ remove_dotfiles_ssh_include_block() {
 	fi
 
 	print_dim "✓ 已清理 ~/.ssh/config 中的 Dotfiles Include 块"
+}
+
+remove_dotfiles_superpowers() {
+	local state_file clone_dir link_dir repo_url
+	local preserve_clone=false preserve_link=false
+	state_file="$(superpowers_state_file)"
+	clone_dir="$HOME/.codex/superpowers"
+	link_dir="$HOME/.agents/skills/superpowers"
+	repo_url="https://github.com/obra/superpowers.git"
+
+	if [[ -f "$state_file" ]]; then
+		# shellcheck disable=SC1090
+		source "$state_file"
+		clone_dir="${SUPERPOWERS_CLONE_DIR:-$clone_dir}"
+		link_dir="${SUPERPOWERS_LINK_DIR:-$link_dir}"
+		repo_url="${SUPERPOWERS_REPO_URL:-$repo_url}"
+	fi
+
+	if [[ -L "$link_dir" ]]; then
+		local target
+		target=$(readlink "$link_dir" 2>/dev/null || true)
+		if [[ "$target" == "$clone_dir/skills" ]]; then
+			rm_path "$link_dir"
+			prune_empty_parents "$(dirname "$link_dir")"
+		else
+			preserve_link=true
+			print_warn "保留 superpowers skills 链接（目标不匹配）: $link_dir"
+		fi
+	elif [[ -e "$link_dir" ]]; then
+		preserve_link=true
+		print_warn "保留 superpowers skills 路径（非符号链接）: $link_dir"
+	fi
+
+	if [[ -d "$clone_dir/.git" ]]; then
+		local origin status_output normalized_origin normalized_repo_url
+		origin=$(git -C "$clone_dir" remote get-url origin 2>/dev/null || true)
+		status_output=$(git -C "$clone_dir" status --porcelain 2>/dev/null || true)
+		normalized_origin=$(normalize_git_remote "$origin" 2>/dev/null || true)
+		normalized_repo_url=$(normalize_git_remote "$repo_url" 2>/dev/null || true)
+		if [[ -n "$origin" && "$normalized_origin" != "$normalized_repo_url" ]]; then
+			preserve_clone=true
+			print_warn "保留 superpowers 仓库（origin 不匹配）: $clone_dir"
+		elif [[ -n "$status_output" ]]; then
+			preserve_clone=true
+			print_warn "保留已修改的 superpowers 仓库: $clone_dir"
+		else
+			rm_path "$clone_dir"
+			prune_empty_parents "$(dirname "$clone_dir")"
+		fi
+	elif [[ -e "$clone_dir" ]]; then
+		preserve_clone=true
+		print_warn "保留 superpowers 路径（非 Git 仓库）: $clone_dir"
+	fi
+
+	if [[ "$preserve_clone" == false && "$preserve_link" == false ]]; then
+		rm_path "$state_file"
+		prune_empty_parents "$(dirname "$state_file")"
+	fi
 }
 
 remove_pixi() {
@@ -317,6 +376,7 @@ remove_claude() {
 remove_dotfiles() {
 	print_info "🗑️ 删除 Dotfiles..."
 
+	remove_dotfiles_superpowers
 	remove_manifested_dotfiles
 	remove_dotfiles_ssh_include_block
 

@@ -6,13 +6,21 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=./test_helpers.sh
 source "$SCRIPT_DIR/test_helpers.sh"
 
+run_dotfiles_install() {
+	local tmp_home="$1" fake_bin="$2" superpowers_repo="$3" log="$4"
+	HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" DOTFILES_DIR="$REPO_ROOT" \
+		SUPERPOWERS_REPO_URL="$superpowers_repo" bash "$REPO_ROOT/scripts/install_dotfiles.sh" >"$log" 2>&1
+}
+
 test_dotfiles_manifest_and_ssh_block() {
-	local tmp_home fake_bin log manifest
+	local tmp_home fake_bin log manifest superpowers_repo superpowers_state
 	tmp_home=$(make_temp_dir)
 	fake_bin=$(make_temp_dir)
 	log="$tmp_home/install-dotfiles.log"
 	manifest="$tmp_home/.local/state/dotfiles/dotfiles-manifest.tsv"
-	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+	superpowers_repo=$(make_fake_superpowers_repo)
+	superpowers_state="$tmp_home/.local/state/dotfiles/superpowers.env"
+	trap "rm -rf '$tmp_home' '$fake_bin' '$superpowers_repo'" RETURN
 
 	cat >"$fake_bin/zsh" <<'EOF'
 #!/bin/sh
@@ -24,8 +32,7 @@ exit 0
 EOF
 	chmod +x "$fake_bin/zsh" "$fake_bin/keychain"
 
-	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" DOTFILES_DIR="$REPO_ROOT" \
-		bash "$REPO_ROOT/scripts/install_dotfiles.sh" >"$log" 2>&1; then
+	if ! run_dotfiles_install "$tmp_home" "$fake_bin" "$superpowers_repo" "$log"; then
 		cat "$log" >&2
 		fail "install_dotfiles.sh failed"
 	fi
@@ -33,21 +40,30 @@ EOF
 	assert_file_exists "$manifest"
 	assert_contains "$tmp_home/.zshrc" "$manifest"
 	assert_contains "$tmp_home/.codex/config.toml" "$manifest"
+	assert_contains "$tmp_home/.claude.json" "$manifest"
 	assert_contains "$tmp_home/.ssh/config.d/00-dotfiles" "$manifest"
 	assert_file_exists "$tmp_home/.codex/config.toml"
+	assert_file_exists "$tmp_home/.claude.json"
+	assert_file_exists "$superpowers_state"
+	assert_symlink "$tmp_home/.agents/skills/superpowers"
+	assert_file_exists "$tmp_home/.codex/superpowers/skills/using-superpowers/SKILL.md"
+	assert_contains '"autoUpdates": false' "$tmp_home/.claude.json"
 	assert_contains 'model = "gpt-5.4"' "$tmp_home/.codex/config.toml"
+	assert_contains '[mcp_servers.github]' "$tmp_home/.codex/config.toml"
+	assert_contains 'bearer_token_env_var = "GITHUB_PERSONAL_ACCESS_TOKEN"' "$tmp_home/.codex/config.toml"
 	assert_file_exists "$tmp_home/.ssh/config"
 	assert_contains "# >>> Dotfiles SSH Include >>>" "$tmp_home/.ssh/config"
 	assert_contains "Include config.d/*" "$tmp_home/.ssh/config"
 }
 
 test_dotfiles_uninstall_preserves_modified_files() {
-	local tmp_home fake_bin install_log uninstall_log
+	local tmp_home fake_bin install_log uninstall_log superpowers_repo
 	tmp_home=$(make_temp_dir)
 	fake_bin=$(make_temp_dir)
 	install_log="$tmp_home/install-dotfiles.log"
 	uninstall_log="$tmp_home/uninstall-dotfiles.log"
-	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+	superpowers_repo=$(make_fake_superpowers_repo)
+	trap "rm -rf '$tmp_home' '$fake_bin' '$superpowers_repo'" RETURN
 
 	cat >"$fake_bin/zsh" <<'EOF'
 #!/bin/sh
@@ -59,8 +75,7 @@ exit 0
 EOF
 	chmod +x "$fake_bin/zsh" "$fake_bin/keychain"
 
-	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" DOTFILES_DIR="$REPO_ROOT" \
-		bash "$REPO_ROOT/scripts/install_dotfiles.sh" >"$install_log" 2>&1; then
+	if ! run_dotfiles_install "$tmp_home" "$fake_bin" "$superpowers_repo" "$install_log"; then
 		cat "$install_log" >&2
 		fail "install_dotfiles.sh failed"
 	fi
@@ -76,18 +91,108 @@ EOF
 	assert_file_exists "$tmp_home/.zshrc"
 	assert_file_missing "$tmp_home/.gitconfig"
 	assert_file_missing "$tmp_home/.codex/config.toml"
+	assert_file_missing "$tmp_home/.codex/superpowers"
+	assert_file_missing "$tmp_home/.agents/skills/superpowers"
+	assert_file_missing "$tmp_home/.local/state/dotfiles/superpowers.env"
+	assert_file_exists "$tmp_home/.claude.json"
 	assert_file_exists "$tmp_home/.claude/settings.json"
 	if [[ -f "$tmp_home/.ssh/config" ]]; then
 		assert_not_contains "# >>> Dotfiles SSH Include >>>" "$tmp_home/.ssh/config"
 	fi
 }
 
+test_claude_runtime_config_preserves_existing_state() {
+	local tmp_home fake_bin log superpowers_repo
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install-runtime-config.log"
+	superpowers_repo=$(make_fake_superpowers_repo)
+	trap "rm -rf '$tmp_home' '$fake_bin' '$superpowers_repo'" RETURN
+
+	cat >"$tmp_home/.claude.json" <<'EOF'
+{
+  "numStartups": 42,
+  "installMethod": "native",
+  "autoUpdates": true
+}
+EOF
+
+	cat >"$fake_bin/zsh" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/keychain" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$fake_bin/zsh" "$fake_bin/keychain"
+
+	if ! run_dotfiles_install "$tmp_home" "$fake_bin" "$superpowers_repo" "$log"; then
+		cat "$log" >&2
+		fail "install_dotfiles.sh runtime config merge failed"
+	fi
+
+	assert_contains '"numStartups": 42' "$tmp_home/.claude.json"
+	assert_contains '"installMethod": "native"' "$tmp_home/.claude.json"
+	assert_contains '"autoUpdates": false' "$tmp_home/.claude.json"
+}
+
+test_gitconfig_identity_migrates_to_local() {
+	local tmp_home fake_bin install_log uninstall_log superpowers_repo
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	install_log="$tmp_home/install-gitconfig.log"
+	uninstall_log="$tmp_home/uninstall-gitconfig.log"
+	superpowers_repo=$(make_fake_superpowers_repo)
+	trap "rm -rf '$tmp_home' '$fake_bin' '$superpowers_repo'" RETURN
+
+	cat >"$tmp_home/.gitconfig" <<'EOF'
+[user]
+	name = Legacy User
+	email = legacy@example.com
+EOF
+
+	cat >"$fake_bin/zsh" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/keychain" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$fake_bin/zsh" "$fake_bin/keychain"
+
+	if ! run_dotfiles_install "$tmp_home" "$fake_bin" "$superpowers_repo" "$install_log"; then
+		cat "$install_log" >&2
+		fail "install_dotfiles.sh gitconfig migration failed"
+	fi
+
+	assert_file_exists "$tmp_home/.gitconfig"
+	assert_file_exists "$tmp_home/.gitconfig.local"
+	assert_contains "[include]" "$tmp_home/.gitconfig"
+	assert_contains "path = ~/.gitconfig.local" "$tmp_home/.gitconfig"
+	assert_contains "name = Legacy User" "$tmp_home/.gitconfig.local"
+	assert_contains "email = legacy@example.com" "$tmp_home/.gitconfig.local"
+	assert_not_contains "Legacy User" "$tmp_home/.gitconfig"
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		bash "$REPO_ROOT/uninstall.sh" --dotfiles --force >"$uninstall_log" 2>&1; then
+		cat "$uninstall_log" >&2
+		fail "uninstall.sh gitconfig preservation failed"
+	fi
+
+	assert_file_missing "$tmp_home/.gitconfig"
+	assert_file_exists "$tmp_home/.gitconfig.local"
+	assert_contains "name = Legacy User" "$tmp_home/.gitconfig.local"
+}
+
 test_dotfiles_hook_free_fallback() {
-	local tmp_home fake_bin log
+	local tmp_home fake_bin log superpowers_repo
 	tmp_home=$(make_temp_dir)
 	fake_bin=$(make_temp_dir)
 	log="$tmp_home/install-fallback.log"
-	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+	superpowers_repo=$(make_fake_superpowers_repo)
+	trap "rm -rf '$tmp_home' '$fake_bin' '$superpowers_repo'" RETURN
 
 	cat >"$fake_bin/jq" <<'EOF'
 #!/bin/sh
@@ -107,24 +212,26 @@ exit 0
 EOF
 	chmod +x "$fake_bin/jq" "$fake_bin/python3" "$fake_bin/zsh" "$fake_bin/keychain"
 
-	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" DOTFILES_DIR="$REPO_ROOT" \
-		bash "$REPO_ROOT/scripts/install_dotfiles.sh" >"$log" 2>&1; then
+	if ! run_dotfiles_install "$tmp_home" "$fake_bin" "$superpowers_repo" "$log"; then
 		cat "$log" >&2
 		fail "install_dotfiles.sh fallback failed"
 	fi
 
 	assert_file_exists "$tmp_home/.claude/settings.json"
+	assert_file_exists "$tmp_home/.claude.json"
+	assert_contains '"autoUpdates": false' "$tmp_home/.claude.json"
 	assert_not_contains "PostToolUse" "$tmp_home/.claude/settings.json"
 }
 
 test_codex_config_preserves_projects_and_keeps_home_subprojects() {
-	local tmp_home fake_bin log external_project child_project
+	local tmp_home fake_bin log external_project child_project superpowers_repo
 	tmp_home=$(make_temp_dir)
 	fake_bin=$(make_temp_dir)
 	log="$tmp_home/install-codex.log"
 	external_project="/tmp/codex-external-project"
 	child_project="$tmp_home/redundant-project"
-	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+	superpowers_repo=$(make_fake_superpowers_repo)
+	trap "rm -rf '$tmp_home' '$fake_bin' '$superpowers_repo'" RETURN
 
 	mkdir -p "$tmp_home/.codex"
 	cat >"$tmp_home/.codex/config.toml" <<EOF
@@ -147,13 +254,22 @@ exit 0
 EOF
 	chmod +x "$fake_bin/zsh" "$fake_bin/keychain"
 
-	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" DOTFILES_DIR="$REPO_ROOT" \
-		bash "$REPO_ROOT/scripts/install_dotfiles.sh" >"$log" 2>&1; then
+	if ! run_dotfiles_install "$tmp_home" "$fake_bin" "$superpowers_repo" "$log"; then
 		cat "$log" >&2
 		fail "install_dotfiles.sh codex merge failed"
 	fi
 
 	assert_contains 'model = "gpt-5.4"' "$tmp_home/.codex/config.toml"
+	assert_contains '[mcp_servers.openaiDeveloperDocs]' "$tmp_home/.codex/config.toml"
+	assert_contains 'url = "https://developers.openai.com/mcp"' "$tmp_home/.codex/config.toml"
+	assert_contains '[mcp_servers.github]' "$tmp_home/.codex/config.toml"
+	assert_contains 'url = "https://api.githubcopilot.com/mcp/"' "$tmp_home/.codex/config.toml"
+	assert_contains 'bearer_token_env_var = "GITHUB_PERSONAL_ACCESS_TOKEN"' "$tmp_home/.codex/config.toml"
+	assert_contains '[mcp_servers.tavily]' "$tmp_home/.codex/config.toml"
+	assert_contains 'args = ["-y", "tavily-mcp"]' "$tmp_home/.codex/config.toml"
+	assert_contains 'env_vars = ["TAVILY_API_KEY"]' "$tmp_home/.codex/config.toml"
+	assert_contains '[mcp_servers.fetch]' "$tmp_home/.codex/config.toml"
+	assert_contains 'args = ["-y", "@kazuph/mcp-fetch"]' "$tmp_home/.codex/config.toml"
 	assert_contains "[projects.\"$external_project\"]" "$tmp_home/.codex/config.toml"
 	assert_contains "[projects.\"$tmp_home\"]" "$tmp_home/.codex/config.toml"
 	assert_contains "[projects.\"$child_project\"]" "$tmp_home/.codex/config.toml"
@@ -350,6 +466,74 @@ EOF
 
 	assert_symlink "$tmp_home/.ssh/known_hosts"
 	assert_grep '^github.com ssh-ed25519 ' "$real_known_hosts"
+	assert_file_exists "$tmp_home/.claude.json"
+	assert_contains '"autoUpdates": false' "$tmp_home/.claude.json"
+}
+
+test_claude_installs_study_master_from_new_repo() {
+	local tmp_home fake_bin log expected_repo
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install-claude-study-master.log"
+	expected_repo="https://github.com/Learner-Geek-Perfectionist/agent-study-skills.git"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	cat >"$fake_bin/claude" <<'EOF'
+#!/bin/sh
+case "$1" in
+  --version) echo 'claude 1.0.0'; exit 0 ;;
+  plugin)
+    case "$2" in
+      list|install|uninstall) exit 0 ;;
+      marketplace) exit 0 ;;
+    esac
+    ;;
+  mcp)
+    case "$2" in
+      list|add|add-json|remove) exit 0 ;;
+    esac
+    ;;
+esac
+exit 0
+EOF
+	cat >"$fake_bin/rustup" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/npm" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/dotnet" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/curl" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/git" <<EOF
+#!/bin/sh
+if [ "\$1" = "clone" ] && [ "\$2" = "--depth" ] && [ "\$3" = "1" ] && [ "\$4" = "$expected_repo" ]; then
+  dest="\$5"
+  mkdir -p "\$dest/study-master-skill/hooks"
+  printf '# study-master\\n' >"\$dest/study-master-skill/SKILL.md"
+  printf '#!/bin/sh\\nexit 0\\n' >"\$dest/study-master-skill/hooks/check-study_master.sh"
+  exit 0
+fi
+exit 1
+EOF
+	chmod +x "$fake_bin/claude" "$fake_bin/rustup" "$fake_bin/npm" "$fake_bin/dotnet" "$fake_bin/curl" "$fake_bin/git"
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		bash "$REPO_ROOT/scripts/install_claude_code.sh" >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "install_claude_code.sh study-master repo test failed"
+	fi
+
+	assert_file_exists "$tmp_home/.claude/skills/study-master/SKILL.md"
+	assert_file_exists "$tmp_home/.claude/hooks/check-study_master.sh"
+	assert_contains "study-master Skill 安装完成" "$log"
 }
 
 test_macos_brew_maintenance_launchagent_created() {
@@ -438,12 +622,15 @@ EOF
 
 run_test "Dotfiles manifest and SSH include block" test_dotfiles_manifest_and_ssh_block
 run_test "Dotfiles uninstall preserves modified files" test_dotfiles_uninstall_preserves_modified_files
+run_test "Claude runtime config preserves existing state" test_claude_runtime_config_preserves_existing_state
+run_test "Git config identity migrates to local include" test_gitconfig_identity_migrates_to_local
 run_test "Dotfiles hook-free fallback" test_dotfiles_hook_free_fallback
 run_test "Codex config preserves subprojects" test_codex_config_preserves_projects_and_keeps_home_subprojects
 run_test "Pixi prefers managed install" test_pixi_prefers_managed_install_over_system_binary
 run_test "Claude optional on macOS" test_claude_optional_on_macos_when_missing
 run_test "Claude optional on Linux" test_claude_optional_on_linux_when_install_fails
 run_test "Claude known_hosts preserves symlink" test_claude_known_hosts_preserves_symlink
+run_test "Claude installs study-master from new repo" test_claude_installs_study_master_from_new_repo
 run_test "macOS brew maintenance LaunchAgent" test_macos_brew_maintenance_launchagent_created
 
 section "Done"

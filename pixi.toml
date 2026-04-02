@@ -31,6 +31,7 @@ grep = "*"
 sed = "*"
 gawk = "*"
 openssh = "*"
+bash = "*"
 
 # 编程语言运行时
 python = "*"
@@ -39,6 +40,8 @@ nodejs = "*"
 go = "*"
 ruby = "*"
 lua = "*"
+perl = "*"
+luajit = "*"
 rust = "*"
 openjdk = "*"
 gradle = "*"
@@ -46,6 +49,9 @@ kotlin = "*"
 
 # LSP Servers
 pyright = "*"
+gopls = "*"
+lua-language-server = "*"
+jdtls = "*"
 
 # 终端增强工具
 ripgrep = "*"
@@ -58,6 +64,8 @@ dust = "*"
 hyperfine = "*"
 fastfetch = "*"
 tmux = "*"
+htop = "*"
+less = "*"
 
 # 开发工具
 nvim = "*"
@@ -66,6 +74,9 @@ jq = "*"
 yq = "*"
 graphviz = "*"
 doxygen = "*"
+chafa = "*"
+tree-sitter-cli = "*"
+z3-solver = "*"
 
 # 代码格式化
 go-shfmt = "*"
@@ -102,7 +113,16 @@ readline = "*"
 zlib = "*"
 ncurses = "*"
 libffi = "*"
+sqlite = "*"
+yaml = "*"
+
+# 压缩
+lz4 = "*"
+zstd = "*"
+brotli = "*"
+lzip = "*"
 
 # 测试框架和库
 gtest = "*"
+benchmark = "*"
 libboost-devel = "*"

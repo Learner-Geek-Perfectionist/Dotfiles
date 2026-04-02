@@ -72,6 +72,7 @@ brew_casks=(
 brew_formulas=(
 	# 核心工具
 	git
+	git-lfs
 	gh
 	curl
 	wget
@@ -92,6 +93,7 @@ brew_formulas=(
 	eza
 	bat
 	htop
+	hyperfine
 	tree
 	less
 	tmux
@@ -139,7 +141,9 @@ brew_formulas=(
 	graphviz
 	doxygen
 	jq
+	yq
 	shfmt
+	ruff
 	chafa
 
 	# 库
@@ -166,6 +170,7 @@ brew_formulas=(
 
 	# 其他
 	rsync
+	direnv
 	mas
 	tree-sitter
 	z3

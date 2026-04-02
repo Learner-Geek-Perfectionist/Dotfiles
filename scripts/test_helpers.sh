@@ -30,6 +30,37 @@ make_temp_dir() {
 	mktemp -d
 }
 
+make_fake_superpowers_repo() {
+	local repo
+	repo=$(make_temp_dir)
+
+	mkdir -p "$repo/skills/using-superpowers" "$repo/skills/systematic-debugging"
+	cat >"$repo/skills/using-superpowers/SKILL.md" <<'EOF'
+---
+name: using-superpowers
+description: Test fixture for Codex skill discovery
+---
+
+# Using Superpowers
+EOF
+	cat >"$repo/skills/systematic-debugging/SKILL.md" <<'EOF'
+---
+name: systematic-debugging
+description: Test fixture for debugging workflows
+---
+
+# Systematic Debugging
+EOF
+
+	git init "$repo" >/dev/null 2>&1
+	git -C "$repo" config user.name "Dotfiles Test"
+	git -C "$repo" config user.email "dotfiles@example.com"
+	git -C "$repo" add skills
+	git -C "$repo" commit -m "init superpowers fixture" >/dev/null 2>&1
+
+	printf '%s\n' "$repo"
+}
+
 assert_file_exists() {
 	local path="$1"
 	[[ -e "$path" || -L "$path" ]] || fail "Expected path to exist: $path"

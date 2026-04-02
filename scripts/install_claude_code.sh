@@ -2,7 +2,7 @@
 # Claude Code 安装脚本
 # 1) 安装 LSP 二进制（rust-analyzer, gopls, kotlin-ls 等）
 # 2) 安装 Claude Code CLI（原生安装器）
-# 3) 启用自动更新（写入 ~/.claude.json）
+# 3) 关闭启动时更新提示（写入 ~/.claude.json）
 # 4) 添加插件 marketplace
 # 5) 安装 LSP 插件和 skill 插件
 # 6) 安装独立 Skill（study-master 等，在线 clone 安装）
@@ -447,35 +447,23 @@ install_plugins() {
 }
 
 # ========================================
-# 配置自动更新（写入 ~/.claude.json 运行时偏好）
+# 配置 Claude 运行时偏好（写入 ~/.claude.json）
 # ========================================
-configure_auto_updates() {
+configure_runtime_preferences() {
 	local config_file="$HOME/.claude.json"
+	local runtime_config="$SCRIPT_DIR/../.claude/runtime.json"
 
-	if [[ ! -f "$config_file" ]]; then
-		printf '{\n  "autoUpdates": true\n}\n' >"$config_file"
-		print_success "已创建 ~/.claude.json 并启用自动更新"
+	if [[ ! -f "$runtime_config" ]]; then
+		print_warn "未找到 .claude/runtime.json，跳过运行时偏好配置"
 		return 0
 	fi
 
-	if ! command -v jq &>/dev/null; then
-		print_warn "jq 未安装，跳过自动更新配置"
+	if ! merge_json_object_file "$config_file" "$runtime_config"; then
+		print_warn "无法安全写入 ~/.claude.json，跳过运行时偏好配置"
 		return 0
 	fi
 
-	# 已经是 true 则跳过
-	if jq -e '.autoUpdates == true' "$config_file" &>/dev/null; then
-		print_success "自动更新已启用"
-		return 0
-	fi
-
-	if jq '.autoUpdates = true' "$config_file" > "$config_file.tmp" && [[ -s "$config_file.tmp" ]]; then
-		mv "$config_file.tmp" "$config_file"
-		print_success "已启用自动更新"
-	else
-		rm -f "$config_file.tmp"
-		print_warn "自动更新配置写入失败"
-	fi
+	print_success "已更新 ~/.claude.json（关闭 Claude Code CLI 更新提示）"
 }
 
 ensure_claude_settings_file() {
@@ -605,7 +593,7 @@ ensure_study_master_hooks() {
 # 在线 clone 仓库，手动部署文件并注册 hooks
 # 不使用上游 install.sh（其 hook 注册路径和格式有误）
 install_study_master_skill() {
-	local repo="Learner-Geek-Perfectionist/claude-code-study-skills"
+	local repo="Learner-Geek-Perfectionist/agent-study-skills"
 	local skill_dir="$HOME/.claude/skills/study-master"
 	local hooks_dir="$HOME/.claude/hooks"
 	local settings_file="$HOME/.claude/settings.json"
@@ -909,8 +897,8 @@ main() {
 
 	ensure_claude_settings_file
 
-	# 3) 启用自动更新（写入 ~/.claude.json 运行时偏好）
-	configure_auto_updates
+	# 3) 关闭启动时更新提示（写入 ~/.claude.json 运行时偏好）
+	configure_runtime_preferences
 
 	# 4) 预填充 GitHub host key
 	# Claude CLI 内部 git clone 强制 StrictHostKeyChecking=yes，

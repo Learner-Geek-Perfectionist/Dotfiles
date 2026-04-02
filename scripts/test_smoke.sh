@@ -182,6 +182,54 @@ EOF
 	assert_contains "bb-browser@latest" "$npm_log"
 }
 
+test_bb_browser_install_fails_without_supported_browser() {
+	local tmp_home fake_bin log npm_log tool
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install-bb-browser-no-browser.log"
+	npm_log="$tmp_home/npm-no-browser.log"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	for tool in basename cat chmod cp date dirname mkdir rm sleep whoami; do
+		ln -s "$(command -v "$tool")" "$fake_bin/$tool"
+	done
+
+	cat >"$fake_bin/npm" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >>"$npm_log"
+if [ "\$1" = "install" ] && [ "\$2" = "-g" ] && [ "\$3" = "bb-browser@latest" ]; then
+  cat >"$fake_bin/bb-browser" <<'INNER'
+#!/bin/sh
+case "\$1" in
+  --version) echo 'bb-browser 9.9.9' ;;
+  *) exit 0 ;;
+esac
+INNER
+  chmod +x "$fake_bin/bb-browser"
+fi
+exit 0
+EOF
+	cat >"$fake_bin/node" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/uname" <<'EOF'
+#!/bin/sh
+echo 'Linux'
+EOF
+	chmod +x "$fake_bin/npm" "$fake_bin/node" "$fake_bin/uname"
+
+	if HOME="$tmp_home" PATH="$fake_bin" \
+		/bin/bash "$REPO_ROOT/scripts/install_bb_browser.sh" >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "install_bb_browser.sh unexpectedly succeeded without supported browser"
+	fi
+
+	assert_contains "install" "$npm_log"
+	assert_contains "bb-browser@latest" "$npm_log"
+	assert_contains "未找到受支持浏览器" "$log"
+}
+
 test_bb_browser_wrapper_uses_managed_path_over_preexisting_path() {
 	local tmp_home old_bin managed_prefix fake_bin log npm_log state_file
 	tmp_home=$(make_temp_dir)
@@ -253,6 +301,7 @@ EOF
 
 	version_output="$(
 		HOME="$tmp_home" PATH="$old_bin:$managed_prefix/bin:$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+			BB_BROWSER_CDP_URL="http://127.0.0.1:19825" \
 			bash "$tmp_home/.local/bin/bb-browser-user" --version
 	)"
 	assert_equal "bb-browser managed 2.0.0" "$version_output" "wrapper version output"
@@ -1169,6 +1218,7 @@ EOF
 run_test "Dotfiles manifest and SSH include block" test_dotfiles_manifest_and_ssh_block
 run_test "Dotfiles deploys bb-browser shell plugin" test_dotfiles_deploys_bb_browser_shell_plugin
 run_test "bb-browser install uses latest and deploys wrapper" test_bb_browser_install_uses_latest_and_deploys_wrapper
+run_test "bb-browser install fails without supported browser" test_bb_browser_install_fails_without_supported_browser
 run_test "bb-browser wrapper uses managed path over preexisting path" test_bb_browser_wrapper_uses_managed_path_over_preexisting_path
 run_test "bb-browser uninstall preserves preexisting global install" test_bb_browser_uninstall_preserves_preexisting_global_install
 run_test "bb-browser uninstall removes managed global install" test_bb_browser_uninstall_removes_managed_global_install

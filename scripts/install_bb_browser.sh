@@ -86,7 +86,8 @@ main() {
 	write_state_file "$preexisting_bb_browser" "$installed_version" "$real_bb_browser_path"
 
 	if ! "$WRAPPER_PATH" doctor; then
-		print_warn "bb-browser doctor 检查失败"
+		print_error "bb-browser 健康检查失败"
+		return 1
 	fi
 }
 

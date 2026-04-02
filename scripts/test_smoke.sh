@@ -149,9 +149,14 @@ test_bb_browser_install_uses_latest_and_deploys_wrapper() {
 	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
 	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
 
-	cat >"$fake_bin/npm" <<EOF
+	mkdir -p "$tmp_home/.config/google-chrome"
+cat >"$fake_bin/npm" <<EOF
 #!/bin/sh
 printf '%s\n' "\$*" >>"$npm_log"
+if [ "\$1" = "root" ] && [ "\$2" = "-g" ]; then
+  printf '%s\n' "$tmp_home/fake-node-modules"
+  exit 0
+fi
 if [ "\$1" = "install" ] && [ "\$2" = "-g" ] && [ "\$3" = "bb-browser@latest" ]; then
   cat >"$fake_bin/bb-browser" <<'INNER'
 #!/bin/sh
@@ -161,6 +166,8 @@ case "\$1" in
 esac
 INNER
   chmod +x "$fake_bin/bb-browser"
+  mkdir -p "$tmp_home/fake-node-modules/bb-browser/dist"
+  : >"$tmp_home/fake-node-modules/bb-browser/dist/daemon.js"
 fi
 exit 0
 EOF
@@ -168,7 +175,15 @@ EOF
 #!/bin/sh
 exit 0
 EOF
-	chmod +x "$fake_bin/npm" "$fake_bin/node"
+	cat >"$fake_bin/google-chrome" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/uname" <<'EOF'
+#!/bin/sh
+echo 'Linux'
+EOF
+	chmod +x "$fake_bin/npm" "$fake_bin/node" "$fake_bin/google-chrome" "$fake_bin/uname"
 
 	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
 		BB_BROWSER_CDP_URL="http://127.0.0.1:19825" \
@@ -196,9 +211,14 @@ test_bb_browser_fresh_install_marker_drives_managed_uninstall() {
 	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
 	trap "rm -rf '$tmp_home' '$fake_bin' '$managed_prefix'" RETURN
 
-	cat >"$fake_bin/npm" <<EOF
+	mkdir -p "$tmp_home/.config/google-chrome"
+cat >"$fake_bin/npm" <<EOF
 #!/bin/sh
 printf '%s\n' "\$*" >>"$npm_log"
+if [ "\$1" = "root" ] && [ "\$2" = "-g" ]; then
+  printf '%s\n' "$tmp_home/fake-node-modules"
+  exit 0
+fi
 if [ "\$1" = "prefix" ] && [ "\$2" = "-g" ]; then
   printf '%s\n' "$managed_prefix"
   exit 0
@@ -213,6 +233,8 @@ case "\$1" in
 esac
 INNER
   chmod +x "$managed_prefix/bin/bb-browser"
+  mkdir -p "$tmp_home/fake-node-modules/bb-browser/dist"
+  : >"$tmp_home/fake-node-modules/bb-browser/dist/daemon.js"
   exit 0
 fi
 if [ "\$1" = "--prefix" ] && [ "\$2" = "$managed_prefix" ] && [ "\$3" = "uninstall" ] && [ "\$4" = "-g" ] && [ "\$5" = "bb-browser" ]; then
@@ -225,7 +247,15 @@ EOF
 #!/bin/sh
 exit 0
 EOF
-	chmod +x "$fake_bin/npm" "$fake_bin/node"
+	cat >"$fake_bin/google-chrome" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/uname" <<'EOF'
+#!/bin/sh
+echo 'Linux'
+EOF
+	chmod +x "$fake_bin/npm" "$fake_bin/node" "$fake_bin/google-chrome" "$fake_bin/uname"
 
 	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
 		BB_BROWSER_CDP_URL="http://127.0.0.1:19825" \
@@ -251,27 +281,36 @@ EOF
 }
 
 test_bb_browser_install_discovers_browser_and_launches_cdp() {
-	local tmp_home fake_bin log npm_log browser_log fetch_log ready_file config_file state_file wrapper_path
+	local tmp_home fake_bin log npm_log chrome_log edge_log fetch_log daemon_log pkill_log ready_file daemon_ready_file config_file state_file wrapper_path token_file version_output
 	tmp_home=$(make_temp_dir)
 	fake_bin=$(make_temp_dir)
 	log="$tmp_home/install-bb-browser-discovery.log"
 	npm_log="$tmp_home/npm-discovery.log"
-	browser_log="$tmp_home/google-chrome.log"
+	chrome_log="$tmp_home/google-chrome.log"
+	edge_log="$tmp_home/microsoft-edge.log"
 	fetch_log="$tmp_home/node-fetch.log"
+	daemon_log="$tmp_home/daemon.log"
+	pkill_log="$tmp_home/pkill.log"
 	ready_file="$tmp_home/.cdp-ready-24444"
+	daemon_ready_file="$tmp_home/.daemon-ready"
 	config_file="$tmp_home/.config/dotfiles/bb-browser.json"
 	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
 	wrapper_path="$tmp_home/.local/bin/bb-browser-user"
+	token_file="$tmp_home/.bb-browser/daemon.token"
 	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
 
-	mkdir -p "$(dirname "$config_file")" "$tmp_home/.config/google-chrome"
+	mkdir -p "$(dirname "$config_file")" "$tmp_home/.config/google-chrome" "$tmp_home/.config/microsoft-edge"
 	cat >"$config_file" <<'EOF'
-{"port":24444,"profileDirectory":"Profile 9"}
+{"browser":"microsoft-edge","port":24444,"profileDirectory":"Profile 9"}
 EOF
 
-	cat >"$fake_bin/npm" <<EOF
+cat >"$fake_bin/npm" <<EOF
 #!/bin/sh
 printf '%s\n' "\$*" >>"$npm_log"
+if [ "\$1" = "root" ] && [ "\$2" = "-g" ]; then
+  printf '%s\n' "$tmp_home/fake-node-modules"
+  exit 0
+fi
 if [ "\$1" = "install" ] && [ "\$2" = "-g" ] && [ "\$3" = "bb-browser@latest" ]; then
   cat >"$fake_bin/bb-browser" <<'INNER'
 #!/bin/sh
@@ -281,16 +320,33 @@ case "\$1" in
 esac
 INNER
   chmod +x "$fake_bin/bb-browser"
+  mkdir -p "$tmp_home/fake-node-modules/bb-browser/dist"
+  : >"$tmp_home/fake-node-modules/bb-browser/dist/daemon.js"
 fi
 exit 0
 EOF
 	cat >"$fake_bin/node" <<EOF
 #!/bin/sh
+case "\$1" in
+  *daemon.js)
+    printf '%s\n' "\$*" >>"$daemon_log"
+    mkdir -p "$(dirname "$token_file")"
+    : >"$daemon_ready_file"
+    exit 0
+    ;;
+esac
 script="\$2"
 arg="\$3"
+status_url="\$4"
 case "\$script" in
   *fetch*)
     printf '%s\n' "\$arg" >>"$fetch_log"
+    case "\$status_url" in
+      http://127.0.0.1:19824/status)
+        [ -f "$daemon_ready_file" ] && exit 0
+        exit 1
+        ;;
+    esac
     case "\$arg" in
       http://127.0.0.1:24444|http://127.0.0.1:24444/json/version)
         [ -f "$ready_file" ] && exit 0
@@ -299,15 +355,29 @@ case "\$script" in
     esac
     exit 1
     ;;
-  *config.profileDirectory*)
+  *crypto.randomBytes*)
     /bin/cat <<'INNER'
-Profile 9
+daemon-token
 INNER
     exit 0
     ;;
-  *config.port*)
+  *url.hostname*)
+    /bin/cat <<'INNER'
+127.0.0.1
+INNER
+    exit 0
+    ;;
+  *url.port*)
     /bin/cat <<'INNER'
 24444
+INNER
+    exit 0
+    ;;
+  *config.browser*config.port*config.profileDirectory*)
+    /bin/cat <<'INNER'
+microsoft-edge
+24444
+Profile 9
 INNER
     exit 0
     ;;
@@ -316,7 +386,12 @@ exit 0
 EOF
 	cat >"$fake_bin/google-chrome" <<EOF
 #!/bin/sh
-printf '%s\n' "\$*" >>"$browser_log"
+printf '%s\n' "\$*" >>"$chrome_log"
+exit 0
+EOF
+	cat >"$fake_bin/microsoft-edge" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >>"$edge_log"
 port=""
 for arg in "\$@"; do
   case "\$arg" in
@@ -332,7 +407,37 @@ EOF
 #!/bin/sh
 echo 'Linux'
 EOF
-	chmod +x "$fake_bin/npm" "$fake_bin/node" "$fake_bin/google-chrome" "$fake_bin/uname"
+	cat >"$fake_bin/openssl" <<'EOF'
+#!/bin/sh
+printf '%s\n' 'daemon-token'
+EOF
+	cat >"$fake_bin/curl" <<EOF
+#!/bin/sh
+url=""
+for arg in "\$@"; do
+  url="\$arg"
+done
+printf '%s\n' "\$url" >>"$fetch_log"
+case "\$url" in
+  http://127.0.0.1:19824/status)
+    [ -f "$daemon_ready_file" ] || exit 22
+    printf '%s\n' '{"running":true}'
+    exit 0
+    ;;
+  http://127.0.0.1:24444/json/version)
+    [ -f "$ready_file" ] || exit 22
+    printf '%s\n' '{}'
+    exit 0
+    ;;
+esac
+exit 22
+EOF
+	cat >"$fake_bin/pkill" <<EOF
+#!/bin/sh
+	printf '%s\n' "\$*" >>"$pkill_log"
+	exit 0
+EOF
+	chmod +x "$fake_bin/npm" "$fake_bin/node" "$fake_bin/google-chrome" "$fake_bin/microsoft-edge" "$fake_bin/uname" "$fake_bin/openssl" "$fake_bin/curl" "$fake_bin/pkill"
 
 	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
 		bash "$REPO_ROOT/scripts/install_bb_browser.sh" >"$log" 2>&1; then
@@ -340,13 +445,615 @@ EOF
 		fail "install_bb_browser.sh discovery case failed"
 	fi
 
+	version_output="$(
+		HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+			bash "$wrapper_path" --version
+	)"
+
 	assert_executable "$wrapper_path"
 	assert_file_exists "$state_file"
+	assert_equal "bb-browser 9.9.9" "$version_output" "wrapper version output"
 	assert_contains "http://127.0.0.1:24444" "$fetch_log"
-	assert_contains "remote-debugging-port=24444" "$browser_log"
-	assert_contains "user-data-dir=$tmp_home/.config/google-chrome" "$browser_log"
-	assert_contains "profile-directory=Profile 9" "$browser_log"
-	assert_contains "about:blank" "$browser_log"
+	assert_contains "remote-debugging-port=24444" "$edge_log"
+	assert_contains "user-data-dir=$tmp_home/.config/microsoft-edge" "$edge_log"
+	assert_contains "profile-directory=Profile 9" "$edge_log"
+	assert_contains "about:blank" "$edge_log"
+	grep -qF -- "-H 127.0.0.1" "$daemon_log" || fail "Expected '-H 127.0.0.1' in $daemon_log"
+	grep -qF -- "--cdp-host 127.0.0.1" "$daemon_log" || fail "Expected '--cdp-host 127.0.0.1' in $daemon_log"
+	grep -qF -- "--cdp-port 24444" "$daemon_log" || fail "Expected '--cdp-port 24444' in $daemon_log"
+	grep -qF -- "--port 19824" "$daemon_log" || fail "Expected '--port 19824' in $daemon_log"
+	grep -qF -- "--token daemon-token" "$daemon_log" || fail "Expected '--token daemon-token' in $daemon_log"
+	assert_file_exists "$token_file"
+	assert_mode "600" "$token_file"
+	assert_file_missing "$chrome_log"
+	assert_file_missing "$pkill_log"
+}
+
+test_bb_browser_install_keeps_token_private_when_chmod_fails() {
+	local tmp_home fake_bin log npm_log edge_log fetch_log daemon_log ready_file daemon_ready_file config_file token_file wrapper_path version_output
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install-bb-browser-token-mode.log"
+	npm_log="$tmp_home/npm-token-mode.log"
+	edge_log="$tmp_home/microsoft-edge-token-mode.log"
+	fetch_log="$tmp_home/node-fetch-token-mode.log"
+	daemon_log="$tmp_home/daemon-token-mode.log"
+	ready_file="$tmp_home/.cdp-ready-24444"
+	daemon_ready_file="$tmp_home/.daemon-ready"
+	config_file="$tmp_home/.config/dotfiles/bb-browser.json"
+	token_file="$tmp_home/.bb-browser/daemon.token"
+	wrapper_path="$tmp_home/.local/bin/bb-browser-user"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	mkdir -p "$(dirname "$config_file")" "$tmp_home/.config/microsoft-edge"
+	cat >"$config_file" <<'EOF'
+{"browser":"microsoft-edge","port":24444,"profileDirectory":"Profile 9"}
+EOF
+
+	cat >"$fake_bin/npm" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >>"$npm_log"
+if [ "\$1" = "root" ] && [ "\$2" = "-g" ]; then
+  printf '%s\n' "$tmp_home/fake-node-modules"
+  exit 0
+fi
+if [ "\$1" = "install" ] && [ "\$2" = "-g" ] && [ "\$3" = "bb-browser@latest" ]; then
+  cat >"$fake_bin/bb-browser" <<'INNER'
+#!/bin/sh
+case "\$1" in
+  --version) echo 'bb-browser 9.9.9' ;;
+  *) exit 0 ;;
+esac
+INNER
+  /bin/chmod +x "$fake_bin/bb-browser"
+  mkdir -p "$tmp_home/fake-node-modules/bb-browser/dist"
+  : >"$tmp_home/fake-node-modules/bb-browser/dist/daemon.js"
+fi
+exit 0
+EOF
+	cat >"$fake_bin/node" <<EOF
+#!/bin/sh
+case "\$1" in
+  *daemon.js)
+    printf '%s\n' "\$*" >>"$daemon_log"
+    mkdir -p "$(dirname "$token_file")"
+    : >"$daemon_ready_file"
+    exit 0
+    ;;
+esac
+script="\$2"
+arg="\$3"
+status_url="\$4"
+case "\$script" in
+  *fetch*)
+    printf '%s\n' "\$arg" >>"$fetch_log"
+    case "\$status_url" in
+      http://127.0.0.1:19824/status)
+        [ -f "$daemon_ready_file" ] && exit 0
+        exit 1
+        ;;
+    esac
+    case "\$arg" in
+      http://127.0.0.1:24444|http://127.0.0.1:24444/json/version)
+        [ -f "$ready_file" ] && exit 0
+        exit 1
+        ;;
+    esac
+    exit 1
+    ;;
+  *config.browser*config.port*config.profileDirectory*)
+    printf '%s\n%s\n%s\n' 'microsoft-edge' '24444' 'Profile 9'
+    exit 0
+    ;;
+esac
+exit 0
+EOF
+	cat >"$fake_bin/microsoft-edge" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >>"$edge_log"
+: >"$ready_file"
+exit 0
+EOF
+	cat >"$fake_bin/uname" <<'EOF'
+#!/bin/sh
+echo 'Linux'
+EOF
+	cat >"$fake_bin/openssl" <<'EOF'
+#!/bin/sh
+printf '%s\n' 'daemon-token'
+EOF
+	cat >"$fake_bin/curl" <<EOF
+#!/bin/sh
+url=""
+for arg in "\$@"; do
+  url="\$arg"
+done
+printf '%s\n' "\$url" >>"$fetch_log"
+case "\$url" in
+  http://127.0.0.1:19824/status)
+    [ -f "$daemon_ready_file" ] || exit 22
+    printf '%s\n' '{"running":true}'
+    exit 0
+    ;;
+  http://127.0.0.1:24444/json/version)
+    [ -f "$ready_file" ] || exit 22
+    printf '%s\n' '{}'
+    exit 0
+    ;;
+esac
+exit 22
+EOF
+	cat >"$fake_bin/chmod" <<EOF
+#!/bin/sh
+last=""
+for arg in "\$@"; do
+  last="\$arg"
+done
+if [ "\$last" = "$token_file" ]; then
+  exit 1
+fi
+exec /bin/chmod "\$@"
+EOF
+	chmod +x "$fake_bin/npm" "$fake_bin/node" "$fake_bin/microsoft-edge" "$fake_bin/uname" "$fake_bin/openssl" "$fake_bin/curl" "$fake_bin/chmod"
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		bash "$REPO_ROOT/scripts/install_bb_browser.sh" >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "install_bb_browser.sh token mode case failed"
+	fi
+
+	version_output="$(
+		HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+			bash "$wrapper_path" --version
+	)"
+
+	assert_file_exists "$token_file"
+	assert_mode "600" "$token_file"
+	assert_equal "bb-browser 9.9.9" "$version_output" "wrapper version output"
+}
+
+test_bb_browser_wrapper_uses_overridden_loopback_and_daemon_endpoint() {
+	local tmp_home fake_bin log npm_log edge_log fetch_log daemon_log ready_file daemon_ready_file config_file state_file wrapper_path token_file version_output
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install-bb-browser-loopback.log"
+	npm_log="$tmp_home/npm-loopback.log"
+	edge_log="$tmp_home/microsoft-edge-loopback.log"
+	fetch_log="$tmp_home/node-fetch-loopback.log"
+	daemon_log="$tmp_home/daemon-loopback.log"
+	ready_file="$tmp_home/.cdp-ready-24444"
+	daemon_ready_file="$tmp_home/.daemon-ready"
+	config_file="$tmp_home/.config/dotfiles/bb-browser.json"
+	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
+	wrapper_path="$tmp_home/.local/bin/bb-browser-user"
+	token_file="$tmp_home/.bb-browser/daemon.token"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	mkdir -p "$(dirname "$config_file")" "$tmp_home/.config/microsoft-edge"
+	cat >"$config_file" <<'EOF'
+{"browser":"microsoft-edge","port":24444,"profileDirectory":"Profile 9"}
+EOF
+
+cat >"$fake_bin/npm" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >>"$npm_log"
+if [ "\$1" = "root" ] && [ "\$2" = "-g" ]; then
+  printf '%s\n' "$tmp_home/fake-node-modules"
+  exit 0
+fi
+if [ "\$1" = "install" ] && [ "\$2" = "-g" ] && [ "\$3" = "bb-browser@latest" ]; then
+  cat >"$fake_bin/bb-browser" <<'INNER'
+#!/bin/sh
+case "\$1" in
+  --version) echo 'bb-browser 9.9.9' ;;
+  *) exit 0 ;;
+esac
+INNER
+  chmod +x "$fake_bin/bb-browser"
+  mkdir -p "$tmp_home/fake-node-modules/bb-browser/dist"
+  : >"$tmp_home/fake-node-modules/bb-browser/dist/daemon.js"
+fi
+exit 0
+EOF
+	cat >"$fake_bin/node" <<EOF
+#!/bin/sh
+case "\$1" in
+  *daemon.js)
+    printf '%s\n' "\$*" >>"$daemon_log"
+    mkdir -p "$(dirname "$token_file")"
+    : >"$daemon_ready_file"
+    exit 0
+    ;;
+esac
+script="\$2"
+arg="\$3"
+status_url="\$4"
+case "\$script" in
+  *fetch*)
+    printf '%s\n' "\$arg" >>"$fetch_log"
+    case "\$status_url" in
+      http://localhost:24446/status)
+        [ -f "$daemon_ready_file" ] && exit 0
+        exit 1
+        ;;
+    esac
+    case "\$arg" in
+      http://localhost:24444|http://localhost:24444/json/version)
+        [ -f "$ready_file" ] && exit 0
+        exit 1
+        ;;
+    esac
+    exit 1
+    ;;
+  *crypto.randomBytes*)
+    printf '%s\n' 'daemon-token'
+    exit 0
+    ;;
+  *url.hostname*)
+    printf '%s\n' 'localhost'
+    exit 0
+    ;;
+  *url.port*)
+    printf '%s\n' '24444'
+    exit 0
+    ;;
+  *config.browser*config.port*config.profileDirectory*)
+    printf '%s\n%s\n%s\n' 'microsoft-edge' '24444' 'Profile 9'
+    exit 0
+    ;;
+esac
+exit 0
+EOF
+	cat >"$fake_bin/microsoft-edge" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >>"$edge_log"
+port=""
+for arg in "\$@"; do
+  case "\$arg" in
+    --remote-debugging-port=*)
+      port="\${arg#--remote-debugging-port=}"
+      ;;
+  esac
+done
+[ -n "\$port" ] && : >"$ready_file"
+exit 0
+EOF
+	cat >"$fake_bin/uname" <<'EOF'
+#!/bin/sh
+echo 'Linux'
+EOF
+	cat >"$fake_bin/openssl" <<'EOF'
+#!/bin/sh
+printf '%s\n' 'daemon-token'
+EOF
+	cat >"$fake_bin/curl" <<EOF
+#!/bin/sh
+url=""
+for arg in "\$@"; do
+  url="\$arg"
+done
+printf '%s\n' "\$url" >>"$fetch_log"
+case "\$url" in
+  http://localhost:24446/status)
+    [ -f "$daemon_ready_file" ] || exit 22
+    printf '%s\n' '{"running":true}'
+    exit 0
+    ;;
+  http://localhost:24444/json/version)
+    [ -f "$ready_file" ] || exit 22
+    printf '%s\n' '{}'
+    exit 0
+    ;;
+esac
+exit 22
+EOF
+	chmod +x "$fake_bin/npm" "$fake_bin/node" "$fake_bin/microsoft-edge" "$fake_bin/uname" "$fake_bin/openssl" "$fake_bin/curl"
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		BB_BROWSER_LOOPBACK_HOST="localhost" \
+		BB_BROWSER_DAEMON_HOST="localhost" \
+		BB_BROWSER_DAEMON_PORT="24446" \
+		bash "$REPO_ROOT/scripts/install_bb_browser.sh" >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "install_bb_browser.sh loopback override case failed"
+	fi
+
+	version_output="$(
+		HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+			BB_BROWSER_LOOPBACK_HOST="localhost" \
+			BB_BROWSER_DAEMON_HOST="localhost" \
+			BB_BROWSER_DAEMON_PORT="24446" \
+			bash "$wrapper_path" --version
+	)"
+
+	assert_equal "bb-browser 9.9.9" "$version_output" "wrapper version output"
+	assert_contains "http://localhost:24444" "$fetch_log"
+	grep -qF -- "-H localhost" "$daemon_log" || fail "Expected '-H localhost' in $daemon_log"
+	grep -qF -- "--cdp-host localhost" "$daemon_log" || fail "Expected '--cdp-host localhost' in $daemon_log"
+	grep -qF -- "--port 24446" "$daemon_log" || fail "Expected '--port 24446' in $daemon_log"
+	assert_file_exists "$token_file"
+}
+
+test_bb_browser_wrapper_uses_dedicated_default_profile() {
+	local tmp_home fake_bin profile_dir
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	cat >"$fake_bin/node" <<'EOF'
+#!/bin/sh
+script="$2"
+case "$script" in
+  *config.browser*config.port*config.profileDirectory*)
+    printf '%s\n%s\n%s\n' 'auto' '19825' 'Profile bb-browser'
+    exit 0
+    ;;
+esac
+exit 1
+EOF
+	chmod +x "$fake_bin/node"
+
+	profile_dir="$(
+		HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+			bash -lc "source '$REPO_ROOT/scripts/bb-browser-user.sh'; configured_profile_directory"
+	)"
+
+	assert_equal "Profile bb-browser" "$profile_dir" "default profile directory"
+}
+
+test_bb_browser_wrapper_doctor_is_side_effect_free() {
+	local tmp_home fake_bin log browser_log daemon_log fetch_log ready_file daemon_ready_file state_file token_file
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/bb-browser-doctor.log"
+	browser_log="$tmp_home/microsoft-edge.log"
+	daemon_log="$tmp_home/daemon.log"
+	fetch_log="$tmp_home/node-fetch.log"
+	ready_file="$tmp_home/.cdp-ready-24444"
+	daemon_ready_file="$tmp_home/.daemon-ready"
+	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
+	token_file="$tmp_home/.bb-browser/daemon.token"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	mkdir -p "$(dirname "$state_file")" "$tmp_home/.config/microsoft-edge" "$tmp_home/fake-node-modules/bb-browser/dist"
+	: >"$tmp_home/fake-node-modules/bb-browser/dist/daemon.js"
+	cat >"$state_file" <<EOF
+PREEXISTING_BB_BROWSER=0
+REAL_BB_BROWSER_PATH=$fake_bin/bb-browser
+EOF
+
+	cat >"$fake_bin/bb-browser" <<'EOF'
+#!/bin/sh
+case "$1" in
+  --version) echo 'bb-browser 9.9.9' ;;
+  *) exit 0 ;;
+esac
+EOF
+	cat >"$fake_bin/npm" <<EOF
+#!/bin/sh
+if [ "\$1" = "root" ] && [ "\$2" = "-g" ]; then
+  printf '%s\n' "$tmp_home/fake-node-modules"
+  exit 0
+fi
+exit 1
+EOF
+	cat >"$fake_bin/node" <<EOF
+#!/bin/sh
+case "\$1" in
+  *daemon.js)
+    printf '%s\n' "\$*" >>"$daemon_log"
+    : >"$daemon_ready_file"
+    exit 0
+    ;;
+esac
+script="\$2"
+arg="\$3"
+status_url="\$4"
+case "\$script" in
+  *fetch*)
+    printf '%s\n' "\$arg" >>"$fetch_log"
+    case "\$status_url" in
+      http://127.0.0.1:19824/status)
+        [ -f "$daemon_ready_file" ] && exit 0
+        exit 1
+        ;;
+    esac
+    case "\$arg" in
+      http://127.0.0.1:24444|http://127.0.0.1:24444/json/version)
+        [ -f "$ready_file" ] && exit 0
+        exit 1
+        ;;
+    esac
+    exit 1
+    ;;
+  *crypto.randomBytes*)
+    printf '%s\n' 'daemon-token'
+    exit 0
+    ;;
+  *url.hostname*)
+    printf '%s\n' '127.0.0.1'
+    exit 0
+    ;;
+  *url.port*)
+    printf '%s\n' '24444'
+    exit 0
+    ;;
+  *config.browser*config.port*config.profileDirectory*)
+    printf '%s\n%s\n%s\n' 'microsoft-edge' '24444' 'Profile bb-browser'
+    exit 0
+    ;;
+esac
+exit 0
+EOF
+	cat >"$fake_bin/microsoft-edge" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >>"$browser_log"
+: >"$ready_file"
+exit 0
+EOF
+	cat >"$fake_bin/uname" <<'EOF'
+#!/bin/sh
+echo 'Linux'
+EOF
+	chmod +x "$fake_bin/bb-browser" "$fake_bin/npm" "$fake_bin/node" "$fake_bin/microsoft-edge" "$fake_bin/uname"
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		bash "$REPO_ROOT/scripts/bb-browser-user.sh" doctor >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "bb-browser-user.sh doctor unexpectedly failed"
+	fi
+
+	assert_file_missing "$browser_log"
+	assert_file_missing "$daemon_log"
+	assert_file_missing "$token_file"
+}
+
+test_bb_browser_restarts_daemon_when_cdp_target_changes() {
+	local tmp_home fake_bin daemon_log fetch_log token_file pid_file old_daemon_path old_pid daemon_ready_file
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	daemon_log="$tmp_home/daemon-restart.log"
+	fetch_log="$tmp_home/fetch-restart.log"
+	token_file="$tmp_home/.bb-browser/daemon.token"
+	pid_file="$tmp_home/.bb-browser/daemon.pid"
+	old_daemon_path="$tmp_home/fake-node-modules/bb-browser/dist/daemon.js"
+	daemon_ready_file="$tmp_home/.daemon-ready"
+	old_pid=""
+	trap "kill '${old_pid:-}' >/dev/null 2>&1 || true; rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	mkdir -p "$(dirname "$token_file")" "$(dirname "$old_daemon_path")"
+	: >"$old_daemon_path"
+	printf '%s\n' 'stale-token' >"$token_file"
+	bash -c "exec -a 'node $old_daemon_path -H 127.0.0.1 --cdp-host 127.0.0.1 --cdp-port 16666 --port 19824 --token stale-token' sleep 1000" &
+	old_pid="$!"
+	printf '%s\n' "$old_pid" >"$pid_file"
+
+	cat >"$fake_bin/npm" <<EOF
+#!/bin/sh
+if [ "\$1" = "root" ] && [ "\$2" = "-g" ]; then
+  printf '%s\n' "$tmp_home/fake-node-modules"
+  exit 0
+fi
+exit 1
+EOF
+	cat >"$fake_bin/openssl" <<'EOF'
+#!/bin/sh
+printf '%s\n' 'new-token'
+EOF
+	cat >"$fake_bin/node" <<EOF
+#!/bin/sh
+case "\$1" in
+  *daemon.js)
+    printf '%s\n' "\$*" >>"$daemon_log"
+    : >"$daemon_ready_file"
+    exit 0
+    ;;
+esac
+exit 0
+EOF
+	cat >"$fake_bin/curl" <<EOF
+#!/bin/sh
+url=""
+auth=""
+while [ \$# -gt 0 ]; do
+  case "\$1" in
+    -H)
+      shift
+      auth="\$1"
+      ;;
+    *)
+      url="\$1"
+      ;;
+  esac
+  shift
+done
+printf '%s | %s\n' "\$auth" "\$url" >>"$fetch_log"
+case "\$url" in
+  http://127.0.0.1:19824/status)
+    case "\$auth" in
+      "Authorization: Bearer stale-token")
+        printf '%s\n' '{"running":true}'
+        exit 0
+        ;;
+      "Authorization: Bearer new-token")
+        [ -f "$daemon_ready_file" ] || exit 22
+        printf '%s\n' '{"running":true}'
+        exit 0
+        ;;
+    esac
+    ;;
+esac
+exit 22
+EOF
+	chmod +x "$fake_bin/npm" "$fake_bin/openssl" "$fake_bin/node" "$fake_bin/curl"
+
+	HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		bash -c "source '$REPO_ROOT/scripts/bb-browser-user.sh'; ensure_daemon_running 'http://127.0.0.1:24444'"
+
+	grep -qF -- "--cdp-port 24444" "$daemon_log" || fail "Expected daemon restart with new CDP port in $daemon_log"
+	grep -qF -- "--token new-token" "$daemon_log" || fail "Expected daemon restart with new token in $daemon_log"
+	if kill -0 "$old_pid" >/dev/null 2>&1; then
+		fail "Expected stale daemon process to be stopped: $old_pid"
+	fi
+	old_pid=""
+}
+
+test_bb_browser_doctor_finds_daemon_from_recorded_real_path_when_npm_root_drifts() {
+	local tmp_home fake_bin managed_prefix state_file log
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	managed_prefix=$(make_temp_dir)
+	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
+	log="$tmp_home/bb-browser-doctor-drift.log"
+	trap "rm -rf '$tmp_home' '$fake_bin' '$managed_prefix'" RETURN
+
+	mkdir -p "$(dirname "$state_file")" "$managed_prefix/bin" "$managed_prefix/lib/node_modules/bb-browser/dist" "$tmp_home/.config/google-chrome"
+	cat >"$managed_prefix/bin/bb-browser" <<'EOF'
+#!/bin/sh
+case "$1" in
+  --version) echo 'bb-browser 9.9.9' ;;
+  *) exit 0 ;;
+esac
+EOF
+	chmod +x "$managed_prefix/bin/bb-browser"
+	: >"$managed_prefix/lib/node_modules/bb-browser/dist/daemon.js"
+	cat >"$state_file" <<EOF
+PREEXISTING_BB_BROWSER=0
+PREEXISTING_BB_BROWSER_PATH=
+PREEXISTING_WRAPPER=0
+PREEXISTING_WRAPPER_BACKUP_PATH=
+INSTALLED_VERSION=9.9.9
+WRAPPER_PATH=$tmp_home/.local/bin/bb-browser-user
+REAL_BB_BROWSER_PATH=$managed_prefix/bin/bb-browser
+EOF
+
+	cat >"$fake_bin/npm" <<'EOF'
+#!/bin/sh
+if [ "$1" = "root" ] && [ "$2" = "-g" ]; then
+  printf '%s\n' '/tmp/drifted-node-modules'
+  exit 0
+fi
+exit 1
+EOF
+	cat >"$fake_bin/node" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/google-chrome" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/uname" <<'EOF'
+#!/bin/sh
+echo 'Linux'
+EOF
+	chmod +x "$fake_bin/npm" "$fake_bin/node" "$fake_bin/google-chrome" "$fake_bin/uname"
+
+	if ! HOME="$tmp_home" PATH="$managed_prefix/bin:$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		bash "$REPO_ROOT/scripts/bb-browser-user.sh" doctor >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "bb-browser-user.sh doctor drift case failed"
+	fi
 }
 
 test_bb_browser_install_fails_without_supported_browser() {
@@ -480,7 +1187,7 @@ EOF
 }
 
 test_bb_browser_wrapper_uses_managed_path_over_preexisting_path() {
-	local tmp_home old_bin managed_prefix fake_bin log npm_log state_file
+	local tmp_home old_bin managed_prefix fake_bin log npm_log state_file curl_log ready_file daemon_ready_file
 	tmp_home=$(make_temp_dir)
 	old_bin=$(make_temp_dir)
 	managed_prefix=$(make_temp_dir)
@@ -488,8 +1195,12 @@ test_bb_browser_wrapper_uses_managed_path_over_preexisting_path() {
 	log="$tmp_home/install-bb-browser-conflict.log"
 	npm_log="$tmp_home/npm-conflict.log"
 	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
+	curl_log="$tmp_home/curl-conflict.log"
+	ready_file="$tmp_home/.cdp-ready-19825"
+	daemon_ready_file="$tmp_home/.daemon-ready"
 	trap "rm -rf '$tmp_home' '$old_bin' '$managed_prefix' '$fake_bin'" RETURN
 
+	mkdir -p "$tmp_home/.config/google-chrome"
 	cat >"$old_bin/bb-browser" <<'EOF'
 #!/bin/sh
 echo "old-bb-browser" >&2
@@ -497,9 +1208,13 @@ exit 33
 EOF
 	chmod +x "$old_bin/bb-browser"
 
-	cat >"$fake_bin/npm" <<EOF
+cat >"$fake_bin/npm" <<EOF
 #!/bin/sh
 printf '%s\n' "\$*" >>"$npm_log"
+if [ "\$1" = "root" ] && [ "\$2" = "-g" ]; then
+  printf '%s\n' "$tmp_home/fake-node-modules"
+  exit 0
+fi
 if [ "\$1" = "bin" ] && [ "\$2" = "-g" ]; then
   echo 'Unknown command: "bin"' >&2
   exit 1
@@ -518,14 +1233,51 @@ case "\$1" in
 esac
 INNER
   chmod +x "$managed_prefix/bin/bb-browser"
+  mkdir -p "$tmp_home/fake-node-modules/bb-browser/dist"
+  : >"$tmp_home/fake-node-modules/bb-browser/dist/daemon.js"
 fi
 exit 0
 EOF
-	cat >"$fake_bin/node" <<'EOF'
+	cat >"$fake_bin/node" <<EOF
+#!/bin/sh
+case "\$1" in
+  *daemon.js)
+    : >"$daemon_ready_file"
+    exit 0
+    ;;
+esac
+exit 0
+EOF
+	cat >"$fake_bin/google-chrome" <<'EOF'
 #!/bin/sh
 exit 0
 EOF
-	chmod +x "$fake_bin/npm" "$fake_bin/node"
+	cat >"$fake_bin/curl" <<EOF
+#!/bin/sh
+url=""
+for arg in "\$@"; do
+  url="\$arg"
+done
+printf '%s\n' "\$url" >>"$curl_log"
+case "\$url" in
+  http://127.0.0.1:19824/status)
+    [ -f "$daemon_ready_file" ] || exit 22
+    printf '%s\n' '{"running":true}'
+    exit 0
+    ;;
+  http://127.0.0.1:19825/json/version)
+    : >"$ready_file"
+    printf '%s\n' '{}'
+    exit 0
+    ;;
+esac
+exit 22
+EOF
+	cat >"$fake_bin/uname" <<'EOF'
+#!/bin/sh
+echo 'Linux'
+EOF
+	chmod +x "$fake_bin/npm" "$fake_bin/node" "$fake_bin/google-chrome" "$fake_bin/curl" "$fake_bin/uname"
 
 	if ! HOME="$tmp_home" PATH="$old_bin:$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
 		BB_BROWSER_CDP_URL="http://127.0.0.1:19825" \
@@ -554,6 +1306,7 @@ EOF
 			bash "$tmp_home/.local/bin/bb-browser-user" --version
 	)"
 	assert_equal "bb-browser managed 2.0.0" "$version_output" "wrapper version output"
+	assert_contains "http://127.0.0.1:19825/json/version" "$curl_log"
 }
 
 test_bb_browser_uninstall_preserves_preexisting_global_install() {
@@ -618,13 +1371,17 @@ echo "user wrapper preserved"
 '
 	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
 
-	mkdir -p "$(dirname "$wrapper_path")"
+	mkdir -p "$(dirname "$wrapper_path")" "$tmp_home/.config/google-chrome"
 	printf '%s' "$original_wrapper_content" >"$wrapper_path"
 	chmod +x "$wrapper_path"
 
-	cat >"$fake_bin/npm" <<EOF
+cat >"$fake_bin/npm" <<EOF
 #!/bin/sh
 printf '%s\n' "\$*" >>"$npm_log"
+if [ "\$1" = "root" ] && [ "\$2" = "-g" ]; then
+  printf '%s\n' "$tmp_home/fake-node-modules"
+  exit 0
+fi
 if [ "\$1" = "install" ] && [ "\$2" = "-g" ] && [ "\$3" = "bb-browser@latest" ]; then
   cat >"$fake_bin/bb-browser" <<'INNER'
 #!/bin/sh
@@ -634,6 +1391,8 @@ case "\$1" in
 esac
 INNER
   chmod +x "$fake_bin/bb-browser"
+  mkdir -p "$tmp_home/fake-node-modules/bb-browser/dist"
+  : >"$tmp_home/fake-node-modules/bb-browser/dist/daemon.js"
 fi
 exit 0
 EOF
@@ -641,7 +1400,15 @@ EOF
 #!/bin/sh
 exit 0
 EOF
-	chmod +x "$fake_bin/npm" "$fake_bin/node"
+	cat >"$fake_bin/google-chrome" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/uname" <<'EOF'
+#!/bin/sh
+echo 'Linux'
+EOF
+	chmod +x "$fake_bin/npm" "$fake_bin/node" "$fake_bin/google-chrome" "$fake_bin/uname"
 
 	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
 		BB_BROWSER_CDP_URL="http://127.0.0.1:19825" \
@@ -680,9 +1447,14 @@ test_bb_browser_reinstall_preserves_managed_ownership() {
 	wrapper_path="$tmp_home/.local/bin/bb-browser-user"
 	trap "rm -rf '$tmp_home' '$fake_bin' '$managed_prefix'" RETURN
 
-	cat >"$fake_bin/npm" <<EOF
+	mkdir -p "$tmp_home/.config/google-chrome"
+cat >"$fake_bin/npm" <<EOF
 #!/bin/sh
 printf '%s\n' "\$*" >>"$npm_log"
+if [ "\$1" = "root" ] && [ "\$2" = "-g" ]; then
+  printf '%s\n' "$tmp_home/fake-node-modules"
+  exit 0
+fi
 if [ "\$1" = "prefix" ] && [ "\$2" = "-g" ]; then
   printf '%s\n' "$managed_prefix"
   exit 0
@@ -697,6 +1469,8 @@ case "\$1" in
 esac
 INNER
   chmod +x "$managed_prefix/bin/bb-browser"
+  mkdir -p "$tmp_home/fake-node-modules/bb-browser/dist"
+  : >"$tmp_home/fake-node-modules/bb-browser/dist/daemon.js"
   exit 0
 fi
 if [ "\$1" = "--prefix" ] && [ "\$2" = "$managed_prefix" ] && [ "\$3" = "uninstall" ] && [ "\$4" = "-g" ] && [ "\$5" = "bb-browser" ]; then
@@ -709,7 +1483,15 @@ EOF
 #!/bin/sh
 exit 0
 EOF
-	chmod +x "$fake_bin/npm" "$fake_bin/node"
+	cat >"$fake_bin/google-chrome" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/uname" <<'EOF'
+#!/bin/sh
+echo 'Linux'
+EOF
+	chmod +x "$fake_bin/npm" "$fake_bin/node" "$fake_bin/google-chrome" "$fake_bin/uname"
 
 	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
 		BB_BROWSER_CDP_URL="http://127.0.0.1:19825" \
@@ -750,7 +1532,7 @@ EOF
 }
 
 test_bb_browser_uninstall_removes_managed_global_install() {
-	local tmp_home fake_bin log npm_log wrapper_path config_file state_file
+	local tmp_home fake_bin log npm_log wrapper_path config_file state_file token_file pid_file daemon_path daemon_pid
 	tmp_home=$(make_temp_dir)
 	fake_bin=$(make_temp_dir)
 	log="$tmp_home/uninstall-bb-browser-managed.log"
@@ -758,9 +1540,12 @@ test_bb_browser_uninstall_removes_managed_global_install() {
 	wrapper_path="$tmp_home/.local/bin/bb-browser-user"
 	config_file="$tmp_home/.config/dotfiles/bb-browser.json"
 	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
-	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+	token_file="$tmp_home/.bb-browser/daemon.token"
+	pid_file="$tmp_home/.bb-browser/daemon.pid"
+	daemon_path="$tmp_home/fake-node-modules/bb-browser/dist/daemon.js"
+	daemon_pid=""
 
-	mkdir -p "$(dirname "$wrapper_path")" "$(dirname "$config_file")" "$(dirname "$state_file")"
+	mkdir -p "$(dirname "$wrapper_path")" "$(dirname "$config_file")" "$(dirname "$state_file")" "$(dirname "$token_file")" "$(dirname "$daemon_path")"
 	cat >"$wrapper_path" <<'EOF'
 #!/bin/sh
 exit 0
@@ -776,6 +1561,12 @@ INSTALLED_VERSION=9.9.9
 WRAPPER_PATH=$wrapper_path
 REAL_BB_BROWSER_PATH=/usr/local/bin/bb-browser
 EOF
+	printf '%s\n' 'daemon-token' >"$token_file"
+	: >"$daemon_path"
+	bash -c "exec -a 'node $daemon_path' sleep 1000" &
+	daemon_pid="$!"
+	trap "kill '$daemon_pid' >/dev/null 2>&1 || true; rm -rf '$tmp_home' '$fake_bin'" RETURN
+	printf '%s\n' "$daemon_pid" >"$pid_file"
 
 	cat >"$fake_bin/npm" <<EOF
 #!/bin/sh
@@ -797,6 +1588,90 @@ EOF
 	assert_file_exists "$npm_log"
 	assert_contains "uninstall" "$npm_log"
 	assert_contains "bb-browser" "$npm_log"
+	if kill -0 "$daemon_pid" >/dev/null 2>&1; then
+		fail "Expected daemon process to be stopped: $daemon_pid"
+	fi
+	assert_file_missing "$token_file"
+	assert_file_missing "$pid_file"
+}
+
+test_bb_browser_uninstall_restores_wrapper_backup_with_escaped_path_without_python() {
+	local tmp_home fake_bin log wrapper_path state_file backup_path
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/uninstall-bb-browser-escaped-path.log"
+	wrapper_path="$tmp_home/.local/bin/bb-browser-user"
+	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
+	backup_path="$tmp_home/backup dir/bb-browser-user.preexisting"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	mkdir -p "$(dirname "$wrapper_path")" "$(dirname "$state_file")" "$(dirname "$backup_path")"
+	cat >"$wrapper_path" <<'EOF'
+#!/bin/sh
+echo "current wrapper"
+EOF
+	chmod +x "$wrapper_path"
+	cat >"$backup_path" <<'EOF'
+#!/bin/sh
+echo "restored wrapper"
+EOF
+	chmod +x "$backup_path"
+	cat >"$state_file" <<EOF
+PREEXISTING_BB_BROWSER=1
+PREEXISTING_WRAPPER=1
+PREEXISTING_WRAPPER_BACKUP_PATH=$(printf '%q' "$backup_path")
+REAL_BB_BROWSER_PATH=$(printf '%q' "/usr/local/bin/bb-browser")
+EOF
+
+	cat >"$fake_bin/python3" <<'EOF'
+#!/bin/sh
+printf '%s\n' "${2:-}"
+exit 0
+EOF
+	chmod +x "$fake_bin/python3"
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		bash "$REPO_ROOT/uninstall.sh" --dotfiles --force >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "uninstall.sh escaped backup path case failed"
+	fi
+
+	assert_file_exists "$wrapper_path"
+	assert_contains "restored wrapper" "$wrapper_path"
+	assert_file_missing "$backup_path"
+	assert_file_missing "$state_file"
+}
+
+test_bb_browser_state_readers_use_consistent_field_order() {
+	local tmp_home state_file install_partial uninstall_partial install_output uninstall_output
+	tmp_home=$(make_temp_dir)
+	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
+	install_partial=$(mktemp "$REPO_ROOT/scripts/install_bb_browser.partial.XXXXXX")
+	uninstall_partial=$(mktemp "$REPO_ROOT/scripts/uninstall.partial.XXXXXX")
+	trap "rm -rf '$tmp_home'; rm -f '$install_partial' '$uninstall_partial'" RETURN
+
+	mkdir -p "$(dirname "$state_file")"
+	cat >"$state_file" <<'EOF'
+PREEXISTING_BB_BROWSER=1
+PREEXISTING_BB_BROWSER_PATH=/usr/local/bin/bb-browser
+PREEXISTING_WRAPPER=1
+PREEXISTING_WRAPPER_BACKUP_PATH=/tmp/bb-browser-user.preexisting
+INSTALLED_VERSION=9.9.9
+WRAPPER_PATH=/tmp/bb-browser-user
+REAL_BB_BROWSER_PATH=/opt/managed/bin/bb-browser
+EOF
+
+	awk '/^main "\$@"/{exit} {print}' "$REPO_ROOT/scripts/install_bb_browser.sh" >"$install_partial"
+	awk '/^# 解析参数/{exit} {print}' "$REPO_ROOT/uninstall.sh" >"$uninstall_partial"
+
+	install_output="$(
+		HOME="$tmp_home" bash -lc "STATE_FILE='$state_file'; source '$install_partial'; read_existing_install_state"
+	)"
+	uninstall_output="$(
+		HOME="$tmp_home" bash -lc "source '$uninstall_partial'; read_bb_browser_install_state '$state_file'"
+	)"
+
+	assert_equal "$install_output" "$uninstall_output" "bb-browser state reader output"
 }
 
 test_bb_browser_uninstall_skips_missing_or_empty_preexisting_marker() {
@@ -1202,6 +2077,19 @@ EOF
 	assert_contains '[mcp_servers.bb-browser]' "$tmp_home/.codex/config.toml"
 	assert_contains 'command = "bash"' "$tmp_home/.codex/config.toml"
 	assert_contains 'args = ["-c", "\"$HOME/.local/bin/bb-browser-user\" --mcp"]' "$tmp_home/.codex/config.toml"
+}
+
+test_file_deps_include_codex_deploy_for_bb_browser_install() {
+	local has_dep
+	has_dep="$(
+		node -e '
+const fs = require("fs");
+const deps = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+const list = deps["scripts/install_bb_browser.sh"] || [];
+process.stdout.write(list.includes("scripts/deploy_codex_config.sh") ? "yes" : "no");
+' "$REPO_ROOT/.claude/file-deps.json"
+	)"
+	assert_equal "yes" "$has_dep" "install_bb_browser file-deps entry"
 }
 
 test_pixi_prefers_managed_install_over_system_binary() {
@@ -1923,6 +2811,12 @@ run_test "Dotfiles deploys bb-browser shell plugin" test_dotfiles_deploys_bb_bro
 run_test "bb-browser install uses latest and deploys wrapper" test_bb_browser_install_uses_latest_and_deploys_wrapper
 run_test "bb-browser fresh install marker drives managed uninstall" test_bb_browser_fresh_install_marker_drives_managed_uninstall
 run_test "bb-browser install discovers browser and launches CDP" test_bb_browser_install_discovers_browser_and_launches_cdp
+run_test "bb-browser install keeps token private when chmod fails" test_bb_browser_install_keeps_token_private_when_chmod_fails
+run_test "bb-browser wrapper uses overridden loopback and daemon endpoint" test_bb_browser_wrapper_uses_overridden_loopback_and_daemon_endpoint
+run_test "bb-browser wrapper uses dedicated default profile" test_bb_browser_wrapper_uses_dedicated_default_profile
+run_test "bb-browser wrapper doctor is side-effect free" test_bb_browser_wrapper_doctor_is_side_effect_free
+run_test "bb-browser restarts daemon when CDP target changes" test_bb_browser_restarts_daemon_when_cdp_target_changes
+run_test "bb-browser doctor finds daemon from recorded real path when npm root drifts" test_bb_browser_doctor_finds_daemon_from_recorded_real_path_when_npm_root_drifts
 run_test "bb-browser install fails without supported browser" test_bb_browser_install_fails_without_supported_browser
 run_test "bb-browser install preserves preexisting managed package on failure" test_bb_browser_install_preserves_preexisting_managed_prefix_artifact_on_failure
 run_test "bb-browser wrapper uses managed path over preexisting path" test_bb_browser_wrapper_uses_managed_path_over_preexisting_path
@@ -1930,6 +2824,7 @@ run_test "bb-browser uninstall preserves preexisting global install" test_bb_bro
 run_test "bb-browser install/uninstall restores preexisting wrapper" test_bb_browser_install_and_uninstall_restore_preexisting_wrapper
 run_test "bb-browser reinstall preserves managed ownership" test_bb_browser_reinstall_preserves_managed_ownership
 run_test "bb-browser uninstall removes managed global install" test_bb_browser_uninstall_removes_managed_global_install
+run_test "bb-browser uninstall restores escaped backup path without python" test_bb_browser_uninstall_restores_wrapper_backup_with_escaped_path_without_python
 run_test "bb-browser uninstall skips missing or empty preexisting marker" test_bb_browser_uninstall_skips_missing_or_empty_preexisting_marker
 run_test "bb-browser uninstall targets recorded prefix on drift" test_bb_browser_uninstall_targets_recorded_prefix_on_drift
 run_test "Dotfiles uninstall preserves modified files" test_dotfiles_uninstall_preserves_modified_files
@@ -1938,6 +2833,7 @@ run_test "Git config identity migrates to local include" test_gitconfig_identity
 run_test "Dotfiles hook-free fallback" test_dotfiles_hook_free_fallback
 run_test "Codex config preserves subprojects" test_codex_config_preserves_projects_and_keeps_home_subprojects
 run_test "Codex config includes bb-browser when wrapper exists" test_codex_config_includes_bb_browser_when_wrapper_exists
+run_test "file-deps includes codex deploy for bb-browser install" test_file_deps_include_codex_deploy_for_bb_browser_install
 run_test "Pixi prefers managed install" test_pixi_prefers_managed_install_over_system_binary
 run_test "Claude optional on macOS" test_claude_optional_on_macos_when_missing
 run_test "Claude optional on Linux" test_claude_optional_on_linux_when_install_fails

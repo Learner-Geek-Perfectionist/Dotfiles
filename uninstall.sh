@@ -151,42 +151,57 @@ remove_manifested_dotfiles() {
 	fi
 }
 
-bb_browser_state_value() {
-	local state_file="$1" key="$2" raw value
-
+read_bb_browser_install_state() {
+	local state_file="$1"
 	[[ -f "$state_file" ]] || return 0
 
-	raw="$(
-		awk -v key="$key" -F= '
-			$1 == key {
-				sub(/^[^=]*=/, "", $0)
-				print
-				exit
-			}
-		' "$state_file"
-	)"
+	(
+		set +u
+		# shellcheck disable=SC1090
+		source "$state_file"
+		printf '%s\n' \
+			"${PREEXISTING_BB_BROWSER:-}" \
+			"${PREEXISTING_WRAPPER:-}" \
+			"${PREEXISTING_WRAPPER_BACKUP_PATH:-}" \
+			"${REAL_BB_BROWSER_PATH:-}"
+	)
+}
 
-	[[ -n "$raw" ]] || return 0
+bb_browser_daemon_command_matches_pid() {
+	local pid="$1" command_line
+	[[ "$pid" =~ ^[0-9]+$ ]] || return 1
 
-	if command -v python3 &>/dev/null; then
-		value="$(
-			python3 - "$raw" <<'PY'
-import shlex
-import sys
+	command_line="$(ps -p "$pid" -o command= 2>/dev/null || true)"
+	[[ "$command_line" == *"bb-browser/dist/daemon.js"* ]]
+}
 
-raw = sys.argv[1]
-try:
-    parts = shlex.split(raw)
-    print(parts[0] if parts else "")
-except Exception:
-    print(raw)
-PY
-		)"
-	else
-		value="$raw"
+bb_browser_daemon_pid_list() {
+	ps -x -o pid= -o command= 2>/dev/null | awk '/[n]ode .*bb-browser\/dist\/daemon\.js/ { print $1 }'
+}
+
+stop_bb_browser_daemon() {
+	local pid_file token_file pid stopped_pid
+	pid_file="$(bb_browser_daemon_pid_file)"
+	token_file="$(bb_browser_daemon_token_file)"
+
+	if [[ -f "$pid_file" ]]; then
+		pid="$(cat "$pid_file" 2>/dev/null || true)"
+		if bb_browser_daemon_command_matches_pid "$pid"; then
+			kill "$pid" >/dev/null 2>&1 || true
+			stopped_pid="$pid"
+		fi
 	fi
 
-	printf '%s\n' "$value"
+	while IFS= read -r pid; do
+		[[ -n "$pid" && "$pid" != "${stopped_pid:-}" ]] || continue
+		bb_browser_daemon_command_matches_pid "$pid" || continue
+		kill "$pid" >/dev/null 2>&1 || true
+	done < <(bb_browser_daemon_pid_list)
+
+	rm_path "$pid_file"
+	prune_empty_parents "$(dirname "$pid_file")"
+	rm_path "$token_file"
+	prune_empty_parents "$(dirname "$token_file")"
 }
 
 strip_toml_section_in_place() {
@@ -256,15 +271,18 @@ remove_bb_browser() {
 	config_file="$(bb_browser_config_file)"
 	wrapper_path="$HOME/.local/bin/bb-browser-user"
 	wrapper_backup_path="$(bb_browser_wrapper_backup_file)"
+	stop_bb_browser_daemon
 	rm_path "$config_file"
 	prune_empty_parents "$(dirname "$config_file")"
 
 	if [[ -f "$state_file" ]]; then
-		preexisting_bb_browser="$(bb_browser_state_value "$state_file" PREEXISTING_BB_BROWSER)"
-		preexisting_wrapper="$(bb_browser_state_value "$state_file" PREEXISTING_WRAPPER)"
-		wrapper_backup_path="$(bb_browser_state_value "$state_file" PREEXISTING_WRAPPER_BACKUP_PATH)"
+		{
+			IFS= read -r preexisting_bb_browser || true
+			IFS= read -r preexisting_wrapper || true
+			IFS= read -r wrapper_backup_path || true
+			IFS= read -r real_bb_browser_path || true
+		} < <(read_bb_browser_install_state "$state_file" || true)
 		[[ -n "$wrapper_backup_path" ]] || wrapper_backup_path="$(bb_browser_wrapper_backup_file)"
-		real_bb_browser_path="$(bb_browser_state_value "$state_file" REAL_BB_BROWSER_PATH)"
 		if [[ "$preexisting_bb_browser" == "0" && -n "$real_bb_browser_path" ]]; then
 			target_prefix="$(dirname "$(dirname "$real_bb_browser_path")")"
 			if [[ -n "$target_prefix" && "$target_prefix" != "/" ]]; then

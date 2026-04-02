@@ -51,6 +51,71 @@ config_file_path() {
 	fi
 }
 
+load_config_values() {
+	[[ "${BB_BROWSER_CONFIG_LOADED:-0}" == "1" ]] && return 0
+
+	local config_file browser port profile_dir
+	config_file="$(config_file_path)"
+
+	{
+		IFS= read -r browser || true
+		IFS= read -r port || true
+		IFS= read -r profile_dir || true
+	} < <(
+		node -e '
+const fs = require("fs");
+const configPath = process.argv[1];
+const defaults = {
+  browser: "auto",
+  port: "19825",
+  profileDirectory: "Profile bb-browser",
+};
+
+try {
+  if (!configPath || !fs.existsSync(configPath)) {
+    process.stdout.write(`${defaults.browser}\n${defaults.port}\n${defaults.profileDirectory}`);
+    process.exit(0);
+  }
+
+  const raw = fs.readFileSync(configPath, "utf8");
+  const config = raw.trim() ? JSON.parse(raw) : {};
+  const browser = typeof config.browser === "string" && config.browser.trim() ? config.browser : defaults.browser;
+  const portValue = config.port ?? config.remoteDebuggingPort ?? config.cdpPort;
+  const parsedPort = Number.parseInt(String(portValue ?? ""), 10);
+  const port = Number.isInteger(parsedPort) && parsedPort > 0 ? String(parsedPort) : defaults.port;
+  const profileValue = config.profileDirectory ?? config.profileDir ?? config.profile;
+  const profileDirectory =
+    typeof profileValue === "string" && profileValue.trim() ? profileValue : defaults.profileDirectory;
+
+  process.stdout.write(`${browser}\n${port}\n${profileDirectory}`);
+} catch {
+  process.stdout.write(`${defaults.browser}\n${defaults.port}\n${defaults.profileDirectory}`);
+}
+' "$config_file" 2>/dev/null || printf '%s\n%s\n%s\n' "auto" "19825" "Profile bb-browser"
+	)
+
+	BB_BROWSER_CONFIG_BROWSER="${browser:-auto}"
+	BB_BROWSER_CONFIG_PORT="${port:-19825}"
+	BB_BROWSER_CONFIG_PROFILE_DIRECTORY="${profile_dir:-Profile bb-browser}"
+	BB_BROWSER_CONFIG_LOADED=1
+}
+
+loopback_host() {
+	printf '%s\n' "${BB_BROWSER_LOOPBACK_HOST:-127.0.0.1}"
+}
+
+daemon_host() {
+	printf '%s\n' "${BB_BROWSER_DAEMON_HOST:-$(loopback_host)}"
+}
+
+daemon_port() {
+	printf '%s\n' "${BB_BROWSER_DAEMON_PORT:-19824}"
+}
+
+daemon_status_url() {
+	printf 'http://%s:%s/status\n' "$(daemon_host)" "$(daemon_port)"
+}
+
 load_state_file() {
 	local state_file
 	state_file="$(state_file_path)"
@@ -97,12 +162,292 @@ real_bb_browser() {
 can_connect_cdp() {
 	local cdp_url="${1%/}"
 
+	if command -v curl &>/dev/null; then
+		curl -fsS -H 'accept: application/json' "${cdp_url}/json/version" >/dev/null 2>&1
+		return $?
+	fi
+
 	node -e '
 const url = (process.argv[1] || "").replace(/\/$/, "");
 fetch(`${url}/json/version`, { headers: { accept: "application/json" } })
   .then((response) => process.exit(response.ok ? 0 : 1))
   .catch(() => process.exit(1));
 ' "$cdp_url"
+}
+
+daemon_token_file_path() {
+	if declare -F bb_browser_daemon_token_file &>/dev/null; then
+		bb_browser_daemon_token_file
+	else
+		echo "$HOME/.bb-browser/daemon.token"
+	fi
+}
+
+daemon_pid_file_path() {
+	if declare -F bb_browser_daemon_pid_file &>/dev/null; then
+		bb_browser_daemon_pid_file
+	else
+		echo "$HOME/.bb-browser/daemon.pid"
+	fi
+}
+
+daemon_log_file_path() {
+	if declare -F bb_browser_daemon_log_file &>/dev/null; then
+		bb_browser_daemon_log_file
+	else
+		echo "/tmp/bb-browser-daemon-wrapper.log"
+	fi
+}
+
+write_private_file() {
+	local target="$1" content="$2" dir tmp previous_umask
+	dir="$(dirname "$target")"
+	mkdir -p "$dir"
+
+	previous_umask="$(umask)"
+	umask 077
+	tmp="$(mktemp "$dir/.tmp.XXXXXX")" || {
+		umask "$previous_umask"
+		return 1
+	}
+	umask "$previous_umask"
+
+	printf '%s' "$content" >"$tmp" || {
+		rm -f "$tmp"
+		return 1
+	}
+
+	mv -f "$tmp" "$target" || {
+		rm -f "$tmp"
+		return 1
+	}
+}
+
+daemon_entry_path_from_real_bb_browser() {
+	local real_path="$1" prefix candidate
+	[[ -n "$real_path" && "$real_path" == */bin/* ]] || return 1
+
+	prefix="$(dirname "$(dirname "$real_path")")"
+	for candidate in \
+		"$prefix/lib/node_modules/bb-browser/dist/daemon.js" \
+		"$prefix/node_modules/bb-browser/dist/daemon.js"
+	do
+		if [[ -f "$candidate" ]]; then
+			printf '%s\n' "$candidate"
+			return 0
+		fi
+	done
+
+	return 1
+}
+
+daemon_entry_path() {
+	local real_path npm_root
+
+	real_path="$(real_bb_browser 2>/dev/null || true)"
+	if daemon_entry_path_from_real_bb_browser "$real_path"; then
+		return 0
+	fi
+
+	npm_root="$(npm root -g 2>/dev/null || true)"
+	[[ -n "$npm_root" ]] || return 1
+
+	if [[ -f "$npm_root/bb-browser/dist/daemon.js" ]]; then
+		printf '%s\n' "$npm_root/bb-browser/dist/daemon.js"
+		return 0
+	fi
+
+	return 1
+}
+
+daemon_status_ok() {
+	local token="$1" status_url
+	status_url="$(daemon_status_url)"
+
+	if command -v curl &>/dev/null; then
+		curl -fsS -H "Authorization: Bearer ${token}" "$status_url" 2>/dev/null | tr -d '[:space:]' | grep -q '"running":true'
+		return $?
+	fi
+
+	node -e '
+const token = process.argv[1];
+const statusUrl = process.argv[2];
+fetch(statusUrl, {
+  headers: { Authorization: `Bearer ${token}` }
+}).then(async (response) => {
+  if (!response.ok) process.exit(1);
+  const body = await response.json();
+  process.exit(body && body.running ? 0 : 1);
+}).catch(() => process.exit(1));
+' "$token" "$status_url"
+}
+
+cdp_host_from_url() {
+	local cdp_url="$1" authority
+	authority="${cdp_url#*://}"
+	authority="${authority%%/*}"
+
+	if [[ "$authority" == \[*\]:* ]]; then
+		printf '%s]\n' "${authority%%]:*}"
+		return 0
+	fi
+
+	if [[ "$authority" == \[*\] ]]; then
+		printf '%s\n' "$authority"
+		return 0
+	fi
+
+	if [[ "$authority" == *:* ]]; then
+		printf '%s\n' "${authority%%:*}"
+		return 0
+	fi
+
+	if [[ -n "$authority" ]]; then
+		printf '%s\n' "$authority"
+		return 0
+	fi
+
+	printf '%s\n' "$(loopback_host)"
+}
+
+cdp_port_from_url() {
+	local cdp_url="$1" authority
+	authority="${cdp_url#*://}"
+	authority="${authority%%/*}"
+
+	if [[ "$authority" == \[*\]:* || "$authority" == *:* ]]; then
+		printf '%s\n' "${authority##*:}"
+		return 0
+	fi
+
+	printf '%s\n' "19825"
+}
+
+generate_daemon_token() {
+	if command -v openssl &>/dev/null; then
+		openssl rand -hex 16
+		return 0
+	fi
+
+	od -An -N16 -tx1 /dev/urandom | tr -d ' \n'
+}
+
+daemon_command_matches_pid() {
+	local pid="$1" command_line
+	[[ "$pid" =~ ^[0-9]+$ ]] || return 1
+
+	command_line="$(ps -p "$pid" -o command= 2>/dev/null || true)"
+	[[ "$command_line" == *"bb-browser/dist/daemon.js"* ]]
+}
+
+daemon_command_line_for_pid() {
+	local pid="$1"
+	[[ "$pid" =~ ^[0-9]+$ ]] || return 1
+	ps -p "$pid" -o command= 2>/dev/null || true
+}
+
+daemon_matches_runtime_target() {
+	local pid="$1" daemon_bind_host="$2" daemon_bind_port="$3" cdp_host="$4" cdp_port="$5"
+	local command_line
+
+	command_line="$(daemon_command_line_for_pid "$pid")"
+	[[ -n "$command_line" ]] || return 1
+	[[ "$command_line" == *"bb-browser/dist/daemon.js"* ]] || return 1
+	[[ "$command_line" == *"-H ${daemon_bind_host}"* ]] || return 1
+	[[ "$command_line" == *"--cdp-host ${cdp_host}"* ]] || return 1
+	[[ "$command_line" == *"--cdp-port ${cdp_port}"* ]] || return 1
+	[[ "$command_line" == *"--port ${daemon_bind_port}"* ]] || return 1
+}
+
+daemon_pid_list() {
+	ps -x -o pid= -o command= 2>/dev/null | awk '/[n]ode .*bb-browser\/dist\/daemon\.js/ { print $1 }'
+}
+
+stop_daemon_pid() {
+	local pid="$1"
+	[[ "$pid" =~ ^[0-9]+$ ]] || return 1
+
+	kill "$pid" >/dev/null 2>&1 || return 0
+	for _ in {1..5}; do
+		sleep 1
+		kill -0 "$pid" >/dev/null 2>&1 || return 0
+	done
+
+	kill -9 "$pid" >/dev/null 2>&1 || true
+}
+
+stop_existing_daemon() {
+	local pid_file pid stopped_pid
+	pid_file="$(daemon_pid_file_path)"
+
+	if [[ -f "$pid_file" ]]; then
+		pid="$(cat "$pid_file" 2>/dev/null || true)"
+		if daemon_command_matches_pid "$pid"; then
+			stop_daemon_pid "$pid" || true
+			stopped_pid="$pid"
+		fi
+		rm -f "$pid_file"
+	fi
+
+	while IFS= read -r pid; do
+		[[ -n "$pid" && "$pid" != "${stopped_pid:-}" ]] || continue
+		daemon_command_matches_pid "$pid" || continue
+		stop_daemon_pid "$pid" || true
+	done < <(daemon_pid_list)
+}
+
+ensure_daemon_running() {
+	local cdp_url="$1" token_file pid_file token daemon_path cdp_host cdp_port daemon_log pid daemon_bind_host daemon_bind_port
+
+	token_file="$(daemon_token_file_path)"
+	pid_file="$(daemon_pid_file_path)"
+	cdp_host="$(cdp_host_from_url "$cdp_url")"
+	cdp_port="$(cdp_port_from_url "$cdp_url")"
+	daemon_bind_host="$(daemon_host)"
+	daemon_bind_port="$(daemon_port)"
+	if [[ -f "$token_file" ]]; then
+		token="$(cat "$token_file" 2>/dev/null || true)"
+		pid="$(cat "$pid_file" 2>/dev/null || true)"
+		if [[ -n "$token" && -n "$pid" ]] && daemon_matches_runtime_target "$pid" "$daemon_bind_host" "$daemon_bind_port" "$cdp_host" "$cdp_port" &&
+			daemon_status_ok "$token"; then
+			return 0
+		fi
+	fi
+
+	daemon_path="$(daemon_entry_path)" || {
+		print_error "无法定位 bb-browser daemon.js"
+		return 1
+	}
+
+	token="$(generate_daemon_token)"
+	daemon_log="$(daemon_log_file_path)"
+
+	stop_existing_daemon
+	write_private_file "$token_file" "$token" || {
+		print_error "无法写入 bb-browser daemon token"
+		return 1
+	}
+
+	nohup node "$daemon_path" -H "$daemon_bind_host" --cdp-host "$cdp_host" --cdp-port "$cdp_port" --port "$daemon_bind_port" --token "$token" >"$daemon_log" 2>&1 </dev/null &
+	pid="$!"
+	write_private_file "$pid_file" "$pid" || {
+		print_error "无法写入 bb-browser daemon pid"
+		stop_existing_daemon
+		rm -f "$token_file"
+		return 1
+	}
+
+	for _ in {1..15}; do
+		sleep 1
+		if daemon_status_ok "$token"; then
+			return 0
+		fi
+	done
+
+	stop_existing_daemon
+	rm -f "$token_file"
+	print_error "bb-browser daemon 未能在 ${daemon_bind_host}:${daemon_bind_port} 就绪"
+	return 1
 }
 
 require_node() {
@@ -115,20 +460,51 @@ require_node() {
 }
 
 discover_browser_command() {
-	local candidate resolved os_name
+	local browser_pref candidate resolved os_name
 	os_name="$(uname -s)"
+	browser_pref="$(configured_browser)"
 
 	case "$os_name" in
 	Darwin)
-		local mac_candidates=(
-			"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-			"/Applications/Google Chrome Dev.app/Contents/MacOS/Google Chrome Dev"
-			"/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary"
-			"/Applications/Google Chrome Beta.app/Contents/MacOS/Google Chrome Beta"
-			"/Applications/Arc.app/Contents/MacOS/Arc"
-			"/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge"
-			"/Applications/Brave Browser.app/Contents/MacOS/Brave Browser"
-		)
+		local mac_candidates=()
+		case "$browser_pref" in
+		auto)
+			mac_candidates=(
+				"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+				"/Applications/Google Chrome Dev.app/Contents/MacOS/Google Chrome Dev"
+				"/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary"
+				"/Applications/Google Chrome Beta.app/Contents/MacOS/Google Chrome Beta"
+				"/Applications/Arc.app/Contents/MacOS/Arc"
+				"/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge"
+				"/Applications/Brave Browser.app/Contents/MacOS/Brave Browser"
+			)
+			;;
+		google-chrome | chrome)
+			mac_candidates=("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
+			;;
+		google-chrome-dev | chrome-dev)
+			mac_candidates=("/Applications/Google Chrome Dev.app/Contents/MacOS/Google Chrome Dev")
+			;;
+		google-chrome-canary | chrome-canary)
+			mac_candidates=("/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary")
+			;;
+		google-chrome-beta | chrome-beta)
+			mac_candidates=("/Applications/Google Chrome Beta.app/Contents/MacOS/Google Chrome Beta")
+			;;
+		arc)
+			mac_candidates=("/Applications/Arc.app/Contents/MacOS/Arc")
+			;;
+		microsoft-edge | edge)
+			mac_candidates=("/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge")
+			;;
+		brave-browser | brave)
+			mac_candidates=("/Applications/Brave Browser.app/Contents/MacOS/Brave Browser")
+			;;
+		*)
+			print_error "不支持的浏览器配置: $browser_pref"
+			return 1
+			;;
+		esac
 
 		for candidate in "${mac_candidates[@]}"; do
 			[[ -x "$candidate" ]] || continue
@@ -137,14 +513,35 @@ discover_browser_command() {
 		done
 		;;
 	Linux)
-		local linux_candidates=(
-			"google-chrome"
-			"google-chrome-stable"
-			"microsoft-edge"
-			"brave-browser"
-			"chromium-browser"
-			"chromium"
-		)
+		local linux_candidates=()
+		case "$browser_pref" in
+		auto)
+			linux_candidates=(
+				"google-chrome"
+				"google-chrome-stable"
+				"microsoft-edge"
+				"brave-browser"
+				"chromium-browser"
+				"chromium"
+			)
+			;;
+		google-chrome | chrome)
+			linux_candidates=("google-chrome" "google-chrome-stable")
+			;;
+		microsoft-edge | edge)
+			linux_candidates=("microsoft-edge")
+			;;
+		brave-browser | brave)
+			linux_candidates=("brave-browser")
+			;;
+		chromium)
+			linux_candidates=("chromium-browser" "chromium")
+			;;
+		*)
+			print_error "不支持的浏览器配置: $browser_pref"
+			return 1
+			;;
+		esac
 
 		for candidate in "${linux_candidates[@]}"; do
 			resolved="$(command -v "$candidate" 2>/dev/null || true)"
@@ -158,63 +555,19 @@ discover_browser_command() {
 	return 1
 }
 
-configured_port() {
-	local config_file port
-	config_file="$(config_file_path)"
-	port="$(
-		node -e '
-const fs = require("fs");
-const configPath = process.argv[1];
-const fallback = "19825";
-
-try {
-  if (!configPath || !fs.existsSync(configPath)) {
-    process.stdout.write(fallback);
-    process.exit(0);
-  }
-
-  const raw = fs.readFileSync(configPath, "utf8");
-  const config = raw.trim() ? JSON.parse(raw) : {};
-  const value = config.port ?? config.remoteDebuggingPort ?? config.cdpPort;
-  const parsed = Number.parseInt(String(value ?? ""), 10);
-  process.stdout.write(Number.isInteger(parsed) && parsed > 0 ? String(parsed) : fallback);
-} catch {
-  process.stdout.write(fallback);
+configured_browser() {
+	load_config_values
+	printf '%s\n' "$BB_BROWSER_CONFIG_BROWSER"
 }
-' "$config_file" 2>/dev/null || true
-	)"
-	port="${port//$'\n'/}"
-	[[ -n "$port" ]] || port="19825"
-	printf '%s\n' "$port"
+
+configured_port() {
+	load_config_values
+	printf '%s\n' "$BB_BROWSER_CONFIG_PORT"
 }
 
 configured_profile_directory() {
-	local config_file profile_dir
-	config_file="$(config_file_path)"
-	profile_dir="$(
-		node -e '
-const fs = require("fs");
-const configPath = process.argv[1];
-const fallback = "Default";
-
-try {
-  if (!configPath || !fs.existsSync(configPath)) {
-    process.stdout.write(fallback);
-    process.exit(0);
-  }
-
-  const raw = fs.readFileSync(configPath, "utf8");
-  const config = raw.trim() ? JSON.parse(raw) : {};
-  const value = config.profileDirectory ?? config.profileDir ?? config.profile;
-  process.stdout.write(typeof value === "string" && value.trim() ? value : fallback);
-} catch {
-  process.stdout.write(fallback);
-}
-' "$config_file" 2>/dev/null || true
-	)"
-	profile_dir="${profile_dir//$'\n'/}"
-	[[ -n "$profile_dir" ]] || profile_dir="Default"
-	printf '%s\n' "$profile_dir"
+	load_config_values
+	printf '%s\n' "$BB_BROWSER_CONFIG_PROFILE_DIRECTORY"
 }
 
 browser_identity() {
@@ -323,7 +676,7 @@ launch_browser_with_profile() {
 }
 
 resolve_cdp_url() {
-	local cdp_url browser_command port profile_dir profile_root attempt
+	local cdp_url browser_command port profile_dir profile_root
 
 	cdp_url="${BB_BROWSER_CDP_URL:-}"
 	if [[ -n "$cdp_url" ]] && can_connect_cdp "$cdp_url"; then
@@ -350,7 +703,7 @@ resolve_cdp_url() {
 		return 1
 	fi
 
-	cdp_url="http://127.0.0.1:$port"
+	cdp_url="http://$(loopback_host):$port"
 	if can_connect_cdp "$cdp_url"; then
 		printf '%s\n' "$cdp_url"
 		return 0
@@ -358,7 +711,7 @@ resolve_cdp_url() {
 
 	launch_browser_with_profile "$browser_command" "$port" "$profile_root" "$profile_dir"
 
-	for attempt in {1..10}; do
+	for _ in {1..10}; do
 		sleep 1
 		if can_connect_cdp "$cdp_url"; then
 			printf '%s\n' "$cdp_url"
@@ -371,7 +724,7 @@ resolve_cdp_url() {
 }
 
 doctor() {
-	local browser_path
+	local browser_path browser_command profile_root
 
 	require_node || return 1
 
@@ -380,10 +733,29 @@ doctor() {
 		return 1
 	fi
 
-	if ! resolve_cdp_url >/dev/null; then
+	if ! browser_command="$(discover_browser_command)"; then
+		print_error "未找到受支持浏览器"
 		return 1
 	fi
 
+	profile_root="$(discover_profile_root "$browser_command" 2>/dev/null || true)"
+	if [[ -z "$profile_root" ]]; then
+		print_error "无法确定浏览器配置目录: $browser_command"
+		return 1
+	fi
+
+	if [[ ! -d "$profile_root" ]]; then
+		print_error "浏览器配置目录不存在: $profile_root"
+		return 1
+	fi
+
+	if ! daemon_entry_path >/dev/null; then
+		print_error "无法定位 bb-browser daemon.js"
+		return 1
+	fi
+
+	configured_port >/dev/null
+	configured_profile_directory >/dev/null
 	return 0
 }
 
@@ -405,6 +777,7 @@ main() {
 
 	cdp_url="$(resolve_cdp_url)" || return 1
 	export BB_BROWSER_CDP_URL="$cdp_url"
+	ensure_daemon_running "$cdp_url" || return 1
 
 	exec "$browser_path" "$@"
 }

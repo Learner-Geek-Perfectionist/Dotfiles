@@ -103,6 +103,23 @@ assert_equal() {
 	[[ "$expected" == "$actual" ]] || fail "$label mismatch: expected '$expected', got '$actual'"
 }
 
+file_mode() {
+	local path="$1"
+
+	if stat -f %Lp "$path" >/dev/null 2>&1; then
+		stat -f %Lp "$path"
+		return 0
+	fi
+
+	stat -c %a "$path"
+}
+
+assert_mode() {
+	local expected="$1" path="$2" actual
+	actual="$(file_mode "$path")"
+	[[ "$actual" == "$expected" ]] || fail "Expected mode '$expected' for $path, got '$actual'"
+}
+
 run_test() {
 	local name="$1"
 	shift

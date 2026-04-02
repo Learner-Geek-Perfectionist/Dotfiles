@@ -73,7 +73,8 @@
     "install.sh",
     "uninstall.sh",
     "lib/utils.sh",
-    "scripts/bb-browser-user.sh"
+    "scripts/bb-browser-user.sh",
+    "scripts/deploy_codex_config.sh"
   ],
   "scripts/bb-browser-user.sh": [
     "scripts/install_bb_browser.sh",

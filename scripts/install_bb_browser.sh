@@ -83,6 +83,23 @@ cleanup_artifact_backup() {
 	rm -f "$backup_file"
 }
 
+cleanup_install_backups() {
+	local wrapper_backup_backup="$1" state_backup="$2" managed_bb_browser_backup="$3"
+
+	cleanup_artifact_backup "$wrapper_backup_backup"
+	cleanup_artifact_backup "$state_backup"
+	cleanup_artifact_backup "$managed_bb_browser_backup"
+}
+
+rollback_install_attempt() {
+	local managed_prefix="$1" preexisting_bb_browser="$2" managed_bb_browser="$3" managed_bb_browser_backup="$4"
+	local preexisting_wrapper_marker="$5" wrapper_backup_backup="$6" state_backup="$7"
+
+	rollback_managed_bb_browser "$managed_prefix" "$preexisting_bb_browser" "$managed_bb_browser" "$managed_bb_browser_backup"
+	rollback_install_artifacts "$preexisting_wrapper_marker" "$wrapper_backup_backup" "$state_backup"
+	cleanup_install_backups "$wrapper_backup_backup" "$state_backup" "$managed_bb_browser_backup"
+}
+
 require_npm() {
 	if command -v npm &>/dev/null; then
 		return 0
@@ -245,20 +262,14 @@ main() {
 	state_backup="$(backup_artifact "$STATE_FILE")"
 
 	if ! prepare_wrapper_backup "$preexisting_wrapper_marker" "$recorded_preexisting_wrapper"; then
-		rollback_managed_bb_browser "$managed_prefix" "$preexisting_bb_browser" "$managed_bb_browser" "$managed_bb_browser_backup"
-		rollback_install_artifacts "$preexisting_wrapper_marker" "$wrapper_backup_backup" "$state_backup"
-		cleanup_artifact_backup "$wrapper_backup_backup"
-		cleanup_artifact_backup "$state_backup"
-		cleanup_artifact_backup "$managed_bb_browser_backup"
+		rollback_install_attempt "$managed_prefix" "$preexisting_bb_browser" "$managed_bb_browser" "$managed_bb_browser_backup" \
+			"$preexisting_wrapper_marker" "$wrapper_backup_backup" "$state_backup"
 		return 1
 	fi
 
 	if ! install_wrapper; then
-		rollback_managed_bb_browser "$managed_prefix" "$preexisting_bb_browser" "$managed_bb_browser" "$managed_bb_browser_backup"
-		rollback_install_artifacts "$preexisting_wrapper_marker" "$wrapper_backup_backup" "$state_backup"
-		cleanup_artifact_backup "$wrapper_backup_backup"
-		cleanup_artifact_backup "$state_backup"
-		cleanup_artifact_backup "$managed_bb_browser_backup"
+		rollback_install_attempt "$managed_prefix" "$preexisting_bb_browser" "$managed_bb_browser" "$managed_bb_browser_backup" \
+			"$preexisting_wrapper_marker" "$wrapper_backup_backup" "$state_backup"
 		return 1
 	fi
 
@@ -269,27 +280,19 @@ main() {
 	fi
 
 	if ! write_state_file "$preexisting_bb_browser_marker" "$preexisting_bb_browser_path" "$preexisting_wrapper_marker" "$installed_version" "$real_bb_browser_path"; then
-		rollback_managed_bb_browser "$managed_prefix" "$preexisting_bb_browser" "$managed_bb_browser" "$managed_bb_browser_backup"
-		rollback_install_artifacts "$preexisting_wrapper_marker" "$wrapper_backup_backup" "$state_backup"
-		cleanup_artifact_backup "$wrapper_backup_backup"
-		cleanup_artifact_backup "$state_backup"
-		cleanup_artifact_backup "$managed_bb_browser_backup"
+		rollback_install_attempt "$managed_prefix" "$preexisting_bb_browser" "$managed_bb_browser" "$managed_bb_browser_backup" \
+			"$preexisting_wrapper_marker" "$wrapper_backup_backup" "$state_backup"
 		return 1
 	fi
 
 	if ! "$WRAPPER_PATH" doctor; then
-		rollback_managed_bb_browser "$managed_prefix" "$preexisting_bb_browser" "$managed_bb_browser" "$managed_bb_browser_backup"
-		rollback_install_artifacts "$preexisting_wrapper_marker" "$wrapper_backup_backup" "$state_backup"
-		cleanup_artifact_backup "$wrapper_backup_backup"
-		cleanup_artifact_backup "$state_backup"
-		cleanup_artifact_backup "$managed_bb_browser_backup"
+		rollback_install_attempt "$managed_prefix" "$preexisting_bb_browser" "$managed_bb_browser" "$managed_bb_browser_backup" \
+			"$preexisting_wrapper_marker" "$wrapper_backup_backup" "$state_backup"
 		print_error "bb-browser 健康检查失败"
 		return 1
 	fi
 
-	cleanup_artifact_backup "$wrapper_backup_backup"
-	cleanup_artifact_backup "$state_backup"
-	cleanup_artifact_backup "$managed_bb_browser_backup"
+	cleanup_install_backups "$wrapper_backup_backup" "$state_backup" "$managed_bb_browser_backup"
 	refresh_codex_config
 }
 

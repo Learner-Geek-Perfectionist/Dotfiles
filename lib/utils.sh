@@ -513,6 +513,22 @@ bb_browser_wrapper_backup_file() {
 	echo "$(dotfiles_state_dir)/bb-browser-user.preexisting"
 }
 
+bb_browser_daemon_runtime_dir() {
+	echo "$HOME/.bb-browser"
+}
+
+bb_browser_daemon_token_file() {
+	echo "$(bb_browser_daemon_runtime_dir)/daemon.token"
+}
+
+bb_browser_daemon_pid_file() {
+	echo "$(bb_browser_daemon_runtime_dir)/daemon.pid"
+}
+
+bb_browser_daemon_log_file() {
+	echo "/tmp/bb-browser-daemon-wrapper.log"
+}
+
 claude_bb_browser_mcp_state_file() {
 	echo "$(dotfiles_state_dir)/claude-bb-browser-mcp.env"
 }

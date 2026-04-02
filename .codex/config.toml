@@ -56,4 +56,4 @@ args = ["-y", "@kazuph/mcp-fetch"]
 
 [mcp_servers.bb-browser]
 command = "bash"
-args = ["-lc", "\"$HOME/.local/bin/bb-browser-user\" --mcp"]
+args = ["-c", "\"$HOME/.local/bin/bb-browser-user\" --mcp"]

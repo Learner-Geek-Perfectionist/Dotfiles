@@ -182,6 +182,105 @@ EOF
 	assert_contains "bb-browser@latest" "$npm_log"
 }
 
+test_bb_browser_install_discovers_browser_and_launches_cdp() {
+	local tmp_home fake_bin log npm_log browser_log fetch_log ready_file config_file state_file wrapper_path
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install-bb-browser-discovery.log"
+	npm_log="$tmp_home/npm-discovery.log"
+	browser_log="$tmp_home/google-chrome.log"
+	fetch_log="$tmp_home/node-fetch.log"
+	ready_file="$tmp_home/.cdp-ready-24444"
+	config_file="$tmp_home/.config/dotfiles/bb-browser.json"
+	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
+	wrapper_path="$tmp_home/.local/bin/bb-browser-user"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	mkdir -p "$(dirname "$config_file")" "$tmp_home/.config/google-chrome"
+	cat >"$config_file" <<'EOF'
+{"port":24444,"profileDirectory":"Profile 9"}
+EOF
+
+	cat >"$fake_bin/npm" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >>"$npm_log"
+if [ "\$1" = "install" ] && [ "\$2" = "-g" ] && [ "\$3" = "bb-browser@latest" ]; then
+  cat >"$fake_bin/bb-browser" <<'INNER'
+#!/bin/sh
+case "\$1" in
+  --version) echo 'bb-browser 9.9.9' ;;
+  *) exit 0 ;;
+esac
+INNER
+  chmod +x "$fake_bin/bb-browser"
+fi
+exit 0
+EOF
+	cat >"$fake_bin/node" <<EOF
+#!/bin/sh
+script="\$2"
+arg="\$3"
+case "\$script" in
+  *fetch*)
+    printf '%s\n' "\$arg" >>"$fetch_log"
+    case "\$arg" in
+      http://127.0.0.1:24444|http://127.0.0.1:24444/json/version)
+        [ -f "$ready_file" ] && exit 0
+        exit 1
+        ;;
+    esac
+    exit 1
+    ;;
+  *config.profileDirectory*)
+    /bin/cat <<'INNER'
+Profile 9
+INNER
+    exit 0
+    ;;
+  *config.port*)
+    /bin/cat <<'INNER'
+24444
+INNER
+    exit 0
+    ;;
+esac
+exit 0
+EOF
+	cat >"$fake_bin/google-chrome" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >>"$browser_log"
+port=""
+for arg in "\$@"; do
+  case "\$arg" in
+    --remote-debugging-port=*)
+      port="\${arg#--remote-debugging-port=}"
+      ;;
+  esac
+done
+[ -n "\$port" ] && : >"$ready_file"
+exit 0
+EOF
+	cat >"$fake_bin/uname" <<'EOF'
+#!/bin/sh
+echo 'Linux'
+EOF
+	chmod +x "$fake_bin/npm" "$fake_bin/node" "$fake_bin/google-chrome" "$fake_bin/uname"
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		bash "$REPO_ROOT/scripts/install_bb_browser.sh" >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "install_bb_browser.sh discovery case failed"
+	fi
+
+	assert_executable "$wrapper_path"
+	assert_file_exists "$state_file"
+	assert_contains "http://127.0.0.1:24444" "$fetch_log"
+	assert_contains "remote-debugging-port=24444" "$browser_log"
+	assert_contains "user-data-dir=$tmp_home/.config/google-chrome" "$browser_log"
+	assert_contains "profile-directory=Profile 9" "$browser_log"
+	assert_contains "about:blank" "$browser_log"
+}
+
 test_bb_browser_install_fails_without_supported_browser() {
 	local tmp_home fake_bin log npm_log tool
 	tmp_home=$(make_temp_dir)
@@ -228,6 +327,8 @@ EOF
 	assert_contains "install" "$npm_log"
 	assert_contains "bb-browser@latest" "$npm_log"
 	assert_contains "未找到受支持浏览器" "$log"
+	assert_file_missing "$tmp_home/.local/bin/bb-browser-user"
+	assert_file_missing "$tmp_home/.local/state/dotfiles/bb-browser.env"
 }
 
 test_bb_browser_wrapper_uses_managed_path_over_preexisting_path() {
@@ -1218,6 +1319,7 @@ EOF
 run_test "Dotfiles manifest and SSH include block" test_dotfiles_manifest_and_ssh_block
 run_test "Dotfiles deploys bb-browser shell plugin" test_dotfiles_deploys_bb_browser_shell_plugin
 run_test "bb-browser install uses latest and deploys wrapper" test_bb_browser_install_uses_latest_and_deploys_wrapper
+run_test "bb-browser install discovers browser and launches CDP" test_bb_browser_install_discovers_browser_and_launches_cdp
 run_test "bb-browser install fails without supported browser" test_bb_browser_install_fails_without_supported_browser
 run_test "bb-browser wrapper uses managed path over preexisting path" test_bb_browser_wrapper_uses_managed_path_over_preexisting_path
 run_test "bb-browser uninstall preserves preexisting global install" test_bb_browser_uninstall_preserves_preexisting_global_install

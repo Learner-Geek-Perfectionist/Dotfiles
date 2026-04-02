@@ -9,6 +9,42 @@ source "$SCRIPT_DIR/../lib/utils.sh"
 WRAPPER_PATH="$HOME/.local/bin/bb-browser-user"
 STATE_FILE="$(bb_browser_state_file)"
 
+backup_artifact() {
+	local target="$1" backup_file
+
+	[[ -e "$target" ]] || return 0
+
+	backup_file="$(mktemp "${TMPDIR:-/tmp}/bb-browser-install.XXXXXX")"
+	cp -p "$target" "$backup_file"
+	printf '%s\n' "$backup_file"
+}
+
+restore_artifact() {
+	local target="$1" backup_file="$2"
+
+	if [[ -n "$backup_file" && -e "$backup_file" ]]; then
+		mkdir -p "$(dirname "$target")"
+		cp -p "$backup_file" "$target"
+		return 0
+	fi
+
+	rm -f "$target"
+}
+
+rollback_install_artifacts() {
+	local wrapper_backup="$1" state_backup="$2"
+
+	restore_artifact "$WRAPPER_PATH" "$wrapper_backup"
+	restore_artifact "$STATE_FILE" "$state_backup"
+}
+
+cleanup_artifact_backup() {
+	local backup_file="$1"
+
+	[[ -n "$backup_file" ]] || return 0
+	rm -f "$backup_file"
+}
+
 require_npm() {
 	if command -v npm &>/dev/null; then
 		return 0
@@ -64,6 +100,7 @@ installed_bb_browser_path() {
 
 main() {
 	local preexisting_bb_browser installed_version real_bb_browser_path
+	local wrapper_backup state_backup
 
 	require_npm || return 0
 
@@ -75,7 +112,15 @@ main() {
 		return 0
 	fi
 
-	install_wrapper
+	wrapper_backup="$(backup_artifact "$WRAPPER_PATH")"
+	state_backup="$(backup_artifact "$STATE_FILE")"
+
+	if ! install_wrapper; then
+		rollback_install_artifacts "$wrapper_backup" "$state_backup"
+		cleanup_artifact_backup "$wrapper_backup"
+		cleanup_artifact_backup "$state_backup"
+		return 1
+	fi
 
 	real_bb_browser_path="$(installed_bb_browser_path)"
 	installed_version=""
@@ -83,12 +128,23 @@ main() {
 		installed_version="$("$real_bb_browser_path" --version 2>/dev/null || true)"
 	fi
 
-	write_state_file "$preexisting_bb_browser" "$installed_version" "$real_bb_browser_path"
+	if ! write_state_file "$preexisting_bb_browser" "$installed_version" "$real_bb_browser_path"; then
+		rollback_install_artifacts "$wrapper_backup" "$state_backup"
+		cleanup_artifact_backup "$wrapper_backup"
+		cleanup_artifact_backup "$state_backup"
+		return 1
+	fi
 
 	if ! "$WRAPPER_PATH" doctor; then
+		rollback_install_artifacts "$wrapper_backup" "$state_backup"
+		cleanup_artifact_backup "$wrapper_backup"
+		cleanup_artifact_backup "$state_backup"
 		print_error "bb-browser 健康检查失败"
 		return 1
 	fi
+
+	cleanup_artifact_backup "$wrapper_backup"
+	cleanup_artifact_backup "$state_backup"
 }
 
 main "$@"

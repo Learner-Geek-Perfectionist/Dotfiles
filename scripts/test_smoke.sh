@@ -341,6 +341,70 @@ EOF
 	assert_file_missing "$managed_prefix/bin/bb-browser"
 }
 
+test_bb_browser_install_preserves_preexisting_managed_prefix_artifact_on_failure() {
+	local tmp_home fake_bin managed_prefix log npm_log tool
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	managed_prefix=$(make_temp_dir)
+	log="$tmp_home/install-bb-browser-preexisting-managed.log"
+	npm_log="$tmp_home/npm-preexisting-managed.log"
+	trap "rm -rf '$tmp_home' '$fake_bin' '$managed_prefix'" RETURN
+
+	mkdir -p "$managed_prefix/bin"
+	cat >"$managed_prefix/bin/bb-browser" <<'EOF'
+#!/bin/sh
+case "$1" in
+  --version) echo 'bb-browser preexisting 1.0.0' ;;
+  *) exit 0 ;;
+esac
+EOF
+	chmod +x "$managed_prefix/bin/bb-browser"
+
+	for tool in basename cat chmod cp date dirname mkdir rm sleep whoami; do
+		ln -s "$(command -v "$tool")" "$fake_bin/$tool"
+	done
+
+	cat >"$fake_bin/npm" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >>"$npm_log"
+if [ "\$1" = "prefix" ] && [ "\$2" = "-g" ]; then
+  printf '%s\n' "$managed_prefix"
+  exit 0
+fi
+if [ "\$1" = "install" ] && [ "\$2" = "-g" ] && [ "\$3" = "bb-browser@latest" ]; then
+  exit 0
+fi
+if [ "\$1" = "--prefix" ] && [ "\$2" = "$managed_prefix" ] && [ "\$3" = "uninstall" ] && [ "\$4" = "-g" ] && [ "\$5" = "bb-browser" ]; then
+  rm -f "$managed_prefix/bin/bb-browser"
+fi
+exit 0
+EOF
+	cat >"$fake_bin/node" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/uname" <<'EOF'
+#!/bin/sh
+echo 'Linux'
+EOF
+	chmod +x "$fake_bin/npm" "$fake_bin/node" "$fake_bin/uname"
+
+	if HOME="$tmp_home" PATH="$managed_prefix/bin:$fake_bin" \
+		/bin/bash "$REPO_ROOT/scripts/install_bb_browser.sh" >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "install_bb_browser.sh unexpectedly succeeded with preexisting managed package"
+	fi
+
+	assert_contains "install" "$npm_log"
+	assert_contains "bb-browser@latest" "$npm_log"
+	assert_contains "未找到受支持浏览器" "$log"
+	assert_not_contains "uninstall -g bb-browser" "$npm_log"
+	assert_file_missing "$tmp_home/.local/bin/bb-browser-user"
+	assert_file_missing "$tmp_home/.local/state/dotfiles/bb-browser.env"
+	assert_file_exists "$managed_prefix/bin/bb-browser"
+	assert_contains "bb-browser preexisting 1.0.0" "$managed_prefix/bin/bb-browser"
+}
+
 test_bb_browser_wrapper_uses_managed_path_over_preexisting_path() {
 	local tmp_home old_bin managed_prefix fake_bin log npm_log state_file
 	tmp_home=$(make_temp_dir)
@@ -1331,6 +1395,7 @@ run_test "Dotfiles deploys bb-browser shell plugin" test_dotfiles_deploys_bb_bro
 run_test "bb-browser install uses latest and deploys wrapper" test_bb_browser_install_uses_latest_and_deploys_wrapper
 run_test "bb-browser install discovers browser and launches CDP" test_bb_browser_install_discovers_browser_and_launches_cdp
 run_test "bb-browser install fails without supported browser" test_bb_browser_install_fails_without_supported_browser
+run_test "bb-browser install preserves preexisting managed package on failure" test_bb_browser_install_preserves_preexisting_managed_prefix_artifact_on_failure
 run_test "bb-browser wrapper uses managed path over preexisting path" test_bb_browser_wrapper_uses_managed_path_over_preexisting_path
 run_test "bb-browser uninstall preserves preexisting global install" test_bb_browser_uninstall_preserves_preexisting_global_install
 run_test "bb-browser uninstall removes managed global install" test_bb_browser_uninstall_removes_managed_global_install

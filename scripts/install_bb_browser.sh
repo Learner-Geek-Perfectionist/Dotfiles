@@ -48,9 +48,13 @@ rollback_install_artifacts() {
 }
 
 rollback_managed_bb_browser() {
-	local npm_prefix="$1"
+	local npm_prefix="$1" preexisting_bb_browser="$2" managed_bb_browser
 
 	[[ -n "$npm_prefix" && "$npm_prefix" != "/" ]] || return 0
+	managed_bb_browser="$npm_prefix/bin/bb-browser"
+	if [[ "$preexisting_bb_browser" == "$managed_bb_browser" ]]; then
+		return 0
+	fi
 	command -v npm &>/dev/null || return 0
 
 	npm --prefix "$npm_prefix" uninstall -g bb-browser >/dev/null 2>&1 || true
@@ -135,7 +139,7 @@ main() {
 	state_backup="$(backup_artifact "$STATE_FILE")"
 
 	if ! install_wrapper; then
-		rollback_managed_bb_browser "$managed_prefix"
+		rollback_managed_bb_browser "$managed_prefix" "$preexisting_bb_browser"
 		rollback_install_artifacts "$wrapper_backup" "$state_backup"
 		cleanup_artifact_backup "$wrapper_backup"
 		cleanup_artifact_backup "$state_backup"
@@ -149,7 +153,7 @@ main() {
 	fi
 
 	if ! write_state_file "$preexisting_bb_browser" "$installed_version" "$real_bb_browser_path"; then
-		rollback_managed_bb_browser "$managed_prefix"
+		rollback_managed_bb_browser "$managed_prefix" "$preexisting_bb_browser"
 		rollback_install_artifacts "$wrapper_backup" "$state_backup"
 		cleanup_artifact_backup "$wrapper_backup"
 		cleanup_artifact_backup "$state_backup"
@@ -157,7 +161,7 @@ main() {
 	fi
 
 	if ! "$WRAPPER_PATH" doctor; then
-		rollback_managed_bb_browser "$managed_prefix"
+		rollback_managed_bb_browser "$managed_prefix" "$preexisting_bb_browser"
 		rollback_install_artifacts "$wrapper_backup" "$state_backup"
 		cleanup_artifact_backup "$wrapper_backup"
 		cleanup_artifact_backup "$state_backup"

@@ -9,6 +9,15 @@ source "$SCRIPT_DIR/../lib/utils.sh"
 WRAPPER_PATH="$HOME/.local/bin/bb-browser-user"
 STATE_FILE="$(bb_browser_state_file)"
 
+managed_npm_prefix() {
+	local npm_prefix
+
+	npm_prefix="$(npm prefix -g 2>/dev/null || npm config get prefix 2>/dev/null || true)"
+	npm_prefix="${npm_prefix%/}"
+	[[ -n "$npm_prefix" ]] || return 1
+	printf '%s\n' "$npm_prefix"
+}
+
 backup_artifact() {
 	local target="$1" backup_file
 
@@ -36,6 +45,15 @@ rollback_install_artifacts() {
 
 	restore_artifact "$WRAPPER_PATH" "$wrapper_backup"
 	restore_artifact "$STATE_FILE" "$state_backup"
+}
+
+rollback_managed_bb_browser() {
+	local npm_prefix="$1"
+
+	[[ -n "$npm_prefix" && "$npm_prefix" != "/" ]] || return 0
+	command -v npm &>/dev/null || return 0
+
+	npm --prefix "$npm_prefix" uninstall -g bb-browser >/dev/null 2>&1 || true
 }
 
 cleanup_artifact_backup() {
@@ -99,12 +117,13 @@ installed_bb_browser_path() {
 }
 
 main() {
-	local preexisting_bb_browser installed_version real_bb_browser_path
+	local preexisting_bb_browser installed_version real_bb_browser_path managed_prefix
 	local wrapper_backup state_backup
 
 	require_npm || return 0
 
 	preexisting_bb_browser="$(command -v bb-browser 2>/dev/null || true)"
+	managed_prefix="$(managed_npm_prefix || true)"
 
 	print_info "安装 bb-browser (via npm)..."
 	if ! npm install -g bb-browser@latest; then
@@ -116,6 +135,7 @@ main() {
 	state_backup="$(backup_artifact "$STATE_FILE")"
 
 	if ! install_wrapper; then
+		rollback_managed_bb_browser "$managed_prefix"
 		rollback_install_artifacts "$wrapper_backup" "$state_backup"
 		cleanup_artifact_backup "$wrapper_backup"
 		cleanup_artifact_backup "$state_backup"
@@ -129,6 +149,7 @@ main() {
 	fi
 
 	if ! write_state_file "$preexisting_bb_browser" "$installed_version" "$real_bb_browser_path"; then
+		rollback_managed_bb_browser "$managed_prefix"
 		rollback_install_artifacts "$wrapper_backup" "$state_backup"
 		cleanup_artifact_backup "$wrapper_backup"
 		cleanup_artifact_backup "$state_backup"
@@ -136,6 +157,7 @@ main() {
 	fi
 
 	if ! "$WRAPPER_PATH" doctor; then
+		rollback_managed_bb_browser "$managed_prefix"
 		rollback_install_artifacts "$wrapper_backup" "$state_backup"
 		cleanup_artifact_backup "$wrapper_backup"
 		cleanup_artifact_backup "$state_backup"

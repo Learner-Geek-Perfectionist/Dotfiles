@@ -282,12 +282,13 @@ EOF
 }
 
 test_bb_browser_install_fails_without_supported_browser() {
-	local tmp_home fake_bin log npm_log tool
+	local tmp_home fake_bin managed_prefix log npm_log tool
 	tmp_home=$(make_temp_dir)
 	fake_bin=$(make_temp_dir)
+	managed_prefix=$(make_temp_dir)
 	log="$tmp_home/install-bb-browser-no-browser.log"
 	npm_log="$tmp_home/npm-no-browser.log"
-	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+	trap "rm -rf '$tmp_home' '$fake_bin' '$managed_prefix'" RETURN
 
 	for tool in basename cat chmod cp date dirname mkdir rm sleep whoami; do
 		ln -s "$(command -v "$tool")" "$fake_bin/$tool"
@@ -296,15 +297,23 @@ test_bb_browser_install_fails_without_supported_browser() {
 	cat >"$fake_bin/npm" <<EOF
 #!/bin/sh
 printf '%s\n' "\$*" >>"$npm_log"
+if [ "\$1" = "prefix" ] && [ "\$2" = "-g" ]; then
+  printf '%s\n' "$managed_prefix"
+  exit 0
+fi
 if [ "\$1" = "install" ] && [ "\$2" = "-g" ] && [ "\$3" = "bb-browser@latest" ]; then
-  cat >"$fake_bin/bb-browser" <<'INNER'
+  mkdir -p "$managed_prefix/bin"
+  cat >"$managed_prefix/bin/bb-browser" <<'INNER'
 #!/bin/sh
 case "\$1" in
   --version) echo 'bb-browser 9.9.9' ;;
   *) exit 0 ;;
 esac
 INNER
-  chmod +x "$fake_bin/bb-browser"
+  chmod +x "$managed_prefix/bin/bb-browser"
+fi
+if [ "\$1" = "--prefix" ] && [ "\$2" = "$managed_prefix" ] && [ "\$3" = "uninstall" ] && [ "\$4" = "-g" ] && [ "\$5" = "bb-browser" ]; then
+  rm -f "$managed_prefix/bin/bb-browser"
 fi
 exit 0
 EOF
@@ -329,6 +338,7 @@ EOF
 	assert_contains "未找到受支持浏览器" "$log"
 	assert_file_missing "$tmp_home/.local/bin/bb-browser-user"
 	assert_file_missing "$tmp_home/.local/state/dotfiles/bb-browser.env"
+	assert_file_missing "$managed_prefix/bin/bb-browser"
 }
 
 test_bb_browser_wrapper_uses_managed_path_over_preexisting_path() {

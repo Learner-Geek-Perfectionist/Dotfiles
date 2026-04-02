@@ -215,19 +215,55 @@ remove_claude_mcp_if_present() {
 	fi
 }
 
+remove_managed_claude_bb_browser_mcp_if_present() {
+	local state_file mcp_list
+	state_file="$(claude_bb_browser_mcp_state_file)"
+
+	[[ -f "$state_file" ]] || return 0
+	command -v claude &>/dev/null || {
+		rm_path "$state_file"
+		prune_empty_parents "$(dirname "$state_file")"
+		return 0
+	}
+
+	mcp_list=$(claude mcp list 2>/dev/null || true)
+	if echo "$mcp_list" | grep -Eq '^[[:space:]]*bb-browser:'; then
+		claude mcp remove "bb-browser" --scope user &>/dev/null && print_dim "✓ MCP: bb-browser 已移除"
+	fi
+
+	rm_path "$state_file"
+	prune_empty_parents "$(dirname "$state_file")"
+}
+
+restore_bb_browser_wrapper() {
+	local wrapper_path="$1" wrapper_backup_path="$2"
+
+	if [[ -n "$wrapper_backup_path" && -e "$wrapper_backup_path" ]]; then
+		mkdir -p "$(dirname "$wrapper_path")"
+		cp -p "$wrapper_backup_path" "$wrapper_path"
+		rm_path "$wrapper_backup_path"
+		prune_empty_parents "$(dirname "$wrapper_backup_path")"
+		return 0
+	fi
+
+	print_warn "检测到预装 bb-browser wrapper，但未找到备份；保留当前 wrapper: $wrapper_path"
+}
+
 remove_bb_browser() {
-	local state_file config_file wrapper_path preexisting_bb_browser real_bb_browser_path target_prefix
+	local state_file config_file wrapper_path wrapper_backup_path
+	local preexisting_bb_browser preexisting_wrapper real_bb_browser_path target_prefix
 	state_file="$(bb_browser_state_file)"
 	config_file="$(bb_browser_config_file)"
 	wrapper_path="$HOME/.local/bin/bb-browser-user"
-
-	rm_path "$wrapper_path"
-	prune_empty_parents "$(dirname "$wrapper_path")"
+	wrapper_backup_path="$(bb_browser_wrapper_backup_file)"
 	rm_path "$config_file"
 	prune_empty_parents "$(dirname "$config_file")"
 
 	if [[ -f "$state_file" ]]; then
 		preexisting_bb_browser="$(bb_browser_state_value "$state_file" PREEXISTING_BB_BROWSER)"
+		preexisting_wrapper="$(bb_browser_state_value "$state_file" PREEXISTING_WRAPPER)"
+		wrapper_backup_path="$(bb_browser_state_value "$state_file" PREEXISTING_WRAPPER_BACKUP_PATH)"
+		[[ -n "$wrapper_backup_path" ]] || wrapper_backup_path="$(bb_browser_wrapper_backup_file)"
 		real_bb_browser_path="$(bb_browser_state_value "$state_file" REAL_BB_BROWSER_PATH)"
 		if [[ "$preexisting_bb_browser" == "0" && -n "$real_bb_browser_path" ]]; then
 			target_prefix="$(dirname "$(dirname "$real_bb_browser_path")")"
@@ -237,11 +273,23 @@ remove_bb_browser() {
 				fi
 			fi
 		fi
+
+		if [[ "$preexisting_wrapper" == "1" ]]; then
+			restore_bb_browser_wrapper "$wrapper_path" "$wrapper_backup_path"
+		else
+			rm_path "$wrapper_path"
+			prune_empty_parents "$(dirname "$wrapper_path")"
+			rm_path "$wrapper_backup_path"
+			prune_empty_parents "$(dirname "$wrapper_backup_path")"
+		fi
+	else
+		rm_path "$wrapper_path"
+		prune_empty_parents "$(dirname "$wrapper_path")"
 	fi
 
 	rm_path "$state_file"
 	prune_empty_parents "$(dirname "$state_file")"
-	remove_claude_mcp_if_present "bb-browser"
+	remove_managed_claude_bb_browser_mcp_if_present
 }
 
 remove_dotfiles_ssh_include_block() {
@@ -454,9 +502,11 @@ remove_claude() {
 	if command -v claude &>/dev/null; then
 		local mcp
 		for mcp in "${CLAUDE_MANAGED_MCPS[@]}"; do
+			[[ "$mcp" == "bb-browser" ]] && continue
 			remove_claude_mcp_if_present "$mcp"
 		done
 	fi
+	remove_managed_claude_bb_browser_mcp_if_present
 
 	print_success "Claude Code 配置已清理"
 	print_dim "💡 Claude Code CLI 本身未卸载，如需卸载请运行: npm uninstall -g @anthropic-ai/claude-code"

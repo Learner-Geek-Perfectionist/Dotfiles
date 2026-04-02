@@ -509,6 +509,14 @@ bb_browser_state_file() {
 	echo "$HOME/.local/state/dotfiles/bb-browser.env"
 }
 
+bb_browser_wrapper_backup_file() {
+	echo "$(dotfiles_state_dir)/bb-browser-user.preexisting"
+}
+
+claude_bb_browser_mcp_state_file() {
+	echo "$(dotfiles_state_dir)/claude-bb-browser-mcp.env"
+}
+
 dotfiles_ssh_include_block_start() {
 	echo "# >>> Dotfiles SSH Include >>>"
 }

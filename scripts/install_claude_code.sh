@@ -35,6 +35,7 @@ LSP_BIN="$HOME/.local/bin"
 # Claude Code 插件配置目录
 CLAUDE_PLUGINS_DIR="$HOME/.claude/plugins"
 KNOWN_MARKETPLACES_JSON="$CLAUDE_PLUGINS_DIR/known_marketplaces.json"
+CLAUDE_BB_BROWSER_MCP_STATE_FILE="$(claude_bb_browser_mcp_state_file)"
 
 # 插件 Marketplace 列表 (GitHub owner/repo)
 MARKETPLACES=(
@@ -318,6 +319,19 @@ is_marketplace_installed() {
 is_plugin_installed() {
 	local plugin="$1"
 	claude plugin list 2>/dev/null | grep -qF "$plugin"
+}
+
+claude_bb_browser_mcp_managed() {
+	[[ -f "$CLAUDE_BB_BROWSER_MCP_STATE_FILE" ]] && grep -Eq '^DOTFILES_MANAGED=1$' "$CLAUDE_BB_BROWSER_MCP_STATE_FILE"
+}
+
+record_claude_bb_browser_mcp() {
+	mkdir -p "$(dirname "$CLAUDE_BB_BROWSER_MCP_STATE_FILE")"
+	printf 'DOTFILES_MANAGED=1\n' >"$CLAUDE_BB_BROWSER_MCP_STATE_FILE"
+}
+
+clear_claude_bb_browser_mcp_record() {
+	rm -f "$CLAUDE_BB_BROWSER_MCP_STATE_FILE"
 }
 
 # ========================================
@@ -863,13 +877,17 @@ EOF
 	# 4) bb-browser MCP（通过本地 wrapper 的非登录 shell 启动，避免 bash -lc）
 	local bb_browser_wrapper="$HOME/.local/bin/bb-browser-user"
 	if [[ ! -x "$bb_browser_wrapper" ]]; then
-		if echo "$mcp_list" | grep -Eq '^[[:space:]]*bb-browser:'; then
+		if claude_bb_browser_mcp_managed && echo "$mcp_list" | grep -Eq '^[[:space:]]*bb-browser:'; then
 			if claude mcp remove bb-browser --scope user &>/dev/null; then
 				print_dim "✓ MCP: bb-browser 已移除（wrapper 缺失）"
+				clear_claude_bb_browser_mcp_record
 			else
 				print_warn "MCP bb-browser 清理失败（wrapper 缺失）"
 				failed=$((failed + 1))
 			fi
+		elif claude_bb_browser_mcp_managed; then
+			clear_claude_bb_browser_mcp_record
+			print_info "bb-browser wrapper 缺失，已清理 Dotfiles MCP 归属记录"
 		else
 			print_info "未检测到 bb-browser wrapper，跳过 Claude bb-browser MCP 配置"
 			skipped=$((skipped + 1))
@@ -887,6 +905,7 @@ EOF
 EOF
 )
 		if output="$(claude mcp add-json bb-browser "$bb_browser_json" --scope user 2>&1)"; then
+			record_claude_bb_browser_mcp
 			print_success "MCP: bb-browser"
 			installed=$((installed + 1))
 		else

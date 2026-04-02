@@ -7,6 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../lib/utils.sh"
 
 WRAPPER_PATH="$HOME/.local/bin/bb-browser-user"
+WRAPPER_BACKUP_PATH="$(bb_browser_wrapper_backup_file)"
 STATE_FILE="$(bb_browser_state_file)"
 
 managed_npm_prefix() {
@@ -40,10 +41,22 @@ restore_artifact() {
 	rm -f "$target"
 }
 
-rollback_install_artifacts() {
-	local wrapper_backup="$1" state_backup="$2"
+rollback_wrapper_artifacts() {
+	local preexisting_wrapper_marker="$1"
 
-	restore_artifact "$WRAPPER_PATH" "$wrapper_backup"
+	if [[ "$preexisting_wrapper_marker" == "1" && -e "$WRAPPER_BACKUP_PATH" ]]; then
+		restore_artifact "$WRAPPER_PATH" "$WRAPPER_BACKUP_PATH"
+		return 0
+	fi
+
+	rm -f "$WRAPPER_PATH"
+}
+
+rollback_install_artifacts() {
+	local preexisting_wrapper_marker="$1" wrapper_backup_backup="$2" state_backup="$3"
+
+	rollback_wrapper_artifacts "$preexisting_wrapper_marker"
+	restore_artifact "$WRAPPER_BACKUP_PATH" "$wrapper_backup_backup"
 	restore_artifact "$STATE_FILE" "$state_backup"
 }
 
@@ -82,14 +95,18 @@ require_npm() {
 write_state_file() {
 	local preexisting_marker="$1"
 	local preexisting_path="$2"
-	local installed_version="$3"
-	local real_bb_browser_path="$4"
+	local preexisting_wrapper_marker="$3"
+	local installed_version="$4"
+	local real_bb_browser_path="$5"
 
 	mkdir -p "$(dirname "$STATE_FILE")"
 	{
 		printf 'PREEXISTING_BB_BROWSER=%s\n' "$preexisting_marker"
 		printf 'PREEXISTING_BB_BROWSER_PATH='
 		printf '%q\n' "$preexisting_path"
+		printf 'PREEXISTING_WRAPPER=%s\n' "$preexisting_wrapper_marker"
+		printf 'PREEXISTING_WRAPPER_BACKUP_PATH='
+		printf '%q\n' "$WRAPPER_BACKUP_PATH"
 		printf 'INSTALLED_VERSION='
 		printf '%q\n' "$installed_version"
 		printf 'WRAPPER_PATH='
@@ -107,6 +124,18 @@ refresh_codex_config() {
 	if ! bash "$SCRIPT_DIR/deploy_codex_config.sh" "$codex_src" "$codex_dest" "$HOME"; then
 		print_warn "bb-browser 安装完成，但 Codex 配置刷新失败"
 	fi
+}
+
+prepare_wrapper_backup() {
+	local preexisting_wrapper_marker="$1"
+
+	if [[ "$preexisting_wrapper_marker" == "1" ]]; then
+		mkdir -p "$(dirname "$WRAPPER_BACKUP_PATH")"
+		cp -p "$WRAPPER_PATH" "$WRAPPER_BACKUP_PATH"
+		return 0
+	fi
+
+	rm -f "$WRAPPER_BACKUP_PATH"
 }
 
 install_wrapper() {
@@ -137,8 +166,9 @@ installed_bb_browser_path() {
 
 main() {
 	local preexisting_bb_browser preexisting_bb_browser_marker preexisting_bb_browser_path
+	local preexisting_wrapper_marker
 	local installed_version real_bb_browser_path managed_prefix
-	local managed_bb_browser managed_bb_browser_backup wrapper_backup state_backup
+	local managed_bb_browser managed_bb_browser_backup wrapper_backup_backup state_backup
 
 	require_npm || return 0
 
@@ -165,13 +195,26 @@ main() {
 		return 0
 	fi
 
-	wrapper_backup="$(backup_artifact "$WRAPPER_PATH")"
+	preexisting_wrapper_marker=0
+	if [[ -e "$WRAPPER_PATH" ]]; then
+		preexisting_wrapper_marker=1
+	fi
+	wrapper_backup_backup="$(backup_artifact "$WRAPPER_BACKUP_PATH")"
 	state_backup="$(backup_artifact "$STATE_FILE")"
+
+	if ! prepare_wrapper_backup "$preexisting_wrapper_marker"; then
+		rollback_managed_bb_browser "$managed_prefix" "$preexisting_bb_browser" "$managed_bb_browser" "$managed_bb_browser_backup"
+		rollback_install_artifacts "$preexisting_wrapper_marker" "$wrapper_backup_backup" "$state_backup"
+		cleanup_artifact_backup "$wrapper_backup_backup"
+		cleanup_artifact_backup "$state_backup"
+		cleanup_artifact_backup "$managed_bb_browser_backup"
+		return 1
+	fi
 
 	if ! install_wrapper; then
 		rollback_managed_bb_browser "$managed_prefix" "$preexisting_bb_browser" "$managed_bb_browser" "$managed_bb_browser_backup"
-		rollback_install_artifacts "$wrapper_backup" "$state_backup"
-		cleanup_artifact_backup "$wrapper_backup"
+		rollback_install_artifacts "$preexisting_wrapper_marker" "$wrapper_backup_backup" "$state_backup"
+		cleanup_artifact_backup "$wrapper_backup_backup"
 		cleanup_artifact_backup "$state_backup"
 		cleanup_artifact_backup "$managed_bb_browser_backup"
 		return 1
@@ -183,10 +226,10 @@ main() {
 		installed_version="$("$real_bb_browser_path" --version 2>/dev/null || true)"
 	fi
 
-	if ! write_state_file "$preexisting_bb_browser_marker" "$preexisting_bb_browser_path" "$installed_version" "$real_bb_browser_path"; then
+	if ! write_state_file "$preexisting_bb_browser_marker" "$preexisting_bb_browser_path" "$preexisting_wrapper_marker" "$installed_version" "$real_bb_browser_path"; then
 		rollback_managed_bb_browser "$managed_prefix" "$preexisting_bb_browser" "$managed_bb_browser" "$managed_bb_browser_backup"
-		rollback_install_artifacts "$wrapper_backup" "$state_backup"
-		cleanup_artifact_backup "$wrapper_backup"
+		rollback_install_artifacts "$preexisting_wrapper_marker" "$wrapper_backup_backup" "$state_backup"
+		cleanup_artifact_backup "$wrapper_backup_backup"
 		cleanup_artifact_backup "$state_backup"
 		cleanup_artifact_backup "$managed_bb_browser_backup"
 		return 1
@@ -194,15 +237,15 @@ main() {
 
 	if ! "$WRAPPER_PATH" doctor; then
 		rollback_managed_bb_browser "$managed_prefix" "$preexisting_bb_browser" "$managed_bb_browser" "$managed_bb_browser_backup"
-		rollback_install_artifacts "$wrapper_backup" "$state_backup"
-		cleanup_artifact_backup "$wrapper_backup"
+		rollback_install_artifacts "$preexisting_wrapper_marker" "$wrapper_backup_backup" "$state_backup"
+		cleanup_artifact_backup "$wrapper_backup_backup"
 		cleanup_artifact_backup "$state_backup"
 		cleanup_artifact_backup "$managed_bb_browser_backup"
 		print_error "bb-browser 健康检查失败"
 		return 1
 	fi
 
-	cleanup_artifact_backup "$wrapper_backup"
+	cleanup_artifact_backup "$wrapper_backup_backup"
 	cleanup_artifact_backup "$state_backup"
 	cleanup_artifact_backup "$managed_bb_browser_backup"
 	refresh_codex_config

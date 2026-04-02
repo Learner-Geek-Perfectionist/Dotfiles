@@ -513,6 +513,18 @@ bb_browser_wrapper_backup_file() {
 	echo "$(dotfiles_state_dir)/bb-browser-user.preexisting"
 }
 
+bb_browser_sites_dir() {
+	echo "$HOME/.bb-browser/bb-sites"
+}
+
+bb_browser_xiaohongshu_search_file() {
+	echo "$(bb_browser_sites_dir)/xiaohongshu/search.js"
+}
+
+bb_browser_xiaohongshu_search_backup_file() {
+	echo "$(dotfiles_state_dir)/bb-browser-xiaohongshu-search.preexisting"
+}
+
 bb_browser_daemon_runtime_dir() {
 	echo "$HOME/.bb-browser"
 }

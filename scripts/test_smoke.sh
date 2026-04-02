@@ -434,6 +434,175 @@ EOF
 	assert_contains '// If bb-browser already uses daemon.json config, it has native token/host support.' "$REPO_ROOT/scripts/patch_bb_browser_dist.mjs"
 }
 
+test_managed_xiaohongshu_search_template_corrects_stale_search_context() {
+	local template_path first_title
+	template_path="$REPO_ROOT/scripts/bb-browser-sites/xiaohongshu/search.js"
+	assert_file_exists "$template_path"
+
+	first_title="$(
+		node - "$template_path" <<'NODE'
+const fs = require("fs");
+
+const templatePath = process.argv[2];
+const raw = fs.readFileSync(templatePath, "utf8");
+const fnSource = raw.replace(/\/\*[\s\S]*?\*\/\s*/, "");
+const adapterFn = eval(`(${fnSource})`);
+
+function makeStoreFeed(title, author = "作者", likes = "1") {
+  return {
+    id: title,
+    xsecToken: `tok-${title}`,
+    noteCard: {
+      displayTitle: title,
+      type: "normal",
+      user: { nickname: author },
+      interactInfo: { likedCount: likes },
+    },
+  };
+}
+
+function makeResp(title, author = "作者", likes = "1") {
+  return {
+    success: true,
+    data: {
+      has_more: true,
+      items: [
+        {
+          id: `id-${title}`,
+          xsec_token: `xt-${title}`,
+          note_card: {
+            display_title: title,
+            type: "normal",
+            user: { nickname: author },
+            interact_info: { liked_count: likes },
+          },
+        },
+      ],
+    },
+  };
+}
+
+(async () => {
+  const originalSetTimeout = globalThis.setTimeout;
+  const originalDocument = globalThis.document;
+  const originalXHR = globalThis.XMLHttpRequest;
+
+  try {
+    globalThis.setTimeout = (fn) => {
+      fn();
+      return 0;
+    };
+
+    const searchStore = {
+      searchValue: "AI agent",
+      hasMore: true,
+      feeds: [makeStoreFeed("AI标题", "AI作者", "99")],
+      searchContext: { keyword: "AI agent", page: 7, searchId: "old-search-id" },
+      rootSearchId: "old-search-id",
+      resetSearchNoteStore() {
+        this.feeds = [];
+      },
+      resetSearchRelatedInfo() {},
+      setRootSearchId(value) {
+        this.rootSearchId = value;
+      },
+      mutateSearchValue(value) {
+        this.searchValue = value;
+      },
+      async loadMore() {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "//edith.xiaohongshu.com/api/sns/web/v1/search/notes");
+        xhr.send(JSON.stringify({
+          keyword: this.searchContext.keyword,
+          page: this.searchContext.page,
+          page_size: 20,
+          search_id: this.searchContext.searchId,
+          sort: "general",
+          note_type: 0,
+          ext_flags: [],
+          geo: "",
+          image_formats: ["jpg", "webp", "avif"],
+        }));
+      },
+    };
+
+    globalThis.document = {
+      querySelector(selector) {
+        if (selector !== "#app") return null;
+        return {
+          __vue_app__: {
+            config: {
+              globalProperties: {
+                $pinia: {
+                  _s: new Map([["search", searchStore]]),
+                },
+              },
+            },
+          },
+        };
+      },
+    };
+
+    class MockXHR {
+      constructor() {
+        this.listeners = {};
+        this.readyState = 0;
+        this.responseText = "";
+        this.__url = "";
+      }
+      open(method, url) {
+        this.__url = url;
+      }
+      addEventListener(type, fn) {
+        this.listeners[type] ||= [];
+        this.listeners[type].push(fn);
+      }
+      send(body) {
+        const parsed = JSON.parse(body);
+        const response = parsed.keyword === "美食" && parsed.page === 1
+          ? makeResp("家常菜", "弘学美食日记", "4081")
+          : makeResp("AI标题", "AI作者", "99");
+
+        searchStore.feeds = response.data.items.map((item) => ({
+          id: item.id,
+          xsecToken: item.xsec_token,
+          noteCard: {
+            displayTitle: item.note_card.display_title,
+            type: item.note_card.type,
+            user: { nickname: item.note_card.user.nickname },
+            interactInfo: { likedCount: item.note_card.interact_info.liked_count },
+          },
+        }));
+        searchStore.searchContext.keyword = parsed.keyword;
+        searchStore.searchContext.page = parsed.page;
+        searchStore.searchContext.searchId = parsed.search_id;
+        this.readyState = 4;
+        this.responseText = JSON.stringify(response);
+        for (const fn of this.listeners.loadend || []) {
+          fn.call(this);
+        }
+      }
+    }
+
+    globalThis.XMLHttpRequest = MockXHR;
+
+    const result = await adapterFn({ keyword: "美食" });
+    process.stdout.write(result.notes?.[0]?.title || "");
+  } finally {
+    globalThis.setTimeout = originalSetTimeout;
+    globalThis.document = originalDocument;
+    globalThis.XMLHttpRequest = originalXHR;
+  }
+})().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
+NODE
+	)"
+
+	assert_equal "家常菜" "$first_title" "managed xiaohongshu template stale context result"
+}
+
 test_bb_browser_fresh_install_marker_drives_managed_uninstall() {
 	local tmp_home fake_bin managed_prefix install_log uninstall_log npm_log state_file
 	tmp_home=$(make_temp_dir)
@@ -1592,21 +1761,26 @@ EOF
 }
 
 test_bb_browser_install_and_uninstall_restore_preexisting_wrapper() {
-	local tmp_home fake_bin install_log uninstall_log npm_log wrapper_path state_file original_wrapper_content
+	local tmp_home fake_bin install_log uninstall_log npm_log wrapper_path state_file
+	local site_path original_wrapper_content original_site_content
 	tmp_home=$(make_temp_dir)
 	fake_bin=$(make_temp_dir)
 	install_log="$tmp_home/install-bb-browser-wrapper-restore.log"
 	uninstall_log="$tmp_home/uninstall-bb-browser-wrapper-restore.log"
 	npm_log="$tmp_home/npm-wrapper-restore.log"
 	wrapper_path="$tmp_home/.local/bin/bb-browser-user"
+	site_path="$tmp_home/.bb-browser/bb-sites/xiaohongshu/search.js"
 	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
 	original_wrapper_content='#!/bin/sh
 echo "user wrapper preserved"
 '
+	original_site_content='legacy xiaohongshu adapter preserved
+'
 	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
 
-	mkdir -p "$(dirname "$wrapper_path")" "$tmp_home/.config/google-chrome"
+	mkdir -p "$(dirname "$wrapper_path")" "$(dirname "$site_path")" "$tmp_home/.config/google-chrome"
 	printf '%s' "$original_wrapper_content" >"$wrapper_path"
+	printf '%s' "$original_site_content" >"$site_path"
 	chmod +x "$wrapper_path"
 
 cat >"$fake_bin/npm" <<EOF
@@ -1655,6 +1829,7 @@ EOF
 	assert_contains "PREEXISTING_BB_BROWSER=0" "$state_file"
 	assert_contains 'PREEXISTING_WRAPPER=1' "$state_file"
 	assert_not_contains "user wrapper preserved" "$wrapper_path"
+	assert_not_contains "legacy xiaohongshu adapter preserved" "$site_path"
 
 	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
 		bash "$REPO_ROOT/uninstall.sh" --dotfiles --force >"$uninstall_log" 2>&1; then
@@ -1663,7 +1838,9 @@ EOF
 	fi
 
 	assert_file_exists "$wrapper_path"
+	assert_file_exists "$site_path"
 	assert_contains "user wrapper preserved" "$wrapper_path"
+	assert_contains "legacy xiaohongshu adapter preserved" "$site_path"
 	assert_file_missing "$state_file"
 	assert_contains "uninstall" "$npm_log"
 }
@@ -2314,7 +2491,7 @@ EOF
 }
 
 test_file_deps_include_codex_deploy_for_bb_browser_install() {
-	local has_codex_dep has_patch_dep
+	local has_codex_dep has_patch_dep has_xiaohongshu_template_dep
 	has_codex_dep="$(
 		node -e '
 const fs = require("fs");
@@ -2331,8 +2508,17 @@ const list = deps["scripts/install_bb_browser.sh"] || [];
 process.stdout.write(list.includes("scripts/patch_bb_browser_dist.mjs") ? "yes" : "no");
 ' "$REPO_ROOT/.claude/file-deps.json"
 	)"
+	has_xiaohongshu_template_dep="$(
+		node -e '
+const fs = require("fs");
+const deps = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+const list = deps["scripts/install_bb_browser.sh"] || [];
+process.stdout.write(list.includes("scripts/bb-browser-sites/xiaohongshu/search.js") ? "yes" : "no");
+' "$REPO_ROOT/.claude/file-deps.json"
+	)"
 	assert_equal "yes" "$has_codex_dep" "install_bb_browser codex deploy dependency"
 	assert_equal "yes" "$has_patch_dep" "install_bb_browser patch helper dependency"
+	assert_equal "yes" "$has_xiaohongshu_template_dep" "install_bb_browser xiaohongshu template dependency"
 }
 
 test_pixi_prefers_managed_install_over_system_binary() {
@@ -3224,6 +3410,7 @@ run_test "Dotfiles manifest and SSH include block" test_dotfiles_manifest_and_ss
 run_test "Dotfiles deploys bb-browser shell plugin" test_dotfiles_deploys_bb_browser_shell_plugin
 run_test "bb-browser install uses latest and deploys wrapper" test_bb_browser_install_uses_latest_and_deploys_wrapper
 run_test "bb-browser install patches managed cli and mcp dist files" test_bb_browser_install_patches_managed_cli_and_mcp_dist_files
+run_test "managed xiaohongshu template corrects stale search context" test_managed_xiaohongshu_search_template_corrects_stale_search_context
 run_test "bb-browser fresh install marker drives managed uninstall" test_bb_browser_fresh_install_marker_drives_managed_uninstall
 run_test "bb-browser install discovers browser and launches CDP" test_bb_browser_install_discovers_browser_and_launches_cdp
 run_test "bb-browser install keeps token private when chmod fails" test_bb_browser_install_keeps_token_private_when_chmod_fails

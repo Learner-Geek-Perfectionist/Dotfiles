@@ -151,8 +151,46 @@ remove_manifested_dotfiles() {
 	fi
 }
 
+bb_browser_state_value() {
+	local state_file="$1" key="$2" raw value
+
+	[[ -f "$state_file" ]] || return 0
+
+	raw="$(
+		awk -v key="$key" -F= '
+			$1 == key {
+				sub(/^[^=]*=/, "", $0)
+				print
+				exit
+			}
+		' "$state_file"
+	)"
+
+	[[ -n "$raw" ]] || return 0
+
+	if command -v python3 &>/dev/null; then
+		value="$(
+			python3 - "$raw" <<'PY'
+import shlex
+import sys
+
+raw = sys.argv[1]
+try:
+    parts = shlex.split(raw)
+    print(parts[0] if parts else "")
+except Exception:
+    print(raw)
+PY
+		)"
+	else
+		value="$raw"
+	fi
+
+	printf '%s\n' "$value"
+}
+
 remove_bb_browser() {
-	local state_file config_file wrapper_path
+	local state_file config_file wrapper_path preexisting_bb_browser real_bb_browser_path target_prefix
 	state_file="$(bb_browser_state_file)"
 	config_file="$(bb_browser_config_file)"
 	wrapper_path="$HOME/.local/bin/bb-browser-user"
@@ -163,10 +201,15 @@ remove_bb_browser() {
 	prune_empty_parents "$(dirname "$config_file")"
 
 	if [[ -f "$state_file" ]]; then
-		# shellcheck disable=SC1090
-		source "$state_file"
-		if [[ "${PREEXISTING_BB_BROWSER:-}" == "0" ]] && command -v npm &>/dev/null; then
-			npm uninstall -g bb-browser >/dev/null 2>&1 || true
+		preexisting_bb_browser="$(bb_browser_state_value "$state_file" PREEXISTING_BB_BROWSER)"
+		real_bb_browser_path="$(bb_browser_state_value "$state_file" REAL_BB_BROWSER_PATH)"
+		if [[ "$preexisting_bb_browser" == "0" && -n "$real_bb_browser_path" ]]; then
+			target_prefix="$(dirname "$(dirname "$real_bb_browser_path")")"
+			if [[ -n "$target_prefix" && "$target_prefix" != "/" ]]; then
+				if command -v npm &>/dev/null; then
+					npm --prefix "$target_prefix" uninstall -g bb-browser >/dev/null 2>&1 || true
+				fi
+			fi
 		fi
 	fi
 

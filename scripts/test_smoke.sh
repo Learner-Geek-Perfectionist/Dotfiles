@@ -354,6 +354,154 @@ EOF
 	assert_contains "bb-browser" "$npm_log"
 }
 
+test_bb_browser_uninstall_skips_missing_or_empty_preexisting_marker() {
+	local tmp_home_missing tmp_home_empty fake_bin log_missing log_empty npm_log_missing npm_log_empty wrapper_path config_file state_file
+	tmp_home_missing=$(make_temp_dir)
+	tmp_home_empty=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log_missing="$tmp_home_missing/uninstall-bb-browser-missing.log"
+	log_empty="$tmp_home_empty/uninstall-bb-browser-empty.log"
+	npm_log_missing="$tmp_home_missing/npm-missing.log"
+	npm_log_empty="$tmp_home_empty/npm-empty.log"
+	trap "rm -rf '$tmp_home_missing' '$tmp_home_empty' '$fake_bin'" RETURN
+
+	write_fake_npm_bb_browser_stub() {
+		local npm_path="$1" npm_log="$2"
+		cat >"$npm_path" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >>"$npm_log"
+if [ "\$1" = "prefix" ] && [ "\$2" = "-g" ]; then
+  printf '%s\n' "/opt/current-prefix"
+  exit 0
+fi
+if [ "\$1" = "config" ] && [ "\$2" = "get" ] && [ "\$3" = "prefix" ]; then
+  printf '%s\n' "/opt/current-prefix"
+  exit 0
+fi
+exit 0
+EOF
+		chmod +x "$npm_path"
+	}
+
+	# Missing PREEXISTING_BB_BROWSER
+	wrapper_path="$tmp_home_missing/.local/bin/bb-browser-user"
+	config_file="$tmp_home_missing/.config/dotfiles/bb-browser.json"
+	state_file="$tmp_home_missing/.local/state/dotfiles/bb-browser.env"
+	mkdir -p "$(dirname "$wrapper_path")" "$(dirname "$config_file")" "$(dirname "$state_file")"
+	cat >"$wrapper_path" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$wrapper_path"
+	cat >"$config_file" <<'EOF'
+{"managed":true}
+EOF
+	cat >"$state_file" <<EOF
+REAL_BB_BROWSER_PATH=/opt/original-prefix/bin/bb-browser
+EOF
+	write_fake_npm_bb_browser_stub "$fake_bin/npm" "$npm_log_missing"
+
+	if ! HOME="$tmp_home_missing" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		bash "$REPO_ROOT/uninstall.sh" --dotfiles --force >"$log_missing" 2>&1; then
+		cat "$log_missing" >&2
+		fail "uninstall.sh bb-browser missing marker case failed"
+	fi
+
+	assert_file_missing "$wrapper_path"
+	assert_file_missing "$config_file"
+	assert_file_missing "$state_file"
+	assert_file_missing "$npm_log_missing"
+
+	# Empty PREEXISTING_BB_BROWSER
+	wrapper_path="$tmp_home_empty/.local/bin/bb-browser-user"
+	config_file="$tmp_home_empty/.config/dotfiles/bb-browser.json"
+	state_file="$tmp_home_empty/.local/state/dotfiles/bb-browser.env"
+	mkdir -p "$(dirname "$wrapper_path")" "$(dirname "$config_file")" "$(dirname "$state_file")"
+	cat >"$wrapper_path" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$wrapper_path"
+	cat >"$config_file" <<'EOF'
+{"managed":true}
+EOF
+	cat >"$state_file" <<EOF
+PREEXISTING_BB_BROWSER=
+REAL_BB_BROWSER_PATH=/opt/original-prefix/bin/bb-browser
+EOF
+	write_fake_npm_bb_browser_stub "$fake_bin/npm" "$npm_log_empty"
+
+	if ! HOME="$tmp_home_empty" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		bash "$REPO_ROOT/uninstall.sh" --dotfiles --force >"$log_empty" 2>&1; then
+		cat "$log_empty" >&2
+		fail "uninstall.sh bb-browser empty marker case failed"
+	fi
+
+	assert_file_missing "$wrapper_path"
+	assert_file_missing "$config_file"
+	assert_file_missing "$state_file"
+	assert_file_missing "$npm_log_empty"
+}
+
+test_bb_browser_uninstall_targets_recorded_prefix_on_drift() {
+	local tmp_home fake_bin log npm_log wrapper_path config_file state_file original_prefix current_prefix
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	original_prefix=$(make_temp_dir)
+	current_prefix=$(make_temp_dir)
+	log="$tmp_home/uninstall-bb-browser-prefix-drift.log"
+	npm_log="$tmp_home/npm-prefix-drift.log"
+	wrapper_path="$tmp_home/.local/bin/bb-browser-user"
+	config_file="$tmp_home/.config/dotfiles/bb-browser.json"
+	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
+	trap "rm -rf '$tmp_home' '$fake_bin' '$original_prefix' '$current_prefix'" RETURN
+
+	mkdir -p "$(dirname "$wrapper_path")" "$(dirname "$config_file")" "$(dirname "$state_file")"
+	cat >"$wrapper_path" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$wrapper_path"
+	cat >"$config_file" <<'EOF'
+{"managed":true}
+EOF
+	cat >"$state_file" <<EOF
+PREEXISTING_BB_BROWSER=0
+INSTALLED_VERSION=9.9.9
+WRAPPER_PATH=$wrapper_path
+REAL_BB_BROWSER_PATH=$original_prefix/bin/bb-browser
+EOF
+
+	cat >"$fake_bin/npm" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >>"$npm_log"
+if [ "\$1" = "prefix" ] && [ "\$2" = "-g" ]; then
+  printf '%s\n' "$current_prefix"
+  exit 0
+fi
+if [ "\$1" = "config" ] && [ "\$2" = "get" ] && [ "\$3" = "prefix" ]; then
+  printf '%s\n' "$current_prefix"
+  exit 0
+fi
+exit 0
+EOF
+	chmod +x "$fake_bin/npm"
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		bash "$REPO_ROOT/uninstall.sh" --dotfiles --force >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "uninstall.sh bb-browser prefix drift case failed"
+	fi
+
+	assert_file_missing "$wrapper_path"
+	assert_file_missing "$config_file"
+	assert_file_missing "$state_file"
+	assert_contains "$original_prefix" "$npm_log"
+	assert_contains "uninstall" "$npm_log"
+	assert_contains "bb-browser" "$npm_log"
+	assert_not_contains "$current_prefix" "$npm_log"
+}
+
 test_dotfiles_uninstall_preserves_modified_files() {
 	local tmp_home fake_bin install_log uninstall_log superpowers_repo
 	tmp_home=$(make_temp_dir)
@@ -1024,6 +1172,8 @@ run_test "bb-browser install uses latest and deploys wrapper" test_bb_browser_in
 run_test "bb-browser wrapper uses managed path over preexisting path" test_bb_browser_wrapper_uses_managed_path_over_preexisting_path
 run_test "bb-browser uninstall preserves preexisting global install" test_bb_browser_uninstall_preserves_preexisting_global_install
 run_test "bb-browser uninstall removes managed global install" test_bb_browser_uninstall_removes_managed_global_install
+run_test "bb-browser uninstall skips missing or empty preexisting marker" test_bb_browser_uninstall_skips_missing_or_empty_preexisting_marker
+run_test "bb-browser uninstall targets recorded prefix on drift" test_bb_browser_uninstall_targets_recorded_prefix_on_drift
 run_test "Dotfiles uninstall preserves modified files" test_dotfiles_uninstall_preserves_modified_files
 run_test "Claude runtime config preserves existing state" test_claude_runtime_config_preserves_existing_state
 run_test "Git config identity migrates to local include" test_gitconfig_identity_migrates_to_local

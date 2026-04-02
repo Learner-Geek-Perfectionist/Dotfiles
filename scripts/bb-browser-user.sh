@@ -35,8 +35,48 @@ if ! declare -F print_error &>/dev/null; then
 	}
 fi
 
+state_file_path() {
+	if declare -F bb_browser_state_file &>/dev/null; then
+		bb_browser_state_file
+	else
+		echo "$HOME/.local/state/dotfiles/bb-browser.env"
+	fi
+}
+
+load_state_file() {
+	local state_file
+	state_file="$(state_file_path)"
+
+	[[ -f "$state_file" ]] || return 1
+	# shellcheck source=/dev/null
+	source "$state_file"
+	return 0
+}
+
 real_bb_browser() {
-	command -v bb-browser
+	local state_file wrapper_path resolved_path
+
+	load_state_file || true
+	wrapper_path="$HOME/.local/bin/bb-browser-user"
+	resolved_path="${REAL_BB_BROWSER_PATH:-}"
+
+	if [[ -n "$resolved_path" && -x "$resolved_path" && "$resolved_path" != "$wrapper_path" ]]; then
+		printf '%s\n' "$resolved_path"
+		return 0
+	fi
+
+	if [[ -n "${PREEXISTING_BB_BROWSER:-}" && -x "$PREEXISTING_BB_BROWSER" && "$PREEXISTING_BB_BROWSER" != "$wrapper_path" ]]; then
+		printf '%s\n' "$PREEXISTING_BB_BROWSER"
+		return 0
+	fi
+
+	while IFS= read -r candidate; do
+		[[ -n "$candidate" && "$candidate" != "$wrapper_path" ]] || continue
+		printf '%s\n' "$candidate"
+		return 0
+	done < <(type -aP bb-browser 2>/dev/null)
+
+	return 1
 }
 
 can_connect_cdp() {
@@ -87,4 +127,6 @@ main() {
 	exec "$(real_bb_browser)" "$@"
 }
 
-main "$@"
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+	main "$@"
+fi

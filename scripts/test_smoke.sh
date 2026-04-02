@@ -127,6 +127,76 @@ EOF
 	assert_contains "bb-browser@latest" "$npm_log"
 }
 
+test_bb_browser_wrapper_uses_managed_path_over_preexisting_path() {
+	local tmp_home old_bin managed_bin fake_bin log npm_log state_file
+	tmp_home=$(make_temp_dir)
+	old_bin=$(make_temp_dir)
+	managed_bin=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install-bb-browser-conflict.log"
+	npm_log="$tmp_home/npm-conflict.log"
+	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
+	trap "rm -rf '$tmp_home' '$old_bin' '$managed_bin' '$fake_bin'" RETURN
+
+	cat >"$old_bin/bb-browser" <<'EOF'
+#!/bin/sh
+echo "old-bb-browser" >&2
+exit 33
+EOF
+	chmod +x "$old_bin/bb-browser"
+
+	cat >"$fake_bin/npm" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >>"$npm_log"
+if [ "\$1" = "bin" ] && [ "\$2" = "-g" ]; then
+  printf '%s\n' "$managed_bin"
+  exit 0
+fi
+if [ "\$1" = "install" ] && [ "\$2" = "-g" ] && [ "\$3" = "bb-browser@latest" ]; then
+  mkdir -p "$managed_bin"
+	cat >"$managed_bin/bb-browser" <<'INNER'
+#!/bin/sh
+case "\$1" in
+  --version) echo 'bb-browser managed 2.0.0' ;;
+  *) exit 0 ;;
+esac
+INNER
+  chmod +x "$managed_bin/bb-browser"
+fi
+exit 0
+EOF
+	cat >"$fake_bin/node" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$fake_bin/npm" "$fake_bin/node"
+
+	if ! HOME="$tmp_home" PATH="$old_bin:$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		BB_BROWSER_CDP_URL="http://127.0.0.1:19825" \
+		bash "$REPO_ROOT/scripts/install_bb_browser.sh" >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "install_bb_browser.sh conflict case failed"
+	fi
+
+	assert_file_exists "$state_file"
+	assert_contains "$old_bin/bb-browser" "$state_file"
+	assert_contains "$managed_bin/bb-browser" "$state_file"
+	assert_contains 'PREEXISTING_BB_BROWSER=' "$state_file"
+	assert_contains 'REAL_BB_BROWSER_PATH=' "$state_file"
+
+	resolved_path="$(
+		HOME="$tmp_home" PATH="$old_bin:$managed_bin:$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+			bash -c "source '$REPO_ROOT/scripts/bb-browser-user.sh'; real_bb_browser"
+	)"
+	assert_equal "$managed_bin/bb-browser" "$resolved_path" "managed bb-browser path"
+
+	version_output="$(
+		HOME="$tmp_home" PATH="$old_bin:$managed_bin:$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+			bash "$tmp_home/.local/bin/bb-browser-user" --version
+	)"
+	assert_equal "bb-browser managed 2.0.0" "$version_output" "wrapper version output"
+}
+
 test_dotfiles_uninstall_preserves_modified_files() {
 	local tmp_home fake_bin install_log uninstall_log superpowers_repo
 	tmp_home=$(make_temp_dir)
@@ -694,6 +764,7 @@ EOF
 run_test "Dotfiles manifest and SSH include block" test_dotfiles_manifest_and_ssh_block
 run_test "Dotfiles deploys bb-browser shell plugin" test_dotfiles_deploys_bb_browser_shell_plugin
 run_test "bb-browser install uses latest and deploys wrapper" test_bb_browser_install_uses_latest_and_deploys_wrapper
+run_test "bb-browser wrapper uses managed path over preexisting path" test_bb_browser_wrapper_uses_managed_path_over_preexisting_path
 run_test "Dotfiles uninstall preserves modified files" test_dotfiles_uninstall_preserves_modified_files
 run_test "Claude runtime config preserves existing state" test_claude_runtime_config_preserves_existing_state
 run_test "Git config identity migrates to local include" test_gitconfig_identity_migrates_to_local

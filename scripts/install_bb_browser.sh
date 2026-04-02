@@ -42,6 +42,18 @@ install_wrapper() {
 	chmod 755 "$WRAPPER_PATH"
 }
 
+installed_bb_browser_path() {
+	local npm_bin_dir
+
+	npm_bin_dir="$(npm bin -g 2>/dev/null || true)"
+	if [[ -n "$npm_bin_dir" && -x "$npm_bin_dir/bb-browser" ]]; then
+		printf '%s\n' "$npm_bin_dir/bb-browser"
+		return 0
+	fi
+
+	command -v bb-browser 2>/dev/null || true
+}
+
 main() {
 	local preexisting_bb_browser installed_version real_bb_browser_path
 
@@ -57,7 +69,7 @@ main() {
 
 	install_wrapper
 
-	real_bb_browser_path="$(command -v bb-browser 2>/dev/null || true)"
+	real_bb_browser_path="$(installed_bb_browser_path)"
 	installed_version=""
 	if [[ -n "$real_bb_browser_path" ]]; then
 		installed_version="$("$real_bb_browser_path" --version 2>/dev/null || true)"

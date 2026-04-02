@@ -65,6 +65,7 @@ CLAUDE_MANAGED_MCPS=(
 	fetch
 	open-websearch
 	exa
+	bb-browser
 )
 
 show_help() {

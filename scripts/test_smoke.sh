@@ -12,6 +12,61 @@ run_dotfiles_install() {
 		SUPERPOWERS_REPO_URL="$superpowers_repo" bash "$REPO_ROOT/scripts/install_dotfiles.sh" >"$log" 2>&1
 }
 
+write_fake_claude_cli() {
+	local fake_bin="$1" mcp_list_output="$2" add_json_log="$3" remove_log="$4"
+	cat >"$fake_bin/claude" <<EOF
+#!/bin/sh
+case "\$1" in
+  --version)
+    echo 'claude 1.0.0'
+    exit 0
+    ;;
+  plugin)
+    case "\$2" in
+      list)
+        exit 0
+        ;;
+      install|uninstall)
+        exit 0
+        ;;
+      marketplace)
+        case "\$3" in
+          add|remove)
+            exit 0
+            ;;
+        esac
+        ;;
+    esac
+    ;;
+  mcp)
+    case "\$2" in
+      list)
+        cat <<'INNER'
+$mcp_list_output
+INNER
+        exit 0
+        ;;
+      add)
+        exit 0
+        ;;
+      add-json)
+        mkdir -p "$(dirname "$add_json_log")"
+        printf '%s\n' "\$4" >"$add_json_log"
+        exit 0
+        ;;
+      remove)
+        mkdir -p "$(dirname "$remove_log")"
+        printf '%s\n' "\$3" >>"$remove_log"
+        exit 0
+        ;;
+    esac
+    ;;
+esac
+exit 0
+EOF
+	chmod +x "$fake_bin/claude"
+}
+
 test_dotfiles_manifest_and_ssh_block() {
 	local tmp_home fake_bin log manifest superpowers_repo superpowers_state
 	tmp_home=$(make_temp_dir)
@@ -560,6 +615,102 @@ EOF
 	assert_contains "Claude Code CLI 安装失败，跳过 Claude 插件/MCP 配置" "$log"
 }
 
+test_claude_installs_bb_browser_mcp() {
+	local tmp_home fake_bin log mcp_log
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install-claude-bb-browser.log"
+	mcp_log="$tmp_home/claude-mcp-add-json.json"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	write_fake_claude_cli "$fake_bin" $'tavily: stdio\nfetch: stdio' "$mcp_log" "$tmp_home/claude-mcp-remove.log"
+
+	cat >"$fake_bin/rustup" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/npm" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/dotnet" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/curl" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/git" <<'EOF'
+#!/bin/sh
+if [ "$1" = "clone" ] && [ "$2" = "--depth" ] && [ "$3" = "1" ]; then
+  dest="$5"
+  mkdir -p "$dest/study-master-skill/hooks"
+  printf '# study-master\n' >"$dest/study-master-skill/SKILL.md"
+  printf '#!/bin/sh\nexit 0\n' >"$dest/study-master-skill/hooks/check-study_master.sh"
+  exit 0
+fi
+exit 1
+EOF
+	cat >"$fake_bin/zsh" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/keychain" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$fake_bin/rustup" "$fake_bin/npm" "$fake_bin/dotnet" "$fake_bin/curl" "$fake_bin/git" "$fake_bin/zsh" "$fake_bin/keychain"
+
+	mkdir -p "$tmp_home/.local/bin" "$tmp_home/.claude/skills/study-master"
+	cat >"$tmp_home/.local/bin/bb-browser-user" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$tmp_home/.local/bin/bb-browser-user"
+	printf '# study-master\n' >"$tmp_home/.claude/skills/study-master/SKILL.md"
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		bash "$REPO_ROOT/scripts/install_claude_code.sh" >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "install_claude_code.sh bb-browser MCP test failed"
+	fi
+
+	assert_file_exists "$mcp_log"
+	assert_contains 'bb-browser-user' "$mcp_log"
+	assert_contains "$tmp_home/.local/bin/bb-browser-user" "$mcp_log"
+	grep -qF -- '--mcp' "$mcp_log" || fail "Expected '--mcp' in $mcp_log"
+	assert_contains '"command": "bash"' "$mcp_log"
+	assert_contains "\"-c\", \"\\\"$tmp_home/.local/bin/bb-browser-user\\\" --mcp\"" "$mcp_log"
+	! grep -qF -- '-lc' "$mcp_log" || fail "Did not expect '-lc' in $mcp_log"
+}
+
+test_uninstall_claude_removes_bb_browser_mcp() {
+	local tmp_home fake_bin log remove_log
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/uninstall-claude-bb-browser.log"
+	remove_log="$tmp_home/claude-mcp-remove.log"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	write_fake_claude_cli "$fake_bin" $'bb-browser: stdio\nfetch: stdio' "$tmp_home/claude-mcp-add-json.json" "$remove_log"
+
+	cat >"$fake_bin/jq" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$fake_bin/jq"
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		bash "$REPO_ROOT/uninstall.sh" --claude --force >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "uninstall.sh --claude failed"
+	fi
+
+	assert_file_exists "$remove_log"
+	assert_contains "bb-browser" "$remove_log"
+}
+
 test_claude_known_hosts_preserves_symlink() {
 	local tmp_home fake_bin log real_known_hosts
 	tmp_home=$(make_temp_dir)
@@ -783,6 +934,8 @@ run_test "Codex config preserves subprojects" test_codex_config_preserves_projec
 run_test "Pixi prefers managed install" test_pixi_prefers_managed_install_over_system_binary
 run_test "Claude optional on macOS" test_claude_optional_on_macos_when_missing
 run_test "Claude optional on Linux" test_claude_optional_on_linux_when_install_fails
+run_test "Claude installs bb-browser MCP" test_claude_installs_bb_browser_mcp
+run_test "Claude uninstall removes bb-browser MCP" test_uninstall_claude_removes_bb_browser_mcp
 run_test "Claude known_hosts preserves symlink" test_claude_known_hosts_preserves_symlink
 run_test "Claude installs study-master from new repo" test_claude_installs_study_master_from_new_repo
 run_test "macOS brew maintenance LaunchAgent" test_macos_brew_maintenance_launchagent_created

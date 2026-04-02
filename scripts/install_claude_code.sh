@@ -860,6 +860,32 @@ EOF
 		fi
 	fi
 
+	# 4) bb-browser MCP（通过本地 wrapper 的非登录 shell 启动，避免 bash -lc）
+	if echo "$mcp_list" | grep -q "bb-browser:"; then
+		skipped=$((skipped + 1))
+	else
+		local output bb_browser_json
+		bb_browser_json=$(cat <<EOF
+{
+	"type": "stdio",
+	"command": "bash",
+	"args": ["-c", "\"$HOME/.local/bin/bb-browser-user\" --mcp"]
+}
+EOF
+)
+		if output="$(claude mcp add-json bb-browser "$bb_browser_json" --scope user 2>&1)"; then
+			print_success "MCP: bb-browser"
+			installed=$((installed + 1))
+		else
+			if [[ "$output" == *"already exists"* ]]; then
+				skipped=$((skipped + 1))
+			else
+				print_warn "MCP bb-browser 安装失败: $output"
+				failed=$((failed + 1))
+			fi
+		fi
+	fi
+
 	print_install_summary "MCP Servers" "$installed" "$skipped" "$failed"
 }
 

@@ -62,18 +62,25 @@ load_state_file() {
 }
 
 real_bb_browser() {
-	local state_file wrapper_path resolved_path
+	local state_file wrapper_path resolved_path preexisting_path
 
 	load_state_file || true
 	wrapper_path="$HOME/.local/bin/bb-browser-user"
 	resolved_path="${REAL_BB_BROWSER_PATH:-}"
+	preexisting_path="${PREEXISTING_BB_BROWSER_PATH:-}"
 
 	if [[ -n "$resolved_path" && -x "$resolved_path" && "$resolved_path" != "$wrapper_path" ]]; then
 		printf '%s\n' "$resolved_path"
 		return 0
 	fi
 
-	if [[ -n "${PREEXISTING_BB_BROWSER:-}" && -x "$PREEXISTING_BB_BROWSER" && "$PREEXISTING_BB_BROWSER" != "$wrapper_path" ]]; then
+	if [[ -n "$preexisting_path" && -x "$preexisting_path" && "$preexisting_path" != "$wrapper_path" ]]; then
+		printf '%s\n' "$preexisting_path"
+		return 0
+	fi
+
+	if [[ -n "${PREEXISTING_BB_BROWSER:-}" && "${PREEXISTING_BB_BROWSER}" != "0" && "${PREEXISTING_BB_BROWSER}" != "1" &&
+		-x "${PREEXISTING_BB_BROWSER}" && "${PREEXISTING_BB_BROWSER}" != "$wrapper_path" ]]; then
 		printf '%s\n' "$PREEXISTING_BB_BROWSER"
 		return 0
 	fi

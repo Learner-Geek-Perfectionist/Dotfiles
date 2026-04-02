@@ -861,7 +861,20 @@ EOF
 	fi
 
 	# 4) bb-browser MCP（通过本地 wrapper 的非登录 shell 启动，避免 bash -lc）
-	if echo "$mcp_list" | grep -q "bb-browser:"; then
+	local bb_browser_wrapper="$HOME/.local/bin/bb-browser-user"
+	if [[ ! -x "$bb_browser_wrapper" ]]; then
+		if echo "$mcp_list" | grep -Eq '^[[:space:]]*bb-browser:'; then
+			if claude mcp remove bb-browser --scope user &>/dev/null; then
+				print_dim "✓ MCP: bb-browser 已移除（wrapper 缺失）"
+			else
+				print_warn "MCP bb-browser 清理失败（wrapper 缺失）"
+				failed=$((failed + 1))
+			fi
+		else
+			print_info "未检测到 bb-browser wrapper，跳过 Claude bb-browser MCP 配置"
+			skipped=$((skipped + 1))
+		fi
+	elif echo "$mcp_list" | grep -Eq '^[[:space:]]*bb-browser:'; then
 		skipped=$((skipped + 1))
 	else
 		local output bb_browser_json
@@ -869,7 +882,7 @@ EOF
 {
 	"type": "stdio",
 	"command": "bash",
-	"args": ["-c", "\"$HOME/.local/bin/bb-browser-user\" --mcp"]
+	"args": ["-c", "\"$bb_browser_wrapper\" --mcp"]
 }
 EOF
 )

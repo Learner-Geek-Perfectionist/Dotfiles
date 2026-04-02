@@ -189,6 +189,32 @@ PY
 	printf '%s\n' "$value"
 }
 
+strip_toml_section_in_place() {
+	local file="$1" section_header="$2" tmp
+
+	[[ -f "$file" ]] || return 0
+
+	tmp=$(mktemp)
+	awk -v section_header="$section_header" '
+		$0 == section_header { skip = 1; next }
+		/^\[/ { skip = 0 }
+		!skip { print }
+	' "$file" >"$tmp"
+	mv "$tmp" "$file"
+	chmod 600 "$file" 2>/dev/null || true
+}
+
+remove_claude_mcp_if_present() {
+	local mcp="$1" mcp_list
+
+	command -v claude &>/dev/null || return 0
+
+	mcp_list=$(claude mcp list 2>/dev/null || true)
+	if echo "$mcp_list" | grep -Eq "^[[:space:]]*${mcp}:"; then
+		claude mcp remove "$mcp" --scope user &>/dev/null && print_dim "✓ MCP: $mcp 已移除"
+	fi
+}
+
 remove_bb_browser() {
 	local state_file config_file wrapper_path preexisting_bb_browser real_bb_browser_path target_prefix
 	state_file="$(bb_browser_state_file)"
@@ -215,6 +241,7 @@ remove_bb_browser() {
 
 	rm_path "$state_file"
 	prune_empty_parents "$(dirname "$state_file")"
+	remove_claude_mcp_if_present "bb-browser"
 }
 
 remove_dotfiles_ssh_include_block() {
@@ -425,13 +452,9 @@ remove_claude() {
 
 	# 4) MCP Servers（通过 claude CLI 定向移除 Dotfiles 安装的项）
 	if command -v claude &>/dev/null; then
-		local mcp_list
-		mcp_list=$(claude mcp list 2>/dev/null) || true
 		local mcp
 		for mcp in "${CLAUDE_MANAGED_MCPS[@]}"; do
-			if echo "$mcp_list" | grep -Eq "^[[:space:]]*${mcp}:"; then
-				claude mcp remove "$mcp" --scope user &>/dev/null && print_dim "✓ MCP: $mcp 已移除"
-			fi
+			remove_claude_mcp_if_present "$mcp"
 		done
 	fi
 
@@ -446,6 +469,7 @@ remove_dotfiles() {
 	remove_dotfiles_superpowers
 	remove_bb_browser
 	remove_manifested_dotfiles
+	strip_toml_section_in_place "$HOME/.codex/config.toml" "[mcp_servers.bb-browser]"
 	remove_dotfiles_ssh_include_block
 
 	# macOS 专属清理

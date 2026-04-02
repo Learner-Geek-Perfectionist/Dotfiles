@@ -401,14 +401,14 @@ install_lsp_servers() {
 		bash "$dotfiles_dir/scripts/install_kotlin_native.sh"
 	fi
 
-	# Claude Code: LSP 二进制 + CLI + 插件
-	if [[ -f "$dotfiles_dir/scripts/install_claude_code.sh" ]]; then
-		bash "$dotfiles_dir/scripts/install_claude_code.sh"
-	fi
-
 	# bb-browser: npm 安装 + wrapper
 	if [[ -f "$dotfiles_dir/scripts/install_bb_browser.sh" ]]; then
 		bash "$dotfiles_dir/scripts/install_bb_browser.sh"
+	fi
+
+	# Claude Code: LSP 二进制 + CLI + 插件
+	if [[ -f "$dotfiles_dir/scripts/install_claude_code.sh" ]]; then
+		bash "$dotfiles_dir/scripts/install_claude_code.sh"
 	fi
 }
 

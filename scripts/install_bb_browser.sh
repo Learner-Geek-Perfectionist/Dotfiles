@@ -80,14 +80,16 @@ require_npm() {
 }
 
 write_state_file() {
-	local preexisting="$1"
-	local installed_version="$2"
-	local real_bb_browser_path="$3"
+	local preexisting_marker="$1"
+	local preexisting_path="$2"
+	local installed_version="$3"
+	local real_bb_browser_path="$4"
 
 	mkdir -p "$(dirname "$STATE_FILE")"
 	{
-		printf 'PREEXISTING_BB_BROWSER='
-		printf '%q\n' "$preexisting"
+		printf 'PREEXISTING_BB_BROWSER=%s\n' "$preexisting_marker"
+		printf 'PREEXISTING_BB_BROWSER_PATH='
+		printf '%q\n' "$preexisting_path"
 		printf 'INSTALLED_VERSION='
 		printf '%q\n' "$installed_version"
 		printf 'WRAPPER_PATH='
@@ -95,6 +97,16 @@ write_state_file() {
 		printf 'REAL_BB_BROWSER_PATH='
 		printf '%q\n' "$real_bb_browser_path"
 	} >"$STATE_FILE"
+}
+
+refresh_codex_config() {
+	local codex_src="$SCRIPT_DIR/../.codex/config.toml"
+	local codex_dest="$HOME/.codex/config.toml"
+
+	[[ -f "$SCRIPT_DIR/deploy_codex_config.sh" && -f "$codex_src" ]] || return 0
+	if ! bash "$SCRIPT_DIR/deploy_codex_config.sh" "$codex_src" "$codex_dest" "$HOME"; then
+		print_warn "bb-browser 安装完成，但 Codex 配置刷新失败"
+	fi
 }
 
 install_wrapper() {
@@ -124,12 +136,19 @@ installed_bb_browser_path() {
 }
 
 main() {
-	local preexisting_bb_browser installed_version real_bb_browser_path managed_prefix
+	local preexisting_bb_browser preexisting_bb_browser_marker preexisting_bb_browser_path
+	local installed_version real_bb_browser_path managed_prefix
 	local managed_bb_browser managed_bb_browser_backup wrapper_backup state_backup
 
 	require_npm || return 0
 
 	preexisting_bb_browser="$(command -v bb-browser 2>/dev/null || true)"
+	preexisting_bb_browser_marker=0
+	preexisting_bb_browser_path=""
+	if [[ -n "$preexisting_bb_browser" ]]; then
+		preexisting_bb_browser_marker=1
+		preexisting_bb_browser_path="$preexisting_bb_browser"
+	fi
 	managed_prefix="$(managed_npm_prefix || true)"
 	managed_bb_browser=""
 	if [[ -n "$managed_prefix" ]]; then
@@ -164,7 +183,7 @@ main() {
 		installed_version="$("$real_bb_browser_path" --version 2>/dev/null || true)"
 	fi
 
-	if ! write_state_file "$preexisting_bb_browser" "$installed_version" "$real_bb_browser_path"; then
+	if ! write_state_file "$preexisting_bb_browser_marker" "$preexisting_bb_browser_path" "$installed_version" "$real_bb_browser_path"; then
 		rollback_managed_bb_browser "$managed_prefix" "$preexisting_bb_browser" "$managed_bb_browser" "$managed_bb_browser_backup"
 		rollback_install_artifacts "$wrapper_backup" "$state_backup"
 		cleanup_artifact_backup "$wrapper_backup"
@@ -186,6 +205,7 @@ main() {
 	cleanup_artifact_backup "$wrapper_backup"
 	cleanup_artifact_backup "$state_backup"
 	cleanup_artifact_backup "$managed_bb_browser_backup"
+	refresh_codex_config
 }
 
 main "$@"

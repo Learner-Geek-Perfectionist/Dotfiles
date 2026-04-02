@@ -141,11 +141,12 @@ EOF
 }
 
 test_bb_browser_install_uses_latest_and_deploys_wrapper() {
-	local tmp_home fake_bin log npm_log
+	local tmp_home fake_bin log npm_log state_file
 	tmp_home=$(make_temp_dir)
 	fake_bin=$(make_temp_dir)
 	log="$tmp_home/install-bb-browser.log"
 	npm_log="$tmp_home/npm.log"
+	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
 	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
 
 	cat >"$fake_bin/npm" <<EOF
@@ -177,9 +178,76 @@ EOF
 	fi
 
 	assert_executable "$tmp_home/.local/bin/bb-browser-user"
-	assert_file_exists "$tmp_home/.local/state/dotfiles/bb-browser.env"
+	assert_file_exists "$state_file"
 	assert_contains "install" "$npm_log"
 	assert_contains "bb-browser@latest" "$npm_log"
+	assert_contains "PREEXISTING_BB_BROWSER=0" "$state_file"
+	assert_contains "REAL_BB_BROWSER_PATH=$fake_bin/bb-browser" "$state_file"
+}
+
+test_bb_browser_fresh_install_marker_drives_managed_uninstall() {
+	local tmp_home fake_bin managed_prefix install_log uninstall_log npm_log state_file
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	managed_prefix=$(make_temp_dir)
+	install_log="$tmp_home/install-bb-browser-managed.log"
+	uninstall_log="$tmp_home/uninstall-bb-browser-managed.log"
+	npm_log="$tmp_home/npm-managed.log"
+	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
+	trap "rm -rf '$tmp_home' '$fake_bin' '$managed_prefix'" RETURN
+
+	cat >"$fake_bin/npm" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >>"$npm_log"
+if [ "\$1" = "prefix" ] && [ "\$2" = "-g" ]; then
+  printf '%s\n' "$managed_prefix"
+  exit 0
+fi
+if [ "\$1" = "install" ] && [ "\$2" = "-g" ] && [ "\$3" = "bb-browser@latest" ]; then
+  mkdir -p "$managed_prefix/bin"
+  cat >"$managed_prefix/bin/bb-browser" <<'INNER'
+#!/bin/sh
+case "\$1" in
+  --version) echo 'bb-browser 9.9.9' ;;
+  *) exit 0 ;;
+esac
+INNER
+  chmod +x "$managed_prefix/bin/bb-browser"
+  exit 0
+fi
+if [ "\$1" = "--prefix" ] && [ "\$2" = "$managed_prefix" ] && [ "\$3" = "uninstall" ] && [ "\$4" = "-g" ] && [ "\$5" = "bb-browser" ]; then
+  rm -f "$managed_prefix/bin/bb-browser"
+  exit 0
+fi
+exit 0
+EOF
+	cat >"$fake_bin/node" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$fake_bin/npm" "$fake_bin/node"
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		BB_BROWSER_CDP_URL="http://127.0.0.1:19825" \
+		bash "$REPO_ROOT/scripts/install_bb_browser.sh" >"$install_log" 2>&1; then
+		cat "$install_log" >&2
+		fail "install_bb_browser.sh managed ownership test failed"
+	fi
+
+	assert_file_exists "$state_file"
+	assert_contains "PREEXISTING_BB_BROWSER=0" "$state_file"
+	assert_contains "REAL_BB_BROWSER_PATH=$managed_prefix/bin/bb-browser" "$state_file"
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		bash "$REPO_ROOT/uninstall.sh" --dotfiles --force >"$uninstall_log" 2>&1; then
+		cat "$uninstall_log" >&2
+		fail "uninstall.sh managed ownership test failed"
+	fi
+
+	assert_file_missing "$state_file"
+	assert_contains "$managed_prefix" "$npm_log"
+	assert_contains "uninstall" "$npm_log"
+	assert_file_missing "$managed_prefix/bin/bb-browser"
 }
 
 test_bb_browser_install_discovers_browser_and_launches_cdp() {
@@ -467,9 +535,9 @@ EOF
 	fi
 
 	assert_file_exists "$state_file"
-	assert_contains "$old_bin/bb-browser" "$state_file"
+	assert_contains "PREEXISTING_BB_BROWSER=1" "$state_file"
+	assert_contains "PREEXISTING_BB_BROWSER_PATH=$old_bin/bb-browser" "$state_file"
 	assert_contains "$managed_prefix/bin/bb-browser" "$state_file"
-	assert_contains 'PREEXISTING_BB_BROWSER=' "$state_file"
 	assert_contains 'REAL_BB_BROWSER_PATH=' "$state_file"
 	assert_contains "prefix -g" "$npm_log"
 	assert_not_contains "bin -g" "$npm_log"
@@ -510,6 +578,7 @@ EOF
 EOF
 	cat >"$state_file" <<EOF
 PREEXISTING_BB_BROWSER=1
+PREEXISTING_BB_BROWSER_PATH=/usr/local/bin/bb-browser
 INSTALLED_VERSION=9.9.9
 WRAPPER_PATH=$wrapper_path
 REAL_BB_BROWSER_PATH=/usr/local/bin/bb-browser
@@ -557,6 +626,7 @@ EOF
 EOF
 	cat >"$state_file" <<EOF
 PREEXISTING_BB_BROWSER=0
+PREEXISTING_BB_BROWSER_PATH=
 INSTALLED_VERSION=9.9.9
 WRAPPER_PATH=$wrapper_path
 REAL_BB_BROWSER_PATH=/usr/local/bin/bb-browser
@@ -697,6 +767,7 @@ EOF
 EOF
 	cat >"$state_file" <<EOF
 PREEXISTING_BB_BROWSER=0
+PREEXISTING_BB_BROWSER_PATH=
 INSTALLED_VERSION=9.9.9
 WRAPPER_PATH=$wrapper_path
 REAL_BB_BROWSER_PATH=$original_prefix/bin/bb-browser
@@ -946,13 +1017,46 @@ EOF
 	assert_contains 'env_vars = ["TAVILY_API_KEY"]' "$tmp_home/.codex/config.toml"
 	assert_contains '[mcp_servers.fetch]' "$tmp_home/.codex/config.toml"
 	assert_contains 'args = ["-y", "@kazuph/mcp-fetch"]' "$tmp_home/.codex/config.toml"
-	assert_contains '[mcp_servers.bb-browser]' "$tmp_home/.codex/config.toml"
-	assert_contains 'command = "bash"' "$tmp_home/.codex/config.toml"
-	assert_contains 'args = ["-c", "\"$HOME/.local/bin/bb-browser-user\" --mcp"]' "$tmp_home/.codex/config.toml"
+	assert_not_contains '[mcp_servers.bb-browser]' "$tmp_home/.codex/config.toml"
 	assert_not_contains 'args = ["-lc",' "$tmp_home/.codex/config.toml"
 	assert_contains "[projects.\"$external_project\"]" "$tmp_home/.codex/config.toml"
 	assert_contains "[projects.\"$tmp_home\"]" "$tmp_home/.codex/config.toml"
 	assert_contains "[projects.\"$child_project\"]" "$tmp_home/.codex/config.toml"
+}
+
+test_codex_config_includes_bb_browser_when_wrapper_exists() {
+	local tmp_home fake_bin log superpowers_repo
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install-codex-wrapper.log"
+	superpowers_repo=$(make_fake_superpowers_repo)
+	trap "rm -rf '$tmp_home' '$fake_bin' '$superpowers_repo'" RETURN
+
+	mkdir -p "$tmp_home/.local/bin"
+	cat >"$tmp_home/.local/bin/bb-browser-user" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$tmp_home/.local/bin/bb-browser-user"
+
+	cat >"$fake_bin/zsh" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/keychain" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$fake_bin/zsh" "$fake_bin/keychain"
+
+	if ! run_dotfiles_install "$tmp_home" "$fake_bin" "$superpowers_repo" "$log"; then
+		cat "$log" >&2
+		fail "install_dotfiles.sh codex wrapper merge failed"
+	fi
+
+	assert_contains '[mcp_servers.bb-browser]' "$tmp_home/.codex/config.toml"
+	assert_contains 'command = "bash"' "$tmp_home/.codex/config.toml"
+	assert_contains 'args = ["-c", "\"$HOME/.local/bin/bb-browser-user\" --mcp"]' "$tmp_home/.codex/config.toml"
 }
 
 test_pixi_prefers_managed_install_over_system_binary() {
@@ -1159,6 +1263,69 @@ EOF
 	! grep -qF -- '-lc' "$mcp_log" || fail "Did not expect '-lc' in $mcp_log"
 }
 
+test_claude_skips_bb_browser_mcp_without_wrapper() {
+	local tmp_home fake_bin log mcp_log remove_log
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install-claude-no-bb-browser.log"
+	mcp_log="$tmp_home/claude-mcp-add-json.json"
+	remove_log="$tmp_home/claude-mcp-remove.log"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	write_fake_claude_cli "$fake_bin" $'bb-browser: stdio\ntavily: stdio\nfetch: stdio' "$mcp_log" "$remove_log"
+
+	cat >"$fake_bin/rustup" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/npm" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/dotnet" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/curl" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/git" <<'EOF'
+#!/bin/sh
+if [ "$1" = "clone" ] && [ "$2" = "--depth" ] && [ "$3" = "1" ]; then
+  dest="$5"
+  mkdir -p "$dest/study-master-skill/hooks"
+  printf '# study-master\n' >"$dest/study-master-skill/SKILL.md"
+  printf '#!/bin/sh\nexit 0\n' >"$dest/study-master-skill/hooks/check-study_master.sh"
+  exit 0
+fi
+exit 1
+EOF
+	cat >"$fake_bin/zsh" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/keychain" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$fake_bin/rustup" "$fake_bin/npm" "$fake_bin/dotnet" "$fake_bin/curl" "$fake_bin/git" "$fake_bin/zsh" "$fake_bin/keychain"
+
+	mkdir -p "$tmp_home/.claude/skills/study-master"
+	printf '# study-master\n' >"$tmp_home/.claude/skills/study-master/SKILL.md"
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		bash "$REPO_ROOT/scripts/install_claude_code.sh" >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "install_claude_code.sh wrapper-absent MCP test failed"
+	fi
+
+	assert_file_exists "$mcp_log"
+	assert_not_contains 'bb-browser-user' "$mcp_log"
+	assert_file_exists "$remove_log"
+	assert_contains "bb-browser" "$remove_log"
+}
+
 test_uninstall_claude_removes_bb_browser_mcp() {
 	local tmp_home fake_bin log remove_log
 	tmp_home=$(make_temp_dir)
@@ -1183,6 +1350,58 @@ EOF
 
 	assert_file_exists "$remove_log"
 	assert_contains "bb-browser" "$remove_log"
+}
+
+test_dotfiles_uninstall_removes_wrapper_integrations() {
+	local tmp_home fake_bin log remove_log wrapper_path state_file codex_config
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/uninstall-dotfiles-wrapper-integrations.log"
+	remove_log="$tmp_home/claude-mcp-remove.log"
+	wrapper_path="$tmp_home/.local/bin/bb-browser-user"
+	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
+	codex_config="$tmp_home/.codex/config.toml"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	write_fake_claude_cli "$fake_bin" $'bb-browser: stdio\nfetch: stdio' "$tmp_home/claude-mcp-add-json.json" "$remove_log"
+
+	mkdir -p "$(dirname "$wrapper_path")" "$(dirname "$state_file")" "$(dirname "$codex_config")"
+	cat >"$wrapper_path" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$wrapper_path"
+	cat >"$state_file" <<EOF
+PREEXISTING_BB_BROWSER=1
+PREEXISTING_BB_BROWSER_PATH=/usr/local/bin/bb-browser
+WRAPPER_PATH=$wrapper_path
+REAL_BB_BROWSER_PATH=/usr/local/bin/bb-browser
+EOF
+	cat >"$codex_config" <<'EOF'
+model = "gpt-5.4"
+
+[mcp_servers.fetch]
+command = "npx"
+args = ["-y", "@kazuph/mcp-fetch"]
+
+[mcp_servers.bb-browser]
+command = "bash"
+args = ["-c", "\"$HOME/.local/bin/bb-browser-user\" --mcp"]
+EOF
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		bash "$REPO_ROOT/uninstall.sh" --dotfiles --force >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "uninstall.sh --dotfiles wrapper integration cleanup failed"
+	fi
+
+	assert_file_missing "$wrapper_path"
+	assert_file_missing "$state_file"
+	assert_file_exists "$remove_log"
+	assert_contains "bb-browser" "$remove_log"
+	assert_file_exists "$codex_config"
+	assert_contains '[mcp_servers.fetch]' "$codex_config"
+	assert_not_contains '[mcp_servers.bb-browser]' "$codex_config"
 }
 
 test_claude_known_hosts_preserves_symlink() {
@@ -1399,6 +1618,7 @@ EOF
 run_test "Dotfiles manifest and SSH include block" test_dotfiles_manifest_and_ssh_block
 run_test "Dotfiles deploys bb-browser shell plugin" test_dotfiles_deploys_bb_browser_shell_plugin
 run_test "bb-browser install uses latest and deploys wrapper" test_bb_browser_install_uses_latest_and_deploys_wrapper
+run_test "bb-browser fresh install marker drives managed uninstall" test_bb_browser_fresh_install_marker_drives_managed_uninstall
 run_test "bb-browser install discovers browser and launches CDP" test_bb_browser_install_discovers_browser_and_launches_cdp
 run_test "bb-browser install fails without supported browser" test_bb_browser_install_fails_without_supported_browser
 run_test "bb-browser install preserves preexisting managed package on failure" test_bb_browser_install_preserves_preexisting_managed_prefix_artifact_on_failure
@@ -1412,11 +1632,14 @@ run_test "Claude runtime config preserves existing state" test_claude_runtime_co
 run_test "Git config identity migrates to local include" test_gitconfig_identity_migrates_to_local
 run_test "Dotfiles hook-free fallback" test_dotfiles_hook_free_fallback
 run_test "Codex config preserves subprojects" test_codex_config_preserves_projects_and_keeps_home_subprojects
+run_test "Codex config includes bb-browser when wrapper exists" test_codex_config_includes_bb_browser_when_wrapper_exists
 run_test "Pixi prefers managed install" test_pixi_prefers_managed_install_over_system_binary
 run_test "Claude optional on macOS" test_claude_optional_on_macos_when_missing
 run_test "Claude optional on Linux" test_claude_optional_on_linux_when_install_fails
 run_test "Claude installs bb-browser MCP" test_claude_installs_bb_browser_mcp
+run_test "Claude skips bb-browser MCP without wrapper" test_claude_skips_bb_browser_mcp_without_wrapper
 run_test "Claude uninstall removes bb-browser MCP" test_uninstall_claude_removes_bb_browser_mcp
+run_test "Dotfiles uninstall removes wrapper integrations" test_dotfiles_uninstall_removes_wrapper_integrations
 run_test "Claude known_hosts preserves symlink" test_claude_known_hosts_preserves_symlink
 run_test "Claude installs study-master from new repo" test_claude_installs_study_master_from_new_repo
 run_test "macOS brew maintenance LaunchAgent" test_macos_brew_maintenance_launchagent_created

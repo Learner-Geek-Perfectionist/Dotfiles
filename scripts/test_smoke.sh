@@ -258,6 +258,102 @@ EOF
 	assert_equal "bb-browser managed 2.0.0" "$version_output" "wrapper version output"
 }
 
+test_bb_browser_uninstall_preserves_preexisting_global_install() {
+	local tmp_home fake_bin log npm_log wrapper_path config_file state_file
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/uninstall-bb-browser-preexisting.log"
+	npm_log="$tmp_home/npm-preexisting.log"
+	wrapper_path="$tmp_home/.local/bin/bb-browser-user"
+	config_file="$tmp_home/.config/dotfiles/bb-browser.json"
+	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	mkdir -p "$(dirname "$wrapper_path")" "$(dirname "$config_file")" "$(dirname "$state_file")"
+	cat >"$wrapper_path" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$wrapper_path"
+	cat >"$config_file" <<'EOF'
+{"managed":true}
+EOF
+	cat >"$state_file" <<EOF
+PREEXISTING_BB_BROWSER=1
+INSTALLED_VERSION=9.9.9
+WRAPPER_PATH=$wrapper_path
+REAL_BB_BROWSER_PATH=/usr/local/bin/bb-browser
+EOF
+
+	cat >"$fake_bin/npm" <<EOF
+#!/bin/sh
+mkdir -p "$(dirname "$npm_log")"
+printf '%s\n' "\$*" >>"$npm_log"
+exit 0
+EOF
+	chmod +x "$fake_bin/npm"
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		bash "$REPO_ROOT/uninstall.sh" --dotfiles --force >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "uninstall.sh bb-browser preexisting case failed"
+	fi
+
+	assert_file_missing "$wrapper_path"
+	assert_file_missing "$config_file"
+	assert_file_missing "$state_file"
+	assert_file_missing "$npm_log"
+}
+
+test_bb_browser_uninstall_removes_managed_global_install() {
+	local tmp_home fake_bin log npm_log wrapper_path config_file state_file
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/uninstall-bb-browser-managed.log"
+	npm_log="$tmp_home/npm-managed.log"
+	wrapper_path="$tmp_home/.local/bin/bb-browser-user"
+	config_file="$tmp_home/.config/dotfiles/bb-browser.json"
+	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	mkdir -p "$(dirname "$wrapper_path")" "$(dirname "$config_file")" "$(dirname "$state_file")"
+	cat >"$wrapper_path" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$wrapper_path"
+	cat >"$config_file" <<'EOF'
+{"managed":true}
+EOF
+	cat >"$state_file" <<EOF
+PREEXISTING_BB_BROWSER=0
+INSTALLED_VERSION=9.9.9
+WRAPPER_PATH=$wrapper_path
+REAL_BB_BROWSER_PATH=/usr/local/bin/bb-browser
+EOF
+
+	cat >"$fake_bin/npm" <<EOF
+#!/bin/sh
+mkdir -p "$(dirname "$npm_log")"
+printf '%s\n' "\$*" >>"$npm_log"
+exit 0
+EOF
+	chmod +x "$fake_bin/npm"
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		bash "$REPO_ROOT/uninstall.sh" --dotfiles --force >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "uninstall.sh bb-browser managed case failed"
+	fi
+
+	assert_file_missing "$wrapper_path"
+	assert_file_missing "$config_file"
+	assert_file_missing "$state_file"
+	assert_file_exists "$npm_log"
+	assert_contains "uninstall" "$npm_log"
+	assert_contains "bb-browser" "$npm_log"
+}
+
 test_dotfiles_uninstall_preserves_modified_files() {
 	local tmp_home fake_bin install_log uninstall_log superpowers_repo
 	tmp_home=$(make_temp_dir)
@@ -926,6 +1022,8 @@ run_test "Dotfiles manifest and SSH include block" test_dotfiles_manifest_and_ss
 run_test "Dotfiles deploys bb-browser shell plugin" test_dotfiles_deploys_bb_browser_shell_plugin
 run_test "bb-browser install uses latest and deploys wrapper" test_bb_browser_install_uses_latest_and_deploys_wrapper
 run_test "bb-browser wrapper uses managed path over preexisting path" test_bb_browser_wrapper_uses_managed_path_over_preexisting_path
+run_test "bb-browser uninstall preserves preexisting global install" test_bb_browser_uninstall_preserves_preexisting_global_install
+run_test "bb-browser uninstall removes managed global install" test_bb_browser_uninstall_removes_managed_global_install
 run_test "Dotfiles uninstall preserves modified files" test_dotfiles_uninstall_preserves_modified_files
 run_test "Claude runtime config preserves existing state" test_claude_runtime_config_preserves_existing_state
 run_test "Git config identity migrates to local include" test_gitconfig_identity_migrates_to_local

@@ -151,6 +151,29 @@ remove_manifested_dotfiles() {
 	fi
 }
 
+remove_bb_browser() {
+	local state_file config_file wrapper_path
+	state_file="$(bb_browser_state_file)"
+	config_file="$(bb_browser_config_file)"
+	wrapper_path="$HOME/.local/bin/bb-browser-user"
+
+	rm_path "$wrapper_path"
+	prune_empty_parents "$(dirname "$wrapper_path")"
+	rm_path "$config_file"
+	prune_empty_parents "$(dirname "$config_file")"
+
+	if [[ -f "$state_file" ]]; then
+		# shellcheck disable=SC1090
+		source "$state_file"
+		if [[ -z "${PREEXISTING_BB_BROWSER:-}" || "${PREEXISTING_BB_BROWSER:-}" == "0" ]] && command -v npm &>/dev/null; then
+			npm uninstall -g bb-browser >/dev/null 2>&1 || true
+		fi
+	fi
+
+	rm_path "$state_file"
+	prune_empty_parents "$(dirname "$state_file")"
+}
+
 remove_dotfiles_ssh_include_block() {
 	local ssh_config="$HOME/.ssh/config"
 	local start_marker end_marker tmp
@@ -378,6 +401,7 @@ remove_dotfiles() {
 	print_info "🗑️ 删除 Dotfiles..."
 
 	remove_dotfiles_superpowers
+	remove_bb_browser
 	remove_manifested_dotfiles
 	remove_dotfiles_ssh_include_block
 

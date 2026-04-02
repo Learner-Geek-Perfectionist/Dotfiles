@@ -128,15 +128,15 @@ EOF
 }
 
 test_bb_browser_wrapper_uses_managed_path_over_preexisting_path() {
-	local tmp_home old_bin managed_bin fake_bin log npm_log state_file
+	local tmp_home old_bin managed_prefix fake_bin log npm_log state_file
 	tmp_home=$(make_temp_dir)
 	old_bin=$(make_temp_dir)
-	managed_bin=$(make_temp_dir)
+	managed_prefix=$(make_temp_dir)
 	fake_bin=$(make_temp_dir)
 	log="$tmp_home/install-bb-browser-conflict.log"
 	npm_log="$tmp_home/npm-conflict.log"
 	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
-	trap "rm -rf '$tmp_home' '$old_bin' '$managed_bin' '$fake_bin'" RETURN
+	trap "rm -rf '$tmp_home' '$old_bin' '$managed_prefix' '$fake_bin'" RETURN
 
 	cat >"$old_bin/bb-browser" <<'EOF'
 #!/bin/sh
@@ -149,19 +149,23 @@ EOF
 #!/bin/sh
 printf '%s\n' "\$*" >>"$npm_log"
 if [ "\$1" = "bin" ] && [ "\$2" = "-g" ]; then
-  printf '%s\n' "$managed_bin"
+  echo 'Unknown command: "bin"' >&2
+  exit 1
+fi
+if [ "\$1" = "prefix" ] && [ "\$2" = "-g" ]; then
+  printf '%s\n' "$managed_prefix"
   exit 0
 fi
 if [ "\$1" = "install" ] && [ "\$2" = "-g" ] && [ "\$3" = "bb-browser@latest" ]; then
-  mkdir -p "$managed_bin"
-	cat >"$managed_bin/bb-browser" <<'INNER'
+  mkdir -p "$managed_prefix/bin"
+	cat >"$managed_prefix/bin/bb-browser" <<'INNER'
 #!/bin/sh
 case "\$1" in
   --version) echo 'bb-browser managed 2.0.0' ;;
   *) exit 0 ;;
 esac
 INNER
-  chmod +x "$managed_bin/bb-browser"
+  chmod +x "$managed_prefix/bin/bb-browser"
 fi
 exit 0
 EOF
@@ -180,18 +184,20 @@ EOF
 
 	assert_file_exists "$state_file"
 	assert_contains "$old_bin/bb-browser" "$state_file"
-	assert_contains "$managed_bin/bb-browser" "$state_file"
+	assert_contains "$managed_prefix/bin/bb-browser" "$state_file"
 	assert_contains 'PREEXISTING_BB_BROWSER=' "$state_file"
 	assert_contains 'REAL_BB_BROWSER_PATH=' "$state_file"
+	assert_contains "prefix -g" "$npm_log"
+	assert_not_contains "bin -g" "$npm_log"
 
 	resolved_path="$(
-		HOME="$tmp_home" PATH="$old_bin:$managed_bin:$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		HOME="$tmp_home" PATH="$old_bin:$managed_prefix/bin:$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
 			bash -c "source '$REPO_ROOT/scripts/bb-browser-user.sh'; real_bb_browser"
 	)"
-	assert_equal "$managed_bin/bb-browser" "$resolved_path" "managed bb-browser path"
+	assert_equal "$managed_prefix/bin/bb-browser" "$resolved_path" "managed bb-browser path"
 
 	version_output="$(
-		HOME="$tmp_home" PATH="$old_bin:$managed_bin:$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		HOME="$tmp_home" PATH="$old_bin:$managed_prefix/bin:$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
 			bash "$tmp_home/.local/bin/bb-browser-user" --version
 	)"
 	assert_equal "bb-browser managed 2.0.0" "$version_output" "wrapper version output"

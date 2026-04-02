@@ -43,15 +43,23 @@ install_wrapper() {
 }
 
 installed_bb_browser_path() {
-	local npm_bin_dir
+	local npm_prefix candidate
 
-	npm_bin_dir="$(npm bin -g 2>/dev/null || true)"
-	if [[ -n "$npm_bin_dir" && -x "$npm_bin_dir/bb-browser" ]]; then
-		printf '%s\n' "$npm_bin_dir/bb-browser"
-		return 0
+	npm_prefix="$(npm prefix -g 2>/dev/null || npm config get prefix 2>/dev/null || true)"
+	npm_prefix="${npm_prefix%/}"
+	if [[ -n "$npm_prefix" ]]; then
+		candidate="$npm_prefix/bin/bb-browser"
+		if [[ -x "$candidate" ]]; then
+			printf '%s\n' "$candidate"
+			return 0
+		fi
 	fi
 
-	command -v bb-browser 2>/dev/null || true
+	candidate="$(command -v bb-browser 2>/dev/null || true)"
+	if [[ -n "$candidate" ]]; then
+		printf '%s\n' "$candidate"
+		return 0
+	fi
 }
 
 main() {

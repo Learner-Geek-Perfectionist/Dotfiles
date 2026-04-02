@@ -245,7 +245,7 @@ main() {
 	fi
 
 	print_info "安装 bb-browser (via npm)..."
-	if ! npm install -g bb-browser@latest; then
+	if ! npm install -g bb-browser@latest >>"$DOTFILES_LOG" 2>&1; then
 		print_warn "bb-browser 安装失败"
 		return 0
 	fi

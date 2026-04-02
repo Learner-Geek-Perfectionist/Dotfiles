@@ -6,8 +6,8 @@ set -eo pipefail
 # ========================================
 # 日志配置
 # ========================================
-export DOTFILES_LOG_DIR="/tmp/dotfiles-logs-$(whoami)/uninstall"
-export DOTFILES_LOG="${DOTFILES_LOG:-$DOTFILES_LOG_DIR/dotfiles-uninstall-$(whoami)-$(date '+%Y%m%d-%H%M%S').log}"
+export DOTFILES_LOG_DIR="/tmp/dotfiles-$(whoami)"
+export DOTFILES_LOG="${DOTFILES_LOG:-$DOTFILES_LOG_DIR/uninstall-$(date '+%Y%m%d-%H%M%S').log}"
 
 # ========================================
 # 内嵌工具函数（避免路径依赖）
@@ -540,6 +540,11 @@ remove_dotfiles() {
 	strip_toml_section_in_place "$HOME/.codex/config.toml" "[mcp_servers.bb-browser]"
 	remove_dotfiles_ssh_include_block
 
+	# 清理 Git LFS 配置
+	if command -v git-lfs &>/dev/null; then
+		git lfs uninstall &>/dev/null && print_dim "✓ Git LFS 配置已清理"
+	fi
+
 	# macOS 专属清理
 	if [[ "$(uname -s)" == "Darwin" ]]; then
 		local brew_maintenance_plist="$HOME/Library/LaunchAgents/com.dotfiles.brew-maintenance.plist"
@@ -649,4 +654,5 @@ fi
 
 _echo_blank
 print_success "卸载完成！"
-print_dim "📝 日志: $DOTFILES_LOG"
+print_dim "📝 日志已保存:"
+print_dim "   $DOTFILES_LOG"

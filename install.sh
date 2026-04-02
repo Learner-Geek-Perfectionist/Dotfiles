@@ -24,7 +24,7 @@ VSCODE_ONLY="${VSCODE_ONLY:-false}"
 LSP_ONLY="${LSP_ONLY:-false}"
 
 # 日志目录（日志文件名在参数解析后生成，包含安装模式）
-DOTFILES_LOG_DIR="/tmp/dotfiles-logs-$(whoami)/install"
+DOTFILES_LOG_DIR="/tmp/dotfiles-$(whoami)"
 
 # ========================================
 # 工具函数（clone 前必需的最小集合，支持 curl | bash）
@@ -197,7 +197,7 @@ setup_logging() {
 		mode_suffix="-skip-vscode"
 	fi
 
-	DOTFILES_LOG="$DOTFILES_LOG_DIR/dotfiles-install-$(whoami)${mode_suffix}-$(date '+%Y%m%d-%H%M%S').log"
+	DOTFILES_LOG="$DOTFILES_LOG_DIR/install${mode_suffix}-$(date '+%Y%m%d-%H%M%S').log"
 	export DOTFILES_LOG
 
 	echo "=== Dotfiles 安装日志 $(date) ===" >"$DOTFILES_LOG"
@@ -628,6 +628,11 @@ main() {
 		;;
 	esac
 
+	# 配置 Git LFS（macOS 和 Linux 通用）
+	if command -v git-lfs &>/dev/null; then
+		git lfs install &>/dev/null && print_success "Git LFS 已配置"
+	fi
+
 	# 更新 tldr 缓存（macOS 和 Linux 通用）
 	# 支持不同客户端的缓存路径：tldr-c-client (~/.tldrc)、tldr-python (~/.cache/tldr)
 	if command -v tldr &>/dev/null; then
@@ -651,7 +656,8 @@ main() {
 	print_divider
 	print_success "安装完成！"
 	_echo_blank
-	print_dim "📝 日志: $DOTFILES_LOG"
+	print_dim "📝 日志已保存:"
+	print_dim "   $DOTFILES_LOG"
 	_echo_blank
 	print_info "下一步:"
 	print_dim "1. 重新打开终端（或 source ${shell_hint}）"

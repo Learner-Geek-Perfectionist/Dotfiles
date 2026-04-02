@@ -93,7 +93,7 @@ install_rust_analyzer() {
 	# 方式 1: rustup（macOS brew 安装的 rust 自带 rustup）
 	if command -v rustup &>/dev/null; then
 		print_info "安装 rust-analyzer (via rustup)..."
-		if rustup component add rust-analyzer >/dev/null; then
+		if rustup component add rust-analyzer &>/dev/null; then
 			print_success "rust-analyzer 安装完成"
 		else
 			print_warn "rust-analyzer 安装失败"

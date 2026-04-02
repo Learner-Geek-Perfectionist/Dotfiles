@@ -290,7 +290,7 @@ test_bb_browser_install_fails_without_supported_browser() {
 	npm_log="$tmp_home/npm-no-browser.log"
 	trap "rm -rf '$tmp_home' '$fake_bin' '$managed_prefix'" RETURN
 
-	for tool in basename cat chmod cp date dirname mkdir rm sleep whoami; do
+	for tool in basename cat chmod cp date dirname mkdir mktemp rm sleep whoami; do
 		ln -s "$(command -v "$tool")" "$fake_bin/$tool"
 	done
 
@@ -355,12 +355,13 @@ test_bb_browser_install_preserves_preexisting_managed_prefix_artifact_on_failure
 #!/bin/sh
 case "$1" in
   --version) echo 'bb-browser preexisting 1.0.0' ;;
+  doctor) exit 1 ;;
   *) exit 0 ;;
 esac
 EOF
 	chmod +x "$managed_prefix/bin/bb-browser"
 
-	for tool in basename cat chmod cp date dirname mkdir rm sleep whoami; do
+	for tool in basename cat chmod cp date dirname mkdir mktemp rm sleep whoami; do
 		ln -s "$(command -v "$tool")" "$fake_bin/$tool"
 	done
 
@@ -372,10 +373,15 @@ if [ "\$1" = "prefix" ] && [ "\$2" = "-g" ]; then
   exit 0
 fi
 if [ "\$1" = "install" ] && [ "\$2" = "-g" ] && [ "\$3" = "bb-browser@latest" ]; then
-  exit 0
-fi
-if [ "\$1" = "--prefix" ] && [ "\$2" = "$managed_prefix" ] && [ "\$3" = "uninstall" ] && [ "\$4" = "-g" ] && [ "\$5" = "bb-browser" ]; then
-  rm -f "$managed_prefix/bin/bb-browser"
+  cat >"$managed_prefix/bin/bb-browser" <<'INNER'
+#!/bin/sh
+case "\$1" in
+  --version) echo 'bb-browser managed 9.9.9' ;;
+  doctor) exit 1 ;;
+  *) exit 0 ;;
+esac
+INNER
+  chmod +x "$managed_prefix/bin/bb-browser"
 fi
 exit 0
 EOF
@@ -397,7 +403,7 @@ EOF
 
 	assert_contains "install" "$npm_log"
 	assert_contains "bb-browser@latest" "$npm_log"
-	assert_contains "未找到受支持浏览器" "$log"
+	assert_contains "bb-browser 健康检查失败" "$log"
 	assert_not_contains "uninstall -g bb-browser" "$npm_log"
 	assert_file_missing "$tmp_home/.local/bin/bb-browser-user"
 	assert_file_missing "$tmp_home/.local/state/dotfiles/bb-browser.env"

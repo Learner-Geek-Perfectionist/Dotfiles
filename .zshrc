@@ -102,6 +102,7 @@ fi
 [[ -f "${HOME}/.config/zsh/plugins/platform.zsh" ]] && source "${HOME}/.config/zsh/plugins/platform.zsh"
 [[ -f "${HOME}/.config/zsh/plugins/zinit.zsh" ]] && source "${HOME}/.config/zsh/plugins/zinit.zsh"
 [[ -f "${HOME}/.config/zsh/plugins/double-esc-clear.zsh" ]] && source "${HOME}/.config/zsh/plugins/double-esc-clear.zsh"
+[[ -f "${HOME}/.config/zsh/plugins/bb-browser.zsh" ]] && source "${HOME}/.config/zsh/plugins/bb-browser.zsh"
 
 # ============================================
 # 凭证与密钥

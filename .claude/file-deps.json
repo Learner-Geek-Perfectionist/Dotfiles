@@ -14,8 +14,13 @@
     ".config/zsh/plugins/zinit.zsh",
     ".config/zsh/plugins/age-tokens.zsh",
     ".config/zsh/plugins/double-esc-clear.zsh",
+    ".config/zsh/plugins/bb-browser.zsh",
     ".config/zsh/fzf/fzf-preview.sh",
     ".config/ripgrep/config"
+  ],
+  ".config/zsh/plugins/bb-browser.zsh": [
+    ".zshrc",
+    "scripts/bb-browser-user.sh"
   ],
   ".config/zsh/plugins/zinit.zsh": [
     ".zshrc",
@@ -49,7 +54,9 @@
   ],
   "lib/utils.sh": [
     "install.sh",
-    "uninstall.sh"
+    "uninstall.sh",
+    "scripts/install_bb_browser.sh",
+    "scripts/bb-browser-user.sh"
   ],
   "scripts/install_dotfiles.sh": [
     "install.sh",

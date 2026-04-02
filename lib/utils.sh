@@ -501,6 +501,14 @@ dotfiles_manifest_file() {
 	echo "$(dotfiles_state_dir)/dotfiles-manifest.tsv"
 }
 
+bb_browser_config_file() {
+	echo "$HOME/.config/dotfiles/bb-browser.json"
+}
+
+bb_browser_state_file() {
+	echo "$HOME/.local/state/dotfiles/bb-browser.env"
+}
+
 dotfiles_ssh_include_block_start() {
 	echo "# >>> Dotfiles SSH Include >>>"
 }

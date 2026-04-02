@@ -56,6 +56,35 @@ EOF
 	assert_contains "Include config.d/*" "$tmp_home/.ssh/config"
 }
 
+test_dotfiles_deploys_bb_browser_shell_plugin() {
+	local tmp_home fake_bin log manifest superpowers_repo
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install-dotfiles.log"
+	manifest="$tmp_home/.local/state/dotfiles/dotfiles-manifest.tsv"
+	superpowers_repo=$(make_fake_superpowers_repo)
+	trap "rm -rf '$tmp_home' '$fake_bin' '$superpowers_repo'" RETURN
+
+	cat >"$fake_bin/zsh" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/keychain" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$fake_bin/zsh" "$fake_bin/keychain"
+
+	if ! run_dotfiles_install "$tmp_home" "$fake_bin" "$superpowers_repo" "$log"; then
+		cat "$log" >&2
+		fail "install_dotfiles.sh failed"
+	fi
+
+	assert_file_exists "$tmp_home/.config/zsh/plugins/bb-browser.zsh"
+	assert_contains 'source "${HOME}/.config/zsh/plugins/bb-browser.zsh"' "$tmp_home/.zshrc"
+	assert_contains "$tmp_home/.config/zsh/plugins/bb-browser.zsh" "$manifest"
+}
+
 test_dotfiles_uninstall_preserves_modified_files() {
 	local tmp_home fake_bin install_log uninstall_log superpowers_repo
 	tmp_home=$(make_temp_dir)
@@ -621,6 +650,7 @@ EOF
 }
 
 run_test "Dotfiles manifest and SSH include block" test_dotfiles_manifest_and_ssh_block
+run_test "Dotfiles deploys bb-browser shell plugin" test_dotfiles_deploys_bb_browser_shell_plugin
 run_test "Dotfiles uninstall preserves modified files" test_dotfiles_uninstall_preserves_modified_files
 run_test "Claude runtime config preserves existing state" test_claude_runtime_config_preserves_existing_state
 run_test "Git config identity migrates to local include" test_gitconfig_identity_migrates_to_local

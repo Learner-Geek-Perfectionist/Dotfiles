@@ -101,6 +101,37 @@ run_banner_regression_checks() {
 	assert_banner_layout "utils zwj emoji" "$output" 4 4 '👨‍👩‍👧‍👦'
 }
 
+run_install_clone_path_regression_checks() {
+	local temp_source fake_bin log_file log_dir clone_dir
+	temp_source="$(mktemp)"
+	fake_bin="$(make_temp_dir)"
+	log_file="$(mktemp)"
+
+	sed '$d' "$REPO_ROOT/install.sh" >"$temp_source"
+	cat >"$fake_bin/git" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$fake_bin/git"
+
+	{
+		IFS= read -r log_dir
+		IFS= read -r clone_dir
+	} < <(
+		PATH="$fake_bin:/usr/bin:/bin" DOTFILES_LOG="$log_file" TERM="xterm-256color" bash -c '
+			set -euo pipefail
+			# shellcheck source=/dev/null
+			source "$1"
+			printf "%s\n" "$DOTFILES_LOG_DIR"
+			clone_dotfiles 2>/dev/null
+		' _ "$temp_source"
+	)
+
+	[[ "${log_dir,,}" != "${clone_dir,,}" ]] || fail "clone path collides with log dir on case-insensitive filesystems: $clone_dir"
+	rm -f "$temp_source" "$log_file"
+	rm -rf "$fake_bin"
+}
+
 run_python_checks() {
 	cd "$REPO_ROOT"
 	if ! command -v python3 &>/dev/null; then
@@ -142,6 +173,7 @@ run_shellcheck() {
 
 run_test "Shell syntax" run_shell_syntax_checks
 run_test "Banner width" run_banner_regression_checks
+run_test "Install clone path" run_install_clone_path_regression_checks
 run_test "Python syntax" run_python_checks
 run_test "Lua syntax" run_lua_checks
 run_test "ShellCheck" run_shellcheck

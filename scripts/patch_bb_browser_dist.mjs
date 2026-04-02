@@ -190,13 +190,13 @@ async function daemonFetch(url, init = {}, retrying = false) {
     },
     {
       label: "mcp spawn host",
-      pattern: /(^|\n)\s*const child = spawn\(process\.execPath, \[getDaemonPath\(\)\], \{\n\s*detached: true, stdio: "ignore", env: \{ \.\.\.process\.env \},\n\s*\}\);/,
+      pattern: /(^|\n)\s*const child = spawn\(process\.execPath,\s*\[getDaemonPath\(\)\],\s*\{\s*detached: true,\s*stdio: "ignore",\s*env: \{ \.\.\.process\.env \}\s*,?\s*\}\);/,
       after: "\n  const child = spawn(process.execPath, [getDaemonPath(), \"--host\", \"127.0.0.1\"], {\n    detached: true, stdio: \"ignore\", env: { ...process.env },\n  });",
       usePattern: true,
     },
     {
       label: "mcp command fetch",
-      pattern: /(\s*const response = await )fetch\(`\$\{DAEMON_BASE_URL\}\/command`, \{\n\s*method: "POST",\n\s*headers: \{ "Content-Type": "application\/json" \},\n\s*body: JSON\.stringify\(request\),\n(?:\s*signal: controller\.signal,\n)?\s*\}\);/,
+      pattern: /(\s*const response = await )fetch\(`\$\{DAEMON_BASE_URL\}\/command`, \{\n\s*method: "POST",\n\s*headers: \{ "Content-Type": "application\/json" \},\n\s*body: JSON\.stringify\(request\),\n(?:\s*signal: controller\.signal\s*,?\n)?\s*\}\);/,
       after: "    const response = await daemonFetch(`${MCP_DAEMON_BASE_URL}/command`, {\n      method: \"POST\",\n      headers: { \"Content-Type\": \"application/json\" },\n      body: JSON.stringify(request),\n    });",
       usePattern: true,
     },

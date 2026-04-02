@@ -272,7 +272,8 @@ check_dependencies() {
 # 仓库克隆
 # ========================================
 clone_dotfiles() {
-	local tmp_dir="/tmp/Dotfiles-$(whoami)"
+	local tmp_root="${TMPDIR:-/tmp}"
+	local tmp_dir="${tmp_root%/}/dotfiles-clone-$(whoami)"
 
 	# 清理之前的运行
 	[[ -d "$tmp_dir" ]] && rm -rf "$tmp_dir"

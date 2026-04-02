@@ -376,17 +376,23 @@ async function isDaemonRunning() {
 async function ensureDaemon() {
   if (await isDaemonRunning()) return;
   const child = spawn(process.execPath, [getDaemonPath()], {
-    detached: true, stdio: "ignore", env: { ...process.env },
+    detached: true,
+    stdio: "ignore",
+    env: { ...process.env }
   });
   child.unref();
 }
 async function sendCommand(request) {
   await ensureDaemon();
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), COMMAND_TIMEOUT);
   const response = await fetch(\`\${DAEMON_BASE_URL}/command\`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(request),
+    signal: controller.signal
   });
+  clearTimeout(timeoutId);
   return await response.json();
 }
 INNER

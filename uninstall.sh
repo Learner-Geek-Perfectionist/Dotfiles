@@ -161,6 +161,8 @@ read_bb_browser_install_state() {
 		source "$state_file"
 		printf '%s\n' \
 			"${PREEXISTING_BB_BROWSER:-}" \
+			"${PREEXISTING_SHIM:-}" \
+			"${PREEXISTING_SHIM_BACKUP_PATH:-}" \
 			"${PREEXISTING_WRAPPER:-}" \
 			"${PREEXISTING_WRAPPER_BACKUP_PATH:-}" \
 			"${REAL_BB_BROWSER_PATH:-}" \
@@ -281,11 +283,13 @@ restore_bb_browser_managed_file() {
 }
 
 remove_bb_browser() {
-	local state_file config_file wrapper_path wrapper_backup_path xiaohongshu_search_path xiaohongshu_search_backup_path
-	local preexisting_bb_browser preexisting_wrapper preexisting_xiaohongshu_search real_bb_browser_path target_prefix
+	local state_file config_file shim_path shim_backup_path wrapper_path wrapper_backup_path xiaohongshu_search_path xiaohongshu_search_backup_path
+	local preexisting_bb_browser preexisting_shim preexisting_wrapper preexisting_xiaohongshu_search real_bb_browser_path target_prefix
 	state_file="$(bb_browser_state_file)"
 	config_file="$(bb_browser_config_file)"
-	wrapper_path="$HOME/.local/bin/bb-browser-user"
+	shim_path="$(bb_browser_shim_path)"
+	shim_backup_path="$(bb_browser_shim_backup_file)"
+	wrapper_path="$(bb_browser_wrapper_path)"
 	wrapper_backup_path="$(bb_browser_wrapper_backup_file)"
 	xiaohongshu_search_path="$(bb_browser_xiaohongshu_search_file)"
 	xiaohongshu_search_backup_path="$(bb_browser_xiaohongshu_search_backup_file)"
@@ -296,12 +300,15 @@ remove_bb_browser() {
 	if [[ -f "$state_file" ]]; then
 		{
 			IFS= read -r preexisting_bb_browser || true
+			IFS= read -r preexisting_shim || true
+			IFS= read -r shim_backup_path || true
 			IFS= read -r preexisting_wrapper || true
 			IFS= read -r wrapper_backup_path || true
 			IFS= read -r real_bb_browser_path || true
 			IFS= read -r preexisting_xiaohongshu_search || true
 			IFS= read -r xiaohongshu_search_backup_path || true
 		} < <(read_bb_browser_install_state "$state_file" || true)
+		[[ -n "$shim_backup_path" ]] || shim_backup_path="$(bb_browser_shim_backup_file)"
 		[[ -n "$wrapper_backup_path" ]] || wrapper_backup_path="$(bb_browser_wrapper_backup_file)"
 		[[ -n "$xiaohongshu_search_backup_path" ]] || xiaohongshu_search_backup_path="$(bb_browser_xiaohongshu_search_backup_file)"
 		if [[ "$preexisting_bb_browser" == "0" && -n "$real_bb_browser_path" ]]; then
@@ -311,6 +318,15 @@ remove_bb_browser() {
 					npm --prefix "$target_prefix" uninstall -g bb-browser >/dev/null 2>&1 || true
 				fi
 			fi
+		fi
+
+		if [[ "$preexisting_shim" == "1" ]]; then
+			restore_bb_browser_managed_file "$shim_path" "$shim_backup_path" "bb-browser 命令 shim"
+		else
+			rm_path "$shim_path"
+			prune_empty_parents "$(dirname "$shim_path")"
+			rm_path "$shim_backup_path"
+			prune_empty_parents "$(dirname "$shim_backup_path")"
 		fi
 
 		if [[ "$preexisting_wrapper" == "1" ]]; then
@@ -331,6 +347,8 @@ remove_bb_browser() {
 			prune_empty_parents "$(dirname "$xiaohongshu_search_backup_path")"
 		fi
 	else
+		rm_path "$shim_path"
+		prune_empty_parents "$(dirname "$shim_path")"
 		rm_path "$wrapper_path"
 		prune_empty_parents "$(dirname "$wrapper_path")"
 	fi

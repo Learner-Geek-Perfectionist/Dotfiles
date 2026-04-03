@@ -132,31 +132,33 @@ load_state_file() {
 }
 
 real_bb_browser() {
-	local state_file wrapper_path resolved_path preexisting_path
+	local state_file shim_path wrapper_path current_script_path resolved_path preexisting_path
 
 	load_state_file || true
+	shim_path="$HOME/.local/bin/bb-browser"
 	wrapper_path="$HOME/.local/bin/bb-browser-user"
+	current_script_path="$(cd "$(dirname "$0")" 2>/dev/null && pwd)/$(basename "$0")"
 	resolved_path="${REAL_BB_BROWSER_PATH:-}"
 	preexisting_path="${PREEXISTING_BB_BROWSER_PATH:-}"
 
-	if [[ -n "$resolved_path" && -x "$resolved_path" && "$resolved_path" != "$wrapper_path" ]]; then
+	if [[ -n "$resolved_path" && -x "$resolved_path" && "$resolved_path" != "$shim_path" && "$resolved_path" != "$wrapper_path" ]]; then
 		printf '%s\n' "$resolved_path"
 		return 0
 	fi
 
-	if [[ -n "$preexisting_path" && -x "$preexisting_path" && "$preexisting_path" != "$wrapper_path" ]]; then
+	if [[ -n "$preexisting_path" && -x "$preexisting_path" && "$preexisting_path" != "$shim_path" && "$preexisting_path" != "$wrapper_path" ]]; then
 		printf '%s\n' "$preexisting_path"
 		return 0
 	fi
 
 	if [[ -n "${PREEXISTING_BB_BROWSER:-}" && "${PREEXISTING_BB_BROWSER}" != "0" && "${PREEXISTING_BB_BROWSER}" != "1" &&
-		-x "${PREEXISTING_BB_BROWSER}" && "${PREEXISTING_BB_BROWSER}" != "$wrapper_path" ]]; then
+		-x "${PREEXISTING_BB_BROWSER}" && "${PREEXISTING_BB_BROWSER}" != "$shim_path" && "${PREEXISTING_BB_BROWSER}" != "$wrapper_path" ]]; then
 		printf '%s\n' "$PREEXISTING_BB_BROWSER"
 		return 0
 	fi
 
 	while IFS= read -r candidate; do
-		[[ -n "$candidate" && "$candidate" != "$wrapper_path" ]] || continue
+		[[ -n "$candidate" && "$candidate" != "$shim_path" && "$candidate" != "$wrapper_path" && "$candidate" != "$current_script_path" ]] || continue
 		printf '%s\n' "$candidate"
 		return 0
 	done < <(type -aP bb-browser 2>/dev/null)

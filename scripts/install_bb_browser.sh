@@ -6,7 +6,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../lib/utils.sh"
 
-WRAPPER_PATH="$HOME/.local/bin/bb-browser-user"
+SHIM_PATH="$(bb_browser_shim_path)"
+SHIM_BACKUP_PATH="$(bb_browser_shim_backup_file)"
+WRAPPER_PATH="$(bb_browser_wrapper_path)"
 WRAPPER_BACKUP_PATH="$(bb_browser_wrapper_backup_file)"
 XIAOHONGSHU_SEARCH_TEMPLATE="$SCRIPT_DIR/bb-browser-sites/xiaohongshu/search.js"
 XIAOHONGSHU_SEARCH_PATH="$(bb_browser_xiaohongshu_search_file)"
@@ -65,6 +67,17 @@ rollback_wrapper_artifacts() {
 	rm -f "$WRAPPER_PATH"
 }
 
+rollback_shim_artifacts() {
+	local preexisting_shim_marker="$1"
+
+	if [[ "$preexisting_shim_marker" == "1" && -e "$SHIM_BACKUP_PATH" ]]; then
+		restore_artifact "$SHIM_PATH" "$SHIM_BACKUP_PATH"
+		return 0
+	fi
+
+	rm -f "$SHIM_PATH"
+}
+
 rollback_xiaohongshu_search_artifacts() {
 	local preexisting_search_marker="$1"
 
@@ -77,11 +90,13 @@ rollback_xiaohongshu_search_artifacts() {
 }
 
 rollback_install_artifacts() {
-	local preexisting_wrapper_marker="$1" preexisting_search_marker="$2"
-	local wrapper_backup_backup="$3" search_backup_backup="$4" state_backup="$5" config_backup="$6"
+	local preexisting_shim_marker="$1" preexisting_wrapper_marker="$2" preexisting_search_marker="$3"
+	local shim_backup_backup="$4" wrapper_backup_backup="$5" search_backup_backup="$6" state_backup="$7" config_backup="$8"
 
+	rollback_shim_artifacts "$preexisting_shim_marker"
 	rollback_wrapper_artifacts "$preexisting_wrapper_marker"
 	rollback_xiaohongshu_search_artifacts "$preexisting_search_marker"
+	restore_artifact "$SHIM_BACKUP_PATH" "$shim_backup_backup"
 	restore_artifact "$WRAPPER_BACKUP_PATH" "$wrapper_backup_backup"
 	restore_artifact "$XIAOHONGSHU_SEARCH_BACKUP_PATH" "$search_backup_backup"
 	restore_artifact "$STATE_FILE" "$state_backup"
@@ -112,8 +127,9 @@ cleanup_artifact_backup() {
 }
 
 cleanup_install_backups() {
-	local wrapper_backup_backup="$1" search_backup_backup="$2" state_backup="$3" managed_bb_browser_backup="$4" config_backup="$5"
+	local shim_backup_backup="$1" wrapper_backup_backup="$2" search_backup_backup="$3" state_backup="$4" managed_bb_browser_backup="$5" config_backup="$6"
 
+	cleanup_artifact_backup "$shim_backup_backup"
 	cleanup_artifact_backup "$wrapper_backup_backup"
 	cleanup_artifact_backup "$search_backup_backup"
 	cleanup_artifact_backup "$state_backup"
@@ -123,12 +139,13 @@ cleanup_install_backups() {
 
 rollback_install_attempt() {
 	local managed_prefix="$1" preexisting_bb_browser="$2" managed_bb_browser="$3" managed_bb_browser_backup="$4"
-	local preexisting_wrapper_marker="$5" preexisting_search_marker="$6"
-	local wrapper_backup_backup="$7" search_backup_backup="$8" state_backup="$9" config_backup="${10}"
+	local preexisting_shim_marker="$5" preexisting_wrapper_marker="$6" preexisting_search_marker="$7"
+	local shim_backup_backup="$8" wrapper_backup_backup="$9" search_backup_backup="${10}" state_backup="${11}" config_backup="${12}"
 
 	rollback_managed_bb_browser "$managed_prefix" "$preexisting_bb_browser" "$managed_bb_browser" "$managed_bb_browser_backup"
-	rollback_install_artifacts "$preexisting_wrapper_marker" "$preexisting_search_marker" "$wrapper_backup_backup" "$search_backup_backup" "$state_backup" "$config_backup"
-	cleanup_install_backups "$wrapper_backup_backup" "$search_backup_backup" "$state_backup" "$managed_bb_browser_backup" "$config_backup"
+	rollback_install_artifacts "$preexisting_shim_marker" "$preexisting_wrapper_marker" "$preexisting_search_marker" \
+		"$shim_backup_backup" "$wrapper_backup_backup" "$search_backup_backup" "$state_backup" "$config_backup"
+	cleanup_install_backups "$shim_backup_backup" "$wrapper_backup_backup" "$search_backup_backup" "$state_backup" "$managed_bb_browser_backup" "$config_backup"
 }
 
 require_npm() {
@@ -150,6 +167,8 @@ read_existing_install_state() {
 		printf '%s\n' \
 			"${PREEXISTING_BB_BROWSER:-}" \
 			"${PREEXISTING_BB_BROWSER_PATH:-}" \
+			"${PREEXISTING_SHIM:-}" \
+			"${PREEXISTING_SHIM_BACKUP_PATH:-}" \
 			"${PREEXISTING_WRAPPER:-}" \
 			"${PREEXISTING_WRAPPER_BACKUP_PATH:-}" \
 			"${REAL_BB_BROWSER_PATH:-}" \
@@ -162,17 +181,21 @@ read_existing_install_state() {
 write_state_file() {
 	local preexisting_marker="$1"
 	local preexisting_path="$2"
-	local preexisting_wrapper_marker="$3"
-	local preexisting_xiaohongshu_search_marker="$4"
-	local preexisting_xiaohongshu_search_path="$5"
-	local installed_version="$6"
-	local real_bb_browser_path="$7"
+	local preexisting_shim_marker="$3"
+	local preexisting_wrapper_marker="$4"
+	local preexisting_xiaohongshu_search_marker="$5"
+	local preexisting_xiaohongshu_search_path="$6"
+	local installed_version="$7"
+	local real_bb_browser_path="$8"
 
 	mkdir -p "$(dirname "$STATE_FILE")"
 	{
 		printf 'PREEXISTING_BB_BROWSER=%s\n' "$preexisting_marker"
 		printf 'PREEXISTING_BB_BROWSER_PATH='
 		printf '%q\n' "$preexisting_path"
+		printf 'PREEXISTING_SHIM=%s\n' "$preexisting_shim_marker"
+		printf 'PREEXISTING_SHIM_BACKUP_PATH='
+		printf '%q\n' "$SHIM_BACKUP_PATH"
 		printf 'PREEXISTING_WRAPPER=%s\n' "$preexisting_wrapper_marker"
 		printf 'PREEXISTING_WRAPPER_BACKUP_PATH='
 		printf '%q\n' "$WRAPPER_BACKUP_PATH"
@@ -183,6 +206,8 @@ write_state_file() {
 		printf '%q\n' "$XIAOHONGSHU_SEARCH_BACKUP_PATH"
 		printf 'INSTALLED_VERSION='
 		printf '%q\n' "$installed_version"
+		printf 'SHIM_PATH='
+		printf '%q\n' "$SHIM_PATH"
 		printf 'WRAPPER_PATH='
 		printf '%q\n' "$WRAPPER_PATH"
 		printf 'REAL_BB_BROWSER_PATH='
@@ -215,6 +240,21 @@ prepare_wrapper_backup() {
 	rm -f "$WRAPPER_BACKUP_PATH"
 }
 
+prepare_shim_backup() {
+	local preexisting_shim_marker="$1" tracked_preexisting_shim="$2"
+
+	if [[ "$preexisting_shim_marker" == "1" ]]; then
+		if [[ "$tracked_preexisting_shim" == "1" && -e "$SHIM_BACKUP_PATH" ]]; then
+			return 0
+		fi
+		mkdir -p "$(dirname "$SHIM_BACKUP_PATH")"
+		cp -p "$SHIM_PATH" "$SHIM_BACKUP_PATH"
+		return 0
+	fi
+
+	rm -f "$SHIM_BACKUP_PATH"
+}
+
 prepare_xiaohongshu_search_backup() {
 	local preexisting_search_marker="$1" tracked_preexisting_search="$2"
 
@@ -230,7 +270,10 @@ prepare_xiaohongshu_search_backup() {
 	rm -f "$XIAOHONGSHU_SEARCH_BACKUP_PATH"
 }
 
-install_wrapper() {
+install_wrapper_entrypoints() {
+	mkdir -p "$(dirname "$SHIM_PATH")"
+	cp "$SCRIPT_DIR/bb-browser-user.sh" "$SHIM_PATH"
+	chmod 755 "$SHIM_PATH"
 	mkdir -p "$(dirname "$WRAPPER_PATH")"
 	cp "$SCRIPT_DIR/bb-browser-user.sh" "$WRAPPER_PATH"
 	chmod 755 "$WRAPPER_PATH"
@@ -269,7 +312,7 @@ EOF
 	rc=1
 	(
 		cat "$request_file"
-	) | "$WRAPPER_PATH" --mcp >"$output_file" 2>/dev/null &
+	) | "$SHIM_PATH" --mcp >"$output_file" 2>/dev/null &
 	pid="$!"
 
 	for _ in {1..20}; do
@@ -332,7 +375,7 @@ installed_bb_browser_path() {
 	fi
 
 	candidate="$(command -v bb-browser 2>/dev/null || true)"
-	if [[ -n "$candidate" ]]; then
+	if [[ -n "$candidate" && "$candidate" != "$SHIM_PATH" && "$candidate" != "$WRAPPER_PATH" ]]; then
 		printf '%s\n' "$candidate"
 		return 0
 	fi
@@ -340,11 +383,11 @@ installed_bb_browser_path() {
 
 main() {
 	local preexisting_bb_browser preexisting_bb_browser_marker preexisting_bb_browser_path
-	local preexisting_wrapper_marker preexisting_xiaohongshu_search_marker preexisting_xiaohongshu_search_path
+	local preexisting_shim_marker preexisting_wrapper_marker preexisting_xiaohongshu_search_marker preexisting_xiaohongshu_search_path
 	local installed_version real_bb_browser_path managed_prefix
-	local managed_bb_browser managed_bb_browser_backup wrapper_backup_backup search_backup_backup state_backup config_backup managed_root
-	local recorded_preexisting_bb recorded_preexisting_bb_path recorded_preexisting_wrapper
-	local recorded_wrapper_backup_path recorded_real_bb_browser_path
+	local managed_bb_browser managed_bb_browser_backup shim_backup_backup wrapper_backup_backup search_backup_backup state_backup config_backup managed_root
+	local recorded_preexisting_bb recorded_preexisting_bb_path recorded_preexisting_shim recorded_preexisting_wrapper
+	local recorded_shim_backup_path recorded_wrapper_backup_path recorded_real_bb_browser_path
 	local recorded_preexisting_xiaohongshu_search recorded_preexisting_xiaohongshu_search_path recorded_xiaohongshu_search_backup_path
 
 	require_npm || return 0
@@ -352,6 +395,8 @@ main() {
 	{
 		IFS= read -r recorded_preexisting_bb || true
 		IFS= read -r recorded_preexisting_bb_path || true
+		IFS= read -r recorded_preexisting_shim || true
+		IFS= read -r recorded_shim_backup_path || true
 		IFS= read -r recorded_preexisting_wrapper || true
 		IFS= read -r recorded_wrapper_backup_path || true
 		IFS= read -r recorded_real_bb_browser_path || true
@@ -359,6 +404,9 @@ main() {
 		IFS= read -r recorded_preexisting_xiaohongshu_search_path || true
 		IFS= read -r recorded_xiaohongshu_search_backup_path || true
 	} < <(read_existing_install_state || true)
+	if [[ -n "$recorded_shim_backup_path" ]]; then
+		SHIM_BACKUP_PATH="$recorded_shim_backup_path"
+	fi
 	if [[ -n "$recorded_wrapper_backup_path" ]]; then
 		WRAPPER_BACKUP_PATH="$recorded_wrapper_backup_path"
 	fi
@@ -369,7 +417,8 @@ main() {
 	preexisting_bb_browser="$(command -v bb-browser 2>/dev/null || true)"
 	preexisting_bb_browser_marker=0
 	preexisting_bb_browser_path=""
-	if [[ "$recorded_preexisting_bb" == "0" && -n "$recorded_real_bb_browser_path" && "$preexisting_bb_browser" == "$recorded_real_bb_browser_path" ]]; then
+	if [[ "$recorded_preexisting_bb" == "0" && -n "$recorded_real_bb_browser_path" ]] &&
+		[[ "$preexisting_bb_browser" == "$recorded_real_bb_browser_path" || "$preexisting_bb_browser" == "$SHIM_PATH" || "$preexisting_bb_browser" == "$WRAPPER_PATH" ]]; then
 		preexisting_bb_browser_marker=0
 		preexisting_bb_browser_path=""
 	elif [[ "$recorded_preexisting_bb" == "1" && -n "$recorded_preexisting_bb_path" ]]; then
@@ -408,6 +457,15 @@ main() {
 		return 0
 	fi
 
+	preexisting_shim_marker=0
+	if [[ "$recorded_preexisting_shim" == "1" ]]; then
+		preexisting_shim_marker=1
+	elif [[ "$recorded_preexisting_shim" == "0" && -e "$SHIM_PATH" ]]; then
+		preexisting_shim_marker=0
+	elif [[ -e "$SHIM_PATH" ]]; then
+		preexisting_shim_marker=1
+	fi
+
 	preexisting_wrapper_marker=0
 	if [[ "$recorded_preexisting_wrapper" == "1" ]]; then
 		preexisting_wrapper_marker=1
@@ -416,47 +474,61 @@ main() {
 	elif [[ -e "$WRAPPER_PATH" ]]; then
 		preexisting_wrapper_marker=1
 	fi
+	shim_backup_backup="$(backup_artifact "$SHIM_BACKUP_PATH")"
 	wrapper_backup_backup="$(backup_artifact "$WRAPPER_BACKUP_PATH")"
 	search_backup_backup="$(backup_artifact "$XIAOHONGSHU_SEARCH_BACKUP_PATH")"
 	state_backup="$(backup_artifact "$STATE_FILE")"
 	config_backup="$(backup_artifact "$CONFIG_FILE")"
 
+	if ! prepare_shim_backup "$preexisting_shim_marker" "$recorded_preexisting_shim"; then
+		rollback_install_attempt "$managed_prefix" "$preexisting_bb_browser" "$managed_bb_browser" "$managed_bb_browser_backup" \
+			"$preexisting_shim_marker" "$preexisting_wrapper_marker" "$preexisting_xiaohongshu_search_marker" \
+			"$shim_backup_backup" "$wrapper_backup_backup" "$search_backup_backup" "$state_backup" "$config_backup"
+		return 1
+	fi
+
 	if ! prepare_wrapper_backup "$preexisting_wrapper_marker" "$recorded_preexisting_wrapper"; then
 		rollback_install_attempt "$managed_prefix" "$preexisting_bb_browser" "$managed_bb_browser" "$managed_bb_browser_backup" \
-			"$preexisting_wrapper_marker" "$preexisting_xiaohongshu_search_marker" "$wrapper_backup_backup" "$search_backup_backup" "$state_backup" "$config_backup"
+			"$preexisting_shim_marker" "$preexisting_wrapper_marker" "$preexisting_xiaohongshu_search_marker" \
+			"$shim_backup_backup" "$wrapper_backup_backup" "$search_backup_backup" "$state_backup" "$config_backup"
 		return 1
 	fi
 
 	if ! prepare_xiaohongshu_search_backup "$preexisting_xiaohongshu_search_marker" "$recorded_preexisting_xiaohongshu_search"; then
 		rollback_install_attempt "$managed_prefix" "$preexisting_bb_browser" "$managed_bb_browser" "$managed_bb_browser_backup" \
-			"$preexisting_wrapper_marker" "$preexisting_xiaohongshu_search_marker" "$wrapper_backup_backup" "$search_backup_backup" "$state_backup" "$config_backup"
+			"$preexisting_shim_marker" "$preexisting_wrapper_marker" "$preexisting_xiaohongshu_search_marker" \
+			"$shim_backup_backup" "$wrapper_backup_backup" "$search_backup_backup" "$state_backup" "$config_backup"
 		return 1
 	fi
 
-	if ! install_wrapper; then
+	if ! install_wrapper_entrypoints; then
 		rollback_install_attempt "$managed_prefix" "$preexisting_bb_browser" "$managed_bb_browser" "$managed_bb_browser_backup" \
-			"$preexisting_wrapper_marker" "$preexisting_xiaohongshu_search_marker" "$wrapper_backup_backup" "$search_backup_backup" "$state_backup" "$config_backup"
+			"$preexisting_shim_marker" "$preexisting_wrapper_marker" "$preexisting_xiaohongshu_search_marker" \
+			"$shim_backup_backup" "$wrapper_backup_backup" "$search_backup_backup" "$state_backup" "$config_backup"
 		return 1
 	fi
 
 	managed_root="$(managed_npm_root || true)"
 	if ! apply_managed_dist_patches "$managed_root"; then
 		rollback_install_attempt "$managed_prefix" "$preexisting_bb_browser" "$managed_bb_browser" "$managed_bb_browser_backup" \
-			"$preexisting_wrapper_marker" "$preexisting_xiaohongshu_search_marker" "$wrapper_backup_backup" "$search_backup_backup" "$state_backup" "$config_backup"
+			"$preexisting_shim_marker" "$preexisting_wrapper_marker" "$preexisting_xiaohongshu_search_marker" \
+			"$shim_backup_backup" "$wrapper_backup_backup" "$search_backup_backup" "$state_backup" "$config_backup"
 		print_error "bb-browser dist 补丁应用失败"
 		return 1
 	fi
 
 	if ! install_managed_xiaohongshu_search; then
 		rollback_install_attempt "$managed_prefix" "$preexisting_bb_browser" "$managed_bb_browser" "$managed_bb_browser_backup" \
-			"$preexisting_wrapper_marker" "$preexisting_xiaohongshu_search_marker" "$wrapper_backup_backup" "$search_backup_backup" "$state_backup" "$config_backup"
+			"$preexisting_shim_marker" "$preexisting_wrapper_marker" "$preexisting_xiaohongshu_search_marker" \
+			"$shim_backup_backup" "$wrapper_backup_backup" "$search_backup_backup" "$state_backup" "$config_backup"
 		print_error "bb-browser 小红书 adapter 安装失败"
 		return 1
 	fi
 
 	if ! write_managed_config; then
 		rollback_install_attempt "$managed_prefix" "$preexisting_bb_browser" "$managed_bb_browser" "$managed_bb_browser_backup" \
-			"$preexisting_wrapper_marker" "$preexisting_xiaohongshu_search_marker" "$wrapper_backup_backup" "$search_backup_backup" "$state_backup" "$config_backup"
+			"$preexisting_shim_marker" "$preexisting_wrapper_marker" "$preexisting_xiaohongshu_search_marker" \
+			"$shim_backup_backup" "$wrapper_backup_backup" "$search_backup_backup" "$state_backup" "$config_backup"
 		print_error "bb-browser 配置写入失败"
 		return 1
 	fi
@@ -467,28 +539,31 @@ main() {
 		installed_version="$("$real_bb_browser_path" --version 2>/dev/null || true)"
 	fi
 
-	if ! write_state_file "$preexisting_bb_browser_marker" "$preexisting_bb_browser_path" "$preexisting_wrapper_marker" \
+	if ! write_state_file "$preexisting_bb_browser_marker" "$preexisting_bb_browser_path" "$preexisting_shim_marker" "$preexisting_wrapper_marker" \
 		"$preexisting_xiaohongshu_search_marker" "$preexisting_xiaohongshu_search_path" "$installed_version" "$real_bb_browser_path"; then
 		rollback_install_attempt "$managed_prefix" "$preexisting_bb_browser" "$managed_bb_browser" "$managed_bb_browser_backup" \
-			"$preexisting_wrapper_marker" "$preexisting_xiaohongshu_search_marker" "$wrapper_backup_backup" "$search_backup_backup" "$state_backup" "$config_backup"
+			"$preexisting_shim_marker" "$preexisting_wrapper_marker" "$preexisting_xiaohongshu_search_marker" \
+			"$shim_backup_backup" "$wrapper_backup_backup" "$search_backup_backup" "$state_backup" "$config_backup"
 		return 1
 	fi
 
-	if ! "$WRAPPER_PATH" doctor; then
+	if ! "$SHIM_PATH" doctor; then
 		rollback_install_attempt "$managed_prefix" "$preexisting_bb_browser" "$managed_bb_browser" "$managed_bb_browser_backup" \
-			"$preexisting_wrapper_marker" "$preexisting_xiaohongshu_search_marker" "$wrapper_backup_backup" "$search_backup_backup" "$state_backup" "$config_backup"
+			"$preexisting_shim_marker" "$preexisting_wrapper_marker" "$preexisting_xiaohongshu_search_marker" \
+			"$shim_backup_backup" "$wrapper_backup_backup" "$search_backup_backup" "$state_backup" "$config_backup"
 		print_error "bb-browser 健康检查失败"
 		return 1
 	fi
 
 	if ! verify_wrapper_mcp_bootstrap; then
 		rollback_install_attempt "$managed_prefix" "$preexisting_bb_browser" "$managed_bb_browser" "$managed_bb_browser_backup" \
-			"$preexisting_wrapper_marker" "$preexisting_xiaohongshu_search_marker" "$wrapper_backup_backup" "$search_backup_backup" "$state_backup" "$config_backup"
+			"$preexisting_shim_marker" "$preexisting_wrapper_marker" "$preexisting_xiaohongshu_search_marker" \
+			"$shim_backup_backup" "$wrapper_backup_backup" "$search_backup_backup" "$state_backup" "$config_backup"
 		print_error "bb-browser MCP 初始化检查失败"
 		return 1
 	fi
 
-	cleanup_install_backups "$wrapper_backup_backup" "$search_backup_backup" "$state_backup" "$managed_bb_browser_backup" "$config_backup"
+	cleanup_install_backups "$shim_backup_backup" "$wrapper_backup_backup" "$search_backup_backup" "$state_backup" "$managed_bb_browser_backup" "$config_backup"
 	refresh_codex_config
 }
 

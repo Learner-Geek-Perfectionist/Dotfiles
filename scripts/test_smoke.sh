@@ -249,12 +249,13 @@ EOF
 }
 
 test_bb_browser_install_uses_latest_and_deploys_wrapper() {
-	local tmp_home fake_bin log npm_log state_file
+	local tmp_home fake_bin log npm_log state_file shim_path
 	tmp_home=$(make_temp_dir)
 	fake_bin=$(make_temp_dir)
 	log="$tmp_home/install-bb-browser.log"
 	npm_log="$tmp_home/npm.log"
 	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
+	shim_path="$tmp_home/.local/bin/bb-browser"
 	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
 
 	mkdir -p "$tmp_home/.config/google-chrome" "$tmp_home/.config/microsoft-edge"
@@ -328,6 +329,7 @@ EOF
 		fail "install_bb_browser.sh failed"
 	fi
 
+	assert_executable "$shim_path"
 	assert_executable "$tmp_home/.local/bin/bb-browser-user"
 	assert_file_exists "$state_file"
 	assert_contains "install" "$npm_log"
@@ -2301,6 +2303,55 @@ EOF
 	assert_file_missing "$npm_log"
 }
 
+test_bb_browser_uninstall_restores_preexisting_command_shim() {
+	local tmp_home fake_bin log shim_path shim_backup_path config_file state_file original_shim_content
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/uninstall-bb-browser-shim-restore.log"
+	shim_path="$tmp_home/.local/bin/bb-browser"
+	shim_backup_path="$tmp_home/backup dir/bb-browser.preexisting"
+	config_file="$tmp_home/.config/dotfiles/bb-browser.json"
+	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
+	original_shim_content='#!/bin/sh
+echo "user shim preserved"
+'
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	mkdir -p "$(dirname "$shim_path")" "$(dirname "$shim_backup_path")" "$(dirname "$config_file")" "$(dirname "$state_file")"
+	cat >"$shim_path" <<'EOF'
+#!/bin/sh
+echo "managed shim"
+EOF
+	chmod +x "$shim_path"
+	printf '%s' "$original_shim_content" >"$shim_backup_path"
+	chmod +x "$shim_backup_path"
+	cat >"$config_file" <<'EOF'
+{"managed":true}
+EOF
+	cat >"$state_file" <<EOF
+PREEXISTING_BB_BROWSER=1
+PREEXISTING_BB_BROWSER_PATH=/usr/local/bin/bb-browser
+PREEXISTING_SHIM=1
+PREEXISTING_SHIM_BACKUP_PATH=$(printf '%q' "$shim_backup_path")
+SHIM_PATH=$shim_path
+PREEXISTING_WRAPPER=0
+WRAPPER_PATH=$tmp_home/.local/bin/bb-browser-user
+REAL_BB_BROWSER_PATH=/usr/local/bin/bb-browser
+EOF
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		bash "$REPO_ROOT/uninstall.sh" --dotfiles --force >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "uninstall.sh bb-browser shim restore case failed"
+	fi
+
+	assert_file_exists "$shim_path"
+	assert_contains "user shim preserved" "$shim_path"
+	assert_file_missing "$config_file"
+	assert_file_missing "$state_file"
+	assert_file_missing "$shim_backup_path"
+}
+
 test_bb_browser_install_and_uninstall_restore_preexisting_wrapper() {
 	local tmp_home fake_bin install_log uninstall_log npm_log wrapper_path state_file
 	local site_path original_wrapper_content original_site_content
@@ -3542,11 +3593,12 @@ test_uninstall_claude_removes_study_master_vendor_repo() {
 }
 
 test_dotfiles_uninstall_removes_wrapper_integrations() {
-	local tmp_home fake_bin log remove_log wrapper_path state_file codex_config mcp_state_file
+	local tmp_home fake_bin log remove_log shim_path wrapper_path state_file codex_config mcp_state_file
 	tmp_home=$(make_temp_dir)
 	fake_bin=$(make_temp_dir)
 	log="$tmp_home/uninstall-dotfiles-wrapper-integrations.log"
 	remove_log="$tmp_home/claude-mcp-remove.log"
+	shim_path="$tmp_home/.local/bin/bb-browser"
 	wrapper_path="$tmp_home/.local/bin/bb-browser-user"
 	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
 	mcp_state_file="$tmp_home/.local/state/dotfiles/claude-bb-browser-mcp.env"
@@ -3555,7 +3607,12 @@ test_dotfiles_uninstall_removes_wrapper_integrations() {
 
 	write_fake_claude_cli "$fake_bin" $'bb-browser: stdio\nfetch: stdio' "$tmp_home/claude-mcp-add-json.json" "$remove_log"
 
-	mkdir -p "$(dirname "$wrapper_path")" "$(dirname "$state_file")" "$(dirname "$codex_config")"
+	mkdir -p "$(dirname "$shim_path")" "$(dirname "$wrapper_path")" "$(dirname "$state_file")" "$(dirname "$codex_config")"
+	cat >"$shim_path" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$shim_path"
 	cat >"$wrapper_path" <<'EOF'
 #!/bin/sh
 exit 0
@@ -3564,6 +3621,8 @@ EOF
 	cat >"$state_file" <<EOF
 PREEXISTING_BB_BROWSER=1
 PREEXISTING_BB_BROWSER_PATH=/usr/local/bin/bb-browser
+PREEXISTING_SHIM=0
+SHIM_PATH=$shim_path
 WRAPPER_PATH=$wrapper_path
 REAL_BB_BROWSER_PATH=/usr/local/bin/bb-browser
 EOF
@@ -3588,6 +3647,7 @@ EOF
 		fail "uninstall.sh --dotfiles wrapper integration cleanup failed"
 	fi
 
+	assert_file_missing "$shim_path"
 	assert_file_missing "$wrapper_path"
 	assert_file_missing "$state_file"
 	assert_file_missing "$mcp_state_file"
@@ -4024,6 +4084,7 @@ run_test "bb-browser install fails without supported browser" test_bb_browser_in
 run_test "bb-browser install preserves preexisting managed package on failure" test_bb_browser_install_preserves_preexisting_managed_prefix_artifact_on_failure
 run_test "bb-browser wrapper uses managed path over preexisting path" test_bb_browser_wrapper_uses_managed_path_over_preexisting_path
 run_test "bb-browser uninstall preserves preexisting global install" test_bb_browser_uninstall_preserves_preexisting_global_install
+run_test "bb-browser uninstall restores preexisting command shim" test_bb_browser_uninstall_restores_preexisting_command_shim
 run_test "bb-browser install/uninstall restores preexisting wrapper" test_bb_browser_install_and_uninstall_restore_preexisting_wrapper
 run_test "bb-browser reinstall preserves managed ownership" test_bb_browser_reinstall_preserves_managed_ownership
 run_test "bb-browser uninstall removes managed global install" test_bb_browser_uninstall_removes_managed_global_install

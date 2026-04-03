@@ -509,6 +509,18 @@ bb_browser_state_file() {
 	echo "$HOME/.local/state/dotfiles/bb-browser.env"
 }
 
+bb_browser_shim_path() {
+	echo "$HOME/.local/bin/bb-browser"
+}
+
+bb_browser_shim_backup_file() {
+	echo "$(dotfiles_state_dir)/bb-browser.preexisting"
+}
+
+bb_browser_wrapper_path() {
+	echo "$HOME/.local/bin/bb-browser-user"
+}
+
 bb_browser_wrapper_backup_file() {
 	echo "$(dotfiles_state_dir)/bb-browser-user.preexisting"
 }

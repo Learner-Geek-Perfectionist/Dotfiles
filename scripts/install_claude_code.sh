@@ -498,6 +498,10 @@ configure_runtime_preferences() {
 		print_warn "无法安全写入 ~/.claude.json，跳过运行时偏好配置"
 		return 0
 	fi
+	if ! sanitize_claude_runtime_state_file "$config_file"; then
+		print_warn "无法安全清理 ~/.claude.json 的安装状态字段，跳过运行时偏好配置"
+		return 0
+	fi
 
 	print_success "已更新 ~/.claude.json（关闭 Claude Code CLI 更新提示）"
 }

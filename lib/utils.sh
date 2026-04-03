@@ -361,6 +361,43 @@ with open(dest_path, 'w') as f:
 }
 
 # ========================================
+# 清理 Claude 运行时状态里不应由 Dotfiles 持久化的字段
+# 语义: 保留用户偏好，但删除 Claude 自己维护的安装状态（避免 stale installMethod 干扰更新提示）
+# 返回: 0=成功 1=无法安全清理
+# ========================================
+sanitize_claude_runtime_state_file() {
+	local config_file="$1" tmp
+
+	[[ -f "$config_file" ]] || return 0
+
+	if command -v jq &>/dev/null; then
+		tmp=$(mktemp)
+		if jq 'del(.installMethod)' "$config_file" >"$tmp" 2>/dev/null && [[ -s "$tmp" ]]; then
+			mv "$tmp" "$config_file"
+			return 0
+		fi
+		rm -f "$tmp"
+	fi
+
+	if command -v python3 &>/dev/null; then
+		python3 -c "
+import json, sys
+path = sys.argv[1]
+with open(path) as f:
+    data = json.load(f)
+if not isinstance(data, dict):
+    raise SystemExit(1)
+data.pop('installMethod', None)
+with open(path, 'w') as f:
+    json.dump(data, f, indent=2, ensure_ascii=False)
+    f.write('\n')
+" "$config_file" 2>/dev/null && return 0
+	fi
+
+	return 1
+}
+
+# ========================================
 # 从 URL 下载并解压到指定目录
 # 参数: $1=下载URL $2=目标目录 $3=解压格式(tar.gz|zip|gz)
 # 返回: 0=成功 1=失败

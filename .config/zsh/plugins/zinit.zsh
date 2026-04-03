@@ -262,6 +262,8 @@ _ice wait'0b' atinit'
     zstyle ":fzf-tab:complete:cd:*" popup-pad 30 0
     zstyle ":fzf-tab:complete:code:*" fzf-preview "eza -1 --color=always \$realpath"
     zstyle ":fzf-tab:complete:code:*" popup-pad 30 0
+    # fzf-tab 的候选流本身带 ANSI 颜色；直接调二进制，绕过我们清洗管道 ANSI 的 fzf() 包装。
+    zstyle ":fzf-tab:*" fzf-command "command fzf"
     # fzf-tab 会把当前输入作为 fzf query；加 -i 避免大写输入触发 smart-case，
     # 例如 `cd W<Tab>` 也能匹配 `mihomo-party-wcloud/`。
     # 仅作用于 fzf-tab，不改变普通 fzf 的全局搜索习惯。

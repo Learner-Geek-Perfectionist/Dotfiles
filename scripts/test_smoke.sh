@@ -2959,7 +2959,7 @@ EOF
 	fi
 
 	assert_contains '"numStartups": 42' "$tmp_home/.claude.json"
-	assert_contains '"installMethod": "native"' "$tmp_home/.claude.json"
+	assert_not_contains '"installMethod": "native"' "$tmp_home/.claude.json"
 	assert_contains '"autoUpdates": false' "$tmp_home/.claude.json"
 }
 
@@ -3755,6 +3755,12 @@ EOF
 
 	mkdir -p "$tmp_home/.ssh" "$tmp_home/.claude/skills/study-master"
 	printf '# stub\n' >"$tmp_home/.claude/skills/study-master/SKILL.md"
+	cat >"$tmp_home/.claude.json" <<'EOF'
+{
+  "installMethod": "native",
+  "autoUpdates": true
+}
+EOF
 	real_known_hosts="$tmp_home/shared-known-hosts"
 	printf 'existing.example ssh-ed25519 AAAAOLD\n' >"$real_known_hosts"
 	ln -s "$real_known_hosts" "$tmp_home/.ssh/known_hosts"
@@ -3768,6 +3774,7 @@ EOF
 	assert_symlink "$tmp_home/.ssh/known_hosts"
 	assert_grep '^github.com ssh-ed25519 ' "$real_known_hosts"
 	assert_file_exists "$tmp_home/.claude.json"
+	assert_not_contains '"installMethod": "native"' "$tmp_home/.claude.json"
 	assert_contains '"autoUpdates": false' "$tmp_home/.claude.json"
 }
 

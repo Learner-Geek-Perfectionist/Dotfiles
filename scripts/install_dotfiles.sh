@@ -158,6 +158,10 @@ _deploy_claude_runtime_config() {
 		print_warn "无法安全部署 ~/.claude.json，跳过"
 		return 0
 	fi
+	if ! sanitize_claude_runtime_state_file "$claude_runtime_dest"; then
+		print_warn "无法安全清理 ~/.claude.json 的安装状态字段，跳过"
+		return 0
+	fi
 
 	dotfiles_manifest_add_file "$claude_runtime_dest"
 	print_success "~/.claude.json"

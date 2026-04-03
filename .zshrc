@@ -96,6 +96,21 @@ else
 	[[ -d "/opt/orbstack-guest" ]] && (( $+commands[open] )) && alias open='open -R'  # $+commands[open]: open 命令是否可用
 fi
 
+# 生成 GNU 风格 LS_COLORS，供 completion/fzf-tab 与 ls 类工具共享完整颜色规则。
+# 仅在用户未显式设置时初始化，优先使用 Homebrew coreutils 的 gdircolors。
+if [[ -z "${LS_COLORS:-}" ]]; then
+	typeset _dircolors_cmd=""
+	if (( $+commands[gdircolors] )); then
+		_dircolors_cmd="$commands[gdircolors]"
+	elif (( $+commands[dircolors] )); then
+		_dircolors_cmd="$commands[dircolors]"
+	fi
+	if [[ -n "$_dircolors_cmd" ]]; then
+		eval "$("$_dircolors_cmd" -b 2>/dev/null)" 2>/dev/null
+	fi
+	unset _dircolors_cmd
+fi
+
 # ============================================
 # 插件加载（PATH 已就绪，插件可安全检测命令是否存在）
 # ============================================

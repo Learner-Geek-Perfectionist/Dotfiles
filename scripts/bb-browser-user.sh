@@ -65,10 +65,15 @@ load_config_values() {
 		node -e '
 const fs = require("fs");
 const configPath = process.argv[1];
+// Keep Edge as the managed target here.
+// Chrome 136+ no longer honors remote-debugging switches on the default data dir
+// unless a non-standard --user-data-dir is used, which conflicts with our
+// "reuse the real logged-in default profile" requirement.
+// Reference: https://developer.chrome.com/blog/remote-debugging-port?hl=zh-cn
 const defaults = {
-  browser: "auto",
+  browser: "microsoft-edge",
   port: "19825",
-  profileDirectory: "Profile bb-browser",
+  profileDirectory: "Default",
 };
 
 try {
@@ -91,12 +96,12 @@ try {
 } catch {
   process.stdout.write(`${defaults.browser}\n${defaults.port}\n${defaults.profileDirectory}`);
 }
-' "$config_file" 2>/dev/null || printf '%s\n%s\n%s\n' "auto" "19825" "Profile bb-browser"
+' "$config_file" 2>/dev/null || printf '%s\n%s\n%s\n' "microsoft-edge" "19825" "Default"
 	)
 
-	BB_BROWSER_CONFIG_BROWSER="${browser:-auto}"
+	BB_BROWSER_CONFIG_BROWSER="${browser:-microsoft-edge}"
 	BB_BROWSER_CONFIG_PORT="${port:-19825}"
-	BB_BROWSER_CONFIG_PROFILE_DIRECTORY="${profile_dir:-Profile bb-browser}"
+	BB_BROWSER_CONFIG_PROFILE_DIRECTORY="${profile_dir:-Default}"
 	BB_BROWSER_CONFIG_LOADED=1
 }
 
@@ -659,6 +664,56 @@ discover_profile_root() {
 	esac
 }
 
+browser_process_name() {
+	local browser_command="$1"
+
+	case "$(browser_identity "$browser_command" 2>/dev/null || true)" in
+	microsoft-edge-macos)
+		printf '%s\n' "Microsoft Edge"
+		;;
+	microsoft-edge-linux)
+		printf '%s\n' "microsoft-edge"
+		;;
+	*)
+		return 1
+		;;
+	esac
+}
+
+browser_running() {
+	local process_name="$1"
+	[[ -n "$process_name" ]] || return 1
+	command -v pgrep &>/dev/null || return 1
+	pgrep -x "$process_name" >/dev/null 2>&1
+}
+
+quit_browser() {
+	local browser_command="$1" process_name identity
+	process_name="$(browser_process_name "$browser_command" 2>/dev/null || true)"
+	identity="$(browser_identity "$browser_command" 2>/dev/null || true)"
+
+	case "$identity" in
+	microsoft-edge-macos)
+		if command -v osascript &>/dev/null; then
+			osascript -e 'tell application "Microsoft Edge" to quit' >/dev/null 2>&1 || true
+		fi
+		;;
+	esac
+
+	if [[ -n "$process_name" ]] && browser_running "$process_name"; then
+		if command -v pkill &>/dev/null; then
+			pkill -x "$process_name" >/dev/null 2>&1 || true
+		fi
+	fi
+
+	for _ in {1..15}; do
+		sleep 1
+		browser_running "$process_name" || return 0
+	done
+
+	return 1
+}
+
 launch_browser_with_profile() {
 	local browser_command="$1"
 	local port="$2"
@@ -676,7 +731,7 @@ launch_browser_with_profile() {
 }
 
 resolve_cdp_url() {
-	local cdp_url browser_command port profile_dir profile_root
+	local cdp_url browser_command port profile_dir profile_root process_name
 
 	cdp_url="${BB_BROWSER_CDP_URL:-}"
 	if [[ -n "$cdp_url" ]] && can_connect_cdp "$cdp_url"; then
@@ -709,9 +764,17 @@ resolve_cdp_url() {
 		return 0
 	fi
 
+	process_name="$(browser_process_name "$browser_command" 2>/dev/null || true)"
+	if [[ -n "$process_name" ]] && browser_running "$process_name"; then
+		if ! quit_browser "$browser_command"; then
+			print_error "退出 Edge 失败: $process_name"
+			return 1
+		fi
+	fi
+
 	launch_browser_with_profile "$browser_command" "$port" "$profile_root" "$profile_dir"
 
-	for _ in {1..10}; do
+	for _ in {1..15}; do
 		sleep 1
 		if can_connect_cdp "$cdp_url"; then
 			printf '%s\n' "$cdp_url"
@@ -719,7 +782,7 @@ resolve_cdp_url() {
 		fi
 	done
 
-	print_error "浏览器已启动但 CDP 端口未就绪: $cdp_url"
+	print_error "CDP 端口未就绪: $cdp_url"
 	return 1
 }
 

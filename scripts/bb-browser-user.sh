@@ -687,6 +687,42 @@ browser_running() {
 	pgrep -x "$process_name" >/dev/null 2>&1
 }
 
+browser_pid_list() {
+	local process_name="$1"
+	[[ -n "$process_name" ]] || return 1
+	command -v pgrep &>/dev/null || return 1
+	pgrep -x "$process_name" 2>/dev/null || true
+}
+
+browser_process_matches_launch_target() {
+	local pid="$1" port="$2" profile_root="$3" profile_dir="$4" command_line
+	[[ "$pid" =~ ^[0-9]+$ ]] || return 1
+	command -v ps &>/dev/null || return 1
+
+	command_line="$(ps -p "$pid" -o command= 2>/dev/null || true)"
+	[[ -n "$command_line" ]] || return 1
+	[[ "$command_line" == *"--remote-debugging-port=$port"* ]] || return 1
+	[[ "$command_line" == *"--user-data-dir=$profile_root"* ]] || return 1
+	[[ "$command_line" == *"--profile-directory=$profile_dir"* ]] || return 1
+}
+
+running_browser_matches_launch_target() {
+	local process_name="$1" port="$2" profile_root="$3" profile_dir="$4" pid found_pid=0
+	[[ -n "$process_name" ]] || return 2
+	command -v ps &>/dev/null || return 2
+
+	while IFS= read -r pid; do
+		[[ -n "$pid" ]] || continue
+		found_pid=1
+		if browser_process_matches_launch_target "$pid" "$port" "$profile_root" "$profile_dir"; then
+			return 0
+		fi
+	done < <(browser_pid_list "$process_name")
+
+	[[ "$found_pid" == "1" ]] || return 2
+	return 1
+}
+
 quit_browser() {
 	local browser_command="$1" process_name identity
 	process_name="$(browser_process_name "$browser_command" 2>/dev/null || true)"
@@ -731,7 +767,7 @@ launch_browser_with_profile() {
 }
 
 resolve_cdp_url() {
-	local cdp_url browser_command port profile_dir profile_root process_name
+	local cdp_url browser_command port profile_dir profile_root process_name cdp_target_status
 
 	cdp_url="${BB_BROWSER_CDP_URL:-}"
 	if [[ -n "$cdp_url" ]] && can_connect_cdp "$cdp_url"; then
@@ -758,16 +794,34 @@ resolve_cdp_url() {
 		return 1
 	fi
 
+	process_name="$(browser_process_name "$browser_command" 2>/dev/null || true)"
 	cdp_url="http://$(loopback_host):$port"
 	if can_connect_cdp "$cdp_url"; then
-		printf '%s\n' "$cdp_url"
-		return 0
+		cdp_target_status=2
+		if [[ -n "$process_name" ]]; then
+			if running_browser_matches_launch_target "$process_name" "$port" "$profile_root" "$profile_dir"; then
+				cdp_target_status=0
+			else
+				cdp_target_status=$?
+			fi
+		fi
+
+		case "$cdp_target_status" in
+		0 | 2)
+			printf '%s\n' "$cdp_url"
+			return 0
+			;;
+		esac
+
+		if ! quit_browser "$browser_command"; then
+			print_error "退出浏览器失败: $process_name"
+			return 1
+		fi
 	fi
 
-	process_name="$(browser_process_name "$browser_command" 2>/dev/null || true)"
 	if [[ -n "$process_name" ]] && browser_running "$process_name"; then
 		if ! quit_browser "$browser_command"; then
-			print_error "退出 Edge 失败: $process_name"
+			print_error "退出浏览器失败: $process_name"
 			return 1
 		fi
 	fi

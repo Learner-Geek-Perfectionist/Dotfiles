@@ -1710,6 +1710,129 @@ EOF
 	assert_contains "profile-directory=Default" "$edge_log"
 }
 
+test_bb_browser_wrapper_restarts_edge_when_cdp_profile_mismatches() {
+	local tmp_home fake_bin wrapper_path state_file config_file edge_log kill_log ready_file daemon_ready_file edge_running_flag version_output
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	wrapper_path="$tmp_home/.local/bin/bb-browser-user"
+	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
+	config_file="$tmp_home/.config/dotfiles/bb-browser.json"
+	edge_log="$tmp_home/microsoft-edge-mismatch.log"
+	kill_log="$tmp_home/pkill-mismatch.log"
+	ready_file="$tmp_home/.cdp-ready-19825"
+	daemon_ready_file="$tmp_home/.daemon-ready"
+	edge_running_flag="$tmp_home/.edge-running"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	mkdir -p "$(dirname "$wrapper_path")" "$(dirname "$state_file")" "$(dirname "$config_file")" "$tmp_home/.config/microsoft-edge" "$tmp_home/fake-node-modules/bb-browser/dist"
+	: >"$tmp_home/fake-node-modules/bb-browser/dist/daemon.js"
+	: >"$edge_running_flag"
+	: >"$ready_file"
+	cp "$REPO_ROOT/scripts/bb-browser-user.sh" "$wrapper_path"
+	chmod +x "$wrapper_path"
+	cat >"$config_file" <<'EOF'
+{"browser":"microsoft-edge","port":19825,"profileDirectory":"Default"}
+EOF
+	cat >"$state_file" <<EOF
+PREEXISTING_BB_BROWSER=0
+REAL_BB_BROWSER_PATH=$fake_bin/bb-browser
+EOF
+
+	cat >"$fake_bin/bb-browser" <<'EOF'
+#!/bin/sh
+case "$1" in
+  --version) echo 'bb-browser 9.9.9' ;;
+  *) exit 0 ;;
+esac
+EOF
+	cat >"$fake_bin/npm" <<EOF
+#!/bin/sh
+if [ "\$1" = "root" ] && [ "\$2" = "-g" ]; then
+  printf '%s\n' "$tmp_home/fake-node-modules"
+  exit 0
+fi
+exit 1
+EOF
+	cat >"$fake_bin/node" <<EOF
+#!/bin/sh
+case "\$1" in
+  *daemon.js)
+    : >"$daemon_ready_file"
+    exit 0
+    ;;
+esac
+exit 0
+EOF
+	cat >"$fake_bin/curl" <<EOF
+#!/bin/sh
+url=""
+for arg in "\$@"; do
+  url="\$arg"
+done
+case "\$url" in
+  http://127.0.0.1:19825/json/version)
+    [ -f "$ready_file" ] || exit 22
+    printf '%s\n' '{}'
+    exit 0
+    ;;
+  http://127.0.0.1:19824/status)
+    [ -f "$daemon_ready_file" ] || exit 22
+    printf '%s\n' '{"running":true}'
+    exit 0
+    ;;
+esac
+exit 22
+EOF
+	cat >"$fake_bin/pgrep" <<EOF
+#!/bin/sh
+if [ -f "$edge_running_flag" ] && [ "\$1" = "-x" ] && [ "\$2" = "microsoft-edge" ]; then
+  printf '%s\n' '4242'
+  exit 0
+fi
+exit 1
+EOF
+	cat >"$fake_bin/ps" <<EOF
+#!/bin/sh
+if [ "\$1" = "-p" ] && [ "\$2" = "4242" ] && [ "\$3" = "-o" ] && [ "\$4" = "command=" ]; then
+  printf '%s\n' "$fake_bin/microsoft-edge --remote-debugging-port=19825 --user-data-dir=$tmp_home/.config/microsoft-edge --profile-directory=Profile bb-browser about:blank"
+  exit 0
+fi
+exit 1
+EOF
+	cat >"$fake_bin/pkill" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >>"$kill_log"
+rm -f "$edge_running_flag" "$ready_file"
+exit 0
+EOF
+	cat >"$fake_bin/microsoft-edge" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >>"$edge_log"
+: >"$edge_running_flag"
+: >"$ready_file"
+exit 0
+EOF
+	cat >"$fake_bin/openssl" <<'EOF'
+#!/bin/sh
+printf '%s\n' 'daemon-token'
+EOF
+	cat >"$fake_bin/uname" <<'EOF'
+#!/bin/sh
+echo 'Linux'
+EOF
+	chmod +x "$fake_bin/bb-browser" "$fake_bin/npm" "$fake_bin/node" "$fake_bin/curl" "$fake_bin/pgrep" "$fake_bin/ps" "$fake_bin/pkill" "$fake_bin/microsoft-edge" "$fake_bin/openssl" "$fake_bin/uname"
+
+	version_output="$(
+		HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+			bash "$wrapper_path" --version
+	)"
+
+	assert_equal "bb-browser 9.9.9" "$version_output" "wrapper version output"
+	assert_contains "microsoft-edge" "$kill_log"
+	assert_contains "remote-debugging-port=19825" "$edge_log"
+	assert_contains "profile-directory=Default" "$edge_log"
+}
+
 test_bb_browser_restarts_daemon_when_cdp_target_changes() {
 	local tmp_home fake_bin daemon_log fetch_log token_file pid_file old_daemon_path old_pid daemon_ready_file
 	tmp_home=$(make_temp_dir)
@@ -3885,6 +4008,7 @@ run_test "bb-browser wrapper uses overridden loopback and daemon endpoint" test_
 run_test "bb-browser wrapper defaults to Edge Default profile" test_bb_browser_wrapper_defaults_to_edge_default_profile
 run_test "bb-browser wrapper doctor is side-effect free" test_bb_browser_wrapper_doctor_is_side_effect_free
 run_test "bb-browser wrapper restarts ordinary Edge when CDP is absent" test_bb_browser_wrapper_restarts_edge_when_running_without_cdp
+run_test "bb-browser wrapper restarts Edge when live CDP belongs to another profile" test_bb_browser_wrapper_restarts_edge_when_cdp_profile_mismatches
 run_test "bb-browser restarts daemon when CDP target changes" test_bb_browser_restarts_daemon_when_cdp_target_changes
 run_test "bb-browser doctor finds daemon from recorded real path when npm root drifts" test_bb_browser_doctor_finds_daemon_from_recorded_real_path_when_npm_root_drifts
 run_test "bb-browser install fails without supported browser" test_bb_browser_install_fails_without_supported_browser

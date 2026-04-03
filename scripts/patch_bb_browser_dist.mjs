@@ -29,79 +29,6 @@ function replacePattern(text, pattern, after, label) {
   };
 }
 
-function patchCli(text) {
-  // If bb-browser already uses daemon.json config, it has native token/host support.
-  if (text.includes("daemon.json")) {
-    return { text, changed: false };
-  }
-
-  let changed = false;
-  let result = text;
-
-  const replacements = [
-    {
-      label: "cli import",
-      before: 'import { spawn } from "child_process";',
-      after: 'import { execFile, spawn } from "child_process";',
-    },
-    {
-      label: "cli pid files",
-      before: 'var TOKEN_FILE = path.join(DAEMON_DIR, "daemon.token");',
-      after: 'var TOKEN_FILE = path.join(DAEMON_DIR, "daemon.token");\nvar PID_FILES = [path.join(DAEMON_DIR, "daemon.pid"), "/tmp/bb-browser.pid"];',
-    },
-    {
-      label: "cli exec helper",
-      before: 'var cachedToken = null;\nvar daemonReady = false;',
-      after: 'var cachedToken = null;\nvar daemonReady = false;\nfunction execFileText(file, args) {\n  return new Promise((resolve2) => {\n    execFile(file, args, (error, stdout) => {\n      if (error) {\n        resolve2("");\n        return;\n      }\n      resolve2((stdout || "").trim());\n    });\n  });\n}',
-    },
-    {
-      label: "cli spawn host",
-      pattern: /(^|\n)\s*const child = spawn\(process\.execPath, \[daemonPath\], \{\n\s*detached: true,\n\s*stdio: "ignore"\n\s*\}\);/,
-      after: "\n  const child = spawn(process.execPath, [daemonPath, \"--host\", \"127.0.0.1\"], {\n    detached: true,\n    stdio: \"ignore\"\n  });",
-      usePattern: true,
-    },
-  ];
-
-  for (const replacement of replacements) {
-    const patched = replacement.usePattern
-      ? replacePattern(result, replacement.pattern, replacement.after, replacement.label)
-      : replaceOnce(result, replacement.before, replacement.after, replacement.label);
-    result = patched.text;
-    changed = changed || patched.changed;
-  }
-
-  const readTokenBefore = `async function readToken() {
-  try {
-    return (await readFile(TOKEN_FILE, "utf8")).trim();
-  } catch {
-    return null;
-  }
-}`;
-  const readTokenAfter = `async function readToken() {
-  try {
-    const token = (await readFile(TOKEN_FILE, "utf8")).trim();
-    if (token) return token;
-  } catch {
-  }
-  for (const pidFile of PID_FILES) {
-    try {
-      const pid = (await readFile(pidFile, "utf8")).trim();
-      if (!pid) continue;
-      const command = await execFileText("ps", ["-ww", "-p", pid, "-o", "command="]);
-      const match = command.match(/--token\\s+([a-f0-9]+)/i);
-      if (match?.[1]) return match[1];
-    } catch {
-    }
-  }
-  return null;
-}`;
-  const patchedReadToken = replaceOnce(result, readTokenBefore, readTokenAfter, "cli readToken");
-  result = patchedReadToken.text;
-  changed = changed || patchedReadToken.changed;
-
-  return { text: result, changed };
-}
-
 function patchMcp(text) {
   // If bb-browser already uses daemon.json config, it has native token/host support.
   if (text.includes("daemon.json") || text.includes("MCP_DAEMON_BASE_URL =")) {
@@ -190,8 +117,8 @@ async function daemonFetch(url, init = {}, retrying = false) {
     },
     {
       label: "mcp spawn host",
-      pattern: /(^|\n)\s*const child = spawn\(process\.execPath,\s*\[getDaemonPath\(\)\],\s*\{\s*detached: true,\s*stdio: "ignore",\s*env: \{ \.\.\.process\.env \}\s*,?\s*\}\);/,
-      after: "\n  const child = spawn(process.execPath, [getDaemonPath(), \"--host\", \"127.0.0.1\"], {\n    detached: true, stdio: \"ignore\", env: { ...process.env },\n  });",
+      pattern: /(\s*const child = spawn\(process\.execPath,\s*\[getDaemonPath\(\))([^\]]*)(\],\s*\{\s*detached: true,\s*stdio: "ignore",\s*env: \{ \.\.\.process\.env \}\s*,?\s*\}\);)/,
+      after: "$1, \"--host\", \"127.0.0.1\"$2$3",
       usePattern: true,
     },
     {
@@ -228,20 +155,13 @@ function main() {
     throw new Error("Usage: patch_bb_browser_dist.mjs <dist-dir>");
   }
 
-  const cliPath = path.join(distDir, "cli.js");
   const mcpPath = path.join(distDir, "mcp.js");
 
-  if (!fs.existsSync(cliPath)) {
-    throw new Error(`cli.js not found: ${cliPath}`);
-  }
   if (!fs.existsSync(mcpPath)) {
     throw new Error(`mcp.js not found: ${mcpPath}`);
   }
 
-  const changed = [
-    patchFile(cliPath, patchCli),
-    patchFile(mcpPath, patchMcp),
-  ];
+  const changed = [patchFile(mcpPath, patchMcp)];
 
   const total = changed.filter(Boolean).length;
   process.stdout.write(`patched ${total} file(s)\n`);

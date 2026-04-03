@@ -24,10 +24,17 @@ async function(args) {
   const searchStore = pinia._s.get('search');
   if (!searchStore) return {error: 'Search store not found', hint: 'Not logged in?'};
 
+  const buildNoteUrl = (id, xsecToken) => {
+    if (!id) return '';
+    const baseUrl = 'https://www.xiaohongshu.com/explore/' + id;
+    if (!xsecToken) return baseUrl;
+    return baseUrl + '?xsec_token=' + encodeURIComponent(xsecToken) + '&xsec_source=pc_search';
+  };
+
   const serializeFeeds = (feeds) => (feeds || []).map(i => ({
     id: i.id, xsec_token: i.xsecToken,
     title: i.noteCard?.displayTitle, type: i.noteCard?.type,
-    url: 'https://www.xiaohongshu.com/explore/' + i.id,
+    url: buildNoteUrl(i.id, i.xsecToken),
     author: i.noteCard?.user?.nickname,
     likes: i.noteCard?.interactInfo?.likedCount
   }));
@@ -110,7 +117,7 @@ async function(args) {
     const notes = (captured.data?.items || []).map(i => ({
       id: i.id, xsec_token: i.xsec_token,
       title: i.note_card?.display_title, type: i.note_card?.type,
-      url: 'https://www.xiaohongshu.com/explore/' + i.id,
+      url: buildNoteUrl(i.id, i.xsec_token),
       author: i.note_card?.user?.nickname,
       likes: i.note_card?.interact_info?.liked_count
     }));

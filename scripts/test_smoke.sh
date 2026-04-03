@@ -566,11 +566,11 @@ EOF
 }
 
 test_managed_xiaohongshu_search_template_corrects_stale_search_context() {
-	local template_path first_title
+	local template_path first_result first_title first_url
 	template_path="$REPO_ROOT/scripts/bb-browser-sites/xiaohongshu/search.js"
 	assert_file_exists "$template_path"
 
-	first_title="$(
+	first_result="$(
 		node - "$template_path" <<'NODE'
 const fs = require("fs");
 
@@ -718,7 +718,10 @@ function makeResp(title, author = "作者", likes = "1") {
     globalThis.XMLHttpRequest = MockXHR;
 
     const result = await adapterFn({ keyword: "美食" });
-    process.stdout.write(result.notes?.[0]?.title || "");
+    process.stdout.write([
+      result.notes?.[0]?.title || "",
+      result.notes?.[0]?.url || "",
+    ].join("\t"));
   } finally {
     globalThis.setTimeout = originalSetTimeout;
     globalThis.document = originalDocument;
@@ -731,7 +734,13 @@ function makeResp(title, author = "作者", likes = "1") {
 NODE
 	)"
 
+	first_title="${first_result%%	*}"
+	first_url="${first_result#*	}"
+
 	assert_equal "家常菜" "$first_title" "managed xiaohongshu template stale context result"
+	[[ "$first_url" == *"https://www.xiaohongshu.com/explore/id-家常菜"* ]] || fail "Expected openable note URL, got '$first_url'"
+	[[ "$first_url" == *"xsec_token=xt-%E5%AE%B6%E5%B8%B8%E8%8F%9C"* ]] || fail "Expected xsec_token in note URL, got '$first_url'"
+	[[ "$first_url" == *"xsec_source=pc_search"* ]] || fail "Expected xsec_source in note URL, got '$first_url'"
 }
 
 test_bb_browser_fresh_install_marker_drives_managed_uninstall() {

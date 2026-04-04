@@ -4,7 +4,7 @@ import shlex
 from urllib.parse import unquote, urlparse
 
 from kitty.launch import launch as kitty_launch, parse_launch_args
-from kittens.ssh.utils import set_cwd_in_cmdline
+from kittens.ssh.utils import get_connection_data, is_kitten_cmdline, set_cwd_in_cmdline
 
 # ssh 中需要跟参数值的选项字母（如 -p 22、-i keyfile、-o Option=val）
 _SSH_OPTS_WITH_ARG = frozenset('bcDEeFIiJLlmOopQRSWw')
@@ -30,6 +30,18 @@ def _extract_kitty_ssh_destination(cmdline):
     if remote_cmd[:3] == ['exec', 'sh', '-c']:
         return destination
     return None
+
+
+def _extract_kitten_cmdline_destination(cmdline):
+    """识别 kitty/kitten ssh 命令行中的目标主机。"""
+    if not is_kitten_cmdline(cmdline):
+        return None
+
+    connection_data = get_connection_data(list(cmdline))
+    if connection_data is None:
+        return None
+
+    return connection_data.host_name
 
 
 def _extract_plain_ssh_destination(cmdline):
@@ -72,6 +84,10 @@ def extract_ssh_destination(window):
         cmdline = process.get('cmdline', []) or []
         if not cmdline:
             continue
+
+        destination = _extract_kitten_cmdline_destination(cmdline)
+        if destination is not None:
+            return destination
 
         basename = cmdline[0].rsplit('/', 1)[-1]
         if basename != 'ssh':

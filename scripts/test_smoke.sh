@@ -4096,6 +4096,29 @@ def fake_set_cwd_in_cmdline(cwd, argv):
     argv[3:3] = ["--kitten", f"cwd={cwd}"]
 
 
+class FakeConnectionData:
+    def __init__(self, host_name):
+        self.host_name = host_name
+
+
+def fake_is_kitten_cmdline(argv):
+    return argv[:2] == ["kitten", "ssh"] or argv[:3] == ["kitty", "+kitten", "ssh"]
+
+
+def fake_get_connection_data(argv):
+    if not fake_is_kitten_cmdline(argv):
+        return None
+
+    for token in reversed(argv):
+        if token in {"kitty", "kitten", "+kitten", "ssh"}:
+            continue
+        if token.startswith("-") or token.startswith("cwd=") or token.startswith("--kitten"):
+            continue
+        return FakeConnectionData(token)
+
+    return None
+
+
 def fake_parse_launch_args(args):
     captured["args"] = args
     return args, []
@@ -4117,6 +4140,8 @@ kitty_kittens_ssh_utils_mod = types.ModuleType("kittens.ssh.utils")
 kitty_launch_mod.launch = fake_launch
 kitty_launch_mod.parse_launch_args = fake_parse_launch_args
 kitty_kittens_ssh_utils_mod.set_cwd_in_cmdline = fake_set_cwd_in_cmdline
+kitty_kittens_ssh_utils_mod.is_kitten_cmdline = fake_is_kitten_cmdline
+kitty_kittens_ssh_utils_mod.get_connection_data = fake_get_connection_data
 sys.modules["kitty"] = kitty_pkg
 sys.modules["kitty.launch"] = kitty_launch_mod
 sys.modules["kittens"] = kitty_kittens_mod
@@ -4163,8 +4188,10 @@ class Window:
 
 window = Window()
 cmdline = None
-if scenario in {"ssh", "kitty-ssh", "inline-kitten", "kitty-inline-kitten", "missing-cwd"}:
+if scenario in {"ssh", "inline-kitten", "missing-cwd"}:
     cmdline = ["ssh", "yumi"]
+elif scenario in {"kitty-ssh", "kitty-inline-kitten"}:
+    cmdline = ["kitty", "+kitten", "ssh", "--kitten", "cwd=/placeholder", "yumi"]
 if cmdline is not None:
     window.child.foreground_processes = [{"cmdline": cmdline}]
 if scenario in {"ssh", "kitty-ssh", "inline-kitten", "kitty-inline-kitten"} and cwd_value is not None:

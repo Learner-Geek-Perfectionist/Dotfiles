@@ -4146,12 +4146,14 @@ test_kitty_smart_launch_uses_last_reported_for_local_windows() {
 	output_file="$tmp_dir/local-launch.json"
 	trap "rm -rf '$tmp_dir'" RETURN
 
-	run_kitty_ssh_utils_case local "" "$output_file"
+	run_kitty_ssh_utils_case local "/Users/local/path" "$output_file"
 
 	assert_contains '"--type=tab"' "$output_file"
 	assert_contains '"--source-window=id:42"' "$output_file"
 	assert_contains '"--cwd=last_reported"' "$output_file"
 	assert_not_contains '"zsh"' "$output_file"
+	assert_not_contains "/Users/local/path" "$output_file"
+	assert_not_contains '"kitten ssh"' "$output_file"
 }
 
 test_kitty_smart_launch_clones_remote_context_with_timeout_guard() {
@@ -4175,14 +4177,18 @@ test_kitty_smart_launch_clones_remote_context_with_timeout_guard() {
 	python3 - <<PY
 import json
 import pathlib
-import re
 import sys
+import shlex
 
 data = json.loads(pathlib.Path("$output_file").read_text())
 cmd = data["args"][-1]
-pattern = r"kitten ssh .*cwd=/srv/my project.*; exec zsh -i"
-if not re.search(pattern, cmd):
-    raise SystemExit(f"Unexpected remote command shape: {cmd!r}")
+tokens = shlex.split(cmd)
+if "kitten" not in tokens or "ssh" not in tokens:
+    raise SystemExit(f"Missing ssh invocation: {tokens!r}")
+if "cwd=/srv/my project" not in tokens:
+    raise SystemExit(f"Remote cwd token split: {tokens!r}")
+if "exec" not in tokens or "zsh" not in tokens or "-i" not in tokens:
+    raise SystemExit(f"Missing fallback shell: {tokens!r}")
 PY
 }
 

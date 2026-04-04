@@ -4084,6 +4084,18 @@ import types
 captured = {}
 
 
+def fake_set_cwd_in_cmdline(cwd, argv):
+    for idx, token in enumerate(tuple(argv)):
+        if token == "--kitten" and idx + 1 < len(argv) and argv[idx + 1].startswith("cwd="):
+            argv[idx + 1] = f"cwd={cwd}"
+            return
+        if token.startswith("--kitten=cwd="):
+            argv[idx] = f"--kitten=cwd={cwd}"
+            return
+
+    argv[3:3] = ["--kitten", f"cwd={cwd}"]
+
+
 def fake_parse_launch_args(args):
     captured["args"] = args
     return args, []
@@ -4095,11 +4107,21 @@ def fake_launch(boss, opts, remaining):
 
 
 kitty_pkg = types.ModuleType("kitty")
+kitty_pkg.__path__ = []
 kitty_launch_mod = types.ModuleType("kitty.launch")
+kitty_kittens_mod = types.ModuleType("kittens")
+kitty_kittens_mod.__path__ = []
+kitty_kittens_ssh_mod = types.ModuleType("kittens.ssh")
+kitty_kittens_ssh_mod.__path__ = []
+kitty_kittens_ssh_utils_mod = types.ModuleType("kittens.ssh.utils")
 kitty_launch_mod.launch = fake_launch
 kitty_launch_mod.parse_launch_args = fake_parse_launch_args
+kitty_kittens_ssh_utils_mod.set_cwd_in_cmdline = fake_set_cwd_in_cmdline
 sys.modules["kitty"] = kitty_pkg
 sys.modules["kitty.launch"] = kitty_launch_mod
+sys.modules["kittens"] = kitty_kittens_mod
+sys.modules["kittens.ssh"] = kitty_kittens_ssh_mod
+sys.modules["kittens.ssh.utils"] = kitty_kittens_ssh_utils_mod
 
 repo_root = pathlib.Path(os.environ["REPO_ROOT"])
 spec = importlib.util.spec_from_file_location(
@@ -4128,20 +4150,24 @@ class Window:
     screen = Screen()
 
     def ssh_kitten_cmdline(self):
-        if scenario in {"ssh", "kitty-ssh"}:
+        if scenario == "ssh":
             return ["kitten", "ssh", "--kitten", "cwd=/placeholder", "yumi"]
+        if scenario == "kitty-ssh":
+            return ["kitty", "+kitten", "ssh", "--kitten", "cwd=/placeholder", "yumi"]
+        if scenario == "inline-kitten":
+            return ["kitten", "ssh", "--kitten=cwd=/placeholder", "yumi"]
+        if scenario == "kitty-inline-kitten":
+            return ["kitty", "+kitten", "ssh", "--kitten=cwd=/placeholder", "yumi"]
         return None
 
 
 window = Window()
 cmdline = None
-if scenario in {"ssh", "missing-cwd"}:
+if scenario in {"ssh", "kitty-ssh", "inline-kitten", "kitty-inline-kitten", "missing-cwd"}:
     cmdline = ["ssh", "yumi"]
-elif scenario == "kitty-ssh":
-    cmdline = ["ssh", "--", "yumi", "exec", "sh", "-c", "kitten", "ssh", "yumi"]
 if cmdline is not None:
     window.child.foreground_processes = [{"cmdline": cmdline}]
-if scenario in {"ssh", "kitty-ssh"} and cwd_value is not None:
+if scenario in {"ssh", "kitty-ssh", "inline-kitten", "kitty-inline-kitten"} and cwd_value is not None:
     window.screen.last_reported_cwd = f"file://{cwd_value.replace(' ', '%20')}"
 if scenario == "missing-cwd":
     window.screen.last_reported_cwd = None
@@ -4188,7 +4214,7 @@ if cmd.count("exec zsh -i") < 2:
     raise SystemExit(f"Remote command must reach local shell on both paths: {cmd!r}")
 
 tokens = [token.rstrip(";") for token in shlex.split(cmd)]
-if "kitten" not in tokens or "ssh" not in tokens:
+if "ssh" not in tokens or ("kitten" not in tokens and "+kitten" not in tokens):
     raise SystemExit(f"Remote command missing kitten ssh tokens: {tokens!r}")
 if "--kitten" not in tokens:
     raise SystemExit(f"Remote command missing --kitten token: {tokens!r}")
@@ -4250,6 +4276,52 @@ test_kitty_smart_launch_handles_kitty_generated_ssh_cmdline() {
 	assert_kitty_remote_launch_matches "$output_file" "yumi"
 }
 
+test_kitty_smart_launch_handles_inline_kitten_cwd_cmdline() {
+	local tmp_dir output_file
+	tmp_dir=$(make_temp_dir)
+	output_file="$tmp_dir/inline-kitten-launch.json"
+	trap "rm -rf '$tmp_dir'" RETURN
+
+	run_kitty_ssh_utils_case inline-kitten "/srv/my project" "$output_file"
+	python3 - <<PY
+import json
+import pathlib
+import shlex
+
+data = json.loads(pathlib.Path("$output_file").read_text())
+tokens = [token.rstrip(";") for token in shlex.split(data["args"][-1])]
+if not any("cwd=/srv/my project" in token for token in tokens):
+    raise SystemExit(f"Inline kitten cwd was not rewritten: {tokens!r}")
+if any("--kitten=cwd=/placeholder" in token for token in tokens):
+    raise SystemExit(f"Inline kitten cwd placeholder leaked through: {tokens!r}")
+if tokens[1:3] != ["kitten", "ssh"]:
+    raise SystemExit(f"Inline kitten prefix changed unexpectedly: {tokens!r}")
+PY
+}
+
+test_kitty_smart_launch_handles_kitty_plus_kitten_ssh_cmdline() {
+	local tmp_dir output_file
+	tmp_dir=$(make_temp_dir)
+	output_file="$tmp_dir/kitty-plus-kitten-launch.json"
+	trap "rm -rf '$tmp_dir'" RETURN
+
+	run_kitty_ssh_utils_case kitty-inline-kitten "/srv/my project" "$output_file"
+	python3 - <<PY
+import json
+import pathlib
+import shlex
+
+data = json.loads(pathlib.Path("$output_file").read_text())
+tokens = [token.rstrip(";") for token in shlex.split(data["args"][-1])]
+if tokens[1:4] != ["kitty", "+kitten", "ssh"]:
+    raise SystemExit(f"kitty +kitten ssh prefix changed unexpectedly: {tokens!r}")
+if not any("cwd=/srv/my project" in token for token in tokens):
+    raise SystemExit(f"kitty +kitten ssh cwd was not rewritten: {tokens!r}")
+if any("--kitten=cwd=/placeholder" in token for token in tokens):
+    raise SystemExit(f"kitty +kitten ssh placeholder leaked through: {tokens!r}")
+PY
+}
+
 test_kitty_smart_launch_falls_back_to_local_when_remote_cwd_is_missing() {
 	local tmp_dir output_file
 	tmp_dir=$(make_temp_dir)
@@ -4283,6 +4355,8 @@ run_test "bb-browser install keeps token private when chmod fails" test_bb_brows
 run_test "bb-browser install writes Edge Default config and verifies MCP bootstrap" test_bb_browser_install_writes_edge_default_config_and_verifies_mcp
 run_test "bb-browser wrapper uses overridden loopback and daemon endpoint" test_bb_browser_wrapper_uses_overridden_loopback_and_daemon_endpoint
 run_test "bb-browser wrapper defaults to Edge Default profile" test_bb_browser_wrapper_defaults_to_edge_default_profile
+run_test "kitty ssh utils rewrites inline kitten cwd" test_kitty_smart_launch_handles_inline_kitten_cwd_cmdline
+run_test "kitty ssh utils rewrites kitty plus kitten ssh" test_kitty_smart_launch_handles_kitty_plus_kitten_ssh_cmdline
 run_test "bb-browser wrapper doctor is side-effect free" test_bb_browser_wrapper_doctor_is_side_effect_free
 run_test "bb-browser wrapper restarts ordinary Edge when CDP is absent" test_bb_browser_wrapper_restarts_edge_when_running_without_cdp
 run_test "bb-browser wrapper restarts Edge when live CDP belongs to another profile" test_bb_browser_wrapper_restarts_edge_when_cdp_profile_mismatches

@@ -4,6 +4,7 @@ import shlex
 from urllib.parse import unquote, urlparse
 
 from kitty.launch import launch as kitty_launch, parse_launch_args
+from kittens.ssh.utils import set_cwd_in_cmdline
 
 # ssh 中需要跟参数值的选项字母（如 -p 22、-i keyfile、-o Option=val）
 _SSH_OPTS_WITH_ARG = frozenset('bcDEeFIiJLlmOopQRSWw')
@@ -146,26 +147,6 @@ def _build_auto_ssh_shell_command(destination, cwd, ssh_kitten_cmdline=None):
     return f'if {ssh_cmd}; then exec zsh -i; else {fallback_notice}; exec zsh -i; fi'
 
 
-def _set_kitten_cwd(argv, cwd):
-    updated = list(argv)
-    cwd_token = f'cwd={cwd}'
-
-    for idx, token in enumerate(updated):
-        if token.startswith('cwd='):
-            updated[idx] = cwd_token
-            return updated
-
-    try:
-        kitten_idx = updated.index('--kitten')
-    except ValueError:
-        insert_at = 2 if updated[:2] == ['kitten', 'ssh'] else len(updated)
-        updated[insert_at:insert_at] = ['--kitten', cwd_token]
-        return updated
-
-    updated.insert(kitten_idx + 1, cwd_token)
-    return updated
-
-
 def _inject_ssh_options(argv, destination):
     updated = list(argv)
     missing_options = [opt for opt in _AUTO_SSH_OPTIONS if opt not in updated]
@@ -184,7 +165,8 @@ def _inject_ssh_options(argv, destination):
 
 def _build_auto_ssh_argv(destination, cwd, ssh_kitten_cmdline=None):
     if ssh_kitten_cmdline:
-        argv = _set_kitten_cwd(ssh_kitten_cmdline, cwd)
+        argv = list(ssh_kitten_cmdline)
+        set_cwd_in_cmdline(cwd, argv)
         return _inject_ssh_options(argv, destination)
 
     return [

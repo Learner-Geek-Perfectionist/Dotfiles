@@ -4147,7 +4147,7 @@ PY
 
 assert_kitty_remote_launch_matches() {
 	local output_file="$1" expected_destination="$2"
-	python3 - "$output_file" "$expected_destination" <<PY
+	python3 - "$output_file" "$expected_destination" <<'PY'
 import json
 import pathlib
 import shlex
@@ -4163,38 +4163,35 @@ if args[:2] != expected_prefix:
 if len(args) < 5:
     raise SystemExit(f"Remote args too short: {args!r}")
 if args[-3:-1] != ["zsh", "-c"]:
-    raise SystemExit(f"Remote launcher not [zsh,-c]: {args!r}")
+    raise SystemExit(f"Remote launcher not ['zsh','-c']: {args!r}")
 
 cmd = args[-1]
-kitten_segment, sep, fallback_segment = cmd.partition(";")
-if sep != ";":
-    raise SystemExit(f"Remote command missing fallback separator: {cmd!r}")
-kitten_tokens = shlex.split(kitten_segment.strip())
-if kitten_tokens[:2] != ["kitten", "ssh"]:
-    raise SystemExit(f"Remote command missing kitten ssh prefix: {kitten_tokens!r}")
-if "--kitten" not in kitten_tokens:
-    raise SystemExit(f"Remote command missing --kitten token: {kitten_tokens!r}")
-if expected_destination not in [token.rstrip(";") for token in kitten_tokens]:
-    raise SystemExit(f"Remote destination mismatch: {kitten_tokens!r}")
-if "cwd=/srv/my project" not in kitten_tokens:
-    raise SystemExit(f"Remote cwd token split: {kitten_tokens!r}")
+if "kitten ssh" not in cmd:
+    raise SystemExit(f"Remote command missing kitten ssh text: {cmd!r}")
+if "fell back to local shell" not in cmd:
+    raise SystemExit(f"Missing fallback notice: {cmd!r}")
+if "if " not in cmd or " else " not in cmd or not cmd.rstrip().endswith("fi"):
+    raise SystemExit(f"Remote command missing failure-path control flow: {cmd!r}")
+if cmd.count("exec zsh -i") < 2:
+    raise SystemExit(f"Remote command must reach local shell on both paths: {cmd!r}")
+
+tokens = [token.rstrip(";") for token in shlex.split(cmd)]
+if "kitten" not in tokens or "ssh" not in tokens:
+    raise SystemExit(f"Remote command missing kitten ssh tokens: {tokens!r}")
+if "--kitten" not in tokens:
+    raise SystemExit(f"Remote command missing --kitten token: {tokens!r}")
+if expected_destination not in tokens:
+    raise SystemExit(f"Remote destination mismatch: {tokens!r}")
+if "cwd=/srv/my project" not in tokens:
+    raise SystemExit(f"Remote cwd token split: {tokens!r}")
 for opt in (
     "-oBatchMode=yes",
     "-oConnectTimeout=2",
     "-oConnectionAttempts=1",
     "-oStrictHostKeyChecking=yes",
 ):
-    if opt not in kitten_tokens:
-        raise SystemExit(f"Missing ssh guard option {opt}: {kitten_tokens!r}")
-if "fell back to local shell" not in cmd:
-    raise SystemExit(f"Missing fallback notice: {cmd!r}")
-
-fallback = fallback_segment.strip()
-if not fallback:
-    raise SystemExit(f"Remote fallback shell missing: {fallback_segment!r}")
-fallback_tokens = shlex.split(fallback)
-if fallback_tokens[:2] != ["exec", "zsh"] or "-i" not in fallback_tokens:
-    raise SystemExit(f"Remote fallback shell not exec zsh -i: {fallback_tokens!r}")
+    if opt not in tokens:
+        raise SystemExit(f"Missing ssh guard option {opt}: {tokens!r}")
 PY
 }
 
@@ -4222,17 +4219,23 @@ PY
 }
 
 test_kitty_smart_launch_clones_remote_context_with_timeout_guard() {
-	local tmp_dir output_file scenario
+	local tmp_dir output_file
 	tmp_dir=$(make_temp_dir)
 	output_file="$tmp_dir/ssh-launch.json"
 	trap "rm -rf '$tmp_dir'" RETURN
 
-	for scenario in ssh kitty-ssh; do
-		run_kitty_ssh_utils_case "$scenario" "/srv/my project" "$output_file"
-
+	run_kitty_ssh_utils_case ssh "/srv/my project" "$output_file"
 	assert_kitty_remote_launch_matches "$output_file" "yumi"
-		assert_kitty_remote_launch_matches "$output_file" "yumi"
-	done
+}
+
+test_kitty_smart_launch_handles_kitty_generated_ssh_cmdline() {
+	local tmp_dir output_file
+	tmp_dir=$(make_temp_dir)
+	output_file="$tmp_dir/kitty-launch.json"
+	trap "rm -rf '$tmp_dir'" RETURN
+
+	run_kitty_ssh_utils_case kitty-ssh "/srv/my project" "$output_file"
+	assert_kitty_remote_launch_matches "$output_file" "yumi"
 }
 
 test_kitty_smart_launch_falls_back_to_local_when_remote_cwd_is_missing() {
@@ -4309,6 +4312,7 @@ run_test "Claude refreshes study-master on rerun" test_claude_refreshes_study_ma
 run_test "macOS brew maintenance LaunchAgent" test_macos_brew_maintenance_launchagent_created
 run_test "kitty smart launch uses last_reported for local windows" test_kitty_smart_launch_uses_last_reported_for_local_windows
 run_test "kitty smart launch clones remote context with timeout guard" test_kitty_smart_launch_clones_remote_context_with_timeout_guard
+run_test "kitty smart launch handles Kitty-generated ssh command line" test_kitty_smart_launch_handles_kitty_generated_ssh_cmdline
 run_test "kitty smart launch falls back to local when remote cwd is missing" test_kitty_smart_launch_falls_back_to_local_when_remote_cwd_is_missing
 
 section "Done"

@@ -1,7 +1,7 @@
 # smart_tab.py — Cmd+E 智能开新 tab
-# 普通情况：继承当前目录开新 tab（原有行为）
-# SSH 会话中：新 tab 先启动本地 zsh，再自动 SSH 进去
-# 这样 exit 退出 SSH 后，回落到本地 zsh，tab 不会消失
+# 普通情况：继承当前目录开新 tab
+# SSH 会话中：优先在 2 秒内复用远端主机与目录
+# 若 SSH 失败或超时：自动回退到本地 zsh，tab 保持可用
 
 import sys
 import traceback

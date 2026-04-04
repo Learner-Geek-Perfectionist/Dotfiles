@@ -6,6 +6,14 @@ from kitty.launch import launch as kitty_launch, parse_launch_args
 
 # ssh 中需要跟参数值的选项字母（如 -p 22、-i keyfile、-o Option=val）
 _SSH_OPTS_WITH_ARG = frozenset('bcDEeFIiJLlmOopQRSWw')
+_AUTO_SSH_CONNECT_TIMEOUT_SECONDS = 2
+_AUTO_SSH_OPTIONS = (
+    '-oBatchMode=yes',
+    f'-oConnectTimeout={_AUTO_SSH_CONNECT_TIMEOUT_SECONDS}',
+    '-oConnectionAttempts=1',
+    '-oStrictHostKeyChecking=yes',
+)
+_AUTO_SSH_FALLBACK_NOTICE = 'kitty: SSH clone failed or timed out; fell back to local shell.'
 
 
 def _extract_kitty_ssh_destination(cmdline):
@@ -54,14 +62,15 @@ def _extract_plain_ssh_destination(cmdline):
 def extract_ssh_destination(window):
     """从前台进程中提取 SSH 目标地址（user@host 或 hostname）。找到返回字符串，否则返回 None。"""
     try:
-        fp = window.child.foreground_processes
+        foreground_processes = window.child.foreground_processes
     except (AttributeError, OSError):
         return None
 
-    for p in fp:
-        cmdline = p.get('cmdline', []) or []
+    for process in foreground_processes:
+        cmdline = process.get('cmdline', []) or []
         if not cmdline:
             continue
+
         basename = cmdline[0].rsplit('/', 1)[-1]
         if basename != 'ssh':
             continue
@@ -77,30 +86,73 @@ def extract_ssh_destination(window):
     return None
 
 
-def smart_launch(boss, launch_type, target_window_id=None):
-    """智能启动新 tab 或 os-window。SSH 中先连远程，exit 后回落本地 zsh。
-
-    Args:
-        boss: kitty.boss.Boss 实例
-        launch_type: "tab" 或 "os-window"
-        target_window_id: 触发当前 kitten 的源窗口 id
-    """
-    window = None
+def _resolve_source_window(boss, target_window_id=None):
     if target_window_id is not None:
         window = boss.window_id_map.get(target_window_id)
-    if window is None:
-        window = boss.active_window
+        if window is not None:
+            return window
+    return boss.active_window
+
+
+def _extract_window_cwd(window):
+    try:
+        cwd = window.cwd_of_child
+    except (AttributeError, OSError):
+        return None
+
+    return cwd or None
+
+
+def _source_window_arg(window):
+    return f'--source-window=id:{window.id}'
+
+
+def _build_local_launch_args(launch_type, window):
+    return [
+        f'--type={launch_type}',
+        _source_window_arg(window),
+        '--cwd=last_reported',
+    ]
+
+
+def _build_auto_ssh_shell_command(destination, cwd):
+    ssh_cmd = shlex.join(
+        [
+            'kitten',
+            'ssh',
+            '--kitten',
+            f'cwd={cwd}',
+            *_AUTO_SSH_OPTIONS,
+            destination,
+        ]
+    )
+    fallback_notice = shlex.join(['printf', '%s\n', _AUTO_SSH_FALLBACK_NOTICE])
+    return f'if {ssh_cmd}; then exec zsh -i; else {fallback_notice}; exec zsh -i; fi'
+
+
+def _build_remote_launch_args(launch_type, window, destination, cwd):
+    return [
+        f'--type={launch_type}',
+        _source_window_arg(window),
+        'zsh',
+        '-c',
+        _build_auto_ssh_shell_command(destination, cwd),
+    ]
+
+
+def smart_launch(boss, launch_type, target_window_id=None):
+    """智能启动新 tab 或 os-window。SSH 可复用时尝试继承远端 cwd，失败后回落本地 zsh。"""
+    window = _resolve_source_window(boss, target_window_id)
     if window is None:
         return
 
     destination = extract_ssh_destination(window)
-    source_window_arg = f'--source-window=id:{window.id}'
+    cwd = _extract_window_cwd(window)
 
-    if destination is not None:
-        ssh_cmd = f'kitten ssh {shlex.quote(destination)}; exec zsh -i'
-        launch_args = [f'--type={launch_type}', source_window_arg, 'zsh', '-c', ssh_cmd]
+    if destination is not None and cwd is not None:
+        launch_args = _build_remote_launch_args(launch_type, window, destination, cwd)
     else:
-        launch_args = [f'--type={launch_type}', source_window_arg, '--cwd=last_reported']
+        launch_args = _build_local_launch_args(launch_type, window)
 
     opts, remaining = parse_launch_args(launch_args)
     kitty_launch(boss, opts, remaining)

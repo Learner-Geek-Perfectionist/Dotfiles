@@ -1,6 +1,7 @@
 # ssh_utils.py — smart_tab.py 和 smart_window.py 共享的 SSH 工具函数
 
 import shlex
+from urllib.parse import unquote, urlparse
 
 from kitty.launch import launch as kitty_launch, parse_launch_args
 
@@ -94,13 +95,37 @@ def _resolve_source_window(boss, target_window_id=None):
     return boss.active_window
 
 
-def _extract_window_cwd(window):
+def _extract_last_reported_cwd(window):
     try:
-        cwd = window.cwd_of_child
+        reported_cwd = window.screen.last_reported_cwd
     except (AttributeError, OSError):
         return None
 
-    return cwd or None
+    if not reported_cwd:
+        return None
+
+    parsed = urlparse(reported_cwd)
+    if not parsed.path:
+        return None
+
+    return unquote(parsed.path)
+
+
+def _extract_ssh_kitten_cmdline(window):
+    try:
+        ssh_kitten_cmdline = window.ssh_kitten_cmdline
+    except (AttributeError, OSError):
+        return None
+
+    if not callable(ssh_kitten_cmdline):
+        return None
+
+    try:
+        cmdline = ssh_kitten_cmdline()
+    except OSError:
+        return None
+
+    return list(cmdline) if cmdline else None
 
 
 def _source_window_arg(window):
@@ -115,28 +140,74 @@ def _build_local_launch_args(launch_type, window):
     ]
 
 
-def _build_auto_ssh_shell_command(destination, cwd):
-    ssh_cmd = shlex.join(
-        [
-            'kitten',
-            'ssh',
-            '--kitten',
-            f'cwd={cwd}',
-            *_AUTO_SSH_OPTIONS,
-            destination,
-        ]
-    )
+def _build_auto_ssh_shell_command(destination, cwd, ssh_kitten_cmdline=None):
+    ssh_cmd = shlex.join(_build_auto_ssh_argv(destination, cwd, ssh_kitten_cmdline=ssh_kitten_cmdline))
     fallback_notice = shlex.join(['printf', '%s\n', _AUTO_SSH_FALLBACK_NOTICE])
     return f'if {ssh_cmd}; then exec zsh -i; else {fallback_notice}; exec zsh -i; fi'
 
 
-def _build_remote_launch_args(launch_type, window, destination, cwd):
+def _set_kitten_cwd(argv, cwd):
+    updated = list(argv)
+    cwd_token = f'cwd={cwd}'
+
+    for idx, token in enumerate(updated):
+        if token.startswith('cwd='):
+            updated[idx] = cwd_token
+            return updated
+
+    try:
+        kitten_idx = updated.index('--kitten')
+    except ValueError:
+        insert_at = 2 if updated[:2] == ['kitten', 'ssh'] else len(updated)
+        updated[insert_at:insert_at] = ['--kitten', cwd_token]
+        return updated
+
+    updated.insert(kitten_idx + 1, cwd_token)
+    return updated
+
+
+def _inject_ssh_options(argv, destination):
+    updated = list(argv)
+    missing_options = [opt for opt in _AUTO_SSH_OPTIONS if opt not in updated]
+    if not missing_options:
+        return updated
+
+    insert_at = len(updated)
+    for idx in range(len(updated) - 1, -1, -1):
+        if updated[idx] == destination:
+            insert_at = idx
+            break
+
+    updated[insert_at:insert_at] = missing_options
+    return updated
+
+
+def _build_auto_ssh_argv(destination, cwd, ssh_kitten_cmdline=None):
+    if ssh_kitten_cmdline:
+        argv = _set_kitten_cwd(ssh_kitten_cmdline, cwd)
+        return _inject_ssh_options(argv, destination)
+
+    return [
+        'kitten',
+        'ssh',
+        '--kitten',
+        f'cwd={cwd}',
+        *_AUTO_SSH_OPTIONS,
+        destination,
+    ]
+
+
+def _build_remote_launch_args(launch_type, window, destination, cwd, ssh_kitten_cmdline=None):
     return [
         f'--type={launch_type}',
         _source_window_arg(window),
         'zsh',
         '-c',
-        _build_auto_ssh_shell_command(destination, cwd),
+        _build_auto_ssh_shell_command(
+            destination,
+            cwd,
+            ssh_kitten_cmdline=ssh_kitten_cmdline,
+        ),
     ]
 
 
@@ -147,10 +218,17 @@ def smart_launch(boss, launch_type, target_window_id=None):
         return
 
     destination = extract_ssh_destination(window)
-    cwd = _extract_window_cwd(window)
+    cwd = _extract_last_reported_cwd(window)
+    ssh_kitten_cmdline = _extract_ssh_kitten_cmdline(window)
 
     if destination is not None and cwd is not None:
-        launch_args = _build_remote_launch_args(launch_type, window, destination, cwd)
+        launch_args = _build_remote_launch_args(
+            launch_type,
+            window,
+            destination,
+            cwd,
+            ssh_kitten_cmdline=ssh_kitten_cmdline,
+        )
     else:
         launch_args = _build_local_launch_args(launch_type, window)
 

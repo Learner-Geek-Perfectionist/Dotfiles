@@ -4117,10 +4117,20 @@ class Child:
     foreground_processes = []
 
 
+class Screen:
+    last_reported_cwd = None
+
+
 class Window:
     id = 42
     child = Child()
-    cwd_of_child = cwd_value
+    cwd_of_child = "/Users/local/path"
+    screen = Screen()
+
+    def ssh_kitten_cmdline(self):
+        if scenario in {"ssh", "kitty-ssh"}:
+            return ["kitten", "ssh", "--kitten", "cwd=/placeholder", "yumi"]
+        return None
 
 
 window = Window()
@@ -4131,8 +4141,10 @@ elif scenario == "kitty-ssh":
     cmdline = ["ssh", "--", "yumi", "exec", "sh", "-c", "kitten", "ssh", "yumi"]
 if cmdline is not None:
     window.child.foreground_processes = [{"cmdline": cmdline}]
+if scenario in {"ssh", "kitty-ssh"} and cwd_value is not None:
+    window.screen.last_reported_cwd = f"file://{cwd_value.replace(' ', '%20')}"
 if scenario == "missing-cwd":
-    window.cwd_of_child = None
+    window.screen.last_reported_cwd = None
 
 
 class Boss:

@@ -160,20 +160,58 @@ def _build_local_launch_args(launch_type, window):
 def _build_auto_ssh_shell_command(destination, cwd, ssh_kitten_cmdline=None):
     ssh_cmd = shlex.join(_build_auto_ssh_argv(destination, cwd, ssh_kitten_cmdline=ssh_kitten_cmdline))
     fallback_notice = shlex.join(['printf', '%s\n', _AUTO_SSH_FALLBACK_NOTICE])
-    return f'if {ssh_cmd}; then exec zsh -i; else {fallback_notice}; exec zsh -i; fi'
+    return (
+        f'{ssh_cmd}; '
+        'ssh_status=$?; '
+        'if [ "$ssh_status" -eq 0 ]; then exec zsh -i; '
+        f'elif [ "$ssh_status" -eq 255 ]; then {fallback_notice}; exec zsh -i; '
+        'else exec zsh -i; fi'
+    )
 
 
-def _inject_ssh_options(argv, destination):
+def _find_ssh_destination_index(argv):
+    try:
+        ssh_idx = argv.index('ssh')
+    except ValueError:
+        return None
+
+    skip_next = False
+    for idx in range(ssh_idx + 1, len(argv)):
+        token = argv[idx]
+
+        if skip_next:
+            skip_next = False
+            continue
+
+        if token == '--':
+            return idx + 1 if idx + 1 < len(argv) else None
+
+        if token == '--kitten':
+            skip_next = True
+            continue
+
+        if token.startswith('--kitten='):
+            continue
+
+        if token.startswith('-'):
+            if len(token) == 2 and token[1] in _SSH_OPTS_WITH_ARG:
+                skip_next = True
+            continue
+
+        return idx
+
+    return None
+
+
+def _inject_ssh_options(argv):
     updated = list(argv)
     missing_options = [opt for opt in _AUTO_SSH_OPTIONS if opt not in updated]
     if not missing_options:
         return updated
 
-    insert_at = len(updated)
-    for idx in range(len(updated) - 1, -1, -1):
-        if updated[idx] == destination:
-            insert_at = idx
-            break
+    insert_at = _find_ssh_destination_index(updated)
+    if insert_at is None:
+        insert_at = len(updated)
 
     updated[insert_at:insert_at] = missing_options
     return updated
@@ -183,7 +221,7 @@ def _build_auto_ssh_argv(destination, cwd, ssh_kitten_cmdline=None):
     if ssh_kitten_cmdline:
         argv = list(ssh_kitten_cmdline)
         set_cwd_in_cmdline(cwd, argv)
-        return _inject_ssh_options(argv, destination)
+        return _inject_ssh_options(argv)
 
     return [
         'kitten',

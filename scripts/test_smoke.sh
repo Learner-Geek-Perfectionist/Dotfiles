@@ -4080,6 +4080,7 @@ import os
 import pathlib
 import sys
 import types
+from urllib.parse import urlparse
 
 captured = {}
 
@@ -4118,6 +4119,9 @@ def fake_get_connection_data(argv, extra_args=()):
             if "--kitten" in extra_args:
                 continue
             return None
+        if token.startswith("ssh://"):
+            parsed = urlparse(token)
+            return FakeConnectionData(parsed.hostname or "")
         return FakeConnectionData(token)
 
     return None
@@ -4187,6 +4191,8 @@ class Window:
             return ["kitten", "ssh", "--kitten=cwd=/placeholder", "yumi"]
         if scenario == "kitty-inline-kitten":
             return ["kitty", "+kitten", "ssh", "--kitten=cwd=/placeholder", "yumi"]
+        if scenario == "uri-kitten":
+            return ["kitty", "+kitten", "ssh", "--kitten=cwd=/placeholder", "ssh://alice@example.com:2222"]
         return None
 
 
@@ -4196,9 +4202,11 @@ if scenario in {"ssh", "inline-kitten", "missing-cwd"}:
     cmdline = ["ssh", "yumi"]
 elif scenario in {"kitty-ssh", "kitty-inline-kitten"}:
     cmdline = ["kitty", "+kitten", "ssh", "--kitten", "cwd=/placeholder", "yumi"]
+elif scenario == "uri-kitten":
+    cmdline = ["kitty", "+kitten", "ssh", "--kitten", "cwd=/placeholder", "ssh://alice@example.com:2222"]
 if cmdline is not None:
     window.child.foreground_processes = [{"cmdline": cmdline}]
-if scenario in {"ssh", "kitty-ssh", "inline-kitten", "kitty-inline-kitten"} and cwd_value is not None:
+if scenario in {"ssh", "kitty-ssh", "inline-kitten", "kitty-inline-kitten", "uri-kitten"} and cwd_value is not None:
     window.screen.last_reported_cwd = f"file://{cwd_value.replace(' ', '%20')}"
 if scenario == "missing-cwd":
     window.screen.last_reported_cwd = None
@@ -4325,7 +4333,11 @@ if not any("cwd=/srv/my project" in token for token in tokens):
     raise SystemExit(f"Inline kitten cwd was not rewritten: {tokens!r}")
 if any("--kitten=cwd=/placeholder" in token for token in tokens):
     raise SystemExit(f"Inline kitten cwd placeholder leaked through: {tokens!r}")
-if tokens[1:3] != ["kitten", "ssh"]:
+try:
+    kitten_idx = tokens.index("kitten")
+except ValueError as exc:
+    raise SystemExit(f"Inline kitten prefix missing: {tokens!r}") from exc
+if tokens[kitten_idx:kitten_idx + 2] != ["kitten", "ssh"]:
     raise SystemExit(f"Inline kitten prefix changed unexpectedly: {tokens!r}")
 PY
 }
@@ -4344,12 +4356,43 @@ import shlex
 
 data = json.loads(pathlib.Path("$output_file").read_text())
 tokens = [token.rstrip(";") for token in shlex.split(data["args"][-1])]
-if tokens[1:4] != ["kitty", "+kitten", "ssh"]:
+try:
+    kitty_idx = tokens.index("kitty")
+except ValueError as exc:
+    raise SystemExit(f"kitty +kitten ssh prefix missing: {tokens!r}") from exc
+if tokens[kitty_idx:kitty_idx + 3] != ["kitty", "+kitten", "ssh"]:
     raise SystemExit(f"kitty +kitten ssh prefix changed unexpectedly: {tokens!r}")
 if not any("cwd=/srv/my project" in token for token in tokens):
     raise SystemExit(f"kitty +kitten ssh cwd was not rewritten: {tokens!r}")
 if any("--kitten=cwd=/placeholder" in token for token in tokens):
     raise SystemExit(f"kitty +kitten ssh placeholder leaked through: {tokens!r}")
+PY
+}
+
+test_kitty_smart_launch_inserts_guard_options_before_uri_destinations() {
+	local tmp_dir output_file
+	tmp_dir=$(make_temp_dir)
+	output_file="$tmp_dir/uri-kitten-launch.json"
+	trap 'rm -rf "${tmp_dir:-}"' RETURN
+
+	run_kitty_ssh_utils_case uri-kitten "/srv/my project" "$output_file"
+	python3 - <<PY
+import json
+import pathlib
+import shlex
+
+data = json.loads(pathlib.Path("$output_file").read_text())
+tokens = [token.rstrip(";") for token in shlex.split(data["args"][-1])]
+destination = "ssh://alice@example.com:2222"
+dest_idx = tokens.index(destination)
+for opt in (
+    "-oBatchMode=yes",
+    "-oConnectTimeout=2",
+    "-oConnectionAttempts=1",
+    "-oStrictHostKeyChecking=yes",
+):
+    if tokens.index(opt) > dest_idx:
+        raise SystemExit(f"SSH guard option appears after URI destination: {tokens!r}")
 PY
 }
 
@@ -4388,6 +4431,7 @@ run_test "bb-browser wrapper uses overridden loopback and daemon endpoint" test_
 run_test "bb-browser wrapper defaults to Edge Default profile" test_bb_browser_wrapper_defaults_to_edge_default_profile
 run_test "kitty ssh utils rewrites inline kitten cwd" test_kitty_smart_launch_handles_inline_kitten_cwd_cmdline
 run_test "kitty ssh utils rewrites kitty plus kitten ssh" test_kitty_smart_launch_handles_kitty_plus_kitten_ssh_cmdline
+run_test "kitty ssh utils keeps guard options before URI destinations" test_kitty_smart_launch_inserts_guard_options_before_uri_destinations
 run_test "bb-browser wrapper doctor is side-effect free" test_bb_browser_wrapper_doctor_is_side_effect_free
 run_test "bb-browser wrapper restarts ordinary Edge when CDP is absent" test_bb_browser_wrapper_restarts_edge_when_running_without_cdp
 run_test "bb-browser wrapper restarts Edge when live CDP belongs to another profile" test_bb_browser_wrapper_restarts_edge_when_cdp_profile_mismatches

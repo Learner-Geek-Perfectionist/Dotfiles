@@ -4193,6 +4193,8 @@ class Window:
             return ["kitty", "+kitten", "ssh", "--kitten=cwd=/placeholder", "yumi"]
         if scenario == "uri-kitten":
             return ["kitty", "+kitten", "ssh", "--kitten=cwd=/placeholder", "ssh://alice@example.com:2222"]
+        if scenario == "wrapped-kitty-ssh":
+            return ["kitty", "+kitten", "ssh", "--kitten", "cwd=/placeholder", "yumi"]
         return None
 
 
@@ -4204,9 +4206,13 @@ elif scenario in {"kitty-ssh", "kitty-inline-kitten"}:
     cmdline = ["kitty", "+kitten", "ssh", "--kitten", "cwd=/placeholder", "yumi"]
 elif scenario == "uri-kitten":
     cmdline = ["kitty", "+kitten", "ssh", "--kitten", "cwd=/placeholder", "ssh://alice@example.com:2222"]
+elif scenario == "wrapped-kitty-ssh":
+    cmdline = ["kitten", "run-shell", "kitty", "+kitten", "ssh", "--kitten", "cwd=/placeholder", "yumi"]
+elif scenario == "kitty-uri-no-helper":
+    cmdline = ["kitty", "+kitten", "ssh", "--kitten", "cwd=/placeholder", "ssh://alice@example.com:2222"]
 if cmdline is not None:
     window.child.foreground_processes = [{"cmdline": cmdline}]
-if scenario in {"ssh", "kitty-ssh", "inline-kitten", "kitty-inline-kitten", "uri-kitten"} and cwd_value is not None:
+if scenario in {"ssh", "kitty-ssh", "inline-kitten", "kitty-inline-kitten", "uri-kitten", "wrapped-kitty-ssh", "kitty-uri-no-helper"} and cwd_value is not None:
     window.screen.last_reported_cwd = f"file://{cwd_value.replace(' ', '%20')}"
 if scenario == "missing-cwd":
     window.screen.last_reported_cwd = None
@@ -4315,6 +4321,16 @@ test_kitty_smart_launch_handles_kitty_generated_ssh_cmdline() {
 	assert_kitty_remote_launch_matches "$output_file" "yumi"
 }
 
+test_kitty_smart_launch_handles_wrapped_kitty_ssh_foreground_cmdline() {
+	local tmp_dir output_file
+	tmp_dir=$(make_temp_dir)
+	output_file="$tmp_dir/wrapped-kitty-launch.json"
+	trap 'rm -rf "${tmp_dir:-}"' RETURN
+
+	run_kitty_ssh_utils_case wrapped-kitty-ssh "/srv/my project" "$output_file"
+	assert_kitty_remote_launch_matches "$output_file" "yumi"
+}
+
 test_kitty_smart_launch_handles_inline_kitten_cwd_cmdline() {
 	local tmp_dir output_file
 	tmp_dir=$(make_temp_dir)
@@ -4396,6 +4412,24 @@ for opt in (
 PY
 }
 
+test_kitty_smart_launch_fails_closed_for_kitty_uri_without_helper_cmdline() {
+	local tmp_dir output_file
+	tmp_dir=$(make_temp_dir)
+	output_file="$tmp_dir/kitty-uri-no-helper-launch.json"
+	trap 'rm -rf "${tmp_dir:-}"' RETURN
+
+	run_kitty_ssh_utils_case kitty-uri-no-helper "/srv/my project" "$output_file"
+	python3 - <<PY
+import json
+import pathlib
+
+data = json.loads(pathlib.Path("$output_file").read_text())
+expected_args = ["--type=tab", "--source-window=id:42", "--cwd=last_reported"]
+if data["args"] != expected_args:
+    raise SystemExit(f"Expected local fallback when ssh_kitten_cmdline() is unavailable: {data['args']!r}")
+PY
+}
+
 test_kitty_smart_launch_falls_back_to_local_when_remote_cwd_is_missing() {
 	local tmp_dir output_file
 	tmp_dir=$(make_temp_dir)
@@ -4431,7 +4465,9 @@ run_test "bb-browser wrapper uses overridden loopback and daemon endpoint" test_
 run_test "bb-browser wrapper defaults to Edge Default profile" test_bb_browser_wrapper_defaults_to_edge_default_profile
 run_test "kitty ssh utils rewrites inline kitten cwd" test_kitty_smart_launch_handles_inline_kitten_cwd_cmdline
 run_test "kitty ssh utils rewrites kitty plus kitten ssh" test_kitty_smart_launch_handles_kitty_plus_kitten_ssh_cmdline
+run_test "kitty ssh utils handles wrapped kitty ssh foreground cmdline" test_kitty_smart_launch_handles_wrapped_kitty_ssh_foreground_cmdline
 run_test "kitty ssh utils keeps guard options before URI destinations" test_kitty_smart_launch_inserts_guard_options_before_uri_destinations
+run_test "kitty ssh utils falls back locally when helper cmdline is unavailable" test_kitty_smart_launch_fails_closed_for_kitty_uri_without_helper_cmdline
 run_test "bb-browser wrapper doctor is side-effect free" test_bb_browser_wrapper_doctor_is_side_effect_free
 run_test "bb-browser wrapper restarts ordinary Edge when CDP is absent" test_bb_browser_wrapper_restarts_edge_when_running_without_cdp
 run_test "bb-browser wrapper restarts Edge when live CDP belongs to another profile" test_bb_browser_wrapper_restarts_edge_when_cdp_profile_mismatches

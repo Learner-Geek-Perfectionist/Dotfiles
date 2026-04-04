@@ -34,6 +34,9 @@ def _extract_kitty_ssh_destination(cmdline):
 
 def _extract_kitten_cmdline_destination(cmdline):
     """识别 kitty/kitten ssh 命令行中的目标主机。"""
+    if not cmdline:
+        return None
+
     if not is_kitten_cmdline(cmdline):
         return None
 
@@ -84,10 +87,6 @@ def extract_ssh_destination(window):
         cmdline = process.get('cmdline', []) or []
         if not cmdline:
             continue
-
-        destination = _extract_kitten_cmdline_destination(cmdline)
-        if destination is not None:
-            return destination
 
         basename = cmdline[0].rsplit('/', 1)[-1]
         if basename != 'ssh':
@@ -256,6 +255,8 @@ def smart_launch(boss, launch_type, target_window_id=None):
     destination = extract_ssh_destination(window)
     cwd = _extract_last_reported_cwd(window)
     ssh_kitten_cmdline = _extract_ssh_kitten_cmdline(window)
+    if ssh_kitten_cmdline is not None:
+        destination = _extract_kitten_cmdline_destination(ssh_kitten_cmdline)
 
     if destination is not None and cwd is not None:
         launch_args = _build_remote_launch_args(

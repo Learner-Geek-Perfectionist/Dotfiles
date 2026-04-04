@@ -4189,6 +4189,10 @@ if "cwd=/srv/my project" not in tokens:
     raise SystemExit(f"Remote cwd token split: {tokens!r}")
 if "exec" not in tokens or "zsh" not in tokens or "-i" not in tokens:
     raise SystemExit(f"Missing fallback shell: {tokens!r}")
+if "--type=tab" not in data["args"]:
+    raise SystemExit(f"Missing type arg: {data['args']!r}")
+if "--source-window=id:42" not in data["args"]:
+    raise SystemExit(f"Missing source window arg: {data['args']!r}")
 PY
 }
 
@@ -4200,11 +4204,19 @@ test_kitty_smart_launch_falls_back_to_local_when_remote_cwd_is_missing() {
 
 	run_kitty_ssh_utils_case missing-cwd "" "$output_file"
 
-	assert_contains '"--cwd=last_reported"' "$output_file"
-	assert_not_contains 'cwd=' "$output_file"
-	assert_not_contains '-oConnectTimeout=2' "$output_file"
-	assert_not_contains '"kitten ssh"' "$output_file"
-	assert_not_contains '"zsh"' "$output_file"
+	python3 - <<PY
+import json
+import pathlib
+
+data = json.loads(pathlib.Path("$output_file").read_text())
+expected_args = ["--type=tab", "--source-window=id:42", "--cwd=last_reported"]
+if data["args"] != expected_args:
+    raise SystemExit(f"Unexpected fallback args: {data['args']!r}")
+if any("kitten" in token or "ssh" in token for token in data["args"]):
+    raise SystemExit(f"Remote markers present in fallback args: {data['args']!r}")
+if "yumi" in data.get("remaining", []):
+    raise SystemExit("Remote destination still present")
+PY
 }
 
 run_test "Dotfiles manifest and SSH include block" test_dotfiles_manifest_and_ssh_block

@@ -4103,7 +4103,8 @@ class FakeConnectionData:
 
 
 def fake_is_kitten_cmdline(argv):
-    return argv[:2] == ["kitten", "ssh"] or argv[:3] == ["kitty", "+kitten", "ssh"]
+    basename0 = os.path.basename(argv[0]) if argv else ""
+    return (basename0 == "kitten" and argv[1:2] == ["ssh"]) or argv[:3] == ["kitty", "+kitten", "ssh"]
 
 
 def fake_get_connection_data(argv, extra_args=()):
@@ -4111,7 +4112,7 @@ def fake_get_connection_data(argv, extra_args=()):
         return None
 
     for token in reversed(argv):
-        if token in {"kitty", "kitten", "+kitten", "ssh"}:
+        if token in {"kitty", "kitten", "+kitten", "ssh"} or os.path.basename(token) == "kitten":
             continue
         if token.startswith("-") or token.startswith("cwd="):
             continue
@@ -4139,6 +4140,7 @@ def fake_launch(boss, opts, remaining):
 
 kitty_pkg = types.ModuleType("kitty")
 kitty_pkg.__path__ = []
+kitty_constants_mod = types.ModuleType("kitty.constants")
 kitty_launch_mod = types.ModuleType("kitty.launch")
 kitty_kittens_mod = types.ModuleType("kittens")
 kitty_kittens_mod.__path__ = []
@@ -4147,10 +4149,12 @@ kitty_kittens_ssh_mod.__path__ = []
 kitty_kittens_ssh_utils_mod = types.ModuleType("kittens.ssh.utils")
 kitty_launch_mod.launch = fake_launch
 kitty_launch_mod.parse_launch_args = fake_parse_launch_args
+kitty_constants_mod.kitten_exe = lambda: "/opt/kitty/bin/kitten"
 kitty_kittens_ssh_utils_mod.set_cwd_in_cmdline = fake_set_cwd_in_cmdline
 kitty_kittens_ssh_utils_mod.is_kitten_cmdline = fake_is_kitten_cmdline
 kitty_kittens_ssh_utils_mod.get_connection_data = fake_get_connection_data
 sys.modules["kitty"] = kitty_pkg
+sys.modules["kitty.constants"] = kitty_constants_mod
 sys.modules["kitty.launch"] = kitty_launch_mod
 sys.modules["kittens"] = kitty_kittens_mod
 sys.modules["kittens.ssh"] = kitty_kittens_ssh_mod
@@ -4195,6 +4199,8 @@ class Window:
             return ["kitty", "+kitten", "ssh", "--kitten=cwd=/placeholder", "ssh://alice@example.com:2222"]
         if scenario == "wrapped-kitty-ssh":
             return ["kitty", "+kitten", "ssh", "--kitten", "cwd=/placeholder", "yumi"]
+        if scenario == "combined-short-flags":
+            return ["kitty", "+kitten", "ssh", "-vp", "2222", "--kitten=cwd=/placeholder", "yumi"]
         return None
 
 
@@ -4210,9 +4216,11 @@ elif scenario == "wrapped-kitty-ssh":
     cmdline = ["kitten", "run-shell", "kitty", "+kitten", "ssh", "--kitten", "cwd=/placeholder", "yumi"]
 elif scenario == "kitty-uri-no-helper":
     cmdline = ["kitty", "+kitten", "ssh", "--kitten", "cwd=/placeholder", "ssh://alice@example.com:2222"]
+elif scenario == "combined-short-flags":
+    cmdline = ["kitty", "+kitten", "ssh", "-vp", "2222", "--kitten", "cwd=/placeholder", "yumi"]
 if cmdline is not None:
     window.child.foreground_processes = [{"cmdline": cmdline}]
-if scenario in {"ssh", "kitty-ssh", "inline-kitten", "kitty-inline-kitten", "uri-kitten", "wrapped-kitty-ssh", "kitty-uri-no-helper"} and cwd_value is not None:
+if scenario in {"ssh", "kitty-ssh", "inline-kitten", "kitty-inline-kitten", "uri-kitten", "wrapped-kitty-ssh", "kitty-uri-no-helper", "combined-short-flags"} and cwd_value is not None:
     window.screen.last_reported_cwd = f"file://{cwd_value.replace(' ', '%20')}"
 if scenario == "missing-cwd":
     window.screen.last_reported_cwd = None
@@ -4232,6 +4240,7 @@ assert_kitty_remote_launch_matches() {
 	local output_file="$1" expected_destination="$2"
 	python3 - "$output_file" "$expected_destination" <<'PY'
 import json
+import os
 import pathlib
 import shlex
 import sys
@@ -4259,7 +4268,8 @@ if cmd.count("exec zsh -i") < 2:
     raise SystemExit(f"Remote command must reach local shell on both paths: {cmd!r}")
 
 tokens = [token.rstrip(";") for token in shlex.split(cmd)]
-if "ssh" not in tokens or ("kitten" not in tokens and "+kitten" not in tokens):
+token_basenames = [os.path.basename(token) if "/" in token and not token.startswith("-") else token for token in tokens]
+if "ssh" not in token_basenames or ("kitten" not in token_basenames and "+kitten" not in token_basenames):
     raise SystemExit(f"Remote command missing kitten ssh tokens: {tokens!r}")
 if "--kitten" not in tokens:
     raise SystemExit(f"Remote command missing --kitten token: {tokens!r}")
@@ -4340,6 +4350,7 @@ test_kitty_smart_launch_handles_inline_kitten_cwd_cmdline() {
 	run_kitty_ssh_utils_case inline-kitten "/srv/my project" "$output_file"
 	python3 - <<PY
 import json
+import os
 import pathlib
 import shlex
 
@@ -4350,10 +4361,10 @@ if not any("cwd=/srv/my project" in token for token in tokens):
 if any("--kitten=cwd=/placeholder" in token for token in tokens):
     raise SystemExit(f"Inline kitten cwd placeholder leaked through: {tokens!r}")
 try:
-    kitten_idx = tokens.index("kitten")
+    kitten_idx = [os.path.basename(token) if "/" in token and not token.startswith("-") else token for token in tokens].index("kitten")
 except ValueError as exc:
     raise SystemExit(f"Inline kitten prefix missing: {tokens!r}") from exc
-if tokens[kitten_idx:kitten_idx + 2] != ["kitten", "ssh"]:
+if [os.path.basename(token) if "/" in token and not token.startswith("-") else token for token in tokens[kitten_idx:kitten_idx + 2]] != ["kitten", "ssh"]:
     raise SystemExit(f"Inline kitten prefix changed unexpectedly: {tokens!r}")
 PY
 }
@@ -4373,10 +4384,10 @@ import shlex
 data = json.loads(pathlib.Path("$output_file").read_text())
 tokens = [token.rstrip(";") for token in shlex.split(data["args"][-1])]
 try:
-    kitty_idx = tokens.index("kitty")
+    kitty_idx = [os.path.basename(token) if "/" in token and not token.startswith("-") else token for token in tokens].index("kitty")
 except ValueError as exc:
     raise SystemExit(f"kitty +kitten ssh prefix missing: {tokens!r}") from exc
-if tokens[kitty_idx:kitty_idx + 3] != ["kitty", "+kitten", "ssh"]:
+if [os.path.basename(token) if "/" in token and not token.startswith("-") else token for token in tokens[kitty_idx:kitty_idx + 3]] != ["kitty", "+kitten", "ssh"]:
     raise SystemExit(f"kitty +kitten ssh prefix changed unexpectedly: {tokens!r}")
 if not any("cwd=/srv/my project" in token for token in tokens):
     raise SystemExit(f"kitty +kitten ssh cwd was not rewritten: {tokens!r}")
@@ -4409,6 +4420,35 @@ for opt in (
 ):
     if tokens.index(opt) > dest_idx:
         raise SystemExit(f"SSH guard option appears after URI destination: {tokens!r}")
+PY
+}
+
+test_kitty_smart_launch_inserts_guard_options_before_combined_short_flag_destinations() {
+	local tmp_dir output_file
+	tmp_dir=$(make_temp_dir)
+	output_file="$tmp_dir/combined-short-flags-launch.json"
+	trap 'rm -rf "${tmp_dir:-}"' RETURN
+
+	run_kitty_ssh_utils_case combined-short-flags "/srv/my project" "$output_file"
+	python3 - <<PY
+import json
+import pathlib
+import shlex
+
+data = json.loads(pathlib.Path("$output_file").read_text())
+tokens = [token.rstrip(";") for token in shlex.split(data["args"][-1])]
+dest_idx = tokens.index("yumi")
+port_idx = tokens.index("2222")
+if port_idx > dest_idx:
+    raise SystemExit(f"Combined short-flag port moved after destination: {tokens!r}")
+for opt in (
+    "-oBatchMode=yes",
+    "-oConnectTimeout=2",
+    "-oConnectionAttempts=1",
+    "-oStrictHostKeyChecking=yes",
+):
+    if tokens.index(opt) > dest_idx:
+        raise SystemExit(f"SSH guard option appears after combined-short-flags destination: {tokens!r}")
 PY
 }
 
@@ -4467,6 +4507,7 @@ run_test "kitty ssh utils rewrites inline kitten cwd" test_kitty_smart_launch_ha
 run_test "kitty ssh utils rewrites kitty plus kitten ssh" test_kitty_smart_launch_handles_kitty_plus_kitten_ssh_cmdline
 run_test "kitty ssh utils handles wrapped kitty ssh foreground cmdline" test_kitty_smart_launch_handles_wrapped_kitty_ssh_foreground_cmdline
 run_test "kitty ssh utils keeps guard options before URI destinations" test_kitty_smart_launch_inserts_guard_options_before_uri_destinations
+run_test "kitty ssh utils keeps guard options before combined short-flag destinations" test_kitty_smart_launch_inserts_guard_options_before_combined_short_flag_destinations
 run_test "kitty ssh utils falls back locally when helper cmdline is unavailable" test_kitty_smart_launch_fails_closed_for_kitty_uri_without_helper_cmdline
 run_test "bb-browser wrapper doctor is side-effect free" test_bb_browser_wrapper_doctor_is_side_effect_free
 run_test "bb-browser wrapper restarts ordinary Edge when CDP is absent" test_bb_browser_wrapper_restarts_edge_when_running_without_cdp

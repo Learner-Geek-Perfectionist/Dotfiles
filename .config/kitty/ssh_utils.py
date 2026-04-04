@@ -1,8 +1,10 @@
 # ssh_utils.py — smart_tab.py 和 smart_window.py 共享的 SSH 工具函数
 
+import os
 import shlex
 from urllib.parse import unquote, urlparse
 
+from kitty.constants import kitten_exe
 from kitty.launch import launch as kitty_launch, parse_launch_args
 from kittens.ssh.utils import get_connection_data, is_kitten_cmdline, set_cwd_in_cmdline
 
@@ -141,7 +143,14 @@ def _extract_ssh_kitten_cmdline(window):
     except OSError:
         return None
 
-    return list(cmdline) if cmdline else None
+    if not cmdline:
+        return None
+
+    cmdline = list(cmdline)
+    if cmdline[0] == 'kitten':
+        cmdline[0] = kitten_exe()
+
+    return cmdline
 
 
 def _source_window_arg(window):
@@ -193,8 +202,15 @@ def _find_ssh_destination_index(argv):
             continue
 
         if token.startswith('-'):
-            if len(token) == 2 and token[1] in _SSH_OPTS_WITH_ARG:
-                skip_next = True
+            if token.startswith('--'):
+                continue
+
+            short_opts = token[1:]
+            for opt_idx, opt in enumerate(short_opts):
+                if opt in _SSH_OPTS_WITH_ARG:
+                    if opt_idx == len(short_opts) - 1:
+                        skip_next = True
+                    break
             continue
 
         return idx

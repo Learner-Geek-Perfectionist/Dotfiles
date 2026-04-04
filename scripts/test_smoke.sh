@@ -4070,6 +4070,122 @@ EOF
 	assert_file_missing "$legacy_autoupdate_plist"
 }
 
+run_kitty_ssh_utils_case() {
+	local scenario="$1" cwd_value="$2" output_file="$3"
+
+	REPO_ROOT="$REPO_ROOT" SCENARIO="$scenario" CASE_CWD="$cwd_value" python3 - <<'PY' >"$output_file"
+import importlib.util
+import json
+import os
+import pathlib
+import sys
+import types
+
+captured = {}
+
+
+def fake_parse_launch_args(args):
+    captured["args"] = args
+    return args, []
+
+
+def fake_launch(boss, opts, remaining):
+    captured["opts"] = opts
+    captured["remaining"] = remaining
+
+
+kitty_pkg = types.ModuleType("kitty")
+kitty_launch_mod = types.ModuleType("kitty.launch")
+kitty_launch_mod.launch = fake_launch
+kitty_launch_mod.parse_launch_args = fake_parse_launch_args
+sys.modules["kitty"] = kitty_pkg
+sys.modules["kitty.launch"] = kitty_launch_mod
+
+repo_root = pathlib.Path(os.environ["REPO_ROOT"])
+spec = importlib.util.spec_from_file_location(
+    "ssh_utils_under_test",
+    repo_root / ".config/kitty/ssh_utils.py",
+)
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+
+scenario = os.environ["SCENARIO"]
+cwd_value = os.environ.get("CASE_CWD") or None
+
+
+class Child:
+    foreground_processes = []
+
+
+class Window:
+    id = 42
+    child = Child()
+    cwd_of_child = cwd_value
+
+
+window = Window()
+if scenario in {"ssh", "missing-cwd"}:
+    window.child.foreground_processes = [{"cmdline": ["ssh", "yumi"]}]
+if scenario == "missing-cwd":
+    window.cwd_of_child = None
+
+
+class Boss:
+    active_window = window
+    window_id_map = {42: window}
+
+
+module.smart_launch(Boss(), "tab", 42)
+print(json.dumps({"args": captured["args"], "remaining": captured["remaining"]}))
+PY
+}
+
+test_kitty_smart_launch_uses_last_reported_for_local_windows() {
+	local tmp_dir output_file
+	tmp_dir=$(make_temp_dir)
+	output_file="$tmp_dir/local-launch.json"
+	trap "rm -rf '$tmp_dir'" RETURN
+
+	run_kitty_ssh_utils_case local "" "$output_file"
+
+	assert_contains '"--type=tab"' "$output_file"
+	assert_contains '"--source-window=id:42"' "$output_file"
+	assert_contains '"--cwd=last_reported"' "$output_file"
+	assert_not_contains '"zsh"' "$output_file"
+}
+
+test_kitty_smart_launch_clones_remote_context_with_timeout_guard() {
+	local tmp_dir output_file
+	tmp_dir=$(make_temp_dir)
+	output_file="$tmp_dir/ssh-launch.json"
+	trap "rm -rf '$tmp_dir'" RETURN
+
+	run_kitty_ssh_utils_case ssh "/srv/my project" "$output_file"
+
+	assert_contains '"zsh"' "$output_file"
+	assert_contains 'cwd=/srv/my project' "$output_file"
+	assert_contains '-oBatchMode=yes' "$output_file"
+	assert_contains '-oConnectTimeout=2' "$output_file"
+	assert_contains '-oConnectionAttempts=1' "$output_file"
+	assert_contains '-oStrictHostKeyChecking=yes' "$output_file"
+	assert_contains 'yumi' "$output_file"
+	assert_contains 'exec zsh -i' "$output_file"
+	assert_contains 'fell back to local shell' "$output_file"
+}
+
+test_kitty_smart_launch_falls_back_to_local_when_remote_cwd_is_missing() {
+	local tmp_dir output_file
+	tmp_dir=$(make_temp_dir)
+	output_file="$tmp_dir/missing-cwd-launch.json"
+	trap "rm -rf '$tmp_dir'" RETURN
+
+	run_kitty_ssh_utils_case missing-cwd "" "$output_file"
+
+	assert_contains '"--cwd=last_reported"' "$output_file"
+	assert_not_contains 'cwd=' "$output_file"
+	assert_not_contains '-oConnectTimeout=2' "$output_file"
+}
+
 run_test "Dotfiles manifest and SSH include block" test_dotfiles_manifest_and_ssh_block
 run_test "Dotfiles deploys bb-browser shell plugin" test_dotfiles_deploys_bb_browser_shell_plugin
 run_test "bb-browser install uses latest and deploys wrapper" test_bb_browser_install_uses_latest_and_deploys_wrapper
@@ -4121,6 +4237,9 @@ run_test "Claude installs study-master from new repo" test_claude_installs_study
 run_test "Claude updates marketplaces and plugins" test_claude_updates_marketplaces_and_plugins
 run_test "Claude refreshes study-master on rerun" test_claude_refreshes_study_master_on_rerun
 run_test "macOS brew maintenance LaunchAgent" test_macos_brew_maintenance_launchagent_created
+run_test "kitty smart launch uses last_reported for local windows" test_kitty_smart_launch_uses_last_reported_for_local_windows
+run_test "kitty smart launch clones remote context with timeout guard" test_kitty_smart_launch_clones_remote_context_with_timeout_guard
+run_test "kitty smart launch falls back to local when remote cwd is missing" test_kitty_smart_launch_falls_back_to_local_when_remote_cwd_is_missing
 
 section "Done"
 pass "Smoke checks completed"

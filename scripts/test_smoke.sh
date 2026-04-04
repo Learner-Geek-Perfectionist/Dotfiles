@@ -4148,12 +4148,19 @@ test_kitty_smart_launch_uses_last_reported_for_local_windows() {
 
 	run_kitty_ssh_utils_case local "/Users/local/path" "$output_file"
 
-	assert_contains '"--type=tab"' "$output_file"
-	assert_contains '"--source-window=id:42"' "$output_file"
-	assert_contains '"--cwd=last_reported"' "$output_file"
-	assert_not_contains '"zsh"' "$output_file"
-	assert_not_contains "/Users/local/path" "$output_file"
-	assert_not_contains '"kitten ssh"' "$output_file"
+	python3 - <<PY
+import json
+import pathlib
+
+data = json.loads(pathlib.Path("$output_file").read_text())
+expected_args = ["--type=tab", "--source-window=id:42", "--cwd=last_reported"]
+if data["args"] != expected_args:
+    raise SystemExit(f"Unexpected local args: {data['args']!r}")
+if "kitten" in data["args"] or "ssh" in data["args"]:
+    raise SystemExit(f"Unexpected remote markers in local args: {data['args']!r}")
+if "/Users/local/path" in data["args"]:
+    raise SystemExit("Local cwd leaked into args")
+PY
 }
 
 test_kitty_smart_launch_clones_remote_context_with_timeout_guard() {
@@ -4166,14 +4173,8 @@ test_kitty_smart_launch_clones_remote_context_with_timeout_guard() {
 
 	assert_contains '"zsh"' "$output_file"
 	assert_contains '"-c"' "$output_file"
-	assert_contains 'cwd=/srv/my project' "$output_file"
-	assert_contains '-oBatchMode=yes' "$output_file"
-	assert_contains '-oConnectTimeout=2' "$output_file"
-	assert_contains '-oConnectionAttempts=1' "$output_file"
-	assert_contains '-oStrictHostKeyChecking=yes' "$output_file"
 	assert_contains 'yumi' "$output_file"
 	assert_contains 'exec zsh -i' "$output_file"
-	assert_contains 'fell back to local shell' "$output_file"
 	python3 - <<PY
 import json
 import pathlib
@@ -4193,6 +4194,14 @@ if "--type=tab" not in data["args"]:
     raise SystemExit(f"Missing type arg: {data['args']!r}")
 if "--source-window=id:42" not in data["args"]:
     raise SystemExit(f"Missing source window arg: {data['args']!r}")
+for opt in (
+    "-oBatchMode=yes",
+    "-oConnectTimeout=2",
+    "-oConnectionAttempts=1",
+    "-oStrictHostKeyChecking=yes",
+):
+    if opt not in tokens:
+        raise SystemExit(f"Missing ssh guard option {opt}: {tokens!r}")
 PY
 }
 

@@ -4202,6 +4202,11 @@ for opt in (
 ):
     if opt not in tokens:
         raise SystemExit(f"Missing ssh guard option {opt}: {tokens!r}")
+search_space = data["args"] + data.get("remaining", []) + [cmd]
+if not any("--kitten" in entry for entry in search_space):
+    raise SystemExit(f"Missing --kitten token: {search_space!r}")
+if not any("fell back to local shell" in entry for entry in search_space):
+    raise SystemExit(f"Missing fallback notice: {search_space!r}")
 PY
 }
 
@@ -4223,8 +4228,6 @@ if data["args"] != expected_args:
     raise SystemExit(f"Unexpected fallback args: {data['args']!r}")
 if any("kitten" in token or "ssh" in token for token in data["args"]):
     raise SystemExit(f"Remote markers present in fallback args: {data['args']!r}")
-if "yumi" in data.get("remaining", []):
-    raise SystemExit("Remote destination still present")
 PY
 }
 

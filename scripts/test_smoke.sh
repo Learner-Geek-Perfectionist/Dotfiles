@@ -4097,23 +4097,27 @@ def fake_set_cwd_in_cmdline(cwd, argv):
 
 
 class FakeConnectionData:
-    def __init__(self, host_name):
-        self.host_name = host_name
+    def __init__(self, hostname):
+        self.hostname = hostname
 
 
 def fake_is_kitten_cmdline(argv):
     return argv[:2] == ["kitten", "ssh"] or argv[:3] == ["kitty", "+kitten", "ssh"]
 
 
-def fake_get_connection_data(argv):
+def fake_get_connection_data(argv, extra_args=()):
     if not fake_is_kitten_cmdline(argv):
         return None
 
     for token in reversed(argv):
         if token in {"kitty", "kitten", "+kitten", "ssh"}:
             continue
-        if token.startswith("-") or token.startswith("cwd=") or token.startswith("--kitten"):
+        if token.startswith("-") or token.startswith("cwd="):
             continue
+        if token.startswith("--kitten"):
+            if "--kitten" in extra_args:
+                continue
+            return None
         return FakeConnectionData(token)
 
     return None

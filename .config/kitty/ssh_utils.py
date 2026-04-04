@@ -37,11 +37,11 @@ def _extract_kitten_cmdline_destination(cmdline):
     if not is_kitten_cmdline(cmdline):
         return None
 
-    connection_data = get_connection_data(list(cmdline))
+    connection_data = get_connection_data(list(cmdline), extra_args=('--kitten',))
     if connection_data is None:
         return None
 
-    return connection_data.host_name
+    return connection_data.hostname
 
 
 def _extract_plain_ssh_destination(cmdline):

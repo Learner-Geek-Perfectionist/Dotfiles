@@ -4163,6 +4163,7 @@ test_kitty_smart_launch_clones_remote_context_with_timeout_guard() {
 	run_kitty_ssh_utils_case ssh "/srv/my project" "$output_file"
 
 	assert_contains '"zsh"' "$output_file"
+	assert_contains '"-c"' "$output_file"
 	assert_contains 'cwd=/srv/my project' "$output_file"
 	assert_contains '-oBatchMode=yes' "$output_file"
 	assert_contains '-oConnectTimeout=2' "$output_file"
@@ -4171,6 +4172,18 @@ test_kitty_smart_launch_clones_remote_context_with_timeout_guard() {
 	assert_contains 'yumi' "$output_file"
 	assert_contains 'exec zsh -i' "$output_file"
 	assert_contains 'fell back to local shell' "$output_file"
+	python3 - <<PY
+import json
+import pathlib
+import re
+import sys
+
+data = json.loads(pathlib.Path("$output_file").read_text())
+cmd = data["args"][-1]
+pattern = r"kitten ssh .*cwd=/srv/my project.*; exec zsh -i"
+if not re.search(pattern, cmd):
+    raise SystemExit(f"Unexpected remote command shape: {cmd!r}")
+PY
 }
 
 test_kitty_smart_launch_falls_back_to_local_when_remote_cwd_is_missing() {
@@ -4184,6 +4197,8 @@ test_kitty_smart_launch_falls_back_to_local_when_remote_cwd_is_missing() {
 	assert_contains '"--cwd=last_reported"' "$output_file"
 	assert_not_contains 'cwd=' "$output_file"
 	assert_not_contains '-oConnectTimeout=2' "$output_file"
+	assert_not_contains '"kitten ssh"' "$output_file"
+	assert_not_contains '"zsh"' "$output_file"
 }
 
 run_test "Dotfiles manifest and SSH include block" test_dotfiles_manifest_and_ssh_block

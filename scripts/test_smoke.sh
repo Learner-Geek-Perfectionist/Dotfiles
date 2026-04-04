@@ -4124,8 +4124,13 @@ class Window:
 
 
 window = Window()
+cmdline = None
 if scenario in {"ssh", "missing-cwd"}:
-    window.child.foreground_processes = [{"cmdline": ["ssh", "yumi"]}]
+    cmdline = ["ssh", "yumi"]
+elif scenario == "kitty-ssh":
+    cmdline = ["ssh", "--", "yumi", "exec", "sh", "-c", "kitten", "ssh", "yumi"]
+if cmdline is not None:
+    window.child.foreground_processes = [{"cmdline": cmdline}]
 if scenario == "missing-cwd":
     window.cwd_of_child = None
 
@@ -4137,6 +4142,59 @@ class Boss:
 
 module.smart_launch(Boss(), "tab", 42)
 print(json.dumps({"args": captured["args"], "remaining": captured["remaining"]}))
+PY
+}
+
+assert_kitty_remote_launch_matches() {
+	local output_file="$1" expected_destination="$2"
+	python3 - "$output_file" "$expected_destination" <<PY
+import json
+import pathlib
+import shlex
+import sys
+
+output_path = pathlib.Path(sys.argv[1])
+expected_destination = sys.argv[2]
+data = json.loads(output_path.read_text())
+args = data["args"]
+expected_prefix = ["--type=tab", "--source-window=id:42"]
+if args[:2] != expected_prefix:
+    raise SystemExit(f"Remote args prefix mismatch: {args!r}")
+if len(args) < 5:
+    raise SystemExit(f"Remote args too short: {args!r}")
+if args[-3:-1] != ["zsh", "-c"]:
+    raise SystemExit(f"Remote launcher not [zsh,-c]: {args!r}")
+
+cmd = args[-1]
+kitten_segment, sep, fallback_segment = cmd.partition(";")
+if sep != ";":
+    raise SystemExit(f"Remote command missing fallback separator: {cmd!r}")
+kitten_tokens = shlex.split(kitten_segment.strip())
+if kitten_tokens[:2] != ["kitten", "ssh"]:
+    raise SystemExit(f"Remote command missing kitten ssh prefix: {kitten_tokens!r}")
+if "--kitten" not in kitten_tokens:
+    raise SystemExit(f"Remote command missing --kitten token: {kitten_tokens!r}")
+if expected_destination not in [token.rstrip(";") for token in kitten_tokens]:
+    raise SystemExit(f"Remote destination mismatch: {kitten_tokens!r}")
+if "cwd=/srv/my project" not in kitten_tokens:
+    raise SystemExit(f"Remote cwd token split: {kitten_tokens!r}")
+for opt in (
+    "-oBatchMode=yes",
+    "-oConnectTimeout=2",
+    "-oConnectionAttempts=1",
+    "-oStrictHostKeyChecking=yes",
+):
+    if opt not in kitten_tokens:
+        raise SystemExit(f"Missing ssh guard option {opt}: {kitten_tokens!r}")
+if "fell back to local shell" not in cmd:
+    raise SystemExit(f"Missing fallback notice: {cmd!r}")
+
+fallback = fallback_segment.strip()
+if not fallback:
+    raise SystemExit(f"Remote fallback shell missing: {fallback_segment!r}")
+fallback_tokens = shlex.split(fallback)
+if fallback_tokens[:2] != ["exec", "zsh"] or "-i" not in fallback_tokens:
+    raise SystemExit(f"Remote fallback shell not exec zsh -i: {fallback_tokens!r}")
 PY
 }
 
@@ -4164,50 +4222,17 @@ PY
 }
 
 test_kitty_smart_launch_clones_remote_context_with_timeout_guard() {
-	local tmp_dir output_file
+	local tmp_dir output_file scenario
 	tmp_dir=$(make_temp_dir)
 	output_file="$tmp_dir/ssh-launch.json"
 	trap "rm -rf '$tmp_dir'" RETURN
 
-	run_kitty_ssh_utils_case ssh "/srv/my project" "$output_file"
+	for scenario in ssh kitty-ssh; do
+		run_kitty_ssh_utils_case "$scenario" "/srv/my project" "$output_file"
 
-	assert_contains '"zsh"' "$output_file"
-	assert_contains '"-c"' "$output_file"
-	assert_contains 'yumi' "$output_file"
-	assert_contains 'exec zsh -i' "$output_file"
-	python3 - <<PY
-import json
-import pathlib
-import sys
-import shlex
-
-data = json.loads(pathlib.Path("$output_file").read_text())
-cmd = data["args"][-1]
-tokens = shlex.split(cmd)
-if "kitten" not in tokens or "ssh" not in tokens:
-    raise SystemExit(f"Missing ssh invocation: {tokens!r}")
-if "cwd=/srv/my project" not in tokens:
-    raise SystemExit(f"Remote cwd token split: {tokens!r}")
-if "exec" not in tokens or "zsh" not in tokens or "-i" not in tokens:
-    raise SystemExit(f"Missing fallback shell: {tokens!r}")
-if "--type=tab" not in data["args"]:
-    raise SystemExit(f"Missing type arg: {data['args']!r}")
-if "--source-window=id:42" not in data["args"]:
-    raise SystemExit(f"Missing source window arg: {data['args']!r}")
-for opt in (
-    "-oBatchMode=yes",
-    "-oConnectTimeout=2",
-    "-oConnectionAttempts=1",
-    "-oStrictHostKeyChecking=yes",
-):
-    if opt not in tokens:
-        raise SystemExit(f"Missing ssh guard option {opt}: {tokens!r}")
-search_space = data["args"] + data.get("remaining", []) + [cmd]
-if not any("--kitten" in entry for entry in search_space):
-    raise SystemExit(f"Missing --kitten token: {search_space!r}")
-if not any("fell back to local shell" in entry for entry in search_space):
-    raise SystemExit(f"Missing fallback notice: {search_space!r}")
-PY
+	assert_kitty_remote_launch_matches "$output_file" "yumi"
+		assert_kitty_remote_launch_matches "$output_file" "yumi"
+	done
 }
 
 test_kitty_smart_launch_falls_back_to_local_when_remote_cwd_is_missing() {

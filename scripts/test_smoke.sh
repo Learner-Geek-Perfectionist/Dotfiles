@@ -480,7 +480,7 @@ test_bb_browser_dist_patch_supports_mcp_spawn_with_cdp_args_without_cli_js() {
 	dist_dir="$tmp_dir/dist"
 	mcp_file="$dist_dir/mcp.js"
 	output_file="$tmp_dir/patch-output.log"
-	trap "rm -rf '$tmp_dir'" RETURN
+	trap 'rm -rf "${tmp_dir:-}"' RETURN
 
 	mkdir -p "$dist_dir"
 	cat >"$mcp_file" <<'EOF'
@@ -4237,7 +4237,7 @@ test_kitty_smart_launch_uses_last_reported_for_local_windows() {
 	local tmp_dir output_file
 	tmp_dir=$(make_temp_dir)
 	output_file="$tmp_dir/local-launch.json"
-	trap "rm -rf '$tmp_dir'" RETURN
+	trap 'rm -rf "${tmp_dir:-}"' RETURN
 
 	run_kitty_ssh_utils_case local "/Users/local/path" "$output_file"
 
@@ -4260,7 +4260,7 @@ test_kitty_smart_launch_clones_remote_context_with_timeout_guard() {
 	local tmp_dir output_file
 	tmp_dir=$(make_temp_dir)
 	output_file="$tmp_dir/ssh-launch.json"
-	trap "rm -rf '$tmp_dir'" RETURN
+	trap 'rm -rf "${tmp_dir:-}"' RETURN
 
 	run_kitty_ssh_utils_case ssh "/srv/my project" "$output_file"
 	assert_kitty_remote_launch_matches "$output_file" "yumi"
@@ -4270,7 +4270,7 @@ test_kitty_smart_launch_handles_kitty_generated_ssh_cmdline() {
 	local tmp_dir output_file
 	tmp_dir=$(make_temp_dir)
 	output_file="$tmp_dir/kitty-launch.json"
-	trap "rm -rf '$tmp_dir'" RETURN
+	trap 'rm -rf "${tmp_dir:-}"' RETURN
 
 	run_kitty_ssh_utils_case kitty-ssh "/srv/my project" "$output_file"
 	assert_kitty_remote_launch_matches "$output_file" "yumi"
@@ -4280,7 +4280,7 @@ test_kitty_smart_launch_handles_inline_kitten_cwd_cmdline() {
 	local tmp_dir output_file
 	tmp_dir=$(make_temp_dir)
 	output_file="$tmp_dir/inline-kitten-launch.json"
-	trap "rm -rf '$tmp_dir'" RETURN
+	trap 'rm -rf "${tmp_dir:-}"' RETURN
 
 	run_kitty_ssh_utils_case inline-kitten "/srv/my project" "$output_file"
 	python3 - <<PY
@@ -4303,7 +4303,7 @@ test_kitty_smart_launch_handles_kitty_plus_kitten_ssh_cmdline() {
 	local tmp_dir output_file
 	tmp_dir=$(make_temp_dir)
 	output_file="$tmp_dir/kitty-plus-kitten-launch.json"
-	trap "rm -rf '$tmp_dir'" RETURN
+	trap 'rm -rf "${tmp_dir:-}"' RETURN
 
 	run_kitty_ssh_utils_case kitty-inline-kitten "/srv/my project" "$output_file"
 	python3 - <<PY
@@ -4326,7 +4326,7 @@ test_kitty_smart_launch_falls_back_to_local_when_remote_cwd_is_missing() {
 	local tmp_dir output_file
 	tmp_dir=$(make_temp_dir)
 	output_file="$tmp_dir/missing-cwd-launch.json"
-	trap "rm -rf '$tmp_dir'" RETURN
+	trap 'rm -rf "${tmp_dir:-}"' RETURN
 
 	run_kitty_ssh_utils_case missing-cwd "" "$output_file"
 

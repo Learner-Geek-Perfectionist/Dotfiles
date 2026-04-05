@@ -185,6 +185,14 @@ def _build_local_launch_args(launch_type, window, explicit_cwd=None):
     ]
 
 
+def _build_native_current_launch_args(launch_type, window):
+    return [
+        f'--type={launch_type}',
+        _source_window_arg(window),
+        '--cwd=current',
+    ]
+
+
 def _build_local_launch_args_without_cwd(launch_type, window):
     return [
         f'--type={launch_type}',
@@ -196,7 +204,7 @@ def _build_established_ssh_launch_args(launch_type, window):
     return [
         f'--type={launch_type}',
         _source_window_arg(window),
-        '--cwd=last_reported',
+        '--cwd=current',
         '--hold-after-ssh',
     ]
 
@@ -309,12 +317,7 @@ def smart_launch(boss, launch_type, target_window_id=None):
                 prefer_local_cwd=True,
             )
         else:
-            launch_args = _build_explicit_local_fallback_launch_args(
-                launch_type,
-                window,
-                cwd,
-                local_cwd,
-            )
+            launch_args = _build_native_current_launch_args(launch_type, window)
     elif cwd is not None and _window_reports_remote_cwd(window, cwd, local_cwd):
         launch_args = _build_established_ssh_launch_args(launch_type, window)
     else:

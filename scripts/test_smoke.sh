@@ -4187,7 +4187,7 @@ class Window:
     screen = Screen()
 
     def ssh_kitten_cmdline(self):
-        if scenario in {"ssh", "ssh-connecting"}:
+        if scenario in {"ssh", "ssh-connecting", "ssh-same-cwd"}:
             return ["kitten", "ssh", "--kitten", "cwd=/placeholder", "yumi"]
         if scenario == "shared-control-kitten":
             return [
@@ -4219,7 +4219,7 @@ class Window:
 
 window = Window()
 cmdline = None
-if scenario in {"ssh", "ssh-connecting", "inline-kitten", "missing-cwd"}:
+if scenario in {"ssh", "ssh-connecting", "ssh-same-cwd", "inline-kitten", "missing-cwd"}:
     cmdline = ["ssh", "yumi"]
 elif scenario in {"kitty-ssh", "kitty-inline-kitten"}:
     cmdline = ["kitty", "+kitten", "ssh", "--kitten", "cwd=/placeholder", "yumi"]
@@ -4233,7 +4233,9 @@ elif scenario == "combined-short-flags":
     cmdline = ["kitty", "+kitten", "ssh", "-vp", "2222", "--kitten", "cwd=/placeholder", "yumi"]
 if cmdline is not None:
     window.child.foreground_processes = [{"cmdline": cmdline}]
-if scenario in {"ssh", "ssh-connecting", "shared-control-kitten", "kitty-ssh", "inline-kitten", "kitty-inline-kitten", "uri-kitten", "wrapped-kitty-ssh", "kitty-uri-no-helper", "combined-short-flags"} and cwd_value is not None:
+if scenario == "ssh-same-cwd" and cwd_value is not None:
+    window.screen.last_reported_cwd = f"kitty-shell-cwd://yumi{cwd_value.replace(' ', '%20')}"
+elif scenario in {"ssh", "ssh-connecting", "shared-control-kitten", "kitty-ssh", "inline-kitten", "kitty-inline-kitten", "uri-kitten", "wrapped-kitty-ssh", "kitty-uri-no-helper", "combined-short-flags"} and cwd_value is not None:
     window.screen.last_reported_cwd = f"file://{cwd_value.replace(' ', '%20')}"
 if scenario == "missing-cwd":
     window.screen.last_reported_cwd = None
@@ -4343,6 +4345,35 @@ if data["args"] != expected_args:
     raise SystemExit(f"Expected explicit local cwd when SSH is still connecting: {data['args']!r}")
 if any("kitten" in token or "ssh" in token for token in data["args"]):
     raise SystemExit(f"Remote markers present when SSH should have been skipped: {data['args']!r}")
+PY
+}
+
+test_kitty_smart_launch_clones_when_remote_cwd_matches_local_path() {
+	local tmp_dir output_file
+	tmp_dir=$(make_temp_dir)
+	output_file="$tmp_dir/ssh-same-cwd-launch.json"
+	trap 'rm -rf "${tmp_dir:-}"' RETURN
+
+	# Remote CWD equals cwd_of_child but URL hostname is "yumi" (remote)
+	run_kitty_ssh_utils_case ssh-same-cwd "/Users/local/path" "$output_file"
+	python3 - <<PY
+import json
+import os
+import pathlib
+import shlex
+
+data = json.loads(pathlib.Path("$output_file").read_text())
+args = data["args"]
+if len(args) < 5 or args[-3:-1] != ["zsh", "-c"]:
+    raise SystemExit(f"Expected remote launch with zsh -c: {args!r}")
+tokens = [token.rstrip(";") for token in shlex.split(args[-1])]
+token_basenames = [os.path.basename(t) if "/" in t and not t.startswith("-") else t for t in tokens]
+if "ssh" not in token_basenames or ("kitten" not in token_basenames and "+kitten" not in token_basenames):
+    raise SystemExit(f"Expected kitten ssh in remote command: {tokens!r}")
+if "yumi" not in tokens:
+    raise SystemExit(f"Expected yumi destination: {tokens!r}")
+if "cwd=/Users/local/path" not in tokens:
+    raise SystemExit(f"Expected cwd=/Users/local/path in remote command: {tokens!r}")
 PY
 }
 
@@ -4613,6 +4644,7 @@ run_test "Claude refreshes study-master on rerun" test_claude_refreshes_study_ma
 run_test "macOS brew maintenance LaunchAgent" test_macos_brew_maintenance_launchagent_created
 run_test "kitty smart launch uses last_reported for local windows" test_kitty_smart_launch_uses_last_reported_for_local_windows
 run_test "kitty smart launch skips ssh when session not established" test_kitty_smart_launch_skips_ssh_when_session_not_established
+run_test "kitty smart launch clones when remote cwd matches local path" test_kitty_smart_launch_clones_when_remote_cwd_matches_local_path
 run_test "kitty smart launch clones remote context with timeout guard" test_kitty_smart_launch_clones_remote_context_with_timeout_guard
 run_test "kitty smart launch disables shared kitty connections for auto ssh" test_kitty_smart_launch_disables_shared_kitty_connections_for_auto_ssh
 run_test "kitty smart launch handles Kitty-generated ssh command line" test_kitty_smart_launch_handles_kitty_generated_ssh_cmdline

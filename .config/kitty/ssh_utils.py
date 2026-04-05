@@ -2,6 +2,7 @@
 
 import os
 import shlex
+import socket
 from urllib.parse import unquote, urlparse
 
 from kitty.constants import kitten_exe
@@ -124,11 +125,36 @@ def _extract_last_reported_cwd(window):
     if not reported_cwd:
         return None
 
+    if isinstance(reported_cwd, (bytes, memoryview)):
+        reported_cwd = bytes(reported_cwd).decode('utf-8', errors='replace')
+
     parsed = urlparse(reported_cwd)
     if not parsed.path:
         return None
 
     return unquote(parsed.path)
+
+
+def _cwd_reported_by_local_host(window):
+    """Check if the last_reported_cwd URL hostname matches the local machine."""
+    try:
+        reported_cwd = window.screen.last_reported_cwd
+    except (AttributeError, OSError):
+        return True
+
+    if not reported_cwd:
+        return True
+
+    if isinstance(reported_cwd, (bytes, memoryview)):
+        reported_cwd = bytes(reported_cwd).decode('utf-8', errors='replace')
+
+    parsed = urlparse(reported_cwd)
+    url_host = (parsed.hostname or '').partition('.')[0].lower()
+    if not url_host:
+        return True
+
+    local_host = socket.gethostname().partition('.')[0].lower()
+    return url_host == local_host
 
 
 def _extract_ssh_kitten_cmdline(window):
@@ -362,12 +388,15 @@ def smart_launch(boss, launch_type, target_window_id=None):
     local_cwd = _extract_cwd_of_child(window)
 
     if destination is not None and cwd is not None:
-        if local_cwd is not None and os.path.normpath(cwd) == os.path.normpath(local_cwd):
-            # Reported CWD still matches local child process CWD — the remote
-            # shell has not sent its own OSC 7 yet, meaning the SSH session is
-            # still connecting.  Pass the CWD as an explicit path so that
-            # kitty's launch machinery does not enter its built-in SSH clone
-            # path (which would hang on the unreachable host).
+        if (local_cwd is not None
+                and os.path.normpath(cwd) == os.path.normpath(local_cwd)
+                and _cwd_reported_by_local_host(window)):
+            # Reported CWD matches local child process CWD AND the URL
+            # hostname is the local machine — the remote shell has not sent
+            # its own OSC 7 yet, meaning the SSH session is still connecting.
+            # Pass the CWD as an explicit path so that kitty's launch
+            # machinery does not enter its built-in SSH clone path (which
+            # would hang on the unreachable host).
             launch_args = _build_local_launch_args(launch_type, window, explicit_cwd=local_cwd)
         else:
             launch_args = _build_remote_launch_args(

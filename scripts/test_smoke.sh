@@ -4546,7 +4546,7 @@ import json
 import pathlib
 
 data = json.loads(pathlib.Path("$output_file").read_text())
-expected_args = ["--type=tab", "--source-window=id:42", "--cwd=last_reported"]
+expected_args = ["--type=tab", "--source-window=id:42", "--cwd=/Users/local/path"]
 if data["args"] != expected_args:
     raise SystemExit(f"Unexpected fallback args: {data['args']!r}")
 if any("kitten" in token or "ssh" in token for token in data["args"]):

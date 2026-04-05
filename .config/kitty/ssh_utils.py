@@ -359,15 +359,16 @@ def smart_launch(boss, launch_type, target_window_id=None):
     if ssh_kitten_cmdline is not None:
         destination = _extract_kitten_cmdline_destination(ssh_kitten_cmdline)
 
+    local_cwd = _extract_cwd_of_child(window)
+
     if destination is not None and cwd is not None:
-        local_cwd = _extract_cwd_of_child(window)
         if local_cwd is not None and os.path.normpath(cwd) == os.path.normpath(local_cwd):
             # Reported CWD still matches local child process CWD — the remote
             # shell has not sent its own OSC 7 yet, meaning the SSH session is
             # still connecting.  Pass the CWD as an explicit path so that
             # kitty's launch machinery does not enter its built-in SSH clone
             # path (which would hang on the unreachable host).
-            launch_args = _build_local_launch_args(launch_type, window, explicit_cwd=cwd)
+            launch_args = _build_local_launch_args(launch_type, window, explicit_cwd=local_cwd)
         else:
             launch_args = _build_remote_launch_args(
                 launch_type,
@@ -376,6 +377,11 @@ def smart_launch(boss, launch_type, target_window_id=None):
                 cwd,
                 ssh_kitten_cmdline=ssh_kitten_cmdline,
             )
+    elif destination is not None:
+        # SSH detected but last_reported_cwd is missing — cannot reliably
+        # inherit the remote context.  Use explicit local CWD to avoid
+        # triggering kitty's built-in SSH clone via --cwd=last_reported.
+        launch_args = _build_local_launch_args(launch_type, window, explicit_cwd=local_cwd)
     else:
         launch_args = _build_local_launch_args(launch_type, window)
 

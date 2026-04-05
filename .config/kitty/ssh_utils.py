@@ -1,26 +1,14 @@
 # ssh_utils.py — smart_tab.py 和 smart_window.py 共享的 SSH 工具函数
 
 import os
-import shlex
 import socket
 from urllib.parse import unquote, urlparse
 
-from kitty.constants import kitten_exe
 from kitty.launch import launch as kitty_launch, parse_launch_args
-from kittens.ssh.utils import get_connection_data, is_kitten_cmdline, set_cwd_in_cmdline
+from kittens.ssh.utils import get_connection_data, is_kitten_cmdline
 
 # ssh 中需要跟参数值的选项字母（如 -p 22、-i keyfile、-o Option=val）
 _SSH_OPTS_WITH_ARG = frozenset('bcDEeFIiJLlmOopQRSWw')
-_SSH_CONNECTION_SHARING_OPTION_KEYS = frozenset({'controlmaster', 'controlpath', 'controlpersist'})
-_AUTO_SSH_CONNECT_TIMEOUT_SECONDS = 2
-_AUTO_SSH_KITTEN_DIRECTIVES = ('share_connections=no',)
-_AUTO_SSH_OPTIONS = (
-    '-oBatchMode=yes',
-    f'-oConnectTimeout={_AUTO_SSH_CONNECT_TIMEOUT_SECONDS}',
-    '-oConnectionAttempts=1',
-    '-oStrictHostKeyChecking=yes',
-)
-_AUTO_SSH_FALLBACK_NOTICE = 'kitty: SSH clone failed or timed out; fell back to local shell.'
 
 
 def _extract_kitty_ssh_destination(cmdline):
@@ -39,10 +27,7 @@ def _extract_kitty_ssh_destination(cmdline):
 
 def _extract_kitten_cmdline_destination(cmdline):
     """识别 kitty/kitten ssh 命令行中的目标主机。"""
-    if not cmdline:
-        return None
-
-    if not is_kitten_cmdline(cmdline):
+    if not cmdline or not is_kitten_cmdline(cmdline):
         return None
 
     connection_data = get_connection_data(list(cmdline), extra_args=('--kitten',))
@@ -117,44 +102,29 @@ def _resolve_source_window(boss, target_window_id=None):
 
 
 def _extract_last_reported_cwd(window):
-    try:
-        reported_cwd = window.screen.last_reported_cwd
-    except (AttributeError, OSError):
+    parsed = _parse_last_reported_cwd(window)
+    if parsed is None:
         return None
 
-    if not reported_cwd:
-        return None
-
-    if isinstance(reported_cwd, (bytes, memoryview)):
-        reported_cwd = bytes(reported_cwd).decode('utf-8', errors='replace')
-
-    parsed = urlparse(reported_cwd)
     if not parsed.path:
         return None
 
     return unquote(parsed.path)
 
 
-def _cwd_reported_by_local_host(window):
-    """Check if the last_reported_cwd URL hostname matches the local machine."""
+def _parse_last_reported_cwd(window):
     try:
         reported_cwd = window.screen.last_reported_cwd
     except (AttributeError, OSError):
-        return True
+        return None
 
     if not reported_cwd:
-        return True
+        return None
 
     if isinstance(reported_cwd, (bytes, memoryview)):
         reported_cwd = bytes(reported_cwd).decode('utf-8', errors='replace')
 
-    parsed = urlparse(reported_cwd)
-    url_host = (parsed.hostname or '').partition('.')[0].lower()
-    if not url_host:
-        return True
-
-    local_host = socket.gethostname().partition('.')[0].lower()
-    return url_host == local_host
+    return urlparse(reported_cwd)
 
 
 def _extract_ssh_kitten_cmdline(window):
@@ -171,14 +141,7 @@ def _extract_ssh_kitten_cmdline(window):
     except OSError:
         return None
 
-    if not cmdline:
-        return None
-
-    cmdline = list(cmdline)
-    if cmdline[0] == 'kitten':
-        cmdline[0] = kitten_exe()
-
-    return cmdline
+    return list(cmdline) if cmdline else None
 
 
 def _extract_cwd_of_child(window):
@@ -187,6 +150,27 @@ def _extract_cwd_of_child(window):
     except (AttributeError, OSError):
         return None
     return cwd if cwd else None
+
+
+def _window_looks_ssh_shaped(window, ssh_kitten_cmdline=None):
+    if ssh_kitten_cmdline is not None:
+        return True
+
+    try:
+        foreground_processes = window.child.foreground_processes
+    except (AttributeError, OSError):
+        return False
+
+    for process in foreground_processes:
+        cmdline = process.get('cmdline', []) or []
+        if not cmdline:
+            continue
+
+        basename = cmdline[0].rsplit('/', 1)[-1]
+        if basename == 'ssh' or is_kitten_cmdline(cmdline):
+            return True
+
+    return False
 
 
 def _source_window_arg(window):
@@ -201,218 +185,141 @@ def _build_local_launch_args(launch_type, window, explicit_cwd=None):
     ]
 
 
-def _build_auto_ssh_shell_command(destination, cwd, ssh_kitten_cmdline=None):
-    ssh_cmd = shlex.join(_build_auto_ssh_argv(destination, cwd, ssh_kitten_cmdline=ssh_kitten_cmdline))
-    fallback_notice = shlex.join(['printf', '%s\n', _AUTO_SSH_FALLBACK_NOTICE])
-    return (
-        f'{ssh_cmd}; '
-        'ssh_status=$?; '
-        'if [ "$ssh_status" -eq 0 ]; then exec zsh -i; '
-        f'elif [ "$ssh_status" -eq 255 ]; then {fallback_notice}; exec zsh -i; '
-        'else exec zsh -i; fi'
-    )
-
-
-def _find_ssh_destination_index(argv):
-    try:
-        ssh_idx = argv.index('ssh')
-    except ValueError:
-        return None
-
-    skip_next = False
-    for idx in range(ssh_idx + 1, len(argv)):
-        token = argv[idx]
-
-        if skip_next:
-            skip_next = False
-            continue
-
-        if token == '--':
-            return idx + 1 if idx + 1 < len(argv) else None
-
-        if token == '--kitten':
-            skip_next = True
-            continue
-
-        if token.startswith('--kitten='):
-            continue
-
-        if token.startswith('-'):
-            if token.startswith('--'):
-                continue
-
-            short_opts = token[1:]
-            for opt_idx, opt in enumerate(short_opts):
-                if opt in _SSH_OPTS_WITH_ARG:
-                    if opt_idx == len(short_opts) - 1:
-                        skip_next = True
-                    break
-            continue
-
-        return idx
-
-    return None
-
-
-def _inject_ssh_options(argv):
-    updated = list(argv)
-    missing_options = [opt for opt in _AUTO_SSH_OPTIONS if opt not in updated]
-    if not missing_options:
-        return updated
-
-    insert_at = _find_ssh_destination_index(updated)
-    if insert_at is None:
-        insert_at = len(updated)
-
-    updated[insert_at:insert_at] = missing_options
-    return updated
-
-
-def _is_ssh_sharing_option(option):
-    return option.partition('=')[0].strip().lower() in _SSH_CONNECTION_SHARING_OPTION_KEYS
-
-
-def _directive_key(option):
-    return option.partition('=')[0].strip().lower()
-
-
-def _strip_ssh_sharing_options(argv):
-    cleaned = []
-    skip_next = False
-
-    for idx, token in enumerate(argv):
-        if skip_next:
-            skip_next = False
-            continue
-
-        if token == '-M':
-            continue
-
-        if token == '-S':
-            skip_next = True
-            continue
-
-        if token == '-o':
-            if idx + 1 < len(argv) and _is_ssh_sharing_option(argv[idx + 1]):
-                skip_next = True
-                continue
-
-            cleaned.append(token)
-            continue
-
-        if token.startswith('-o') and _is_ssh_sharing_option(token[2:]):
-            continue
-
-        cleaned.append(token)
-
-    return cleaned
-
-
-def _inject_kitten_directive(argv, directive):
-    key = _directive_key(directive)
-    updated = []
-    skip_next = False
-
-    for idx, token in enumerate(argv):
-        if skip_next:
-            skip_next = False
-            continue
-
-        if token == '--kitten':
-            if idx + 1 < len(argv) and _directive_key(argv[idx + 1]) == key:
-                skip_next = True
-                continue
-
-            updated.append(token)
-            continue
-
-        if token.startswith('--kitten=') and _directive_key(token[len('--kitten='):]) == key:
-            continue
-
-        updated.append(token)
-
-    insert_at = _find_ssh_destination_index(updated)
-    if insert_at is None:
-        insert_at = len(updated)
-
-    updated[insert_at:insert_at] = ['--kitten', directive]
-    return updated
-
-
-def _build_auto_ssh_argv(destination, cwd, ssh_kitten_cmdline=None):
-    if ssh_kitten_cmdline:
-        argv = _strip_ssh_sharing_options(ssh_kitten_cmdline)
-        set_cwd_in_cmdline(cwd, argv)
-        for directive in _AUTO_SSH_KITTEN_DIRECTIVES:
-            argv = _inject_kitten_directive(argv, directive)
-        return _inject_ssh_options(argv)
-
-    return [
-        'kitten',
-        'ssh',
-        '--kitten',
-        f'cwd={cwd}',
-        '--kitten',
-        'share_connections=no',
-        *_AUTO_SSH_OPTIONS,
-        destination,
-    ]
-
-
-def _build_remote_launch_args(launch_type, window, destination, cwd, ssh_kitten_cmdline=None):
+def _build_local_launch_args_without_cwd(launch_type, window):
     return [
         f'--type={launch_type}',
         _source_window_arg(window),
-        'zsh',
-        '-c',
-        _build_auto_ssh_shell_command(
-            destination,
-            cwd,
-            ssh_kitten_cmdline=ssh_kitten_cmdline,
-        ),
     ]
 
 
+def _build_established_ssh_launch_args(launch_type, window):
+    return [
+        f'--type={launch_type}',
+        _source_window_arg(window),
+        '--cwd=last_reported',
+        '--hold-after-ssh',
+    ]
+
+
+def _build_explicit_local_fallback_launch_args(launch_type, window, cwd, local_cwd, prefer_local_cwd=False):
+    explicit_cwd = local_cwd if prefer_local_cwd else cwd
+    if explicit_cwd is None:
+        explicit_cwd = cwd if prefer_local_cwd else local_cwd
+
+    if cwd is not None and local_cwd is not None and _paths_equivalent(cwd, local_cwd):
+        explicit_cwd = local_cwd
+    if explicit_cwd is None:
+        return _build_local_launch_args_without_cwd(launch_type, window)
+
+    return _build_local_launch_args(launch_type, window, explicit_cwd=explicit_cwd)
+
+
+def _paths_equivalent(left, right):
+    if not left or not right:
+        return False
+
+    return os.path.realpath(left) == os.path.realpath(right)
+
+
+def _normalize_hostname(hostname):
+    if not hostname:
+        return None
+
+    normalized = hostname.strip().rstrip('.').lower()
+    return normalized or None
+
+
+def _short_hostname(hostname):
+    normalized = _normalize_hostname(hostname)
+    if normalized is None:
+        return None
+
+    return normalized.partition('.')[0]
+
+
+def _local_host_identity_sets():
+    full_identities = {'localhost', '127.0.0.1', '::1'}
+    short_identities = {'localhost'}
+
+    normalized = _normalize_hostname(socket.gethostname())
+    if normalized is None:
+        return full_identities, short_identities
+
+    full_identities.add(normalized)
+
+    short = _short_hostname(normalized)
+    if short is not None:
+        short_identities.add(short)
+
+    return full_identities, short_identities
+
+
+def _hostname_matches_local_machine(hostname):
+    normalized = _normalize_hostname(hostname)
+    if normalized is None:
+        return False
+
+    full_identities, short_identities = _local_host_identity_sets()
+    if normalized in full_identities:
+        return True
+
+    short = _short_hostname(normalized)
+    if short is not None and short in short_identities:
+        return True
+
+    return False
+
+
+def _window_reports_remote_cwd(window, cwd=None, local_cwd=None):
+    parsed = _parse_last_reported_cwd(window)
+    if parsed is None:
+        return False
+
+    url_host = _normalize_hostname(parsed.hostname)
+    if url_host is not None:
+        return not _hostname_matches_local_machine(url_host)
+
+    return cwd is not None and local_cwd is not None and not _paths_equivalent(cwd, local_cwd)
+
+
 def smart_launch(boss, launch_type, target_window_id=None):
-    """智能启动新 tab 或 os-window。SSH 可复用时尝试继承远端 cwd，失败后回落本地 zsh。"""
+    """智能启动新 tab 或 os-window。已建立 SSH 会话走 kitty 原生 launch，connecting 状态直接回本地。"""
     window = _resolve_source_window(boss, target_window_id)
     if window is None:
         return
 
     destination = extract_ssh_destination(window)
-    cwd = _extract_last_reported_cwd(window)
     ssh_kitten_cmdline = _extract_ssh_kitten_cmdline(window)
     if ssh_kitten_cmdline is not None:
-        destination = _extract_kitten_cmdline_destination(ssh_kitten_cmdline)
+        kitten_destination = _extract_kitten_cmdline_destination(ssh_kitten_cmdline)
+        if kitten_destination is not None:
+            destination = kitten_destination
 
+    cwd = _extract_last_reported_cwd(window)
     local_cwd = _extract_cwd_of_child(window)
+    ssh_shaped = _window_looks_ssh_shaped(window, ssh_kitten_cmdline=ssh_kitten_cmdline)
 
-    if destination is not None and cwd is not None:
-        if (local_cwd is not None
-                and os.path.normpath(cwd) == os.path.normpath(local_cwd)
-                and _cwd_reported_by_local_host(window)):
-            # Reported CWD matches local child process CWD AND the URL
-            # hostname is the local machine — the remote shell has not sent
-            # its own OSC 7 yet, meaning the SSH session is still connecting.
-            # Pass the CWD as an explicit path so that kitty's launch
-            # machinery does not enter its built-in SSH clone path (which
-            # would hang on the unreachable host).
-            launch_args = _build_local_launch_args(launch_type, window, explicit_cwd=local_cwd)
-        else:
-            launch_args = _build_remote_launch_args(
+    if destination is None:
+        if ssh_shaped:
+            launch_args = _build_explicit_local_fallback_launch_args(
                 launch_type,
                 window,
-                destination,
                 cwd,
-                ssh_kitten_cmdline=ssh_kitten_cmdline,
+                local_cwd,
+                prefer_local_cwd=True,
             )
-    elif destination is not None:
-        # SSH detected but last_reported_cwd is missing — cannot reliably
-        # inherit the remote context.  Use explicit local CWD to avoid
-        # triggering kitty's built-in SSH clone via --cwd=last_reported.
-        launch_args = _build_local_launch_args(launch_type, window, explicit_cwd=local_cwd)
+        else:
+            launch_args = _build_local_launch_args(launch_type, window)
+    elif cwd is not None and _window_reports_remote_cwd(window, cwd, local_cwd):
+        launch_args = _build_established_ssh_launch_args(launch_type, window)
     else:
-        launch_args = _build_local_launch_args(launch_type, window)
+        launch_args = _build_explicit_local_fallback_launch_args(
+            launch_type,
+            window,
+            cwd,
+            local_cwd,
+            prefer_local_cwd=True,
+        )
 
     opts, remaining = parse_launch_args(launch_args)
     kitty_launch(boss, opts, remaining)

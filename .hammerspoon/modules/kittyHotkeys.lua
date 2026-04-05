@@ -1,12 +1,10 @@
--- kittyHotkeys.lua — intercept Cmd+N / Cmd+E before Kitty consumes them
+-- kittyHotkeys.lua — rollback-only shim while native Kitty hotkeys are active; the map is
+-- intentionally empty and manual rollback would require repopulating it.
 
 local M = {}
 
 local KITTY_BUNDLE_ID = 'net.kovidgoyal.kitty'
-local KEY_CODE_TO_SCRIPT = {
-    [hs.keycodes.map.n] = './smart_window.py',
-    [hs.keycodes.map.e] = './smart_tab.py',
-}
+local KEY_CODE_TO_SCRIPT = {}
 local KITTY_BIN_CANDIDATES = {
     '/Applications/kitty.app/Contents/MacOS/kitty',
     '/opt/homebrew/bin/kitty',

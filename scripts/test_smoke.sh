@@ -2491,9 +2491,10 @@ class Window:
     cwd_of_child = "/Users/local/path"
     at_prompt = False
     screen = Screen()
+    user_vars = {}
 
     def ssh_kitten_cmdline(self):
-        if scenario in {"ssh", "ssh-connecting", "ssh-same-cwd", "ssh-connecting-realpath"}:
+        if scenario in {"ssh", "ssh-connecting", "ssh-same-cwd", "ssh-connecting-realpath", "burst-ssh"}:
             return ["kitten", "ssh", "--kitten", "cwd=/placeholder", "yumi"]
         if scenario == "ssh-prompt-before-cwd":
             return ["kitten", "ssh", "--kitten", "cwd=/placeholder", "orb"]
@@ -2528,6 +2529,9 @@ class Window:
 
 
 window = Window()
+active_window = window
+window_id_map = {42: window}
+target_window_id = 42
 cmdline = None
 if scenario in {"ssh", "ssh-connecting", "ssh-same-cwd", "inline-kitten", "missing-cwd", "missing-all-cwd", "ssh-connecting-realpath"}:
     cmdline = ["ssh", "yumi"]
@@ -2562,13 +2566,53 @@ if scenario == "ssh-connecting-realpath":
 if scenario == "missing-all-cwd":
     window.cwd_of_child = None
 
+if scenario == "burst-local":
+    source_window = Window()
+    source_window.id = 42
+    source_window.cwd_of_child = "/tmp"
+    source_window.screen = type("Screen", (), {"last_reported_cwd": "file:///tmp"})()
+    source_window.child = Child()
+    source_window.child.foreground_processes = []
+    source_window.user_vars = {}
+
+    active_window = Window()
+    active_window.id = 43
+    active_window.cwd_of_child = str(pathlib.Path.home())
+    active_window.screen = type("Screen", (), {"last_reported_cwd": None})()
+    active_window.child = Child()
+    active_window.child.foreground_processes = []
+    active_window.user_vars = {"smart_launch_source_window_id": "42"}
+    window_id_map = {42: source_window, 43: active_window}
+    target_window_id = 43
+
+if scenario == "burst-ssh":
+    source_window = Window()
+    source_window.id = 42
+    source_window.cwd_of_child = "/private/tmp"
+    source_window.screen = type("Screen", (), {"last_reported_cwd": "kitty-shell-cwd://orb/tmp"})()
+    source_window.child = Child()
+    source_window.child.foreground_processes = [{"cmdline": ["ssh", "orb"]}]
+    source_window.user_vars = {}
+    source_window.ssh_kitten_cmdline = lambda: ["kitten", "ssh", "--kitten", "cwd=/placeholder", "orb"]
+
+    active_window = Window()
+    active_window.id = 43
+    active_window.cwd_of_child = str(pathlib.Path.home())
+    active_window.screen = type("Screen", (), {"last_reported_cwd": None})()
+    active_window.child = Child()
+    active_window.child.foreground_processes = []
+    active_window.user_vars = {"smart_launch_source_window_id": "42"}
+    active_window.ssh_kitten_cmdline = lambda: None
+    window_id_map = {42: source_window, 43: active_window}
+    target_window_id = 43
+
 
 class Boss:
-    active_window = window
-    window_id_map = {42: window}
+    active_window = active_window
+    window_id_map = window_id_map
 
 
-module.smart_launch(Boss(), "tab", 42)
+module.smart_launch(Boss(), "tab", target_window_id)
 print(json.dumps({"args": captured["args"], "remaining": captured["remaining"]}))
 PY
 }
@@ -2586,6 +2630,8 @@ args = data["args"]
 expected_args = [
     "--type=tab",
     "--source-window=id:42",
+    "--var",
+    "smart_launch_source_window_id=42",
     "--cwd=current",
     "--hold-after-ssh",
 ]
@@ -2605,7 +2651,13 @@ output_path = pathlib.Path(sys.argv[1])
 expected_cwd = sys.argv[2]
 data = json.loads(output_path.read_text())
 args = data["args"]
-expected_args = ["--type=tab", "--source-window=id:42", f"--cwd={expected_cwd}"]
+expected_args = [
+    "--type=tab",
+    "--source-window=id:42",
+    "--var",
+    "smart_launch_source_window_id=42",
+    f"--cwd={expected_cwd}",
+]
 if args != expected_args:
     raise SystemExit(f"Expected local fallback launch args: {args!r}")
 if any("kitten" in token or "ssh" in token for token in args):
@@ -2623,7 +2675,12 @@ import sys
 output_path = pathlib.Path(sys.argv[1])
 data = json.loads(output_path.read_text())
 args = data["args"]
-expected_args = ["--type=tab", "--source-window=id:42"]
+expected_args = [
+    "--type=tab",
+    "--source-window=id:42",
+    "--var",
+    "smart_launch_source_window_id=42",
+]
 if args != expected_args:
     raise SystemExit(f"Expected fail-closed launch args without cwd: {args!r}")
 if any(token.startswith("--cwd=") for token in args):
@@ -2658,7 +2715,13 @@ import json
 import pathlib
 
 data = json.loads(pathlib.Path("$output_file").read_text())
-expected_args = ["--type=tab", "--source-window=id:42", "--cwd=current"]
+expected_args = [
+    "--type=tab",
+    "--source-window=id:42",
+    "--var",
+    "smart_launch_source_window_id=42",
+    "--cwd=current",
+]
 if data["args"] != expected_args:
     raise SystemExit(f"Unexpected local args: {data['args']!r}")
 if "kitten" in data["args"] or "ssh" in data["args"]:
@@ -2770,6 +2833,56 @@ test_kitty_smart_launch_skips_ssh_when_connecting_paths_match_via_realpath() {
 	assert_kitty_local_fallback_matches "$output_file" "/tmp"
 }
 
+test_kitty_smart_launch_reuses_previous_stable_local_source_during_rapid_repeats() {
+	local tmp_dir output_file
+	tmp_dir=$(make_temp_dir)
+	output_file="$tmp_dir/burst-local-launch.json"
+	trap 'rm -rf "${tmp_dir:-}"' RETURN
+
+	run_kitty_ssh_utils_case burst-local "" "$output_file"
+
+	python3 - <<PY
+import json
+import pathlib
+
+data = json.loads(pathlib.Path("$output_file").read_text())
+expected_args = [
+    "--type=tab",
+    "--source-window=id:42",
+    "--var",
+    "smart_launch_source_window_id=42",
+    "--cwd=current",
+]
+if data["args"] != expected_args:
+    raise SystemExit(f"Unexpected burst-local args: {data['args']!r}")
+PY
+}
+
+test_kitty_smart_launch_reuses_previous_stable_ssh_source_during_rapid_repeats() {
+	local tmp_dir output_file
+	tmp_dir=$(make_temp_dir)
+	output_file="$tmp_dir/burst-ssh-launch.json"
+	trap 'rm -rf "${tmp_dir:-}"' RETURN
+
+	run_kitty_ssh_utils_case burst-ssh "" "$output_file"
+	python3 - <<PY
+import json
+import pathlib
+
+data = json.loads(pathlib.Path("$output_file").read_text())
+expected_args = [
+    "--type=tab",
+    "--source-window=id:42",
+    "--var",
+    "smart_launch_source_window_id=42",
+    "--cwd=current",
+    "--hold-after-ssh",
+]
+if data["args"] != expected_args:
+    raise SystemExit(f"Unexpected burst-ssh args: {data['args']!r}")
+PY
+}
+
 run_test "Dotfiles manifest and SSH include block" test_dotfiles_manifest_and_ssh_block
 run_test "Dotfiles deploys bb-browser shell plugin" test_dotfiles_deploys_bb_browser_shell_plugin
 run_test "bb-browser install uses latest and deploys wrapper" test_bb_browser_install_uses_latest_and_deploys_wrapper
@@ -2809,6 +2922,8 @@ run_test "kitty smart launch falls back to local when helper exists before promp
 run_test "kitty smart launch falls back to local when remote cwd is missing" test_kitty_smart_launch_falls_back_to_local_when_remote_cwd_is_missing
 run_test "kitty smart launch fails closed without cwd when ssh metadata is missing" test_kitty_smart_launch_fails_closed_without_cwd_when_ssh_metadata_is_missing
 run_test "kitty smart launch realpath-matches local cwd while connecting" test_kitty_smart_launch_skips_ssh_when_connecting_paths_match_via_realpath
+run_test "kitty smart launch reuses previous stable local source during rapid repeats" test_kitty_smart_launch_reuses_previous_stable_local_source_during_rapid_repeats
+run_test "kitty smart launch reuses previous stable ssh source during rapid repeats" test_kitty_smart_launch_reuses_previous_stable_ssh_source_during_rapid_repeats
 
 section "Done"
 pass "Smoke checks completed"

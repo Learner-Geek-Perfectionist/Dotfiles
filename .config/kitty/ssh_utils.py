@@ -9,6 +9,7 @@ from kittens.ssh.utils import get_connection_data, is_kitten_cmdline
 
 # ssh 中需要跟参数值的选项字母（如 -p 22、-i keyfile、-o Option=val）
 _SSH_OPTS_WITH_ARG = frozenset('bcDEeFIiJLlmOopQRSWw')
+_SMART_SOURCE_WINDOW_ID_VAR = 'smart_launch_source_window_id'
 
 
 def _extract_kitty_ssh_destination(cmdline):
@@ -152,6 +153,48 @@ def _extract_cwd_of_child(window):
     return cwd if cwd else None
 
 
+def _extract_user_var(window, key):
+    try:
+        user_vars = window.user_vars
+    except (AttributeError, OSError):
+        return None
+
+    if not user_vars:
+        return None
+
+    value = user_vars.get(key)
+    if not value:
+        return None
+
+    if isinstance(value, (bytes, memoryview)):
+        value = bytes(value).decode('utf-8', errors='replace')
+
+    return str(value)
+
+
+def _resolve_repeat_source_window(boss, window):
+    seen_window_ids = {window.id}
+    current_window = window
+
+    while _extract_last_reported_cwd(current_window) is None:
+        source_window_id = _extract_user_var(current_window, _SMART_SOURCE_WINDOW_ID_VAR)
+        if source_window_id is None:
+            break
+
+        try:
+            source_window = boss.window_id_map.get(int(source_window_id))
+        except ValueError:
+            break
+
+        if source_window is None or source_window.id in seen_window_ids:
+            break
+
+        seen_window_ids.add(source_window.id)
+        current_window = source_window
+
+    return current_window
+
+
 def _window_looks_ssh_shaped(window, ssh_kitten_cmdline=None):
     if ssh_kitten_cmdline is not None:
         return True
@@ -220,6 +263,16 @@ def _build_explicit_local_fallback_launch_args(launch_type, window, cwd, local_c
         return _build_local_launch_args_without_cwd(launch_type, window)
 
     return _build_local_launch_args(launch_type, window, explicit_cwd=explicit_cwd)
+
+
+def _with_source_window_var(launch_args, source_window):
+    return [
+        launch_args[0],
+        launch_args[1],
+        '--var',
+        f'{_SMART_SOURCE_WINDOW_ID_VAR}={source_window.id}',
+        *launch_args[2:],
+    ]
 
 
 def _paths_equivalent(left, right):
@@ -296,6 +349,8 @@ def smart_launch(boss, launch_type, target_window_id=None):
     if window is None:
         return
 
+    window = _resolve_repeat_source_window(boss, window)
+
     destination = extract_ssh_destination(window)
     ssh_kitten_cmdline = _extract_ssh_kitten_cmdline(window)
     if ssh_kitten_cmdline is not None:
@@ -329,5 +384,6 @@ def smart_launch(boss, launch_type, target_window_id=None):
             prefer_local_cwd=True,
         )
 
+    launch_args = _with_source_window_var(launch_args, window)
     opts, remaining = parse_launch_args(launch_args)
     kitty_launch(boss, opts, remaining)

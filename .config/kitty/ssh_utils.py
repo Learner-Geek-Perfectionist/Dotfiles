@@ -207,7 +207,7 @@ def _build_explicit_local_fallback_launch_args(launch_type, window, cwd, local_c
         explicit_cwd = cwd if prefer_local_cwd else local_cwd
 
     if cwd is not None and local_cwd is not None and _paths_equivalent(cwd, local_cwd):
-        explicit_cwd = local_cwd
+        explicit_cwd = cwd
     if explicit_cwd is None:
         return _build_local_launch_args_without_cwd(launch_type, window)
 
@@ -309,7 +309,12 @@ def smart_launch(boss, launch_type, target_window_id=None):
                 prefer_local_cwd=True,
             )
         else:
-            launch_args = _build_local_launch_args(launch_type, window)
+            launch_args = _build_explicit_local_fallback_launch_args(
+                launch_type,
+                window,
+                cwd,
+                local_cwd,
+            )
     elif cwd is not None and _window_reports_remote_cwd(window, cwd, local_cwd):
         launch_args = _build_established_ssh_launch_args(launch_type, window)
     else:

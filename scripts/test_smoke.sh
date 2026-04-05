@@ -2645,27 +2645,14 @@ test_kitty_hammerspoon_does_not_wire_native_smart_hotkeys() {
 	assert_not_contains "[hs.keycodes.map.e] = './smart_tab.py'" "$REPO_ROOT/.hammerspoon/modules/kittyHotkeys.lua"
 }
 
-test_kitty_smart_launch_uses_last_reported_for_local_windows() {
+test_kitty_smart_launch_prefers_immediate_local_cwd_for_local_windows() {
 	local tmp_dir output_file
 	tmp_dir=$(make_temp_dir)
 	output_file="$tmp_dir/local-launch.json"
 	trap 'rm -rf "${tmp_dir:-}"' RETURN
 
 	run_kitty_ssh_utils_case local "/Users/local/path" "$output_file"
-
-	python3 - <<PY
-import json
-import pathlib
-
-data = json.loads(pathlib.Path("$output_file").read_text())
-expected_args = ["--type=tab", "--source-window=id:42", "--cwd=last_reported"]
-if data["args"] != expected_args:
-    raise SystemExit(f"Unexpected local args: {data['args']!r}")
-if "kitten" in data["args"] or "ssh" in data["args"]:
-    raise SystemExit(f"Unexpected remote markers in local args: {data['args']!r}")
-if "/Users/local/path" in data["args"]:
-    raise SystemExit("Local cwd leaked into args")
-PY
+	assert_kitty_local_fallback_matches "$output_file" "/Users/local/path"
 }
 
 test_kitty_smart_launch_skips_ssh_when_session_not_established() {
@@ -2769,7 +2756,7 @@ test_kitty_smart_launch_skips_ssh_when_connecting_paths_match_via_realpath() {
 	trap 'rm -rf "${tmp_dir:-}"' RETURN
 
 	run_kitty_ssh_utils_case ssh-connecting-realpath "/tmp" "$output_file"
-	assert_kitty_local_fallback_matches "$output_file" "/private/tmp"
+	assert_kitty_local_fallback_matches "$output_file" "/tmp"
 }
 
 run_test "Dotfiles manifest and SSH include block" test_dotfiles_manifest_and_ssh_block
@@ -2801,7 +2788,7 @@ run_test "Claude optional on macOS" test_claude_optional_on_macos_when_missing
 run_test "Claude optional on Linux" test_claude_optional_on_linux_when_install_fails
 run_test "Dotfiles uninstall removes wrapper integrations" test_dotfiles_uninstall_removes_wrapper_integrations
 run_test "Claude known_hosts preserves symlink" test_claude_known_hosts_preserves_symlink
-run_test "kitty smart launch uses last_reported for local windows" test_kitty_smart_launch_uses_last_reported_for_local_windows
+run_test "kitty smart launch prefers immediate local cwd for local windows" test_kitty_smart_launch_prefers_immediate_local_cwd_for_local_windows
 run_test "kitty smart launch skips ssh when session not established" test_kitty_smart_launch_skips_ssh_when_session_not_established
 run_test "kitty smart launch clones when remote cwd matches local path" test_kitty_smart_launch_clones_when_remote_cwd_matches_local_path
 run_test "kitty smart launch uses native hold-after-ssh for established sessions" test_kitty_smart_launch_uses_native_hold_after_ssh_for_established_sessions

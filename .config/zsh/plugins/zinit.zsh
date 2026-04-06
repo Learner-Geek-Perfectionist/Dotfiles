@@ -231,7 +231,7 @@ _ice wait'0b' atinit'
     # 仅标准文件补全使用此样式；非文件补全会忽略它。
     # `modification` 默认是最近修改的排前面。
     zstyle ":completion:*" file-sort modification
-    zstyle ":completion:*:descriptions" format "[%d]"
+    # 不启用 descriptions format；否则 fzf-tab 会显示分组标题，并给候选加 `·` 前缀。
     if [[ -n "${LS_COLORS:-}" ]]; then
         zstyle ":completion:*" list-colors ${(s.:.)LS_COLORS}
     else

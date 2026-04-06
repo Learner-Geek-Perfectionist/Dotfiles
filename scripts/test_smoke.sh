@@ -2390,18 +2390,6 @@ from urllib.parse import urlparse
 captured = {}
 
 
-def fake_set_cwd_in_cmdline(cwd, argv):
-    for idx, token in enumerate(tuple(argv)):
-        if token == "--kitten" and idx + 1 < len(argv) and argv[idx + 1].startswith("cwd="):
-            argv[idx + 1] = f"cwd={cwd}"
-            return
-        if token.startswith("--kitten=cwd="):
-            argv[idx] = f"--kitten=cwd={cwd}"
-            return
-
-    argv[3:3] = ["--kitten", f"cwd={cwd}"]
-
-
 class FakeConnectionData:
     def __init__(self, hostname):
         self.hostname = hostname
@@ -2454,8 +2442,6 @@ kitty_kittens_ssh_mod.__path__ = []
 kitty_kittens_ssh_utils_mod = types.ModuleType("kittens.ssh.utils")
 kitty_launch_mod.launch = fake_launch
 kitty_launch_mod.parse_launch_args = fake_parse_launch_args
-kitty_constants_mod.kitten_exe = lambda: "/opt/kitty/bin/kitten"
-kitty_kittens_ssh_utils_mod.set_cwd_in_cmdline = fake_set_cwd_in_cmdline
 kitty_kittens_ssh_utils_mod.is_kitten_cmdline = fake_is_kitten_cmdline
 kitty_kittens_ssh_utils_mod.get_connection_data = fake_get_connection_data
 sys.modules["kitty"] = kitty_pkg

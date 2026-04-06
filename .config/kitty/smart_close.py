@@ -1,6 +1,6 @@
 # smart_close.py
-# Kitty 对象层级: Boss → OS Window → Tab → Window(分屏窗格)
-# Cmd+W 逐层关闭: 分屏 → tab → OS window → quit（不可跳级）
+# Kitty 对象层级：Boss → 系统窗口 → Tab → Window（分屏窗格）
+# Cmd+W 按层级关闭：分屏 → Tab → 系统窗口 → 退出（不可跳级）
 import sys
 
 # Kitty 的 kittens 是内置的、不直接显现在文件系统中的工具。
@@ -8,7 +8,7 @@ from kittens.tui.handler import result_handler
 
 
 def main(args):
-    pass  # We do not need to process any arguments
+    pass  # 这里不需要处理任何参数
 
 
 @result_handler(no_ui=True)

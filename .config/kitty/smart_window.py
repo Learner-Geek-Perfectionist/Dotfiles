@@ -1,7 +1,7 @@
 # smart_window.py — Cmd+N 智能开新 os-window
-# 普通情况：继承当前目录开新 os-window
-# SSH 会话中：优先在 2 秒内复用远端主机与目录
-# 若 SSH 失败或超时：自动回退到本地 zsh，window 保持可用
+# 普通情况：复用当前源窗口的工作目录。
+# SSH 会话中：只有“明确已建立”的远端上下文才复用远端工作目录。
+# 正在连接 / 主机不可达 / 元数据不完整时，直接回退到本地 shell，不能等待。
 
 import sys
 import traceback

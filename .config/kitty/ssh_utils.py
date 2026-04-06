@@ -9,6 +9,10 @@ from kittens.ssh.utils import get_connection_data, is_kitten_cmdline
 
 # ssh 中需要跟参数值的选项字母（如 -p 22、-i keyfile、-o Option=val）
 _SSH_OPTS_WITH_ARG = frozenset('bcDEeFIiJLlmOopQRSWw')
+# 快速连按 Cmd+E/Cmd+N 时，第二次按键可能已经落在“刚新开的标签页”上，
+# 但这个标签页还没来得及上报自己的工作目录。这里把原始稳定源窗口 id
+# 写到新窗口里，下一次连按时就能沿着这条线回溯；否则连按场景会掉到
+# HOME 或其他尚未稳定的工作目录。
 _SMART_SOURCE_WINDOW_ID_VAR = 'smart_launch_source_window_id'
 
 
@@ -176,6 +180,9 @@ def _resolve_repeat_source_window(boss, window):
     seen_window_ids = {window.id}
     current_window = window
 
+    # 新开的标签页可能先获得焦点，但此时还没有任何可信的工作目录元数据。
+    # 这种情况下沿着记录下来的源窗口链一路回溯，直到找到一个已经稳定上报
+    # 工作目录的窗口；如果链断了，就停止回溯。
     while _extract_last_reported_cwd(current_window) is None:
         source_window_id = _extract_user_var(current_window, _SMART_SOURCE_WINDOW_ID_VAR)
         if source_window_id is None:
@@ -232,6 +239,8 @@ def _build_native_current_launch_args(launch_type, window):
     return [
         f'--type={launch_type}',
         _source_window_arg(window),
+        # `current` 由 kitty 直接基于源窗口立即解析，
+        # 可以避开快速连按时 shell integration 上报滞后的竞争。
         '--cwd=current',
     ]
 
@@ -247,16 +256,24 @@ def _build_established_ssh_launch_args(launch_type, window):
     return [
         f'--type={launch_type}',
         _source_window_arg(window),
+        # 对已经建立的 ssh-kitten 会话，kitty 原生的 `current`
+        # 语义就能保住远端工作目录，不需要我们再重写 argv。
         '--cwd=current',
         '--hold-after-ssh',
     ]
 
 
-def _build_explicit_local_fallback_launch_args(launch_type, window, cwd, local_cwd, prefer_local_cwd=False):
-    explicit_cwd = local_cwd if prefer_local_cwd else cwd
+def _build_explicit_local_fallback_launch_args(launch_type, window, cwd, local_cwd, prefer_known_local_cwd=False):
+    # 在“看起来像 SSH，但状态并不明确”的场景里，优先使用已知的本地
+    # 子进程工作目录。只有拿不到更可靠的本地信号时，才退回到 `cwd`，因为
+    # `cwd` 可能只是陈旧的、或者看起来像远端的 OSC 7 上报。
+    explicit_cwd = local_cwd if prefer_known_local_cwd else cwd
     if explicit_cwd is None:
-        explicit_cwd = cwd if prefer_local_cwd else local_cwd
+        explicit_cwd = cwd if prefer_known_local_cwd else local_cwd
 
+    # 把 /tmp 和 /private/tmp 这类别名视为同一位置，但保留当前已有的、
+    # 用户可见的路径表示，不要强行规范化成 realpath。否则 burst 场景会
+    # 看起来像目录“跳变”。
     if cwd is not None and local_cwd is not None and _paths_equivalent(cwd, local_cwd):
         explicit_cwd = cwd
     if explicit_cwd is None:
@@ -266,6 +283,9 @@ def _build_explicit_local_fallback_launch_args(launch_type, window, cwd, local_c
 
 
 def _with_source_window_var(launch_args, source_window):
+    # 给每个新开的窗口都打上“原始稳定源窗口 id”，这样在刚开的标签页上
+    # 继续快速连按时，还能在它完成 cwd/ssh 元数据上报前，找回正确的
+    # 源窗口。
     return [
         launch_args[0],
         launch_args[1],
@@ -349,6 +369,8 @@ def smart_launch(boss, launch_type, target_window_id=None):
     if window is None:
         return
 
+    # 这里是“快速连按”问题的关键修复：如果当前活跃窗口只是刚打开、还处于
+    # “空壳”状态，就先回退到上一个稳定源窗口，再决定 cwd/ssh 行为。
     window = _resolve_repeat_source_window(boss, window)
 
     destination = extract_ssh_destination(window)
@@ -364,24 +386,30 @@ def smart_launch(boss, launch_type, target_window_id=None):
 
     if destination is None:
         if ssh_shaped:
+            # 看起来像 SSH，但没有足够证据证明远端克隆目标是安全的。
+            # 这里必须 fail closed 到本地，并优先使用已知的本地 cwd 信号。
             launch_args = _build_explicit_local_fallback_launch_args(
                 launch_type,
                 window,
                 cwd,
                 local_cwd,
-                prefer_local_cwd=True,
+                prefer_known_local_cwd=True,
             )
         else:
+            # 纯本地窗口直接使用 kitty 原生的 `current` 语义。
             launch_args = _build_native_current_launch_args(launch_type, window)
     elif cwd is not None and _window_reports_remote_cwd(window, cwd, local_cwd):
+        # 只有“明确是远端”的工作目录才允许走原生 SSH 克隆路径。
         launch_args = _build_established_ssh_launch_args(launch_type, window)
     else:
+        # 虽然像 SSH，但并不能明确证明它已经进入远端：此时必须留在本地，
+        # 不能等待，也不能让 kitty 通过 `last_reported` 重新走回远端克隆。
         launch_args = _build_explicit_local_fallback_launch_args(
             launch_type,
             window,
             cwd,
             local_cwd,
-            prefer_local_cwd=True,
+            prefer_known_local_cwd=True,
         )
 
     launch_args = _with_source_window_var(launch_args, window)

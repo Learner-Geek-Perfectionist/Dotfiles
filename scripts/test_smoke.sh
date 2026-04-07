@@ -182,7 +182,7 @@ EOF
 	chmod +x "$fake_bin/git"
 }
 
-test_superpowers_clone_falls_back_to_https_when_github_ssh_fails() {
+test_superpowers_clone_does_not_retry_github_ssh_failures() {
 	local tmp_home fake_bin log git_log clone_dir link_dir state_file expected_repo
 	tmp_home=$(make_temp_dir)
 	fake_bin=$(make_temp_dir)
@@ -194,15 +194,10 @@ test_superpowers_clone_falls_back_to_https_when_github_ssh_fails() {
 	expected_repo="https://github.com/obra/superpowers.git"
 	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
 
-	cat >"$fake_bin/git" <<EOF
+cat >"$fake_bin/git" <<EOF
 #!/bin/sh
 printf 'GIT_CONFIG_GLOBAL=%s|%s\n' "\${GIT_CONFIG_GLOBAL:-}" "\$*" >>"$git_log"
 if [ "\$1" = "clone" ] && [ "\$2" = "$expected_repo" ] && [ "\$3" = "$clone_dir" ]; then
-  if [ "\${GIT_CONFIG_GLOBAL:-}" = "/dev/null" ]; then
-    mkdir -p "$clone_dir/.git" "$clone_dir/skills/using-superpowers"
-    printf '%s\n' '# Using Superpowers' >"$clone_dir/skills/using-superpowers/SKILL.md"
-    exit 0
-  fi
   printf '%s\n' 'git@github.com: Permission denied (publickey).' >&2
   exit 1
 fi
@@ -215,19 +210,21 @@ exit 99
 EOF
 	chmod +x "$fake_bin/git"
 
-	if ! run_deploy_superpowers_skills "$tmp_home" "$fake_bin" "$clone_dir" "$link_dir" "$state_file" "$log"; then
+	if run_deploy_superpowers_skills "$tmp_home" "$fake_bin" "$clone_dir" "$link_dir" "$state_file" "$log"; then
 		cat "$log" >&2
-		fail "deploy_superpowers_skills.sh should recover from GitHub SSH clone failure"
+		fail "deploy_superpowers_skills.sh should fail on GitHub SSH clone errors"
 	fi
 
-	assert_symlink "$link_dir"
-	assert_file_exists "$clone_dir/skills/using-superpowers/SKILL.md"
-	assert_file_exists "$state_file"
+	assert_file_missing "$link_dir"
+	assert_file_missing "$clone_dir/skills/using-superpowers/SKILL.md"
+	assert_file_missing "$state_file"
 	assert_grep "^GIT_CONFIG_GLOBAL=\\|clone $expected_repo $clone_dir\$" "$git_log"
-	assert_grep "^GIT_CONFIG_GLOBAL=/dev/null\\|clone $expected_repo $clone_dir\$" "$git_log"
+	if grep -q "/dev/null" "$git_log"; then
+		fail "deploy_superpowers_skills.sh retried GitHub SSH clone failure with HTTPS fallback"
+	fi
 }
 
-test_superpowers_pull_falls_back_to_https_when_github_ssh_fails() {
+test_superpowers_pull_does_not_retry_github_ssh_failures() {
 	local tmp_home fake_bin log git_log clone_dir link_dir state_file expected_repo
 	tmp_home=$(make_temp_dir)
 	fake_bin=$(make_temp_dir)
@@ -250,10 +247,6 @@ if [ "\$1" = "-C" ] && [ "\$2" = "$clone_dir" ] && [ "\$3" = "remote" ] && [ "\$
   exit 0
 fi
 if [ "\$1" = "-C" ] && [ "\$2" = "$clone_dir" ] && [ "\$3" = "pull" ] && [ "\$4" = "--ff-only" ]; then
-  if [ "\$5" = "$expected_repo" ] && [ "\$6" = "main" ] && [ "\${GIT_CONFIG_GLOBAL:-}" = "/dev/null" ]; then
-    printf '%s\n' 'updated skill' >"$clone_dir/skills/using-superpowers/SKILL.md"
-    exit 0
-  fi
   printf '%s\n' 'git@github.com: Permission denied (publickey).' >&2
   exit 1
 fi
@@ -266,17 +259,18 @@ exit 99
 EOF
 	chmod +x "$fake_bin/git"
 
-	if ! run_deploy_superpowers_skills "$tmp_home" "$fake_bin" "$clone_dir" "$link_dir" "$state_file" "$log"; then
+	if run_deploy_superpowers_skills "$tmp_home" "$fake_bin" "$clone_dir" "$link_dir" "$state_file" "$log"; then
 		cat "$log" >&2
-		fail "deploy_superpowers_skills.sh should recover from GitHub SSH pull failure"
+		fail "deploy_superpowers_skills.sh should fail on GitHub SSH pull errors"
 	fi
 
-	assert_symlink "$link_dir"
 	assert_file_exists "$clone_dir/skills/using-superpowers/SKILL.md"
-	assert_contains 'updated skill' "$clone_dir/skills/using-superpowers/SKILL.md"
+	assert_contains 'old skill' "$clone_dir/skills/using-superpowers/SKILL.md"
+	assert_file_missing "$state_file"
 	assert_grep "^GIT_CONFIG_GLOBAL=\\|-C $clone_dir pull --ff-only\$" "$git_log"
-	assert_grep "^GIT_CONFIG_GLOBAL=/dev/null\\|-C $clone_dir pull --ff-only $expected_repo main\$" "$git_log"
-	assert_contains "SUPERPOWERS_REPO_URL=git@github.com:obra/superpowers.git" "$state_file"
+	if grep -q "/dev/null" "$git_log"; then
+		fail "deploy_superpowers_skills.sh retried GitHub SSH pull failure with HTTPS fallback"
+	fi
 }
 
 test_dotfiles_manifest_and_ssh_block() {
@@ -3078,8 +3072,8 @@ PY
 }
 
 run_test "Dotfiles manifest and SSH include block" test_dotfiles_manifest_and_ssh_block
-run_test "superpowers clone falls back to HTTPS on GitHub SSH failure" test_superpowers_clone_falls_back_to_https_when_github_ssh_fails
-run_test "superpowers pull falls back to HTTPS on GitHub SSH failure" test_superpowers_pull_falls_back_to_https_when_github_ssh_fails
+run_test "superpowers clone does not retry GitHub SSH failures" test_superpowers_clone_does_not_retry_github_ssh_failures
+run_test "superpowers pull does not retry GitHub SSH failures" test_superpowers_pull_does_not_retry_github_ssh_failures
 run_test "Dotfiles deploys bb-browser shell plugin" test_dotfiles_deploys_bb_browser_shell_plugin
 run_test "bb-browser install uses latest and deploys wrapper" test_bb_browser_install_uses_latest_and_deploys_wrapper
 run_test "bb-browser install patches managed mcp dist only" test_bb_browser_install_patches_managed_mcp_dist_file_only

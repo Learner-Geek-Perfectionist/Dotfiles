@@ -142,8 +142,8 @@ EOF
 	rm -rf "$fake_bin"
 }
 
-run_install_clone_falls_back_to_https_on_github_ssh_failure() {
-	local temp_source fake_bin log_file git_log clone_dir expected_repo expected_clone_dir
+run_install_clone_does_not_retry_github_ssh_failures() {
+	local temp_source fake_bin log_file git_log expected_repo expected_clone_dir
 	temp_source="$(mktemp)"
 	fake_bin="$(make_temp_dir)"
 	log_file="$(mktemp)"
@@ -153,13 +153,10 @@ run_install_clone_falls_back_to_https_on_github_ssh_failure() {
 	expected_clone_dir="${expected_clone_dir%/}/dotfiles-clone-$(whoami)"
 
 	sed '$d' "$REPO_ROOT/install.sh" >"$temp_source"
-	cat >"$fake_bin/git" <<EOF
+cat >"$fake_bin/git" <<EOF
 #!/bin/sh
 printf 'GIT_CONFIG_GLOBAL=%s|%s\n' "\${GIT_CONFIG_GLOBAL:-}" "\$*" >>"$git_log"
 if [ "\$1" = "clone" ] && [ "\$2" = "--depth=1" ] && [ "\$3" = "--branch" ] && [ "\$5" = "--single-branch" ] && [ "\$6" = "$expected_repo" ]; then
-  if [ "\${GIT_CONFIG_GLOBAL:-}" = "/dev/null" ]; then
-    exit 0
-  fi
   printf '%s\n' 'git@github.com: Permission denied (publickey).' >&2
   printf '%s\n' 'fatal: Could not read from remote repository.' >&2
   exit 1
@@ -169,18 +166,19 @@ exit 99
 EOF
 	chmod +x "$fake_bin/git"
 
-	clone_dir="$(
-		PATH="$fake_bin:/usr/bin:/bin" DOTFILES_LOG="$log_file" TERM="xterm-256color" bash -c '
-			set -euo pipefail
-			# shellcheck source=/dev/null
-			source "$1"
-			clone_dotfiles 2>/dev/null
-		' _ "$temp_source"
-	)"
+	if PATH="$fake_bin:/usr/bin:/bin" DOTFILES_LOG="$log_file" TERM="xterm-256color" bash -c '
+		set -euo pipefail
+		# shellcheck source=/dev/null
+		source "$1"
+		clone_dotfiles >/dev/null 2>&1
+	' _ "$temp_source"; then
+		fail "clone_dotfiles should fail for GitHub SSH clone errors"
+	fi
 
-	assert_equal "$expected_clone_dir" "$clone_dir" "clone path"
 	assert_grep "^GIT_CONFIG_GLOBAL=\\|clone --depth=1 --branch beta --single-branch $expected_repo $expected_clone_dir\$" "$git_log"
-	assert_grep "^GIT_CONFIG_GLOBAL=/dev/null\\|clone --depth=1 --branch beta --single-branch $expected_repo $expected_clone_dir\$" "$git_log"
+	if grep -q "/dev/null" "$git_log"; then
+		fail "clone_dotfiles retried GitHub SSH failure with HTTPS fallback"
+	fi
 
 	rm -f "$temp_source" "$log_file" "$git_log"
 	rm -rf "$fake_bin"
@@ -282,7 +280,7 @@ run_shellcheck() {
 run_test "Shell syntax" run_shell_syntax_checks
 run_test "Banner width" run_banner_regression_checks
 run_test "Install clone path" run_install_clone_path_regression_checks
-run_test "Install clone falls back to HTTPS on GitHub SSH failure" run_install_clone_falls_back_to_https_on_github_ssh_failure
+run_test "Install clone does not retry GitHub SSH failures" run_install_clone_does_not_retry_github_ssh_failures
 run_test "Install clone does not retry non-SSH failures" run_install_clone_does_not_retry_non_ssh_failures
 run_test "Python syntax" run_python_checks
 run_test "Lua syntax" run_lua_checks

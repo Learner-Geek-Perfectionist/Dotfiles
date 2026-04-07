@@ -1,6 +1,5 @@
 # smart_launcher.py — smart_tab.py 和 smart_window.py 共享的 kitten 入口逻辑
 
-from functools import lru_cache
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 import traceback
@@ -13,7 +12,6 @@ def main(args):
     pass
 
 
-@lru_cache(maxsize=1)
 def load_ssh_utils():
     module_path = Path(__file__).resolve().with_name('ssh_utils.py')
     spec = spec_from_file_location('kitty_smart_ssh_utils', module_path)

@@ -2564,6 +2564,18 @@ if scenario == "ssh-shortname-fqdn-collision":
     module.socket.gethostname = lambda: "dev.local"
     module.socket.getfqdn = lambda: "dev.local"
     module.socket.getaddrinfo = lambda *args, **kwargs: []
+elif scenario == "ssh-alias-reported-fqdn":
+    module.socket.gethostname = lambda: "mbp"
+    module.socket.getfqdn = lambda: "mbp.local"
+    module.socket.getaddrinfo = lambda *args, **kwargs: []
+elif scenario == "plain-ssh-with-remote-cwd":
+    module.socket.gethostname = lambda: "mbp"
+    module.socket.getfqdn = lambda: "mbp.local"
+    module.socket.getaddrinfo = lambda *args, **kwargs: []
+elif scenario == "ssh-alias-reported-shortname-host":
+    module.socket.gethostname = lambda: "mbp"
+    module.socket.getfqdn = lambda: "mbp.local"
+    module.socket.getaddrinfo = lambda *args, **kwargs: []
 elif scenario == "ssh-local-interface-ip":
     module.socket.gethostname = lambda: "mbp"
     module.socket.getfqdn = lambda: "mbp.local"
@@ -2600,6 +2612,12 @@ class Window:
             return ["kitten", "ssh", "--kitten", "cwd=/placeholder", "yumi"]
         if scenario == "ssh-shortname-fqdn-collision":
             return ["kitten", "ssh", "--kitten", "cwd=/placeholder", "dev.corp"]
+        if scenario == "ssh-alias-reported-fqdn":
+            return ["kitten", "ssh", "--kitten", "cwd=/placeholder", "orb"]
+        if scenario == "plain-ssh-with-remote-cwd":
+            return None
+        if scenario == "ssh-alias-reported-shortname-host":
+            return ["kitten", "ssh", "--kitten", "cwd=/placeholder", "orb"]
         if scenario == "ssh-local-interface-ip":
             return ["kitten", "ssh", "--kitten", "cwd=/placeholder", "192.168.1.100"]
         if scenario == "ssh-reported-host-mismatch":
@@ -2645,6 +2663,12 @@ if scenario in {"ssh", "ssh-connecting", "ssh-same-cwd", "inline-kitten", "missi
     cmdline = ["ssh", "yumi"]
 elif scenario == "ssh-shortname-fqdn-collision":
     cmdline = ["ssh", "dev.corp"]
+elif scenario == "ssh-alias-reported-fqdn":
+    cmdline = ["ssh", "orb"]
+elif scenario == "plain-ssh-with-remote-cwd":
+    cmdline = ["ssh", "legacy"]
+elif scenario == "ssh-alias-reported-shortname-host":
+    cmdline = ["ssh", "orb"]
 elif scenario == "ssh-local-interface-ip":
     cmdline = ["ssh", "192.168.1.100"]
 elif scenario == "ssh-reported-host-mismatch":
@@ -2667,6 +2691,12 @@ if scenario == "ssh-same-cwd" and cwd_value is not None:
     window.screen.last_reported_cwd = f"kitty-shell-cwd://yumi{cwd_value.replace(' ', '%20')}"
 elif scenario == "ssh-shortname-fqdn-collision" and cwd_value is not None:
     window.screen.last_reported_cwd = f"kitty-shell-cwd://dev.corp{cwd_value.replace(' ', '%20')}"
+elif scenario == "ssh-alias-reported-fqdn" and cwd_value is not None:
+    window.screen.last_reported_cwd = f"kitty-shell-cwd://ubuntu.orb.local{cwd_value.replace(' ', '%20')}"
+elif scenario == "plain-ssh-with-remote-cwd" and cwd_value is not None:
+    window.screen.last_reported_cwd = f"kitty-shell-cwd://legacy.example.com{cwd_value.replace(' ', '%20')}"
+elif scenario == "ssh-alias-reported-shortname-host" and cwd_value is not None:
+    window.screen.last_reported_cwd = f"kitty-shell-cwd://ubuntu{cwd_value.replace(' ', '%20')}"
 elif scenario == "ssh-local-interface-ip" and cwd_value is not None:
     window.screen.last_reported_cwd = f"kitty-shell-cwd://192.168.1.100{cwd_value.replace(' ', '%20')}"
 elif scenario == "ssh-reported-host-mismatch" and cwd_value is not None:
@@ -2860,6 +2890,18 @@ for name in ("smart_window.py", "smart_tab.py"):
 PY
 }
 
+test_kitty_smart_launcher_does_not_cache_ssh_utils_module() {
+	assert_not_contains "from functools import lru_cache" "$REPO_ROOT/.config/kitty/smart_launcher.py"
+	assert_not_contains "@lru_cache" "$REPO_ROOT/.config/kitty/smart_launcher.py"
+}
+
+test_kitty_ssh_utils_does_not_keep_dead_plain_ssh_helpers() {
+	assert_not_contains "_SSH_OPTS_WITH_ARG" "$REPO_ROOT/.config/kitty/ssh_utils.py"
+	assert_not_contains "def _extract_kitty_ssh_destination" "$REPO_ROOT/.config/kitty/ssh_utils.py"
+	assert_not_contains "def _extract_plain_ssh_destination" "$REPO_ROOT/.config/kitty/ssh_utils.py"
+	assert_not_contains "def extract_ssh_destination" "$REPO_ROOT/.config/kitty/ssh_utils.py"
+}
+
 test_kitty_smart_launch_uses_native_current_cwd_for_local_windows() {
 	local tmp_dir output_file
 	tmp_dir=$(make_temp_dir)
@@ -2919,14 +2961,44 @@ test_kitty_smart_launch_treats_different_fqdns_with_same_shortname_as_remote() {
 	assert_kitty_remote_launch_matches "$output_file"
 }
 
-test_kitty_smart_launch_fails_closed_when_reported_host_conflicts_with_destination() {
+test_kitty_smart_launch_accepts_reported_remote_fqdn_for_ssh_alias() {
+	local tmp_dir output_file
+	tmp_dir=$(make_temp_dir)
+	output_file="$tmp_dir/ssh-alias-reported-fqdn-launch.json"
+	trap 'rm -rf "${tmp_dir:-}"' RETURN
+
+	run_kitty_ssh_utils_case ssh-alias-reported-fqdn "/srv/my project" "$output_file"
+	assert_kitty_remote_launch_matches "$output_file"
+}
+
+test_kitty_smart_launch_accepts_reported_remote_short_hostname_for_ssh_alias() {
+	local tmp_dir output_file
+	tmp_dir=$(make_temp_dir)
+	output_file="$tmp_dir/ssh-alias-reported-shortname-host-launch.json"
+	trap 'rm -rf "${tmp_dir:-}"' RETURN
+
+	run_kitty_ssh_utils_case ssh-alias-reported-shortname-host "/srv/my project" "$output_file"
+	assert_kitty_remote_launch_matches "$output_file"
+}
+
+test_kitty_smart_launch_falls_back_locally_without_kitty_ssh_metadata() {
+	local tmp_dir output_file
+	tmp_dir=$(make_temp_dir)
+	output_file="$tmp_dir/plain-ssh-with-remote-cwd-launch.json"
+	trap 'rm -rf "${tmp_dir:-}"' RETURN
+
+	run_kitty_ssh_utils_case plain-ssh-with-remote-cwd "/srv/my project" "$output_file"
+	assert_kitty_local_fallback_matches "$output_file" "/Users/local/path"
+}
+
+test_kitty_smart_launch_accepts_different_reported_remote_hostname() {
 	local tmp_dir output_file
 	tmp_dir=$(make_temp_dir)
 	output_file="$tmp_dir/ssh-reported-host-mismatch-launch.json"
 	trap 'rm -rf "${tmp_dir:-}"' RETURN
 
 	run_kitty_ssh_utils_case ssh-reported-host-mismatch "/srv/my project" "$output_file"
-	assert_kitty_local_fallback_matches "$output_file" "/Users/local/path"
+	assert_kitty_remote_launch_matches "$output_file"
 }
 
 test_kitty_smart_launch_treats_local_interface_ip_as_local_host() {
@@ -3081,6 +3153,8 @@ run_test "bb-browser dist patch supports mcp cdpArgs variant without cli.js" tes
 run_test "managed xiaohongshu template corrects stale search context" test_managed_xiaohongshu_search_template_corrects_stale_search_context
 run_test "kitty conf enables native smart hotkeys" test_kitty_conf_enables_native_smart_hotkeys
 run_test "kitty custom kitten entrypoints do not require __file__" test_kitty_custom_kitten_entrypoints_do_not_require___file__
+run_test "kitty smart launcher does not cache ssh utils module" test_kitty_smart_launcher_does_not_cache_ssh_utils_module
+run_test "kitty ssh utils does not keep dead plain ssh helpers" test_kitty_ssh_utils_does_not_keep_dead_plain_ssh_helpers
 run_test "bb-browser install discovers browser and launches CDP" test_bb_browser_install_discovers_browser_and_launches_cdp
 run_test "bb-browser install keeps token private when chmod fails" test_bb_browser_install_keeps_token_private_when_chmod_fails
 run_test "bb-browser install writes Edge Default config and verifies MCP bootstrap" test_bb_browser_install_writes_edge_default_config_and_verifies_mcp
@@ -3106,7 +3180,10 @@ run_test "kitty smart launch uses native current cwd for local windows" test_kit
 run_test "kitty smart launch skips ssh when session not established" test_kitty_smart_launch_skips_ssh_when_session_not_established
 run_test "kitty smart launch clones when remote cwd matches local path" test_kitty_smart_launch_clones_when_remote_cwd_matches_local_path
 run_test "kitty smart launch treats different FQDNs with same shortname as remote" test_kitty_smart_launch_treats_different_fqdns_with_same_shortname_as_remote
-run_test "kitty smart launch fails closed when reported host conflicts with destination" test_kitty_smart_launch_fails_closed_when_reported_host_conflicts_with_destination
+run_test "kitty smart launch accepts reported remote FQDN for ssh alias" test_kitty_smart_launch_accepts_reported_remote_fqdn_for_ssh_alias
+run_test "kitty smart launch accepts reported remote short hostname for ssh alias" test_kitty_smart_launch_accepts_reported_remote_short_hostname_for_ssh_alias
+run_test "kitty smart launch falls back locally without kitty ssh metadata" test_kitty_smart_launch_falls_back_locally_without_kitty_ssh_metadata
+run_test "kitty smart launch accepts different reported remote hostname" test_kitty_smart_launch_accepts_different_reported_remote_hostname
 run_test "kitty smart launch treats local interface IP as local host" test_kitty_smart_launch_treats_local_interface_ip_as_local_host
 run_test "kitty smart launch uses native hold-after-ssh for established sessions" test_kitty_smart_launch_uses_native_hold_after_ssh_for_established_sessions
 run_test "kitty smart launch prefers native hold-after-ssh over helper rewriting" test_kitty_smart_launch_prefers_native_hold_after_ssh_over_helper_rewriting

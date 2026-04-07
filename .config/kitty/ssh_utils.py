@@ -8,27 +8,11 @@ from urllib.parse import unquote, urlparse
 from kitty.launch import launch as kitty_launch, parse_launch_args
 from kittens.ssh.utils import get_connection_data, is_kitten_cmdline
 
-# ssh 中需要跟参数值的选项字母（如 -p 22、-i keyfile、-o Option=val）
-_SSH_OPTS_WITH_ARG = frozenset('bcDEeFIiJLlmOopQRSWw')
 # 快速连按 Cmd+E/Cmd+N 时，第二次按键可能已经落在“刚新开的标签页”上，
 # 但这个标签页还没来得及上报自己的工作目录。这里把原始稳定源窗口 id
 # 写到新窗口里，下一次连按时就能沿着这条线回溯；否则连按场景会掉到
 # HOME 或其他尚未稳定的工作目录。
 _SMART_SOURCE_WINDOW_ID_VAR = 'smart_launch_source_window_id'
-
-
-def _extract_kitty_ssh_destination(cmdline):
-    """只识别 kitty kitten ssh 启动的交互式远程 shell。"""
-    try:
-        dash_idx = cmdline.index('--')
-        destination = cmdline[dash_idx + 1]
-    except (ValueError, IndexError):
-        return None
-
-    remote_cmd = cmdline[dash_idx + 2:]
-    if remote_cmd[:3] == ['exec', 'sh', '-c']:
-        return destination
-    return None
 
 
 def _extract_kitten_cmdline_destination(cmdline):
@@ -41,62 +25,6 @@ def _extract_kitten_cmdline_destination(cmdline):
         return None
 
     return connection_data.hostname
-
-
-def _extract_plain_ssh_destination(cmdline):
-    """只把 `ssh host` 视为交互式 SSH，会忽略 git-over-ssh 等远程命令。"""
-    args = cmdline[1:]
-    skip_next = False
-
-    for idx, arg in enumerate(args):
-        if skip_next:
-            skip_next = False
-            continue
-
-        if arg == '--':
-            if idx + 1 < len(args):
-                destination = args[idx + 1]
-                remote_cmd = args[idx + 2:]
-                return destination if not remote_cmd else None
-            return None
-
-        if arg.startswith('-'):
-            if len(arg) == 2 and arg[1] in _SSH_OPTS_WITH_ARG:
-                skip_next = True
-            continue
-
-        destination = arg
-        remote_cmd = args[idx + 1:]
-        return destination if not remote_cmd else None
-
-    return None
-
-
-def extract_ssh_destination(window):
-    """从前台进程中提取 SSH 目标地址（user@host 或 hostname）。找到返回字符串，否则返回 None。"""
-    try:
-        foreground_processes = window.child.foreground_processes
-    except (AttributeError, OSError):
-        return None
-
-    for process in foreground_processes:
-        cmdline = process.get('cmdline', []) or []
-        if not cmdline:
-            continue
-
-        basename = cmdline[0].rsplit('/', 1)[-1]
-        if basename != 'ssh':
-            continue
-
-        destination = _extract_kitty_ssh_destination(cmdline)
-        if destination is not None:
-            return destination
-
-        destination = _extract_plain_ssh_destination(cmdline)
-        if destination is not None:
-            return destination
-
-    return None
 
 
 def _resolve_source_window(boss, target_window_id=None):
@@ -396,39 +324,9 @@ def _extract_last_reported_cwd_host(window):
     return _normalize_hostname(parsed.hostname)
 
 
-def _extract_destination_host(destination):
-    if not destination:
-        return None
-
-    parsed = urlparse(destination if '://' in destination else f'ssh://{destination}')
-    return _normalize_hostname(parsed.hostname)
-
-
-def _hostnames_obviously_conflict(left, right):
-    left_normalized = _normalize_hostname(left)
-    right_normalized = _normalize_hostname(right)
-    if left_normalized is None or right_normalized is None:
-        return False
-
-    if left_normalized == right_normalized:
-        return False
-
-    left_short = _short_hostname(left_normalized)
-    right_short = _short_hostname(right_normalized)
-    if left_short is not None and left_short == right_short:
-        if _is_plain_hostname_label(left_normalized) or _is_plain_hostname_label(right_normalized):
-            return False
-
-    return True
-
-
 def _reported_cwd_host_confirms_remote(reported_host, destination=None):
     normalized_host = _normalize_hostname(reported_host)
     if normalized_host is None or _hostname_matches_local_machine(normalized_host):
-        return False
-
-    destination_host = _extract_destination_host(destination)
-    if destination_host is not None and _hostnames_obviously_conflict(normalized_host, destination_host):
         return False
 
     return True
@@ -461,37 +359,33 @@ def smart_launch(boss, launch_type, target_window_id=None):
     # “空壳”状态，就先回退到上一个稳定源窗口，再决定 cwd/ssh 行为。
     window = _resolve_repeat_source_window(boss, window)
 
-    destination = extract_ssh_destination(window)
     ssh_kitten_cmdline = _extract_ssh_kitten_cmdline(window)
+    trusted_destination = None
     if ssh_kitten_cmdline is not None:
-        kitten_destination = _extract_kitten_cmdline_destination(ssh_kitten_cmdline)
-        if kitten_destination is not None:
-            destination = kitten_destination
+        trusted_destination = _extract_kitten_cmdline_destination(ssh_kitten_cmdline)
 
     cwd = _extract_last_reported_cwd(window)
     local_cwd = _extract_cwd_of_child(window)
     ssh_shaped = _window_looks_ssh_shaped(window, ssh_kitten_cmdline=ssh_kitten_cmdline)
+    remote_clone_allowed = (
+        trusted_destination is not None
+        and cwd is not None
+        and _reported_cwd_supports_remote_clone(
+            window,
+            destination=trusted_destination,
+            cwd=cwd,
+            local_cwd=local_cwd,
+        )
+    )
 
-    if destination is None:
-        if ssh_shaped:
-            # 看起来像 SSH，但没有足够证据证明远端克隆目标是安全的。
-            # 这里必须 fail closed 到本地，并优先使用已知的本地 cwd 信号。
-            launch_args = _build_explicit_local_fallback_launch_args(
-                launch_type,
-                window,
-                cwd,
-                local_cwd,
-                prefer_known_local_cwd=True,
-            )
-        else:
-            # 纯本地窗口直接使用 kitty 原生的 `current` 语义。
-            launch_args = _build_native_current_launch_args(launch_type, window)
-    elif cwd is not None and _reported_cwd_supports_remote_clone(window, destination=destination, cwd=cwd, local_cwd=local_cwd):
-        # 只有“明确是远端”的工作目录才允许走原生 SSH 克隆路径。
+    if remote_clone_allowed:
+        # 只有 Kitty 自己确认过的 ssh kitten 元数据，才允许触发远端克隆。
+        # 纯 `ssh host` 命令行和前台进程列表只作为“像 SSH” 的弱信号使用，
+        # 最多触发本地 fail-closed，不再授权远端目录继承。
         launch_args = _build_established_ssh_launch_args(launch_type, window)
-    else:
-        # 虽然像 SSH，但并不能明确证明它已经进入远端：此时必须留在本地，
-        # 不能等待，也不能让 kitty 通过 `last_reported` 重新走回远端克隆。
+    elif ssh_shaped:
+        # 看起来像 SSH，但没有足够证据证明远端克隆目标是安全的。
+        # 这里必须 fail closed 到本地，并优先使用已知的本地 cwd 信号。
         launch_args = _build_explicit_local_fallback_launch_args(
             launch_type,
             window,
@@ -499,6 +393,9 @@ def smart_launch(boss, launch_type, target_window_id=None):
             local_cwd,
             prefer_known_local_cwd=True,
         )
+    else:
+        # 纯本地窗口直接使用 kitty 原生的 `current` 语义。
+        launch_args = _build_native_current_launch_args(launch_type, window)
 
     launch_args = _with_source_window_var(launch_args, window)
     opts, remaining = parse_launch_args(launch_args)

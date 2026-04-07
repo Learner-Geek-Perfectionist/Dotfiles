@@ -6,8 +6,10 @@ set -eo pipefail
 # ========================================
 # 日志配置
 # ========================================
-export DOTFILES_LOG_DIR="/tmp/dotfiles-$(whoami)"
-export DOTFILES_LOG="${DOTFILES_LOG:-$DOTFILES_LOG_DIR/uninstall-$(date '+%Y%m%d-%H%M%S').log}"
+DOTFILES_LOG_DIR="/tmp/dotfiles-$(whoami)"
+export DOTFILES_LOG_DIR
+DOTFILES_LOG="${DOTFILES_LOG:-$DOTFILES_LOG_DIR/uninstall-$(date '+%Y%m%d-%H%M%S').log}"
+export DOTFILES_LOG
 
 # ========================================
 # 内嵌工具函数（避免路径依赖）

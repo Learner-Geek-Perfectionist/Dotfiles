@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2088
 # Dotfiles 配置安装脚本
 # 只同步明确列出的文件/目录，避免覆盖用户的其它配置
 

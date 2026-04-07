@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2034
 # Package definitions for macOS (Homebrew)
 # Linux 包管理已迁移到 devbox.json
 # 本文件仅定义包列表数组，通过 source 加载，不设置 set -e（由调用方负责）

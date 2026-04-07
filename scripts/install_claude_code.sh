@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2088
 # Claude Code 安装脚本
 # 1) 安装 LSP 二进制（rust-analyzer, gopls, kotlin-ls 等）
 # 2) 安装 Claude Code CLI（原生安装器）
@@ -372,10 +373,11 @@ install_cli() {
 # Claude CLI 内部 git clone 使用 -c core.sshCommand="ssh -o StrictHostKeyChecking=yes"，
 # 要求 host key 必须已存在于 known_hosts 中，否则连接被拒绝。
 # 这里直接写入 GitHub 官方文档公布的 host keys，避免运行时 ssh-keyscan 的 TOFU 风险。
-# 对 [ssh.github.com]:443 使用与 github.com 相同的官方 host keys。
+	# 对 [ssh.github.com]:443 使用与 github.com 相同的官方 host keys。
 ensure_github_host_keys() {
 	local known_hosts="$HOME/.ssh/known_hosts"
-	mkdir -p -m 700 "$HOME/.ssh"
+	mkdir -p "$HOME/.ssh"
+	chmod 700 "$HOME/.ssh"
 	local tmp_known_hosts added=0 entry
 	tmp_known_hosts=$(mktemp)
 	[[ -f "$known_hosts" ]] && cat "$known_hosts" >"$tmp_known_hosts"

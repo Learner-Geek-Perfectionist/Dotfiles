@@ -42,10 +42,12 @@ done <<< "$_home_env"
 unset _home_path _home_env _name _value
 
 # p10k 显示：自动从 pixi.toml 读取项目名
-export CONDA_DEFAULT_ENV="$(grep -m1 '^name' pixi.toml 2>/dev/null | sed 's/.*"\(.*\)".*/\1/')"
+CONDA_DEFAULT_ENV="$(grep -m1 '^name' pixi.toml 2>/dev/null | sed 's/.*"\(.*\)".*/\1/')"
+export CONDA_DEFAULT_ENV
 
 # 修复 pixi shell-hook 覆盖的 HOST 变量（p10k 需要正确的主机名）
-export HOST=$(hostname -s 2>/dev/null || hostname)
+HOST="$(hostname -s 2>/dev/null || hostname)"
+export HOST
 
 # ========== 项目特定环境变量（按需修改）==========
 # 方式 1：使用 pixi activation script（推荐，在 pixi.toml 中配置）
@@ -56,6 +58,5 @@ export HOST=$(hostname -s 2>/dev/null || hostname)
 # PROJECT_INSTALL="$PWD/install"
 # path_add LD_LIBRARY_PATH "$PROJECT_INSTALL/lib"
 # path_add CMAKE_PREFIX_PATH "$PROJECT_INSTALL"
-
 
 

@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2088
 # Pixi 安装脚本
 # 基于 conda-forge 的现代包管理器
 # 完全 Rootless，支持 x86_64 和 arm64

@@ -54,6 +54,14 @@ capture_utils_banner() {
 	rm -f "$log_file"
 }
 
+portable_combining_mark_sample() {
+	printf 'e\314\201'
+}
+
+portable_ascii_lower() {
+	printf '%s' "$1" | tr '[:upper:]' '[:lower:]'
+}
+
 inspect_banner_output() {
 	python3 - "$1" <<'PY'
 import re
@@ -80,10 +88,12 @@ assert_banner_layout() {
 }
 
 run_banner_regression_checks() {
-	local output
+	local output combining_mark
 
-	output="$(capture_bootstrap_banner 10 $'e\u0301')"
-	assert_banner_layout "bootstrap combining mark" "$output" 4 5 $'e\u0301'
+	combining_mark="$(portable_combining_mark_sample)"
+
+	output="$(capture_bootstrap_banner 10 "$combining_mark")"
+	assert_banner_layout "bootstrap combining mark" "$output" 4 5 "$combining_mark"
 
 	output="$(capture_bootstrap_banner 10 '🇨🇳')"
 	assert_banner_layout "bootstrap flag emoji" "$output" 4 4 '🇨🇳'
@@ -91,8 +101,8 @@ run_banner_regression_checks() {
 	output="$(capture_bootstrap_banner 10 '👨‍👩‍👧‍👦')"
 	assert_banner_layout "bootstrap zwj emoji" "$output" 4 4 '👨‍👩‍👧‍👦'
 
-	output="$(capture_utils_banner 10 $'e\u0301')"
-	assert_banner_layout "utils combining mark" "$output" 4 5 $'e\u0301'
+	output="$(capture_utils_banner 10 "$combining_mark")"
+	assert_banner_layout "utils combining mark" "$output" 4 5 "$combining_mark"
 
 	output="$(capture_utils_banner 10 '🇨🇳')"
 	assert_banner_layout "utils flag emoji" "$output" 4 4 '🇨🇳'
@@ -127,7 +137,7 @@ EOF
 		' _ "$temp_source"
 	)
 
-	[[ "${log_dir,,}" != "${clone_dir,,}" ]] || fail "clone path collides with log dir on case-insensitive filesystems: $clone_dir"
+	[[ "$(portable_ascii_lower "$log_dir")" != "$(portable_ascii_lower "$clone_dir")" ]] || fail "clone path collides with log dir on case-insensitive filesystems: $clone_dir"
 	rm -f "$temp_source" "$log_file"
 	rm -rf "$fake_bin"
 }

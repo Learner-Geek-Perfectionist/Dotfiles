@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2088
 # Dotfiles 统一安装入口
 #
 # Linux: Pixi (包管理) + Dotfiles 配置 - 完全 Rootless
@@ -151,6 +152,7 @@ print_banner() {
 	[[ $padding -lt 0 ]] && padding=0
 	local right_width=$(( width - padding - display_width ))
 	[[ $right_width -lt 0 ]] && right_width=0
+	# shellcheck disable=SC2155
 	local output="\033[45m$(printf "%${padding}s" "")${msg}$(printf "%${right_width}s" "")\033[0m"
 	echo -e "$output"
 	[[ -n "${DOTFILES_LOG:-}" ]] && echo -e "$output" >>"$DOTFILES_LOG"
@@ -273,7 +275,8 @@ check_dependencies() {
 # ========================================
 clone_dotfiles() {
 	local tmp_root="${TMPDIR:-/tmp}"
-	local tmp_dir="${tmp_root%/}/dotfiles-clone-$(whoami)"
+	local tmp_dir
+	tmp_dir="${tmp_root%/}/dotfiles-clone-$(whoami)"
 
 	# 清理之前的运行
 	[[ -d "$tmp_dir" ]] && rm -rf "$tmp_dir"

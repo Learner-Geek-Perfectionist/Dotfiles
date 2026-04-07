@@ -11,7 +11,9 @@ DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 LIB_DIR="$DOTFILES_DIR/lib"
 
 # 加载工具函数和包定义
+# shellcheck source=../lib/utils.sh
 source "$LIB_DIR/utils.sh"
+# shellcheck source=../lib/packages.sh
 source "$LIB_DIR/packages.sh"
 
 # 确保 brew tap 已添加（已 tap 则跳过）
@@ -250,6 +252,7 @@ print_info "检查 CLI 工具..."
 
 installed_formulas=$(brew list --formula -1 2>/dev/null)
 missing_formulas=()
+# shellcheck disable=SC2154
 for formula in "${brew_formulas[@]}"; do
 	if ! grep -qix "$formula" <<< "$installed_formulas"; then
 		# 二次检查：处理别名/重命名（如 python→python@3.x, pkg-config→pkgconf）
@@ -274,6 +277,7 @@ ensure_brew_tap "mihomo-party-org/mihomo-party"
 # 一次性获取已安装列表，本地比对找出缺失项
 installed_casks=$(brew list --cask -1 2>/dev/null)
 missing_casks=()
+# shellcheck disable=SC2154
 for cask in "${brew_casks[@]}"; do
 	grep -qix "$cask" <<< "$installed_casks" || missing_casks+=("$cask")
 done

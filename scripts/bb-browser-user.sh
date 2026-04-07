@@ -17,12 +17,12 @@ load_utils() {
 		fi
 	fi
 
-	for candidate in "$SCRIPT_DIR/../lib/utils.sh"; do
-		[[ -n "$candidate" && -f "$candidate" ]] || continue
+	candidate="$SCRIPT_DIR/../lib/utils.sh"
+	if [[ -n "$candidate" && -f "$candidate" ]]; then
 		# shellcheck source=/dev/null
 		source "$candidate"
 		return 0
-	done
+	fi
 
 	return 1
 }

@@ -189,6 +189,7 @@ print_item() {
 # 脚本标题横幅（背景色填充，文字居中）
 print_banner() {
 	local msg="$1"
+	# shellcheck disable=SC2155
 	local width=$(tput cols 2>/dev/null || echo 80)
 	local dw
 	dw="$(_string_display_width "$msg")"
@@ -196,6 +197,7 @@ print_banner() {
 	[[ $pad -lt 0 ]] && pad=0
 	local right=$(( width - pad - dw ))
 	[[ $right -lt 0 ]] && right=0
+	# shellcheck disable=SC2155
 	local output="\033[45m$(printf "%${pad}s")${msg}$(printf "%${right}s")\033[0m"
 	printf '%b\n' "$output"
 	printf '%b\n' "$output" >>"$DOTFILES_LOG"
@@ -794,7 +796,9 @@ git_clone_with_github_https_fallback() {
 		return 1
 	fi
 
+	# shellcheck disable=SC2034
 	GIT_GITHUB_FALLBACK_USED=1
+	# shellcheck disable=SC2034
 	GIT_GITHUB_FALLBACK_URL="$fallback_url"
 	printf '%s' "$git_output"
 }
@@ -832,7 +836,9 @@ git_pull_ff_only_with_github_https_fallback() {
 		return 1
 	fi
 
+	# shellcheck disable=SC2034
 	GIT_GITHUB_FALLBACK_USED=1
+	# shellcheck disable=SC2034
 	GIT_GITHUB_FALLBACK_URL="$fallback_url"
 	printf '%s' "$git_output"
 }

@@ -279,12 +279,25 @@ clone_dotfiles() {
 	[[ -d "$tmp_dir" ]] && rm -rf "$tmp_dir"
 
 	local branch="$DEFAULT_BRANCH"
+	local git_output fallback_url
 
 	print_header "克隆 Dotfiles 仓库 (分支: ${branch})..." >&2
 
 	# git clone 输出到 stderr，需要捕获并写入日志
-	local git_output
 	if ! git_output=$(git clone --depth=1 --branch "$branch" --single-branch "$DOTFILES_REPO_URL" "$tmp_dir" 2>&1); then
+		if bootstrap_git_remote_is_github "$DOTFILES_REPO_URL" &&
+			bootstrap_git_output_indicates_github_ssh_failure "$git_output"; then
+			fallback_url=$(bootstrap_github_https_remote_url "$DOTFILES_REPO_URL" 2>/dev/null || true)
+			if [[ -n "$fallback_url" ]]; then
+				print_warn "GitHub SSH 克隆失败，回退 HTTPS: $fallback_url" >&2
+				if git_output=$(GIT_CONFIG_GLOBAL=/dev/null git clone --depth=1 --branch "$branch" --single-branch "$fallback_url" "$tmp_dir" 2>&1); then
+					echo "$git_output" >>"$DOTFILES_LOG"
+					echo "$tmp_dir"
+					return 0
+				fi
+			fi
+		fi
+
 		echo "$git_output" >>"$DOTFILES_LOG"
 		echo "$git_output" >&2
 		print_error "克隆仓库失败（分支: ${branch}）" >&2
@@ -293,6 +306,52 @@ clone_dotfiles() {
 	echo "$git_output" >>"$DOTFILES_LOG"
 
 	echo "$tmp_dir"
+}
+
+bootstrap_git_remote_is_github() {
+	local url="$1"
+	case "$url" in
+	https://github.com/* | http://github.com/* | git@github.com:* | ssh://git@github.com/* | ssh://git@ssh.github.com:443/*)
+		return 0
+		;;
+	esac
+	return 1
+}
+
+bootstrap_github_https_remote_url() {
+	local url="$1"
+	[[ -n "$url" ]] || return 1
+
+	case "$url" in
+	https://github.com/*)
+		printf '%s\n' "$url"
+		return 0
+		;;
+	http://github.com/*)
+		printf 'https://%s\n' "${url#http://}"
+		return 0
+		;;
+	git@github.com:*)
+		printf 'https://github.com/%s\n' "${url#git@github.com:}"
+		return 0
+		;;
+	ssh://git@github.com/*)
+		printf 'https://github.com/%s\n' "${url#ssh://git@github.com/}"
+		return 0
+		;;
+	ssh://git@ssh.github.com:443/*)
+		printf 'https://github.com/%s\n' "${url#ssh://git@ssh.github.com:443/}"
+		return 0
+		;;
+	esac
+
+	return 1
+}
+
+bootstrap_git_output_indicates_github_ssh_failure() {
+	local output="$1"
+	printf '%s\n' "$output" | grep -Eqi \
+		'Permission denied \(publickey\)|Host key verification failed|ssh: connect to host (github\.com|ssh\.github\.com) port (22|443)|Connection (timed out|refused|closed|reset)|No route to host|Network is unreachable|Operation timed out|kex_exchange_identification'
 }
 
 # ========================================

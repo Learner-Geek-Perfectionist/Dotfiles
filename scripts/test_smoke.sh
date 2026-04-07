@@ -12,6 +12,12 @@ run_dotfiles_install() {
 		SUPERPOWERS_REPO_URL="$superpowers_repo" bash "$REPO_ROOT/scripts/install_dotfiles.sh" >"$log" 2>&1
 }
 
+run_deploy_superpowers_skills() {
+	local tmp_home="$1" fake_bin="$2" clone_dir="$3" link_dir="$4" state_file="$5" log="$6"
+	HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" DOTFILES_LOG="$log" \
+		bash "$REPO_ROOT/scripts/deploy_superpowers_skills.sh" "$clone_dir" "$link_dir" "$state_file" >"$log" 2>&1
+}
+
 write_fake_claude_cli() {
 	local fake_bin="$1" mcp_list_output="$2" add_json_log="$3" remove_log="$4"
 	cat >"$fake_bin/claude" <<EOF
@@ -173,6 +179,103 @@ fi
 exit 1
 EOF
 	chmod +x "$fake_bin/git"
+}
+
+test_superpowers_clone_falls_back_to_https_when_github_ssh_fails() {
+	local tmp_home fake_bin log git_log clone_dir link_dir state_file expected_repo
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/deploy-superpowers.log"
+	git_log="$tmp_home/git.log"
+	clone_dir="$tmp_home/.codex/superpowers"
+	link_dir="$tmp_home/.agents/skills/superpowers"
+	state_file="$tmp_home/.local/state/dotfiles/superpowers.env"
+	expected_repo="https://github.com/obra/superpowers.git"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	cat >"$fake_bin/git" <<EOF
+#!/bin/sh
+printf 'GIT_CONFIG_GLOBAL=%s|%s\n' "\${GIT_CONFIG_GLOBAL:-}" "\$*" >>"$git_log"
+if [ "\$1" = "clone" ] && [ "\$2" = "$expected_repo" ] && [ "\$3" = "$clone_dir" ]; then
+  if [ "\${GIT_CONFIG_GLOBAL:-}" = "/dev/null" ]; then
+    mkdir -p "$clone_dir/.git" "$clone_dir/skills/using-superpowers"
+    printf '%s\n' '# Using Superpowers' >"$clone_dir/skills/using-superpowers/SKILL.md"
+    exit 0
+  fi
+  printf '%s\n' 'git@github.com: Permission denied (publickey).' >&2
+  exit 1
+fi
+if [ "\$1" = "-C" ] && [ "\$2" = "$clone_dir" ] && [ "\$3" = "remote" ] && [ "\$4" = "get-url" ] && [ "\$5" = "origin" ]; then
+  printf '%s\n' "$expected_repo"
+  exit 0
+fi
+printf '%s\n' "unexpected git invocation: \$*" >&2
+exit 99
+EOF
+	chmod +x "$fake_bin/git"
+
+	if ! run_deploy_superpowers_skills "$tmp_home" "$fake_bin" "$clone_dir" "$link_dir" "$state_file" "$log"; then
+		cat "$log" >&2
+		fail "deploy_superpowers_skills.sh should recover from GitHub SSH clone failure"
+	fi
+
+	assert_symlink "$link_dir"
+	assert_file_exists "$clone_dir/skills/using-superpowers/SKILL.md"
+	assert_file_exists "$state_file"
+	assert_grep "^GIT_CONFIG_GLOBAL=\\|clone $expected_repo $clone_dir\$" "$git_log"
+	assert_grep "^GIT_CONFIG_GLOBAL=/dev/null\\|clone $expected_repo $clone_dir\$" "$git_log"
+}
+
+test_superpowers_pull_falls_back_to_https_when_github_ssh_fails() {
+	local tmp_home fake_bin log git_log clone_dir link_dir state_file expected_repo
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/deploy-superpowers.log"
+	git_log="$tmp_home/git.log"
+	clone_dir="$tmp_home/.codex/superpowers"
+	link_dir="$tmp_home/.agents/skills/superpowers"
+	state_file="$tmp_home/.local/state/dotfiles/superpowers.env"
+	expected_repo="https://github.com/obra/superpowers.git"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	mkdir -p "$clone_dir/.git" "$clone_dir/skills/using-superpowers" "$(dirname "$link_dir")"
+	printf '%s\n' 'old skill' >"$clone_dir/skills/using-superpowers/SKILL.md"
+
+	cat >"$fake_bin/git" <<EOF
+#!/bin/sh
+printf 'GIT_CONFIG_GLOBAL=%s|%s\n' "\${GIT_CONFIG_GLOBAL:-}" "\$*" >>"$git_log"
+if [ "\$1" = "-C" ] && [ "\$2" = "$clone_dir" ] && [ "\$3" = "remote" ] && [ "\$4" = "get-url" ] && [ "\$5" = "origin" ]; then
+  printf '%s\n' 'git@github.com:obra/superpowers.git'
+  exit 0
+fi
+if [ "\$1" = "-C" ] && [ "\$2" = "$clone_dir" ] && [ "\$3" = "pull" ] && [ "\$4" = "--ff-only" ]; then
+  if [ "\$5" = "$expected_repo" ] && [ "\$6" = "main" ] && [ "\${GIT_CONFIG_GLOBAL:-}" = "/dev/null" ]; then
+    printf '%s\n' 'updated skill' >"$clone_dir/skills/using-superpowers/SKILL.md"
+    exit 0
+  fi
+  printf '%s\n' 'git@github.com: Permission denied (publickey).' >&2
+  exit 1
+fi
+if [ "\$1" = "-C" ] && [ "\$2" = "$clone_dir" ] && [ "\$3" = "rev-parse" ] && [ "\$4" = "--abbrev-ref" ] && [ "\$5" = "HEAD" ]; then
+  printf '%s\n' 'main'
+  exit 0
+fi
+printf '%s\n' "unexpected git invocation: \$*" >&2
+exit 99
+EOF
+	chmod +x "$fake_bin/git"
+
+	if ! run_deploy_superpowers_skills "$tmp_home" "$fake_bin" "$clone_dir" "$link_dir" "$state_file" "$log"; then
+		cat "$log" >&2
+		fail "deploy_superpowers_skills.sh should recover from GitHub SSH pull failure"
+	fi
+
+	assert_symlink "$link_dir"
+	assert_file_exists "$clone_dir/skills/using-superpowers/SKILL.md"
+	assert_contains 'updated skill' "$clone_dir/skills/using-superpowers/SKILL.md"
+	assert_grep "^GIT_CONFIG_GLOBAL=\\|-C $clone_dir pull --ff-only\$" "$git_log"
+	assert_grep "^GIT_CONFIG_GLOBAL=/dev/null\\|-C $clone_dir pull --ff-only $expected_repo main\$" "$git_log"
+	assert_contains "SUPERPOWERS_REPO_URL=git@github.com:obra/superpowers.git" "$state_file"
 }
 
 test_dotfiles_manifest_and_ssh_block() {
@@ -2870,6 +2973,8 @@ PY
 }
 
 run_test "Dotfiles manifest and SSH include block" test_dotfiles_manifest_and_ssh_block
+run_test "superpowers clone falls back to HTTPS on GitHub SSH failure" test_superpowers_clone_falls_back_to_https_when_github_ssh_fails
+run_test "superpowers pull falls back to HTTPS on GitHub SSH failure" test_superpowers_pull_falls_back_to_https_when_github_ssh_fails
 run_test "Dotfiles deploys bb-browser shell plugin" test_dotfiles_deploys_bb_browser_shell_plugin
 run_test "bb-browser install uses latest and deploys wrapper" test_bb_browser_install_uses_latest_and_deploys_wrapper
 run_test "bb-browser install patches managed mcp dist only" test_bb_browser_install_patches_managed_mcp_dist_file_only

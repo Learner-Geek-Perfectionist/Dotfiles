@@ -21,10 +21,12 @@ ensure_clone() {
 			print_warn "superpowers 仓库 origin 不匹配，跳过: $clone_dir"
 			return 1
 		fi
-		git -C "$clone_dir" pull --ff-only >/dev/null 2>&1 || {
+		if ! git_pull_ff_only_with_github_https_fallback "$clone_dir" "${origin:-$repo_url}" >/dev/null 2>&1; then
 			print_warn "superpowers 更新失败，跳过: $clone_dir"
 			return 1
-		}
+		fi
+		[[ "${GIT_GITHUB_FALLBACK_USED:-0}" == "1" ]] &&
+			print_warn "superpowers GitHub SSH 更新失败，已回退 HTTPS: $GIT_GITHUB_FALLBACK_URL"
 		return 0
 	fi
 
@@ -33,10 +35,13 @@ ensure_clone() {
 		return 1
 	fi
 
-	git clone "$repo_url" "$clone_dir" >/dev/null 2>&1 || {
+	if ! git_clone_with_github_https_fallback "$repo_url" "$clone_dir" >/dev/null 2>&1; then
 		print_warn "superpowers 克隆失败，跳过: $repo_url"
 		return 1
-	}
+	fi
+	[[ "${GIT_GITHUB_FALLBACK_USED:-0}" == "1" ]] &&
+		print_warn "superpowers GitHub SSH 克隆失败，已回退 HTTPS: $GIT_GITHUB_FALLBACK_URL"
+	return 0
 }
 
 ensure_link() {

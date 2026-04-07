@@ -2,7 +2,6 @@
 
 local cfg = require('config.keyConfig')
 local appToggler = require('modules.AppToggler')
-local kittyHotkeys = require('modules.kittyHotkeys')
 local winMgmt = require('modules.windowManagement')
 local caffeinate = require('modules.caffeinate')
 
@@ -39,6 +38,4 @@ hs.hotkey.bind(cfg.HyperKey, '1', function()
     caffeinate.toggle()
 end)
 
-return {
-    _kittyHotkeys = kittyHotkeys,
-}
+return {}

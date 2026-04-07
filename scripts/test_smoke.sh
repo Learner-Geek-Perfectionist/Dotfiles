@@ -2565,6 +2565,24 @@ spec.loader.exec_module(module)
 scenario = os.environ["SCENARIO"]
 cwd_value = os.environ.get("CASE_CWD") or None
 
+if scenario == "ssh-shortname-fqdn-collision":
+    module.socket.gethostname = lambda: "dev.local"
+    module.socket.getfqdn = lambda: "dev.local"
+    module.socket.getaddrinfo = lambda *args, **kwargs: []
+elif scenario == "ssh-local-interface-ip":
+    module.socket.gethostname = lambda: "mbp"
+    module.socket.getfqdn = lambda: "mbp.local"
+
+    def fake_local_getaddrinfo(host, port, *args, **kwargs):
+        normalized_host = (host or "").lower()
+        if normalized_host in {"mbp", "mbp.local"}:
+            return [
+                (module.socket.AF_INET, module.socket.SOCK_STREAM, 6, "", ("192.168.1.100", 0)),
+            ]
+        return []
+
+    module.socket.getaddrinfo = fake_local_getaddrinfo
+
 
 class Child:
     foreground_processes = []
@@ -2584,6 +2602,12 @@ class Window:
 
     def ssh_kitten_cmdline(self):
         if scenario in {"ssh", "ssh-connecting", "ssh-same-cwd", "ssh-connecting-realpath", "burst-ssh"}:
+            return ["kitten", "ssh", "--kitten", "cwd=/placeholder", "yumi"]
+        if scenario == "ssh-shortname-fqdn-collision":
+            return ["kitten", "ssh", "--kitten", "cwd=/placeholder", "dev.corp"]
+        if scenario == "ssh-local-interface-ip":
+            return ["kitten", "ssh", "--kitten", "cwd=/placeholder", "192.168.1.100"]
+        if scenario == "ssh-reported-host-mismatch":
             return ["kitten", "ssh", "--kitten", "cwd=/placeholder", "yumi"]
         if scenario == "ssh-prompt-before-cwd":
             return ["kitten", "ssh", "--kitten", "cwd=/placeholder", "orb"]
@@ -2624,6 +2648,12 @@ target_window_id = 42
 cmdline = None
 if scenario in {"ssh", "ssh-connecting", "ssh-same-cwd", "inline-kitten", "missing-cwd", "missing-all-cwd", "ssh-connecting-realpath"}:
     cmdline = ["ssh", "yumi"]
+elif scenario == "ssh-shortname-fqdn-collision":
+    cmdline = ["ssh", "dev.corp"]
+elif scenario == "ssh-local-interface-ip":
+    cmdline = ["ssh", "192.168.1.100"]
+elif scenario == "ssh-reported-host-mismatch":
+    cmdline = ["ssh", "yumi"]
 elif scenario in {"ssh-prompt-before-cwd", "ssh-helper-before-prompt-or-cwd"}:
     cmdline = ["ssh", "orb"]
 elif scenario in {"kitty-ssh", "kitty-inline-kitten"}:
@@ -2640,6 +2670,12 @@ if cmdline is not None:
     window.child.foreground_processes = [{"cmdline": cmdline}]
 if scenario == "ssh-same-cwd" and cwd_value is not None:
     window.screen.last_reported_cwd = f"kitty-shell-cwd://yumi{cwd_value.replace(' ', '%20')}"
+elif scenario == "ssh-shortname-fqdn-collision" and cwd_value is not None:
+    window.screen.last_reported_cwd = f"kitty-shell-cwd://dev.corp{cwd_value.replace(' ', '%20')}"
+elif scenario == "ssh-local-interface-ip" and cwd_value is not None:
+    window.screen.last_reported_cwd = f"kitty-shell-cwd://192.168.1.100{cwd_value.replace(' ', '%20')}"
+elif scenario == "ssh-reported-host-mismatch" and cwd_value is not None:
+    window.screen.last_reported_cwd = f"kitty-shell-cwd://orb{cwd_value.replace(' ', '%20')}"
 elif scenario in {"ssh", "ssh-connecting", "shared-control-kitten", "kitty-ssh", "inline-kitten", "kitty-inline-kitten", "uri-kitten", "wrapped-kitty-ssh", "kitty-uri-no-helper", "combined-short-flags", "ssh-prompt-before-cwd", "ssh-connecting-realpath"} and cwd_value is not None:
     window.screen.last_reported_cwd = f"file://{cwd_value.replace(' ', '%20')}"
 if scenario == "missing-cwd":
@@ -2786,9 +2822,12 @@ test_kitty_conf_enables_native_smart_hotkeys() {
 	assert_not_contains "# map cmd+e kitten ./smart_tab.py" "$REPO_ROOT/.config/kitty/kitty.conf"
 }
 
-test_kitty_hammerspoon_does_not_wire_native_smart_hotkeys() {
-	assert_not_contains "[hs.keycodes.map.n] = './smart_window.py'" "$REPO_ROOT/.hammerspoon/modules/kittyHotkeys.lua"
-	assert_not_contains "[hs.keycodes.map.e] = './smart_tab.py'" "$REPO_ROOT/.hammerspoon/modules/kittyHotkeys.lua"
+test_kitty_smart_entrypoints_share_common_helper() {
+	assert_file_exists "$REPO_ROOT/.config/kitty/smart_launcher.py"
+	assert_contains 'from smart_launcher import make_handle_result, main' "$REPO_ROOT/.config/kitty/smart_tab.py"
+	assert_contains 'from smart_launcher import make_handle_result, main' "$REPO_ROOT/.config/kitty/smart_window.py"
+	assert_contains 'handle_result = make_handle_result("tab", "Kitty smart tab failed")' "$REPO_ROOT/.config/kitty/smart_tab.py"
+	assert_contains 'handle_result = make_handle_result("os-window", "Kitty smart window failed")' "$REPO_ROOT/.config/kitty/smart_window.py"
 }
 
 test_kitty_smart_launch_uses_native_current_cwd_for_local_windows() {
@@ -2838,6 +2877,36 @@ test_kitty_smart_launch_clones_when_remote_cwd_matches_local_path() {
 	# Remote CWD equals cwd_of_child but URL hostname is "yumi" (remote)
 	run_kitty_ssh_utils_case ssh-same-cwd "/Users/local/path" "$output_file"
 	assert_kitty_remote_launch_matches "$output_file"
+}
+
+test_kitty_smart_launch_treats_different_fqdns_with_same_shortname_as_remote() {
+	local tmp_dir output_file
+	tmp_dir=$(make_temp_dir)
+	output_file="$tmp_dir/ssh-shortname-fqdn-collision-launch.json"
+	trap 'rm -rf "${tmp_dir:-}"' RETURN
+
+	run_kitty_ssh_utils_case ssh-shortname-fqdn-collision "/Users/local/path" "$output_file"
+	assert_kitty_remote_launch_matches "$output_file"
+}
+
+test_kitty_smart_launch_fails_closed_when_reported_host_conflicts_with_destination() {
+	local tmp_dir output_file
+	tmp_dir=$(make_temp_dir)
+	output_file="$tmp_dir/ssh-reported-host-mismatch-launch.json"
+	trap 'rm -rf "${tmp_dir:-}"' RETURN
+
+	run_kitty_ssh_utils_case ssh-reported-host-mismatch "/srv/my project" "$output_file"
+	assert_kitty_local_fallback_matches "$output_file" "/Users/local/path"
+}
+
+test_kitty_smart_launch_treats_local_interface_ip_as_local_host() {
+	local tmp_dir output_file
+	tmp_dir=$(make_temp_dir)
+	output_file="$tmp_dir/ssh-local-interface-ip-launch.json"
+	trap 'rm -rf "${tmp_dir:-}"' RETURN
+
+	run_kitty_ssh_utils_case ssh-local-interface-ip "/Users/local/path" "$output_file"
+	assert_kitty_local_fallback_matches "$output_file" "/Users/local/path"
 }
 
 test_kitty_smart_launch_uses_native_hold_after_ssh_for_established_sessions() {
@@ -2981,7 +3050,7 @@ run_test "bb-browser install patches managed mcp dist only" test_bb_browser_inst
 run_test "bb-browser dist patch supports mcp cdpArgs variant without cli.js" test_bb_browser_dist_patch_supports_mcp_spawn_with_cdp_args_without_cli_js
 run_test "managed xiaohongshu template corrects stale search context" test_managed_xiaohongshu_search_template_corrects_stale_search_context
 run_test "kitty conf enables native smart hotkeys" test_kitty_conf_enables_native_smart_hotkeys
-run_test "kitty hammerspoon does not wire native smart hotkeys" test_kitty_hammerspoon_does_not_wire_native_smart_hotkeys
+run_test "kitty smart entrypoints share common helper" test_kitty_smart_entrypoints_share_common_helper
 run_test "bb-browser install discovers browser and launches CDP" test_bb_browser_install_discovers_browser_and_launches_cdp
 run_test "bb-browser install keeps token private when chmod fails" test_bb_browser_install_keeps_token_private_when_chmod_fails
 run_test "bb-browser install writes Edge Default config and verifies MCP bootstrap" test_bb_browser_install_writes_edge_default_config_and_verifies_mcp
@@ -3006,6 +3075,9 @@ run_test "Claude known_hosts preserves symlink" test_claude_known_hosts_preserve
 run_test "kitty smart launch uses native current cwd for local windows" test_kitty_smart_launch_uses_native_current_cwd_for_local_windows
 run_test "kitty smart launch skips ssh when session not established" test_kitty_smart_launch_skips_ssh_when_session_not_established
 run_test "kitty smart launch clones when remote cwd matches local path" test_kitty_smart_launch_clones_when_remote_cwd_matches_local_path
+run_test "kitty smart launch treats different FQDNs with same shortname as remote" test_kitty_smart_launch_treats_different_fqdns_with_same_shortname_as_remote
+run_test "kitty smart launch fails closed when reported host conflicts with destination" test_kitty_smart_launch_fails_closed_when_reported_host_conflicts_with_destination
+run_test "kitty smart launch treats local interface IP as local host" test_kitty_smart_launch_treats_local_interface_ip_as_local_host
 run_test "kitty smart launch uses native hold-after-ssh for established sessions" test_kitty_smart_launch_uses_native_hold_after_ssh_for_established_sessions
 run_test "kitty smart launch prefers native hold-after-ssh over helper rewriting" test_kitty_smart_launch_prefers_native_hold_after_ssh_over_helper_rewriting
 run_test "kitty smart launch falls back to local when prompt-visible SSH is seen" test_kitty_smart_launch_falls_back_to_local_when_prompt_visible_session_is_seen

@@ -2,6 +2,7 @@
 
 import os
 import socket
+from functools import lru_cache
 from urllib.parse import unquote, urlparse
 
 from kitty.launch import launch as kitty_launch, parse_launch_args
@@ -318,19 +319,54 @@ def _short_hostname(hostname):
     return normalized.partition('.')[0]
 
 
+def _is_plain_hostname_label(hostname):
+    normalized = _normalize_hostname(hostname)
+    if normalized is None:
+        return False
+
+    return '.' not in normalized and ':' not in normalized
+
+
+def _resolve_host_addresses(hostname):
+    normalized = _normalize_hostname(hostname)
+    if normalized is None:
+        return set()
+
+    addresses = set()
+    try:
+        addrinfos = socket.getaddrinfo(normalized, None)
+    except OSError:
+        return addresses
+
+    for addrinfo in addrinfos:
+        sockaddr = addrinfo[4] if len(addrinfo) > 4 else None
+        if not sockaddr:
+            continue
+
+        address = _normalize_hostname(sockaddr[0])
+        if address is not None:
+            addresses.add(address)
+
+    return addresses
+
+
+@lru_cache(maxsize=1)
 def _local_host_identity_sets():
     full_identities = {'localhost', '127.0.0.1', '::1'}
     short_identities = {'localhost'}
 
-    normalized = _normalize_hostname(socket.gethostname())
-    if normalized is None:
-        return full_identities, short_identities
+    for candidate in (socket.gethostname(), socket.getfqdn()):
+        normalized = _normalize_hostname(candidate)
+        if normalized is None:
+            continue
 
-    full_identities.add(normalized)
+        full_identities.add(normalized)
+        for address in _resolve_host_addresses(normalized):
+            full_identities.add(address)
 
-    short = _short_hostname(normalized)
-    if short is not None:
-        short_identities.add(short)
+        short = _short_hostname(normalized)
+        if short is not None:
+            short_identities.add(short)
 
     return full_identities, short_identities
 
@@ -344,23 +380,75 @@ def _hostname_matches_local_machine(hostname):
     if normalized in full_identities:
         return True
 
-    short = _short_hostname(normalized)
-    if short is not None and short in short_identities:
+    # 短名只能作为弱兜底，并且只在“上报 host 本身不带域名”时才使用。
+    # 否则 `dev.local` 和 `dev.corp` 这种同短名不同主机也会被误判成本机。
+    if _is_plain_hostname_label(normalized) and normalized in short_identities:
         return True
 
     return False
 
 
-def _window_reports_remote_cwd(window, cwd=None, local_cwd=None):
+def _extract_last_reported_cwd_host(window):
     parsed = _parse_last_reported_cwd(window)
     if parsed is None:
+        return None
+
+    return _normalize_hostname(parsed.hostname)
+
+
+def _extract_destination_host(destination):
+    if not destination:
+        return None
+
+    parsed = urlparse(destination if '://' in destination else f'ssh://{destination}')
+    return _normalize_hostname(parsed.hostname)
+
+
+def _hostnames_obviously_conflict(left, right):
+    left_normalized = _normalize_hostname(left)
+    right_normalized = _normalize_hostname(right)
+    if left_normalized is None or right_normalized is None:
         return False
 
-    url_host = _normalize_hostname(parsed.hostname)
-    if url_host is not None:
-        return not _hostname_matches_local_machine(url_host)
+    if left_normalized == right_normalized:
+        return False
 
+    left_short = _short_hostname(left_normalized)
+    right_short = _short_hostname(right_normalized)
+    if left_short is not None and left_short == right_short:
+        if _is_plain_hostname_label(left_normalized) or _is_plain_hostname_label(right_normalized):
+            return False
+
+    return True
+
+
+def _reported_cwd_host_confirms_remote(reported_host, destination=None):
+    normalized_host = _normalize_hostname(reported_host)
+    if normalized_host is None or _hostname_matches_local_machine(normalized_host):
+        return False
+
+    destination_host = _extract_destination_host(destination)
+    if destination_host is not None and _hostnames_obviously_conflict(normalized_host, destination_host):
+        return False
+
+    return True
+
+
+def _reported_cwd_path_looks_nonlocal(cwd=None, local_cwd=None):
     return cwd is not None and local_cwd is not None and not _paths_equivalent(cwd, local_cwd)
+
+
+def _reported_cwd_supports_remote_clone(window, destination=None, cwd=None, local_cwd=None):
+    reported_host = _extract_last_reported_cwd_host(window)
+    if _reported_cwd_host_confirms_remote(reported_host, destination=destination):
+        return True
+
+    # 只有在 OSC 7 根本没有 host 时，路径差异才作为弱证据使用；否则
+    # “host 已经上报但和 destination/本机关系不明确”必须 fail closed。
+    if reported_host is not None:
+        return False
+
+    return _reported_cwd_path_looks_nonlocal(cwd, local_cwd)
 
 
 def smart_launch(boss, launch_type, target_window_id=None):
@@ -398,7 +486,7 @@ def smart_launch(boss, launch_type, target_window_id=None):
         else:
             # 纯本地窗口直接使用 kitty 原生的 `current` 语义。
             launch_args = _build_native_current_launch_args(launch_type, window)
-    elif cwd is not None and _window_reports_remote_cwd(window, cwd, local_cwd):
+    elif cwd is not None and _reported_cwd_supports_remote_clone(window, destination=destination, cwd=cwd, local_cwd=local_cwd):
         # 只有“明确是远端”的工作目录才允许走原生 SSH 克隆路径。
         launch_args = _build_established_ssh_launch_args(launch_type, window)
     else:

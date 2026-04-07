@@ -4,58 +4,16 @@
 # 正在连接 / 主机不可达 / 元数据不完整时，直接回退到本地 shell，不能等待。
 
 import sys
-import traceback
-import inspect
-from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 
-from kittens.tui.handler import result_handler
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from smart_launcher import make_handle_result, main
 
 
-def main(args):
-    pass
-
-
-def current_script_path():
-    for candidate in (
-        globals().get('__file__'),
-        inspect.getsourcefile(load_ssh_utils),
-        inspect.getfile(load_ssh_utils),
-        sys.argv[0] if sys.argv else None,
-    ):
-        if candidate:
-            return Path(candidate).resolve()
-
-    raise RuntimeError('Unable to determine smart_tab.py path')
-
-
-def load_ssh_utils():
-    module_path = current_script_path().with_name('ssh_utils.py')
-    spec = spec_from_file_location('kitty_smart_ssh_utils', module_path)
-    if spec is None or spec.loader is None:
-        raise ImportError(f'Unable to load ssh_utils from {module_path}')
-
-    module = module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-@result_handler(no_ui=True)
-def handle_result(args, result, target_window_id, boss):
-    try:
-        load_ssh_utils().smart_launch(boss, "tab", target_window_id)
-    except Exception:
-        tb = traceback.format_exc()
-        print(tb, file=sys.stderr, end='')
-
-        show_error = getattr(boss, 'show_error', None)
-        if callable(show_error):
-            try:
-                show_error('Kitty smart tab failed', tb)
-            except Exception:
-                pass
-
-        raise
+handle_result = make_handle_result("tab", "Kitty smart tab failed")
 
 
 if __name__ == '__main__':

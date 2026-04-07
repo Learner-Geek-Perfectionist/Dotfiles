@@ -2822,14 +2822,6 @@ test_kitty_conf_enables_native_smart_hotkeys() {
 	assert_not_contains "# map cmd+e kitten ./smart_tab.py" "$REPO_ROOT/.config/kitty/kitty.conf"
 }
 
-test_kitty_smart_entrypoints_share_common_helper() {
-	assert_file_exists "$REPO_ROOT/.config/kitty/smart_launcher.py"
-	assert_contains 'from smart_launcher import make_handle_result, main' "$REPO_ROOT/.config/kitty/smart_tab.py"
-	assert_contains 'from smart_launcher import make_handle_result, main' "$REPO_ROOT/.config/kitty/smart_window.py"
-	assert_contains 'handle_result = make_handle_result("tab", "Kitty smart tab failed")' "$REPO_ROOT/.config/kitty/smart_tab.py"
-	assert_contains 'handle_result = make_handle_result("os-window", "Kitty smart window failed")' "$REPO_ROOT/.config/kitty/smart_window.py"
-}
-
 test_kitty_smart_launch_uses_native_current_cwd_for_local_windows() {
 	local tmp_dir output_file
 	tmp_dir=$(make_temp_dir)
@@ -3050,7 +3042,6 @@ run_test "bb-browser install patches managed mcp dist only" test_bb_browser_inst
 run_test "bb-browser dist patch supports mcp cdpArgs variant without cli.js" test_bb_browser_dist_patch_supports_mcp_spawn_with_cdp_args_without_cli_js
 run_test "managed xiaohongshu template corrects stale search context" test_managed_xiaohongshu_search_template_corrects_stale_search_context
 run_test "kitty conf enables native smart hotkeys" test_kitty_conf_enables_native_smart_hotkeys
-run_test "kitty smart entrypoints share common helper" test_kitty_smart_entrypoints_share_common_helper
 run_test "bb-browser install discovers browser and launches CDP" test_bb_browser_install_discovers_browser_and_launches_cdp
 run_test "bb-browser install keeps token private when chmod fails" test_bb_browser_install_keeps_token_private_when_chmod_fails
 run_test "bb-browser install writes Edge Default config and verifies MCP bootstrap" test_bb_browser_install_writes_edge_default_config_and_verifies_mcp

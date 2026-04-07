@@ -2823,6 +2823,49 @@ test_kitty_conf_enables_native_smart_hotkeys() {
 	assert_not_contains "# map cmd+e kitten ./smart_tab.py" "$REPO_ROOT/.config/kitty/kitty.conf"
 }
 
+test_kitty_custom_kitten_entrypoints_do_not_require___file__() {
+	python3 - <<PY
+import pathlib
+import sys
+import types
+
+repo_root = pathlib.Path("$REPO_ROOT")
+kitty_dir = repo_root / ".config/kitty"
+
+
+def fake_result_handler(**kwargs):
+    def decorate(fn):
+        fn.no_ui = kwargs.get("no_ui", False)
+        return fn
+
+    return decorate
+
+
+kittens_pkg = types.ModuleType("kittens")
+kittens_pkg.__path__ = []
+kittens_tui_pkg = types.ModuleType("kittens.tui")
+kittens_tui_pkg.__path__ = []
+kittens_tui_handler_mod = types.ModuleType("kittens.tui.handler")
+kittens_tui_handler_mod.result_handler = fake_result_handler
+sys.modules["kittens"] = kittens_pkg
+sys.modules["kittens.tui"] = kittens_tui_pkg
+sys.modules["kittens.tui.handler"] = kittens_tui_handler_mod
+
+sys.path.insert(0, str(kitty_dir))
+
+for name in ("smart_window.py", "smart_tab.py"):
+    module_path = kitty_dir / name
+    code = compile(module_path.read_text(), str(module_path), "exec")
+    module_globals = {"__name__": "kitten"}
+    exec(code, module_globals)
+
+    if not callable(module_globals.get("main")):
+        raise SystemExit(f"{name} did not expose a callable main()")
+    if not callable(module_globals.get("handle_result")):
+        raise SystemExit(f"{name} did not expose a callable handle_result()")
+PY
+}
+
 test_kitty_smart_launch_uses_native_current_cwd_for_local_windows() {
 	local tmp_dir output_file
 	tmp_dir=$(make_temp_dir)
@@ -3043,6 +3086,7 @@ run_test "bb-browser install patches managed mcp dist only" test_bb_browser_inst
 run_test "bb-browser dist patch supports mcp cdpArgs variant without cli.js" test_bb_browser_dist_patch_supports_mcp_spawn_with_cdp_args_without_cli_js
 run_test "managed xiaohongshu template corrects stale search context" test_managed_xiaohongshu_search_template_corrects_stale_search_context
 run_test "kitty conf enables native smart hotkeys" test_kitty_conf_enables_native_smart_hotkeys
+run_test "kitty custom kitten entrypoints do not require __file__" test_kitty_custom_kitten_entrypoints_do_not_require___file__
 run_test "bb-browser install discovers browser and launches CDP" test_bb_browser_install_discovers_browser_and_launches_cdp
 run_test "bb-browser install keeps token private when chmod fails" test_bb_browser_install_keeps_token_private_when_chmod_fails
 run_test "bb-browser install writes Edge Default config and verifies MCP bootstrap" test_bb_browser_install_writes_edge_default_config_and_verifies_mcp

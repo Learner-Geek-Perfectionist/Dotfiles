@@ -4,11 +4,6 @@
 # 正在连接 / 主机不可达 / 元数据不完整时，直接回退到本地 shell，不能等待。
 
 import sys
-from pathlib import Path
-
-SCRIPT_DIR = Path(__file__).resolve().parent
-if str(SCRIPT_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRIPT_DIR))
 
 from smart_launcher import make_handle_result, main
 

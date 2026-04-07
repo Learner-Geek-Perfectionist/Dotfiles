@@ -243,6 +243,19 @@ run_lua_checks() {
 	find .hammerspoon -name '*.lua' -print0 | xargs -0 -n1 luac -p
 }
 
+run_hammerspoon_input_method_checks() {
+	cd "$REPO_ROOT"
+	if ! command -v lua &>/dev/null; then
+		if [[ "${CI:-}" == "true" ]]; then
+			fail "lua is required in CI"
+		fi
+		warn "lua not found, skipping Hammerspoon input method checks"
+		return 0
+	fi
+
+	lua scripts/test_hammerspoon_input_method.lua
+}
+
 run_shellcheck() {
 	cd "$REPO_ROOT"
 	if ! command -v shellcheck &>/dev/null; then
@@ -263,6 +276,7 @@ run_test "Install clone falls back to HTTPS on GitHub SSH failure" run_install_c
 run_test "Install clone does not retry non-SSH failures" run_install_clone_does_not_retry_non_ssh_failures
 run_test "Python syntax" run_python_checks
 run_test "Lua syntax" run_lua_checks
+run_test "Hammerspoon input method logic" run_hammerspoon_input_method_checks
 run_test "ShellCheck" run_shellcheck
 
 section "Done"

@@ -39,6 +39,50 @@ sync_directory_contents() {
 	cp -PRf "$src/." "$dest/"
 }
 
+manifest_recorded_hash_for_path() {
+	local path="$1"
+
+	[[ -n "${DOTFILES_MANIFEST_TMP:-}" && -f "${DOTFILES_MANIFEST_TMP:-}" ]] || return 1
+	awk -F'\t' -v path="$path" 'NF >= 3 && $2 == path { print $3; exit }' "$DOTFILES_MANIFEST_TMP"
+}
+
+prune_manifest_path() {
+	local path="$1"
+
+	[[ -n "${DOTFILES_MANIFEST_TMP:-}" && -f "${DOTFILES_MANIFEST_TMP:-}" ]] || return 1
+	awk -F'\t' -v path="$path" '!(NF >= 2 && $2 == path)' "$DOTFILES_MANIFEST_TMP" >"$DOTFILES_MANIFEST_TMP.filtered"
+	mv "$DOTFILES_MANIFEST_TMP.filtered" "$DOTFILES_MANIFEST_TMP"
+	dotfiles_manifest_flush
+}
+
+remove_obsolete_managed_dotfiles_path() {
+	local path="$1" recorded_hash current_hash
+
+	recorded_hash="$(manifest_recorded_hash_for_path "$path" 2>/dev/null || true)"
+	[[ -n "$recorded_hash" ]] || return 0
+
+	if [[ ! -e "$path" && ! -L "$path" ]]; then
+		prune_manifest_path "$path"
+		return 0
+	fi
+
+	current_hash="$(file_fingerprint "$path" 2>/dev/null || true)"
+	[[ -n "$current_hash" && "$current_hash" == "$recorded_hash" ]] || return 0
+
+	rm -f "$path"
+	prune_manifest_path "$path"
+}
+
+remove_obsolete_macos_ime_helper_chain() {
+	remove_obsolete_managed_dotfiles_path "$HOME/.hammerspoon/config/inputMethodRuntime.lua"
+	remove_obsolete_managed_dotfiles_path "$HOME/.hammerspoon/modules/inputMethodHelper.lua"
+	remove_obsolete_managed_dotfiles_path "$HOME/.hammerspoon/modules/inputMethodProvider.lua"
+}
+
+remove_obsolete_toggle_ime_script() {
+	remove_obsolete_managed_dotfiles_path "$HOME/sh-script/toggle_ime.sh"
+}
+
 copy_path() {
 	local src="$DOTFILES_DIR/$1"
 	local dest="$HOME/$2"
@@ -244,6 +288,7 @@ main() {
 	copy_path ".config/zsh" ".config/zsh"
 	copy_path ".config/kitty" ".config/kitty"
 	copy_path ".config/ripgrep" ".config/ripgrep"
+	remove_obsolete_toggle_ime_script
 
 	# direnv 配置（替换 __HOME__ 为实际路径）
 	if [[ -f "$DOTFILES_DIR/.config/direnv/direnv.toml" ]]; then
@@ -255,6 +300,8 @@ main() {
 
 	# VSCode/Cursor 配置（只复制 settings.json 和 keybindings.json，避免覆盖用户的其它配置）
 	if [[ "$(uname)" == "Darwin" ]]; then
+		local enabled_input_sources_json provider_info provider
+
 		# macOS: ~/Library/Application Support/
 		[[ -n "$vscode_cmd" ]] && copy_path "Library/Application Support/Code/User/settings.json" "Library/Application Support/Code/User/settings.json"
 		[[ -n "$vscode_cmd" ]] && copy_path "Library/Application Support/Code/User/keybindings.json" "Library/Application Support/Code/User/keybindings.json"
@@ -263,6 +310,33 @@ main() {
 		# macOS 专属
 		copy_path ".config/karabiner" ".config/karabiner"
 		copy_path ".hammerspoon" ".hammerspoon"
+		remove_obsolete_macos_ime_helper_chain
+		# shellcheck source=./lib_macos_ime_toggle.sh
+		source "$SCRIPT_DIR/lib_macos_ime_toggle.sh"
+		enabled_input_sources_json="$(
+			plutil -extract AppleEnabledInputSources json -o - "$HOME/Library/Preferences/com.apple.HIToolbox.plist" 2>/dev/null || printf '[]'
+		)"
+		provider_info="$(
+			macos_select_ime_provider "$enabled_input_sources_json"
+		)"
+		provider="$(
+			awk -F= '$1=="provider"{print $2}' <<<"$provider_info"
+		)"
+		case "$provider" in
+		wetype)
+			print_info "macOS IME toggle provider: wetype (enable WeType's Shift toggle inside WeChat Input Method)"
+			;;
+		apple_pair)
+			print_info "macOS IME toggle provider: apple_pair (set macOS input-source shortcut to Control-Space)"
+			;;
+		disabled)
+			print_warn "macOS IME toggle disabled on this machine because no supported provider was detected"
+			;;
+		esac
+		macos_customize_home_karabiner_config \
+			"$HOME/.config/karabiner/karabiner.json" \
+			"$provider"
+		dotfiles_manifest_add_file "$HOME/.config/karabiner/karabiner.json"
 	else
 		# Linux: ~/.config/
 		if is_remote_server; then

@@ -1,9 +1,15 @@
 {
   "profiles": [
     {
+      "name": "个人配置",
+      "selected": true,
+      "virtual_hid_keyboard": {
+        "keyboard_type_v2": "ansi"
+      },
       "complex_modifications": {
         "rules": [
           {
+            "description": "Keep existing right-side remaps",
             "manipulators": [
               {
                 "description": "Change right_command to command+control+option",
@@ -46,7 +52,80 @@
                   }
                 ],
                 "type": "basic"
-              },
+              }
+            ]
+          },
+          {
+            "description": "Use left shift for click-only IME toggle",
+            "manipulators": [
+              {
+                "description": "Change left_shift to left_shift",
+                "from": {
+                  "key_code": "left_shift",
+                  "modifiers": {
+                    "optional": [
+                      "any"
+                    ]
+                  }
+                },
+                "parameters": {
+                  "basic.to_if_alone_timeout_milliseconds": 200
+                },
+                "to": [
+                  {
+                    "key_code": "left_shift",
+                    "lazy": true
+                  }
+                ],
+                "to_if_alone": [
+                  {
+                    "key_code": "spacebar",
+                    "modifiers": [
+                      "left_control"
+                    ]
+                  }
+                ],
+                "type": "basic"
+              }
+            ]
+          },
+          {
+            "description": "Use right shift for click-only IME toggle",
+            "manipulators": [
+              {
+                "description": "Change right_shift to right_shift",
+                "from": {
+                  "key_code": "right_shift",
+                  "modifiers": {
+                    "optional": [
+                      "any"
+                    ]
+                  }
+                },
+                "parameters": {
+                  "basic.to_if_alone_timeout_milliseconds": 200
+                },
+                "to": [
+                  {
+                    "key_code": "right_shift",
+                    "lazy": true
+                  }
+                ],
+                "to_if_alone": [
+                  {
+                    "key_code": "spacebar",
+                    "modifiers": [
+                      "left_control"
+                    ]
+                  }
+                ],
+                "type": "basic"
+              }
+            ]
+          },
+          {
+            "description": "Use caps lock for click-only IME toggle",
+            "manipulators": [
               {
                 "description": "Change Caps to left_shift",
                 "from": {
@@ -57,9 +136,21 @@
                     ]
                   }
                 },
+                "parameters": {
+                  "basic.to_if_alone_timeout_milliseconds": 200
+                },
                 "to": [
                   {
-                    "key_code": "left_shift"
+                    "key_code": "left_shift",
+                    "lazy": true
+                  }
+                ],
+                "to_if_alone": [
+                  {
+                    "key_code": "spacebar",
+                    "modifiers": [
+                      "left_control"
+                    ]
                   }
                 ],
                 "type": "basic"
@@ -67,13 +158,7 @@
             ]
           }
         ]
-      },
-      "name": "个人配置",
-      "selected": true,
-      "virtual_hid_keyboard": {
-        "keyboard_type_v2": "ansi"
       }
     }
   ]
 }
-

@@ -6,6 +6,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=./test_helpers.sh
 source "$SCRIPT_DIR/test_helpers.sh"
+# shellcheck source=./lib_macos_ime_toggle.sh
+source "$REPO_ROOT/scripts/lib_macos_ime_toggle.sh"
 
 run_dotfiles_install() {
 	local tmp_home="$1" fake_bin="$2" superpowers_repo="$3" log="$4"
@@ -17,6 +19,187 @@ run_deploy_superpowers_skills() {
 	local tmp_home="$1" fake_bin="$2" clone_dir="$3" link_dir="$4" state_file="$5" log="$6"
 	HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" DOTFILES_LOG="$log" \
 		bash "$REPO_ROOT/scripts/deploy_superpowers_skills.sh" "$clone_dir" "$link_dir" "$state_file" >"$log" 2>&1
+}
+
+assert_karabiner_provider_shape() {
+	local provider="$1" karabiner_file="$2"
+
+	python3 - "$provider" "$karabiner_file" <<'PY'
+import json
+import sys
+
+provider = sys.argv[1]
+karabiner_file = sys.argv[2]
+
+with open(karabiner_file, encoding="utf-8") as handle:
+    data = json.load(handle)
+
+rules = data["profiles"][0]["complex_modifications"]["rules"]
+serialized = json.dumps(data, sort_keys=True)
+
+def fail(message):
+    raise SystemExit(message)
+
+
+def click_rule_matches(rule, from_key, to_key, to_if_alone_kind):
+    manipulators = rule.get("manipulators", [])
+    if len(manipulators) != 1:
+        return False
+    manipulator = manipulators[0]
+    if manipulator.get("type") != "basic":
+        return False
+    from_ = manipulator.get("from", {})
+    if from_.get("key_code") != from_key:
+        return False
+    if from_.get("modifiers", {}).get("optional") != ["any"]:
+        return False
+    if manipulator.get("parameters", {}).get("basic.to_if_alone_timeout_milliseconds") != 200:
+        return False
+    to_entries = manipulator.get("to", [])
+    if len(to_entries) != 1:
+        return False
+    to_entry = to_entries[0]
+    if to_entry.get("key_code") != to_key or to_entry.get("lazy") is not True:
+        return False
+    to_if_alone = manipulator.get("to_if_alone", [])
+    if len(to_if_alone) != 1:
+        return False
+    entry = to_if_alone[0]
+    if to_if_alone_kind == "control_space":
+        return (
+            set(entry) == {"key_code", "modifiers"}
+            and entry.get("key_code") == "spacebar"
+            and entry.get("modifiers") == ["left_control"]
+        )
+    if to_if_alone_kind == "key_code":
+        return set(entry) == {"key_code"} and entry.get("key_code") == "left_shift"
+    if to_if_alone_kind == "absent":
+        return "to_if_alone" not in manipulator
+    fail(f"unexpected click rule kind {to_if_alone_kind!r}")
+
+
+def unique_click_rule(rule_kind, from_key, to_key, to_if_alone_kind):
+    matches = [item for item in rules if click_rule_matches(item, from_key, to_key, to_if_alone_kind)]
+    if len(matches) != 1:
+        fail(f"expected exactly one {rule_kind} IME click rule for {from_key}")
+    return matches[0]
+
+
+def fallback_rule():
+    matches = []
+    for item in rules:
+        manipulators = item.get("manipulators", [])
+        if len(manipulators) != 1:
+            continue
+        manipulator = manipulators[0]
+        if manipulator.get("from", {}).get("key_code") != "caps_lock":
+            continue
+        if manipulator.get("to", [{}])[0].get("key_code") != "left_shift":
+            continue
+        if manipulator.get("to", [{}])[0].get("lazy") is not True:
+            continue
+        if manipulator.get("to_if_alone"):
+            continue
+        if "parameters" in manipulator:
+            continue
+        matches.append(item)
+    if len(matches) == 1:
+        return matches[0]
+    if len(matches) == 0:
+        return None
+    fail("expected exactly one plain caps fallback rule")
+
+
+stale_symbols = tuple(
+    "".join(parts)
+    for parts in (
+        ("ime_", "shift_session_active"),
+        ("ime_", "keyboard_used"),
+        ("ime_", "left_shift_pressed"),
+        ("ime_", "right_shift_pressed"),
+    )
+)
+for symbol in stale_symbols:
+    if symbol in serialized:
+        fail(f"stale session-state symbol {symbol!r} should not appear in generated Karabiner JSON")
+
+right_rule = next(
+    (
+        item
+        for item in rules
+        if {manipulator.get("from", {}).get("key_code") for manipulator in item.get("manipulators", [])}
+        == {"right_command", "right_option"}
+    ),
+    None,
+)
+if right_rule is None:
+    fail("missing right-side remap rule")
+if len(right_rule.get("manipulators", [])) != 2:
+    fail("right-side remap rule should keep exactly 2 manipulators")
+
+def assert_right_remap(manipulator, from_key):
+    if manipulator.get("from", {}).get("key_code") != from_key:
+        fail(f"right-side remap should start from {from_key}")
+    if manipulator.get("to", [{}])[0].get("key_code") != "left_command":
+        fail(f"right-side remap from {from_key} should remap to left_command")
+    if manipulator.get("to", [{}])[0].get("modifiers") != ["left_control", "left_option"]:
+        fail(f"right-side remap from {from_key} should keep the command+control+option modifiers")
+
+assert_right_remap(right_rule["manipulators"][0], "right_command")
+assert_right_remap(right_rule["manipulators"][1], "right_option")
+
+if provider == "apple_pair":
+    unique_click_rule("apple_pair", "left_shift", "left_shift", "control_space")
+    unique_click_rule("apple_pair", "right_shift", "right_shift", "control_space")
+    unique_click_rule("apple_pair", "caps_lock", "left_shift", "control_space")
+    if fallback_rule() is not None:
+        fail("apple_pair should not keep a plain caps fallback rule")
+elif provider == "wetype":
+    unique_click_rule("wetype", "left_shift", "left_shift", "key_code")
+    unique_click_rule("wetype", "right_shift", "right_shift", "key_code")
+    unique_click_rule("wetype", "caps_lock", "left_shift", "key_code")
+    if fallback_rule() is not None:
+        fail("wetype should not keep a plain caps fallback rule")
+elif provider == "disabled":
+    if any(
+        click_rule_matches(item, "left_shift", "left_shift", kind)
+        for item in rules
+        for kind in ("control_space", "key_code")
+    ):
+        fail("disabled provider should remove the left shift click rule")
+    if any(
+        click_rule_matches(item, "right_shift", "right_shift", kind)
+        for item in rules
+        for kind in ("control_space", "key_code")
+    ):
+        fail("disabled provider should remove the right shift click rule")
+    if any(
+        click_rule_matches(item, "caps_lock", "left_shift", kind)
+        for item in rules
+        for kind in ("control_space", "key_code")
+    ):
+        fail("disabled provider should remove the caps click rule")
+    caps_rule = fallback_rule()
+    if caps_rule is None:
+        fail("disabled provider should keep exactly one plain caps fallback rule")
+    if len(caps_rule.get("manipulators", [])) != 1:
+        fail("disabled provider should keep only one caps fallback manipulator")
+    manipulator = caps_rule["manipulators"][0]
+    if manipulator.get("from", {}).get("key_code") != "caps_lock":
+        fail("disabled provider fallback should start from caps_lock")
+    if len(manipulator.get("to", [])) != 1:
+        fail("disabled provider fallback should keep exactly one to entry")
+    if manipulator.get("to", [{}])[0].get("key_code") != "left_shift":
+        fail("disabled provider fallback should map caps_lock to left_shift")
+    if manipulator.get("to", [{}])[0].get("lazy") is not True:
+        fail("disabled provider fallback should keep lazy=true")
+    if manipulator.get("to_if_alone"):
+        fail("disabled provider fallback should not keep to_if_alone")
+    if "parameters" in manipulator:
+        fail("disabled provider fallback should not keep parameters")
+else:
+    fail(f"unexpected provider {provider!r}")
+PY
 }
 
 write_fake_claude_cli() {
@@ -315,6 +498,588 @@ EOF
 	assert_file_exists "$tmp_home/.ssh/config"
 	assert_contains "# >>> Dotfiles SSH Include >>>" "$tmp_home/.ssh/config"
 	assert_contains "Include config.d/*" "$tmp_home/.ssh/config"
+}
+
+test_dotfiles_manifest_does_not_track_removed_hammerspoon_runtime() {
+	local tmp_home fake_bin log manifest superpowers_repo runtime_file runtime_relative_path
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install-dotfiles.log"
+	manifest="$tmp_home/.local/state/dotfiles/dotfiles-manifest.tsv"
+	runtime_relative_path=".hammerspoon/config/inputMethodRuntime.lua"
+	runtime_file="$tmp_home/$runtime_relative_path"
+	superpowers_repo=$(make_fake_superpowers_repo)
+	trap "rm -rf '$tmp_home' '$fake_bin' '$superpowers_repo'" RETURN
+
+	cat >"$fake_bin/uname" <<'EOF'
+#!/bin/sh
+printf '%s\n' "Darwin"
+EOF
+	cat >"$fake_bin/plutil" <<'EOF'
+#!/bin/sh
+cat <<'INNER'
+[{"InputSourceKind":"Keyboard Layout","InputSourceID":"com.apple.keylayout.ABC"},{"InputSourceKind":"Keyboard Input Method","InputSourceID":"com.apple.inputmethod.SCIM.ITABC"}]
+INNER
+EOF
+	cat >"$fake_bin/zsh" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/keychain" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$fake_bin/uname" "$fake_bin/plutil" "$fake_bin/zsh" "$fake_bin/keychain"
+
+	if ! run_dotfiles_install "$tmp_home" "$fake_bin" "$superpowers_repo" "$log"; then
+		cat "$log" >&2
+		fail "install_dotfiles.sh Darwin runtime removal manifest check failed"
+	fi
+
+	assert_file_missing "$runtime_file"
+	assert_not_contains "$runtime_file" "$manifest"
+}
+
+test_dotfiles_macos_ime_detection_falls_back_without_jq_or_python() {
+	local tmp_home fake_bin log superpowers_repo runtime_file runtime_relative_path
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install-dotfiles.log"
+	runtime_relative_path=".hammerspoon/config/inputMethodRuntime.lua"
+	runtime_file="$tmp_home/$runtime_relative_path"
+	superpowers_repo=$(make_fake_superpowers_repo)
+	trap "rm -rf '$tmp_home' '$fake_bin' '$superpowers_repo'" RETURN
+
+	cat >"$fake_bin/uname" <<'EOF'
+#!/bin/sh
+printf '%s\n' "Darwin"
+EOF
+	cat >"$fake_bin/plutil" <<'EOF'
+#!/bin/sh
+cat <<'INNER'
+[{"InputSourceKind":"Keyboard Layout","InputSourceID":"com.apple.keylayout.US"},{"InputSourceKind":"Keyboard Layout","InputSourceID":"com.apple.keylayout.ABC"},{"InputSourceKind":"Keyboard Input Method","InputSourceID":"com.apple.inputmethod.SCIM.ITABC"}]
+INNER
+EOF
+	cat >"$fake_bin/jq" <<'EOF'
+#!/bin/sh
+exit 1
+EOF
+	cat >"$fake_bin/python3" <<'EOF'
+#!/bin/sh
+exit 1
+EOF
+	cat >"$fake_bin/zsh" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/keychain" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$fake_bin/uname" "$fake_bin/plutil" "$fake_bin/jq" "$fake_bin/python3" "$fake_bin/zsh" "$fake_bin/keychain"
+
+	if ! run_dotfiles_install "$tmp_home" "$fake_bin" "$superpowers_repo" "$log"; then
+		cat "$log" >&2
+		fail "install_dotfiles.sh IME fallback parsing failed"
+	fi
+
+	assert_file_missing "$runtime_file"
+	assert_contains 'macOS IME toggle provider: apple_pair (set macOS input-source shortcut to Control-Space)' "$log"
+	assert_not_contains 'macOS IME toggle disabled on this machine because no supported provider was detected' "$log"
+}
+
+test_dotfiles_macos_ime_detection_empty_fallback_still_installs() {
+	local tmp_home fake_bin log superpowers_repo runtime_file runtime_relative_path
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install-dotfiles.log"
+	runtime_relative_path=".hammerspoon/config/inputMethodRuntime.lua"
+	runtime_file="$tmp_home/$runtime_relative_path"
+	superpowers_repo=$(make_fake_superpowers_repo)
+	trap "rm -rf '$tmp_home' '$fake_bin' '$superpowers_repo'" RETURN
+
+	cat >"$fake_bin/uname" <<'EOF'
+#!/bin/sh
+printf '%s\n' "Darwin"
+EOF
+	cat >"$fake_bin/plutil" <<'EOF'
+#!/bin/sh
+printf '%s\n' '[]'
+EOF
+	cat >"$fake_bin/jq" <<'EOF'
+#!/bin/sh
+exit 1
+EOF
+	cat >"$fake_bin/python3" <<'EOF'
+#!/bin/sh
+exit 1
+EOF
+	cat >"$fake_bin/zsh" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/keychain" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$fake_bin/uname" "$fake_bin/plutil" "$fake_bin/jq" "$fake_bin/python3" "$fake_bin/zsh" "$fake_bin/keychain"
+
+	if ! run_dotfiles_install "$tmp_home" "$fake_bin" "$superpowers_repo" "$log"; then
+		cat "$log" >&2
+		fail "install_dotfiles.sh empty IME fallback should still succeed"
+	fi
+
+	assert_file_missing "$runtime_file"
+	assert_contains 'macOS IME toggle disabled on this machine because no supported provider was detected' "$log"
+}
+
+test_dotfiles_warns_when_macos_ime_provider_is_disabled() {
+	local tmp_home fake_bin log superpowers_repo runtime_file runtime_relative_path
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install-dotfiles.log"
+	runtime_relative_path=".hammerspoon/config/inputMethodRuntime.lua"
+	runtime_file="$tmp_home/$runtime_relative_path"
+	superpowers_repo=$(make_fake_superpowers_repo)
+	trap "rm -rf '$tmp_home' '$fake_bin' '$superpowers_repo'" RETURN
+
+	cat >"$fake_bin/uname" <<'EOF'
+#!/bin/sh
+printf '%s\n' "Darwin"
+EOF
+	cat >"$fake_bin/plutil" <<'EOF'
+#!/bin/sh
+cat <<'INNER'
+[{"InputSourceKind":"Keyboard Layout","InputSourceID":"com.apple.keylayout.Dvorak"}]
+INNER
+EOF
+	cat >"$fake_bin/zsh" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/keychain" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$fake_bin/uname" "$fake_bin/plutil" "$fake_bin/zsh" "$fake_bin/keychain"
+
+	if ! run_dotfiles_install "$tmp_home" "$fake_bin" "$superpowers_repo" "$log"; then
+		cat "$log" >&2
+		fail "install_dotfiles.sh disabled provider warning failed"
+	fi
+
+	assert_file_missing "$runtime_file"
+	assert_contains 'macOS IME toggle disabled on this machine because no supported provider was detected' "$log"
+}
+
+test_dotfiles_generates_apple_pair_karabiner_control_space_toggle() {
+	local tmp_home fake_bin log superpowers_repo runtime_file karabiner_file runtime_relative_path removed_toggle_script
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install-dotfiles.log"
+	runtime_relative_path=".hammerspoon/config/inputMethodRuntime.lua"
+	runtime_file="$tmp_home/$runtime_relative_path"
+	karabiner_file="$tmp_home/.config/karabiner/karabiner.json"
+	removed_toggle_script="toggle_ime.sh"
+	superpowers_repo=$(make_fake_superpowers_repo)
+	trap "rm -rf '$tmp_home' '$fake_bin' '$superpowers_repo'" RETURN
+
+	cat >"$fake_bin/uname" <<'EOF'
+#!/bin/sh
+printf '%s\n' "Darwin"
+EOF
+	cat >"$fake_bin/plutil" <<'EOF'
+#!/bin/sh
+cat <<'INNER'
+[{"InputSourceKind":"Keyboard Layout","InputSourceID":"com.apple.keylayout.ABC"},{"InputSourceKind":"Keyboard Input Method","InputSourceID":"com.apple.inputmethod.SCIM.ITABC"}]
+INNER
+EOF
+	cat >"$fake_bin/zsh" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/keychain" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$fake_bin/uname" "$fake_bin/plutil" "$fake_bin/zsh" "$fake_bin/keychain"
+
+	if ! run_dotfiles_install "$tmp_home" "$fake_bin" "$superpowers_repo" "$log"; then
+		cat "$log" >&2
+		fail "install_dotfiles.sh apple_pair Karabiner generation failed"
+	fi
+
+	assert_file_missing "$runtime_file"
+	assert_contains 'macOS IME toggle provider: apple_pair (set macOS input-source shortcut to Control-Space)' "$log"
+	assert_file_exists "$karabiner_file"
+	assert_not_contains "$removed_toggle_script" "$karabiner_file"
+	assert_karabiner_provider_shape "apple_pair" "$karabiner_file"
+}
+
+test_dotfiles_generates_wetype_karabiner_without_shell_toggle() {
+	local tmp_home fake_bin log superpowers_repo runtime_file karabiner_file runtime_relative_path removed_toggle_script
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install-dotfiles.log"
+	runtime_relative_path=".hammerspoon/config/inputMethodRuntime.lua"
+	runtime_file="$tmp_home/$runtime_relative_path"
+	karabiner_file="$tmp_home/.config/karabiner/karabiner.json"
+	removed_toggle_script="toggle_ime.sh"
+	superpowers_repo=$(make_fake_superpowers_repo)
+	trap "rm -rf '$tmp_home' '$fake_bin' '$superpowers_repo'" RETURN
+
+	cat >"$fake_bin/uname" <<'EOF'
+#!/bin/sh
+printf '%s\n' "Darwin"
+EOF
+	cat >"$fake_bin/plutil" <<'EOF'
+#!/bin/sh
+cat <<'INNER'
+[{"InputSourceKind":"Keyboard Input Method","InputSourceID":"com.tencent.inputmethod.wetype.pinyin"}]
+INNER
+EOF
+	cat >"$fake_bin/zsh" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/keychain" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$fake_bin/uname" "$fake_bin/plutil" "$fake_bin/zsh" "$fake_bin/keychain"
+
+	if ! run_dotfiles_install "$tmp_home" "$fake_bin" "$superpowers_repo" "$log"; then
+		cat "$log" >&2
+		fail "install_dotfiles.sh wetype Karabiner generation failed"
+	fi
+
+	assert_file_missing "$runtime_file"
+	assert_contains "macOS IME toggle provider: wetype (enable WeType's Shift toggle inside WeChat Input Method)" "$log"
+	assert_file_exists "$karabiner_file"
+	assert_not_contains "$removed_toggle_script" "$karabiner_file"
+	assert_karabiner_provider_shape "wetype" "$karabiner_file"
+}
+
+test_dotfiles_generates_disabled_karabiner_without_ime_rules() {
+	local tmp_home fake_bin log superpowers_repo runtime_file karabiner_file runtime_relative_path removed_toggle_script
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install-dotfiles.log"
+	runtime_relative_path=".hammerspoon/config/inputMethodRuntime.lua"
+	runtime_file="$tmp_home/$runtime_relative_path"
+	karabiner_file="$tmp_home/.config/karabiner/karabiner.json"
+	removed_toggle_script="toggle_ime.sh"
+	superpowers_repo=$(make_fake_superpowers_repo)
+	trap "rm -rf '$tmp_home' '$fake_bin' '$superpowers_repo'" RETURN
+
+	cat >"$fake_bin/uname" <<'EOF'
+#!/bin/sh
+printf '%s\n' "Darwin"
+EOF
+	cat >"$fake_bin/plutil" <<'EOF'
+#!/bin/sh
+cat <<'INNER'
+[{"InputSourceKind":"Keyboard Layout","InputSourceID":"com.apple.keylayout.Dvorak"}]
+INNER
+EOF
+	cat >"$fake_bin/zsh" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/keychain" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$fake_bin/uname" "$fake_bin/plutil" "$fake_bin/zsh" "$fake_bin/keychain"
+
+	if ! run_dotfiles_install "$tmp_home" "$fake_bin" "$superpowers_repo" "$log"; then
+		cat "$log" >&2
+		fail "install_dotfiles.sh disabled-provider Karabiner generation failed"
+	fi
+
+	assert_file_missing "$runtime_file"
+	assert_contains 'macOS IME toggle disabled on this machine because no supported provider was detected' "$log"
+	assert_file_exists "$karabiner_file"
+	assert_not_contains "$removed_toggle_script" "$karabiner_file"
+	assert_karabiner_provider_shape "disabled" "$karabiner_file"
+}
+
+test_dotfiles_managed_upgrade_removes_obsolete_ime_helper_chain_artifacts() {
+	local tmp_home fake_bin log manifest superpowers_repo runtime_file helper_file provider_file toggle_script
+	local karabiner_file runtime_hash helper_hash provider_hash toggle_hash
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install-dotfiles.log"
+	manifest="$tmp_home/.local/state/dotfiles/dotfiles-manifest.tsv"
+	runtime_file="$tmp_home/.hammerspoon/config/inputMethodRuntime.lua"
+	helper_file="$tmp_home/.hammerspoon/modules/inputMethodHelper.lua"
+	provider_file="$tmp_home/.hammerspoon/modules/inputMethodProvider.lua"
+	toggle_script="$tmp_home/sh-script/toggle_ime.sh"
+	karabiner_file="$tmp_home/.config/karabiner/karabiner.json"
+	superpowers_repo=$(make_fake_superpowers_repo)
+	trap "rm -rf '$tmp_home' '$fake_bin' '$superpowers_repo'" RETURN
+
+	mkdir -p \
+		"$(dirname "$runtime_file")" \
+		"$(dirname "$helper_file")" \
+		"$(dirname "$toggle_script")" \
+		"$(dirname "$manifest")"
+	printf '%s\n' 'legacy runtime' >"$runtime_file"
+	printf '%s\n' 'legacy helper' >"$helper_file"
+	printf '%s\n' 'legacy provider' >"$provider_file"
+	printf '%s\n' '#!/bin/sh' 'legacy toggle' >"$toggle_script"
+	runtime_hash="$(
+		HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" bash -c '
+			source "$1"
+			file_fingerprint "$2"
+		' _ "$REPO_ROOT/lib/utils.sh" "$runtime_file"
+	)"
+	helper_hash="$(
+		HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" bash -c '
+			source "$1"
+			file_fingerprint "$2"
+		' _ "$REPO_ROOT/lib/utils.sh" "$helper_file"
+	)"
+	provider_hash="$(
+		HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" bash -c '
+			source "$1"
+			file_fingerprint "$2"
+		' _ "$REPO_ROOT/lib/utils.sh" "$provider_file"
+	)"
+	toggle_hash="$(
+		HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" bash -c '
+			source "$1"
+			file_fingerprint "$2"
+		' _ "$REPO_ROOT/lib/utils.sh" "$toggle_script"
+	)"
+	cat >"$manifest" <<EOF
+file	$runtime_file	$runtime_hash
+file	$helper_file	$helper_hash
+file	$provider_file	$provider_hash
+file	$toggle_script	$toggle_hash
+EOF
+
+	cat >"$fake_bin/uname" <<'EOF'
+#!/bin/sh
+printf '%s\n' "Darwin"
+EOF
+	cat >"$fake_bin/plutil" <<'EOF'
+#!/bin/sh
+cat <<'INNER'
+[{"InputSourceKind":"Keyboard Layout","InputSourceID":"com.apple.keylayout.ABC"},{"InputSourceKind":"Keyboard Input Method","InputSourceID":"com.apple.inputmethod.SCIM.ITABC"}]
+INNER
+EOF
+	cat >"$fake_bin/zsh" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/keychain" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$fake_bin/uname" "$fake_bin/plutil" "$fake_bin/zsh" "$fake_bin/keychain"
+
+	if ! run_dotfiles_install "$tmp_home" "$fake_bin" "$superpowers_repo" "$log"; then
+		cat "$log" >&2
+		fail "install_dotfiles.sh should remove obsolete IME helper-chain artifacts during upgrade"
+	fi
+
+	assert_file_missing "$runtime_file"
+	assert_file_missing "$helper_file"
+	assert_file_missing "$provider_file"
+	assert_file_missing "$toggle_script"
+	assert_not_contains "$runtime_file" "$manifest"
+	assert_not_contains "$helper_file" "$manifest"
+	assert_not_contains "$provider_file" "$manifest"
+	assert_not_contains "$toggle_script" "$manifest"
+	assert_file_exists "$karabiner_file"
+	assert_contains 'macOS IME toggle provider: apple_pair (set macOS input-source shortcut to Control-Space)' "$log"
+	assert_karabiner_provider_shape "apple_pair" "$karabiner_file"
+}
+
+test_dotfiles_preserves_unmanaged_obsolete_ime_helper_artifact() {
+	local tmp_home fake_bin log manifest superpowers_repo helper_file karabiner_file
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install-dotfiles.log"
+	manifest="$tmp_home/.local/state/dotfiles/dotfiles-manifest.tsv"
+	helper_file="$tmp_home/.hammerspoon/modules/inputMethodHelper.lua"
+	karabiner_file="$tmp_home/.config/karabiner/karabiner.json"
+	superpowers_repo=$(make_fake_superpowers_repo)
+	trap "rm -rf '$tmp_home' '$fake_bin' '$superpowers_repo'" RETURN
+
+	mkdir -p "$(dirname "$helper_file")" "$(dirname "$manifest")"
+	printf '%s\n' 'custom unmanaged helper' >"$helper_file"
+	printf '%s\n' 'file	/tmp/some-other-path	other-hash' >"$manifest"
+
+	cat >"$fake_bin/uname" <<'EOF'
+#!/bin/sh
+printf '%s\n' "Darwin"
+EOF
+	cat >"$fake_bin/plutil" <<'EOF'
+#!/bin/sh
+cat <<'INNER'
+[{"InputSourceKind":"Keyboard Layout","InputSourceID":"com.apple.keylayout.ABC"},{"InputSourceKind":"Keyboard Input Method","InputSourceID":"com.apple.inputmethod.SCIM.ITABC"}]
+INNER
+EOF
+	cat >"$fake_bin/zsh" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/keychain" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$fake_bin/uname" "$fake_bin/plutil" "$fake_bin/zsh" "$fake_bin/keychain"
+
+	if ! run_dotfiles_install "$tmp_home" "$fake_bin" "$superpowers_repo" "$log"; then
+		cat "$log" >&2
+		fail "install_dotfiles.sh should preserve unmanaged obsolete IME helper artifacts"
+	fi
+
+	assert_file_exists "$helper_file"
+	assert_contains 'custom unmanaged helper' "$helper_file"
+	assert_not_contains "$helper_file" "$manifest"
+	assert_file_exists "$karabiner_file"
+	assert_contains 'macOS IME toggle provider: apple_pair (set macOS input-source shortcut to Control-Space)' "$log"
+	assert_karabiner_provider_shape "apple_pair" "$karabiner_file"
+}
+
+test_dotfiles_preserves_modified_tracked_obsolete_ime_helper_artifact() {
+	local tmp_home fake_bin log manifest superpowers_repo helper_file helper_hash karabiner_file
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install-dotfiles.log"
+	manifest="$tmp_home/.local/state/dotfiles/dotfiles-manifest.tsv"
+	helper_file="$tmp_home/.hammerspoon/modules/inputMethodHelper.lua"
+	karabiner_file="$tmp_home/.config/karabiner/karabiner.json"
+	superpowers_repo=$(make_fake_superpowers_repo)
+	trap "rm -rf '$tmp_home' '$fake_bin' '$superpowers_repo'" RETURN
+
+	mkdir -p "$(dirname "$helper_file")" "$(dirname "$manifest")"
+	printf '%s\n' 'tracked helper before user edit' >"$helper_file"
+	helper_hash="$(
+		HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" bash -c '
+			source "$1"
+			file_fingerprint "$2"
+		' _ "$REPO_ROOT/lib/utils.sh" "$helper_file"
+	)"
+	cat >"$manifest" <<EOF
+file	$helper_file	$helper_hash
+EOF
+	printf '%s\n' 'tracked helper after user edit' >"$helper_file"
+
+	cat >"$fake_bin/uname" <<'EOF'
+#!/bin/sh
+printf '%s\n' "Darwin"
+EOF
+	cat >"$fake_bin/plutil" <<'EOF'
+#!/bin/sh
+cat <<'INNER'
+[{"InputSourceKind":"Keyboard Layout","InputSourceID":"com.apple.keylayout.ABC"},{"InputSourceKind":"Keyboard Input Method","InputSourceID":"com.apple.inputmethod.SCIM.ITABC"}]
+INNER
+EOF
+	cat >"$fake_bin/zsh" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/keychain" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$fake_bin/uname" "$fake_bin/plutil" "$fake_bin/zsh" "$fake_bin/keychain"
+
+	if ! run_dotfiles_install "$tmp_home" "$fake_bin" "$superpowers_repo" "$log"; then
+		cat "$log" >&2
+		fail "install_dotfiles.sh should preserve modified tracked obsolete IME helper artifacts"
+	fi
+
+	assert_file_exists "$helper_file"
+	assert_contains 'tracked helper after user edit' "$helper_file"
+	assert_contains "$helper_file" "$manifest"
+	assert_file_exists "$karabiner_file"
+	assert_contains 'macOS IME toggle provider: apple_pair (set macOS input-source shortcut to Control-Space)' "$log"
+	assert_karabiner_provider_shape "apple_pair" "$karabiner_file"
+}
+
+test_dotfiles_linux_managed_upgrade_removes_obsolete_toggle_ime_script() {
+	local tmp_home fake_bin log manifest superpowers_repo toggle_script toggle_hash
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install-dotfiles.log"
+	manifest="$tmp_home/.local/state/dotfiles/dotfiles-manifest.tsv"
+	toggle_script="$tmp_home/sh-script/toggle_ime.sh"
+	superpowers_repo=$(make_fake_superpowers_repo)
+	trap "rm -rf '$tmp_home' '$fake_bin' '$superpowers_repo'" RETURN
+
+	mkdir -p "$(dirname "$toggle_script")" "$(dirname "$manifest")"
+	printf '%s\n' '#!/bin/sh' 'legacy linux toggle' >"$toggle_script"
+	toggle_hash="$(
+		HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" bash -c '
+			source "$1"
+			file_fingerprint "$2"
+		' _ "$REPO_ROOT/lib/utils.sh" "$toggle_script"
+	)"
+	cat >"$manifest" <<EOF
+file	$toggle_script	$toggle_hash
+EOF
+
+	cat >"$fake_bin/uname" <<'EOF'
+#!/bin/sh
+printf '%s\n' "Linux"
+EOF
+	cat >"$fake_bin/keychain" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$fake_bin/uname" "$fake_bin/keychain"
+
+	if ! run_dotfiles_install "$tmp_home" "$fake_bin" "$superpowers_repo" "$log"; then
+		cat "$log" >&2
+		fail "install_dotfiles.sh should remove obsolete toggle_ime.sh during managed Linux upgrades"
+	fi
+
+	assert_file_missing "$toggle_script"
+	assert_not_contains "$toggle_script" "$manifest"
+}
+
+test_dotfiles_wetype_karabiner_patching_fails_closed_on_malformed_click_rule() {
+	local tmp_dir karabiner_file log
+	tmp_dir=$(make_temp_dir)
+	karabiner_file="$tmp_dir/karabiner.json"
+	log="$tmp_dir/karabiner.log"
+	trap "rm -rf '$tmp_dir'" RETURN
+
+	cp "$REPO_ROOT/.config/karabiner/karabiner.json" "$karabiner_file"
+	python3 - "$karabiner_file" <<'PY'
+import json
+import sys
+
+path = sys.argv[1]
+
+with open(path, encoding="utf-8") as handle:
+    data = json.load(handle)
+
+rules = data["profiles"][0]["complex_modifications"]["rules"]
+for rule in rules:
+    manipulators = rule.get("manipulators", [])
+    if any(manipulator.get("from", {}).get("key_code") == "left_shift" for manipulator in manipulators):
+        manipulators[0]["to_if_alone"] = [{"key_code": "left_shift"}]
+        break
+else:
+    raise SystemExit("failed to locate left_shift click rule")
+
+with open(path, "w", encoding="utf-8") as handle:
+    json.dump(data, handle, indent=2, ensure_ascii=False)
+    handle.write("\n")
+PY
+
+	if macos_customize_home_karabiner_config "$karabiner_file" wetype >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "wetype patching should fail closed on malformed click-rule input"
+	fi
+
+	assert_contains "expected exactly one IME click rule for left_shift" "$log"
 }
 
 test_dotfiles_deploys_bb_browser_shell_plugin() {
@@ -3144,6 +3909,18 @@ PY
 }
 
 run_test "Dotfiles manifest and SSH include block" test_dotfiles_manifest_and_ssh_block
+run_test "Dotfiles manifest omits removed Hammerspoon runtime" test_dotfiles_manifest_does_not_track_removed_hammerspoon_runtime
+run_test "Dotfiles falls back for macOS IME detection without jq or python" test_dotfiles_macos_ime_detection_falls_back_without_jq_or_python
+run_test "Dotfiles empty macOS IME fallback still installs" test_dotfiles_macos_ime_detection_empty_fallback_still_installs
+run_test "Dotfiles warns when macOS IME provider is disabled" test_dotfiles_warns_when_macos_ime_provider_is_disabled
+run_test "Dotfiles generates apple_pair Karabiner control-space toggle" test_dotfiles_generates_apple_pair_karabiner_control_space_toggle
+run_test "Dotfiles generates wetype Karabiner without shell toggle" test_dotfiles_generates_wetype_karabiner_without_shell_toggle
+run_test "Dotfiles generates disabled Karabiner without IME rules" test_dotfiles_generates_disabled_karabiner_without_ime_rules
+run_test "Dotfiles managed upgrade removes obsolete IME helper-chain artifacts" test_dotfiles_managed_upgrade_removes_obsolete_ime_helper_chain_artifacts
+run_test "Dotfiles preserves unmanaged obsolete IME helper artifact" test_dotfiles_preserves_unmanaged_obsolete_ime_helper_artifact
+run_test "Dotfiles preserves modified tracked obsolete IME helper artifact" test_dotfiles_preserves_modified_tracked_obsolete_ime_helper_artifact
+run_test "Dotfiles Linux managed upgrade removes obsolete toggle_ime.sh" test_dotfiles_linux_managed_upgrade_removes_obsolete_toggle_ime_script
+run_test "Dotfiles wetype Karabiner patching fails closed on malformed click rule" test_dotfiles_wetype_karabiner_patching_fails_closed_on_malformed_click_rule
 run_test "superpowers clone does not retry GitHub SSH failures" test_superpowers_clone_does_not_retry_github_ssh_failures
 run_test "superpowers pull does not retry GitHub SSH failures" test_superpowers_pull_does_not_retry_github_ssh_failures
 run_test "Dotfiles deploys bb-browser shell plugin" test_dotfiles_deploys_bb_browser_shell_plugin

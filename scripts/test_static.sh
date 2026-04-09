@@ -251,17 +251,9 @@ run_lua_checks() {
 	find .hammerspoon -name '*.lua' -print0 | xargs -0 -n1 luac -p
 }
 
-run_hammerspoon_input_method_checks() {
+run_macos_ime_toggle_setup_checks() {
 	cd "$REPO_ROOT"
-	if ! command -v lua &>/dev/null; then
-		if [[ "${CI:-}" == "true" ]]; then
-			fail "lua is required in CI"
-		fi
-		warn "lua not found, skipping Hammerspoon input method checks"
-		return 0
-	fi
-
-	lua scripts/test_hammerspoon_input_method.lua
+	bash scripts/test_macos_ime_toggle_setup.sh
 }
 
 run_shellcheck() {
@@ -284,7 +276,7 @@ run_test "Install clone does not retry GitHub SSH failures" run_install_clone_do
 run_test "Install clone does not retry non-SSH failures" run_install_clone_does_not_retry_non_ssh_failures
 run_test "Python syntax" run_python_checks
 run_test "Lua syntax" run_lua_checks
-run_test "Hammerspoon input method logic" run_hammerspoon_input_method_checks
+run_test "macOS IME toggle setup" run_macos_ime_toggle_setup_checks
 run_test "ShellCheck" run_shellcheck
 
 section "Done"

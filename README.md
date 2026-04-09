@@ -75,7 +75,7 @@ bash install.sh --skip-vscode     # 跳过 VSCode 插件
 | 右 Option | Ctrl + Alt + Cmd | 同上，左右手均可触发 HyperKey |
 | CapsLock | 左 Shift | 废键利用，更符合人体工学 |
 
-### 输入法切换（Shift / Caps）
+#### 输入法切换（Shift / Caps）
 
 - `left_shift`、`right_shift`、`caps_lock` 单击切换中英文，长按只保留普通 `Shift` 语义。
 - `caps_lock` 在这套配置里等同于 `left_shift`，不再提供大写锁定。

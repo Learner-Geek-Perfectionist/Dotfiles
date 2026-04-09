@@ -79,9 +79,9 @@ bash install.sh --skip-vscode     # 跳过 VSCode 插件
 
 - `left_shift`、`right_shift`、`caps_lock` 单击切换中英文，长按只保留普通 `Shift` 语义。
 - `caps_lock` 在这套配置里等同于 `left_shift`，不再提供大写锁定。
-- 如果机器安装了微信输入法，则它是唯一主 provider：单击 `Shift` / `Caps` 只服务微信输入法内部中英切换。
+- 如果机器已启用微信输入法输入源，则它是唯一主 provider：单击 `Shift` / `Caps` 只服务微信输入法内部中英切换。
 - 微信输入法前提：在微信输入法设置里开启“单击 `Shift` 切换中英文”。
-- 如果机器没有微信输入法，但安装了 macOS 自带英文和中文输入法，则单击 `Shift` / `Caps` 会发送 `Control-Space`。
+- 如果机器没有已启用的微信输入法输入源，但已加入 macOS 自带英文和中文输入源，则单击 `Shift` / `Caps` 会发送 `Control-Space`。
 - Apple 输入法前提：macOS 系统设置中的输入法切换快捷键必须配置为 `Control-Space`。
 - 混装机器上如果你手动切到 Apple 输入法，这组键不会帮你切 Apple 中英文；这是为了保持热路径最短而做的明确边界。
 

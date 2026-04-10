@@ -3046,6 +3046,53 @@ EOF
 	assert_contains '"autoUpdates": false' "$tmp_home/.claude.json"
 }
 
+test_github_latest_release_uses_github_token() {
+	local tmp_home fake_bin curl_log output
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	curl_log="$tmp_home/curl.log"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	cat >"$fake_bin/curl" <<'EOF'
+#!/bin/sh
+printf '%s\n' "$@" >"$CURL_LOG"
+printf '{"tag_name":"v1.2.3"}\n200'
+EOF
+	chmod +x "$fake_bin/curl"
+
+	output=$(env -u GH_TOKEN HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		CURL_LOG="$curl_log" GITHUB_TOKEN="github-token-value" DOTFILES_LOG_DIR="$tmp_home/logdir" \
+		DOTFILES_LOG="$tmp_home/install.log" bash -c ". \"$REPO_ROOT/lib/utils.sh\"; github_latest_release owner/repo")
+
+	assert_equal "v1.2.3" "$output" "latest release tag"
+	assert_contains "Authorization: Bearer github-token-value" "$curl_log"
+	assert_contains "https://api.github.com/repos/owner/repo/releases/latest" "$curl_log"
+}
+
+test_check_github_update_reports_rate_limit_actionably() {
+	local tmp_home fake_bin log
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install.log"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	cat >"$fake_bin/curl" <<'EOF'
+#!/bin/sh
+printf '{"message":"API rate limit exceeded for 1.2.3.4."}\n403'
+EOF
+	chmod +x "$fake_bin/curl"
+
+	if env -u GH_TOKEN -u GITHUB_TOKEN HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		DOTFILES_LOG_DIR="$tmp_home/logdir" DOTFILES_LOG="$log" \
+		bash -c ". \"$REPO_ROOT/lib/utils.sh\"; check_github_update 'Kotlin/Native' owner/repo \"$tmp_home/install-dir\""; then
+		fail "check_github_update should skip when GitHub API rate limit is exceeded"
+	fi
+
+	assert_contains "GitHub API 匿名配额已耗尽" "$log"
+	assert_contains "GH_TOKEN" "$log"
+	assert_contains "GITHUB_TOKEN" "$log"
+}
+
 run_kitty_ssh_utils_case() {
 	local scenario="$1" cwd_value="$2" output_file="$3"
 
@@ -3756,6 +3803,8 @@ run_test "Claude optional on macOS" test_claude_optional_on_macos_when_missing
 run_test "Claude optional on Linux" test_claude_optional_on_linux_when_install_fails
 run_test "Dotfiles uninstall removes wrapper integrations" test_dotfiles_uninstall_removes_wrapper_integrations
 run_test "Claude known_hosts preserves symlink" test_claude_known_hosts_preserves_symlink
+run_test "GitHub release lookup uses GITHUB_TOKEN" test_github_latest_release_uses_github_token
+run_test "GitHub update check reports rate limit actionably" test_check_github_update_reports_rate_limit_actionably
 run_test "kitty smart launch uses native current cwd for local windows" test_kitty_smart_launch_uses_native_current_cwd_for_local_windows
 run_test "kitty smart launch skips ssh when session not established" test_kitty_smart_launch_skips_ssh_when_session_not_established
 run_test "kitty smart launch clones when remote cwd matches local path" test_kitty_smart_launch_clones_when_remote_cwd_matches_local_path

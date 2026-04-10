@@ -266,12 +266,83 @@ is_remote_server() {
 # GitHub Release 版本管理
 # ========================================
 
+# 获取 GitHub API 认证 token（优先 GH_TOKEN，其次 GITHUB_TOKEN）
+github_api_token() {
+	if [[ -n "${GH_TOKEN:-}" ]]; then
+		printf '%s\n' "$GH_TOKEN"
+	elif [[ -n "${GITHUB_TOKEN:-}" ]]; then
+		printf '%s\n' "$GITHUB_TOKEN"
+	fi
+}
+
+# 获取 GitHub Release 查询失败时的可操作提示
+# 参数: $1 = 显示名 $2 = 目标描述（例如 "最新版本" / "release"）
+print_github_release_lookup_warning() {
+	local name="$1" target="$2" token_name="" message_lower=""
+
+	if [[ -n "${GH_TOKEN:-}" ]]; then
+		token_name="GH_TOKEN"
+	elif [[ -n "${GITHUB_TOKEN:-}" ]]; then
+		token_name="GITHUB_TOKEN"
+	fi
+
+	message_lower=$(printf '%s' "${_GITHUB_API_MESSAGE:-}" | tr '[:upper:]' '[:lower:]')
+
+	if [[ "${_GITHUB_API_STATUS:-}" == "403" && "$message_lower" == *"rate limit exceeded"* ]]; then
+		if [[ -n "$token_name" ]]; then
+			print_warn "$name: GitHub API 限流，${token_name} 配额已耗尽，跳过"
+		else
+			print_warn "$name: GitHub API 匿名配额已耗尽；请配置 GH_TOKEN 或 GITHUB_TOKEN 后重试"
+		fi
+		return 0
+	fi
+
+	if [[ "${_GITHUB_API_STATUS:-}" == "401" ]]; then
+		if [[ -n "$token_name" ]]; then
+			print_warn "$name: GitHub API 认证失败（${token_name} 无效或已过期），无法获取${target}，跳过"
+		else
+			print_warn "$name: GitHub API 认证失败，无法获取${target}，跳过"
+		fi
+		return 0
+	fi
+
+	print_warn "$name: 无法获取${target}，跳过"
+}
+
+# 查询 GitHub 仓库最新 release 元数据
+# 参数: $1 = owner/repo (例如 fwcd/kotlin-language-server)
+# 输出: 设置 _GITHUB_LATEST / _GITHUB_API_STATUS / _GITHUB_API_MESSAGE 供调用方诊断
+github_latest_release_lookup() {
+	local repo="$1" url body status token response
+	local -a curl_args=(-sSL -H "Accept: application/vnd.github+json")
+
+	_GITHUB_LATEST=""
+	_GITHUB_API_STATUS=""
+	_GITHUB_API_MESSAGE=""
+
+	token="$(github_api_token)"
+	if [[ -n "$token" ]]; then
+		curl_args+=(-H "Authorization: Bearer ${token}")
+	fi
+
+	url="https://api.github.com/repos/${repo}/releases/latest"
+	response=$(curl "${curl_args[@]}" -w $'\n%{http_code}' "$url" 2>/dev/null) || return 1
+
+	status="${response##*$'\n'}"
+	body="${response%$'\n'*}"
+	_GITHUB_API_STATUS="$status"
+	_GITHUB_API_MESSAGE=$(printf '%s' "$body" | jq -r '.message // empty' 2>/dev/null)
+	_GITHUB_LATEST=$(printf '%s' "$body" | jq -r '.tag_name // empty' 2>/dev/null)
+
+	[[ "$status" == "200" && -n "$_GITHUB_LATEST" ]] || return 1
+}
+
 # 获取 GitHub 仓库最新 release 的 tag_name
 # 参数: $1 = owner/repo (例如 fwcd/kotlin-language-server)
+# 输出: stdout = tag_name；并设置 _GITHUB_LATEST / _GITHUB_API_STATUS / _GITHUB_API_MESSAGE
 github_latest_release() {
-	local repo="$1"
-	curl -fsSL "https://api.github.com/repos/${repo}/releases/latest" 2>/dev/null \
-		| jq -r '.tag_name // empty' 2>/dev/null
+	github_latest_release_lookup "$1" || return 1
+	printf '%s\n' "$_GITHUB_LATEST"
 }
 
 # 检查 GitHub Release 是否有更新
@@ -281,9 +352,9 @@ github_latest_release() {
 check_github_update() {
 	local name="$1" repo="$2" install_dir="$3"
 
-	_GITHUB_LATEST=$(github_latest_release "$repo") || true
+	github_latest_release_lookup "$repo" || true
 	if [[ -z "$_GITHUB_LATEST" ]]; then
-		print_warn "$name: 无法获取最新版本，跳过"
+		print_github_release_lookup_warning "$name" "最新版本"
 		return 1
 	fi
 

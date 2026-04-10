@@ -76,8 +76,13 @@ install_vsix_from_github() {
 	local repo="$1" cmd="$2"
 	local name="${repo#*/}"
 
-	local tag
-	tag=$(github_latest_release "$repo") || { print_warn "$name: 无法获取 release"; return 0; }
+	local tag=""
+	github_latest_release_lookup "$repo" || true
+	tag="$_GITHUB_LATEST"
+	if [[ -z "$tag" ]]; then
+		print_github_release_lookup_warning "$name" "release"
+		return 0
+	fi
 
 	local vsix_name="${name}-${tag#v}.vsix"
 	local tmp_dir
@@ -200,8 +205,9 @@ main() {
 					local local_ver
 					local_ver=$(echo "$installed_ver" | grep -i "^${ext_lower}@" | cut -d@ -f2)
 					if [[ -n "$local_ver" ]]; then
-						local latest_tag
-						latest_tag=$(github_latest_release "$repo" 2>/dev/null) || true
+						local latest_tag=""
+						github_latest_release_lookup "$repo" 2>/dev/null || true
+						latest_tag="$_GITHUB_LATEST"
 						if [[ "${latest_tag#v}" == "$local_ver" ]]; then
 							skipped+=("$ext")
 							continue

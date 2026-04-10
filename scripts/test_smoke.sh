@@ -501,12 +501,10 @@ EOF
 }
 
 test_dotfiles_macos_ime_detection_falls_back_without_jq_or_python() {
-	local tmp_home fake_bin log superpowers_repo runtime_file runtime_relative_path
+	local tmp_home fake_bin log superpowers_repo
 	tmp_home=$(make_temp_dir)
 	fake_bin=$(make_temp_dir)
 	log="$tmp_home/install-dotfiles.log"
-	runtime_relative_path=".hammerspoon/config/inputMethodRuntime.lua"
-	runtime_file="$tmp_home/$runtime_relative_path"
 	superpowers_repo=$(make_fake_superpowers_repo)
 	trap "rm -rf '$tmp_home' '$fake_bin' '$superpowers_repo'" RETURN
 
@@ -516,9 +514,26 @@ printf '%s\n' "Darwin"
 EOF
 	cat >"$fake_bin/plutil" <<'EOF'
 #!/bin/sh
-cat <<'INNER'
+if [ "$1" = "-extract" ]; then
+	case "$2" in
+	AppleEnabledInputSources)
+		cat <<'INNER'
 [{"InputSourceKind":"Keyboard Layout","InputSourceID":"com.apple.keylayout.US"},{"InputSourceKind":"Keyboard Layout","InputSourceID":"com.apple.keylayout.ABC"},{"InputSourceKind":"Keyboard Input Method","InputSourceID":"com.apple.inputmethod.SCIM.ITABC"}]
 INNER
+		;;
+	AppleSelectedInputSources|AppleInputSourceHistory)
+		printf '%s\n' '[]'
+		;;
+	AppleCurrentKeyboardLayoutInputSourceID)
+		printf '%s\n' 'com.apple.keylayout.US'
+		;;
+	*)
+		exit 1
+		;;
+	esac
+	exit 0
+fi
+exit 1
 EOF
 	cat >"$fake_bin/jq" <<'EOF'
 #!/bin/sh
@@ -543,18 +558,16 @@ EOF
 		fail "install_dotfiles.sh IME fallback parsing failed"
 	fi
 
-	assert_file_missing "$runtime_file"
 	assert_contains 'macOS IME toggle provider: apple_pair (set macOS input-source shortcut to Control-Space)' "$log"
 	assert_not_contains 'macOS IME toggle disabled on this machine because no supported provider was detected' "$log"
+	assert_not_contains 'Wide character in print' "$log"
 }
 
 test_dotfiles_macos_ime_detection_empty_fallback_still_installs() {
-	local tmp_home fake_bin log superpowers_repo runtime_file runtime_relative_path
+	local tmp_home fake_bin log superpowers_repo
 	tmp_home=$(make_temp_dir)
 	fake_bin=$(make_temp_dir)
 	log="$tmp_home/install-dotfiles.log"
-	runtime_relative_path=".hammerspoon/config/inputMethodRuntime.lua"
-	runtime_file="$tmp_home/$runtime_relative_path"
 	superpowers_repo=$(make_fake_superpowers_repo)
 	trap "rm -rf '$tmp_home' '$fake_bin' '$superpowers_repo'" RETURN
 
@@ -564,7 +577,21 @@ printf '%s\n' "Darwin"
 EOF
 	cat >"$fake_bin/plutil" <<'EOF'
 #!/bin/sh
-printf '%s\n' '[]'
+if [ "$1" = "-extract" ]; then
+	case "$2" in
+	AppleEnabledInputSources|AppleSelectedInputSources|AppleInputSourceHistory)
+		printf '%s\n' '[]'
+		;;
+	AppleCurrentKeyboardLayoutInputSourceID)
+		exit 1
+		;;
+	*)
+		exit 1
+		;;
+	esac
+	exit 0
+fi
+exit 1
 EOF
 	cat >"$fake_bin/jq" <<'EOF'
 #!/bin/sh
@@ -589,17 +616,15 @@ EOF
 		fail "install_dotfiles.sh empty IME fallback should still succeed"
 	fi
 
-	assert_file_missing "$runtime_file"
 	assert_contains 'macOS IME toggle disabled on this machine because no supported provider was detected' "$log"
+	assert_not_contains 'Wide character in print' "$log"
 }
 
 test_dotfiles_warns_when_macos_ime_provider_is_disabled() {
-	local tmp_home fake_bin log superpowers_repo runtime_file runtime_relative_path
+	local tmp_home fake_bin log superpowers_repo
 	tmp_home=$(make_temp_dir)
 	fake_bin=$(make_temp_dir)
 	log="$tmp_home/install-dotfiles.log"
-	runtime_relative_path=".hammerspoon/config/inputMethodRuntime.lua"
-	runtime_file="$tmp_home/$runtime_relative_path"
 	superpowers_repo=$(make_fake_superpowers_repo)
 	trap "rm -rf '$tmp_home' '$fake_bin' '$superpowers_repo'" RETURN
 
@@ -609,9 +634,26 @@ printf '%s\n' "Darwin"
 EOF
 	cat >"$fake_bin/plutil" <<'EOF'
 #!/bin/sh
-cat <<'INNER'
+if [ "$1" = "-extract" ]; then
+	case "$2" in
+	AppleEnabledInputSources)
+		cat <<'INNER'
 [{"InputSourceKind":"Keyboard Layout","InputSourceID":"com.apple.keylayout.Dvorak"}]
 INNER
+		;;
+	AppleSelectedInputSources|AppleInputSourceHistory)
+		printf '%s\n' '[]'
+		;;
+	AppleCurrentKeyboardLayoutInputSourceID)
+		printf '%s\n' 'com.apple.keylayout.Dvorak'
+		;;
+	*)
+		exit 1
+		;;
+	esac
+	exit 0
+fi
+exit 1
 EOF
 	cat >"$fake_bin/zsh" <<'EOF'
 #!/bin/sh
@@ -628,19 +670,16 @@ EOF
 		fail "install_dotfiles.sh disabled provider warning failed"
 	fi
 
-	assert_file_missing "$runtime_file"
 	assert_contains 'macOS IME toggle disabled on this machine because no supported provider was detected' "$log"
+	assert_not_contains 'Wide character in print' "$log"
 }
 
-test_dotfiles_generates_apple_pair_karabiner_control_space_toggle() {
-	local tmp_home fake_bin log superpowers_repo runtime_file karabiner_file runtime_relative_path removed_toggle_script
+test_dotfiles_generates_apple_pair_karabiner_profile() {
+	local tmp_home fake_bin log superpowers_repo karabiner_file
 	tmp_home=$(make_temp_dir)
 	fake_bin=$(make_temp_dir)
 	log="$tmp_home/install-dotfiles.log"
-	runtime_relative_path=".hammerspoon/config/inputMethodRuntime.lua"
-	runtime_file="$tmp_home/$runtime_relative_path"
 	karabiner_file="$tmp_home/.config/karabiner/karabiner.json"
-	removed_toggle_script="toggle_ime.sh"
 	superpowers_repo=$(make_fake_superpowers_repo)
 	trap "rm -rf '$tmp_home' '$fake_bin' '$superpowers_repo'" RETURN
 
@@ -650,9 +689,26 @@ printf '%s\n' "Darwin"
 EOF
 	cat >"$fake_bin/plutil" <<'EOF'
 #!/bin/sh
-cat <<'INNER'
+if [ "$1" = "-extract" ]; then
+	case "$2" in
+	AppleEnabledInputSources)
+		cat <<'INNER'
 [{"InputSourceKind":"Keyboard Layout","InputSourceID":"com.apple.keylayout.ABC"},{"InputSourceKind":"Keyboard Input Method","InputSourceID":"com.apple.inputmethod.SCIM.ITABC"}]
 INNER
+		;;
+	AppleSelectedInputSources|AppleInputSourceHistory)
+		printf '%s\n' '[]'
+		;;
+	AppleCurrentKeyboardLayoutInputSourceID)
+		printf '%s\n' 'com.apple.keylayout.ABC'
+		;;
+	*)
+		exit 1
+		;;
+	esac
+	exit 0
+fi
+exit 1
 EOF
 	cat >"$fake_bin/zsh" <<'EOF'
 #!/bin/sh
@@ -669,22 +725,17 @@ EOF
 		fail "install_dotfiles.sh apple_pair Karabiner generation failed"
 	fi
 
-	assert_file_missing "$runtime_file"
 	assert_contains 'macOS IME toggle provider: apple_pair (set macOS input-source shortcut to Control-Space)' "$log"
 	assert_file_exists "$karabiner_file"
-	assert_not_contains "$removed_toggle_script" "$karabiner_file"
 	assert_karabiner_provider_shape "apple_pair" "$karabiner_file"
 }
 
-test_dotfiles_generates_wetype_karabiner_without_shell_toggle() {
-	local tmp_home fake_bin log superpowers_repo runtime_file karabiner_file runtime_relative_path removed_toggle_script
+test_dotfiles_generates_wetype_karabiner_profile_from_hitoolbox_state() {
+	local tmp_home fake_bin log superpowers_repo karabiner_file
 	tmp_home=$(make_temp_dir)
 	fake_bin=$(make_temp_dir)
 	log="$tmp_home/install-dotfiles.log"
-	runtime_relative_path=".hammerspoon/config/inputMethodRuntime.lua"
-	runtime_file="$tmp_home/$runtime_relative_path"
 	karabiner_file="$tmp_home/.config/karabiner/karabiner.json"
-	removed_toggle_script="toggle_ime.sh"
 	superpowers_repo=$(make_fake_superpowers_repo)
 	trap "rm -rf '$tmp_home' '$fake_bin' '$superpowers_repo'" RETURN
 
@@ -694,9 +745,33 @@ printf '%s\n' "Darwin"
 EOF
 	cat >"$fake_bin/plutil" <<'EOF'
 #!/bin/sh
-cat <<'INNER'
-[{"InputSourceKind":"Keyboard Input Method","InputSourceID":"com.tencent.inputmethod.wetype.pinyin"}]
+if [ "$1" = "-extract" ]; then
+	case "$2" in
+	AppleEnabledInputSources)
+		cat <<'INNER'
+[{"InputSourceKind":"Input Mode","Bundle ID":"com.apple.inputmethod.SCIM","Input Mode":"com.apple.inputmethod.SCIM.ITABC"},{"InputSourceKind":"Non Keyboard Input Method","Bundle ID":"com.apple.PressAndHold"}]
 INNER
+		;;
+	AppleInputSourceHistory)
+		cat <<'INNER'
+[{"InputSourceKind":"Input Mode","Bundle ID":"com.tencent.inputmethod.wetype","Input Mode":"com.tencent.inputmethod.wetype.pinyin"},{"InputSourceKind":"Keyboard Layout","KeyboardLayout Name":"ABC","KeyboardLayout ID":252}]
+INNER
+		;;
+	AppleSelectedInputSources)
+		cat <<'INNER'
+[{"InputSourceKind":"Non Keyboard Input Method","Bundle ID":"com.apple.PressAndHold"},{"InputSourceKind":"Input Mode","Bundle ID":"com.tencent.inputmethod.wetype","Input Mode":"com.tencent.inputmethod.wetype.pinyin"}]
+INNER
+		;;
+	AppleCurrentKeyboardLayoutInputSourceID)
+		printf '%s\n' 'com.apple.keylayout.US'
+		;;
+	*)
+		exit 1
+		;;
+	esac
+	exit 0
+fi
+exit 1
 EOF
 	cat >"$fake_bin/zsh" <<'EOF'
 #!/bin/sh
@@ -713,22 +788,18 @@ EOF
 		fail "install_dotfiles.sh wetype Karabiner generation failed"
 	fi
 
-	assert_file_missing "$runtime_file"
 	assert_contains "macOS IME toggle provider: wetype (enable WeType's Shift toggle inside WeChat Input Method)" "$log"
 	assert_file_exists "$karabiner_file"
-	assert_not_contains "$removed_toggle_script" "$karabiner_file"
 	assert_karabiner_provider_shape "wetype" "$karabiner_file"
+	assert_not_contains 'Wide character in print' "$log"
 }
 
 test_dotfiles_generates_disabled_karabiner_without_ime_rules() {
-	local tmp_home fake_bin log superpowers_repo runtime_file karabiner_file runtime_relative_path removed_toggle_script
+	local tmp_home fake_bin log superpowers_repo karabiner_file
 	tmp_home=$(make_temp_dir)
 	fake_bin=$(make_temp_dir)
 	log="$tmp_home/install-dotfiles.log"
-	runtime_relative_path=".hammerspoon/config/inputMethodRuntime.lua"
-	runtime_file="$tmp_home/$runtime_relative_path"
 	karabiner_file="$tmp_home/.config/karabiner/karabiner.json"
-	removed_toggle_script="toggle_ime.sh"
 	superpowers_repo=$(make_fake_superpowers_repo)
 	trap "rm -rf '$tmp_home' '$fake_bin' '$superpowers_repo'" RETURN
 
@@ -738,9 +809,26 @@ printf '%s\n' "Darwin"
 EOF
 	cat >"$fake_bin/plutil" <<'EOF'
 #!/bin/sh
-cat <<'INNER'
+if [ "$1" = "-extract" ]; then
+	case "$2" in
+	AppleEnabledInputSources)
+		cat <<'INNER'
 [{"InputSourceKind":"Keyboard Layout","InputSourceID":"com.apple.keylayout.Dvorak"}]
 INNER
+		;;
+	AppleSelectedInputSources|AppleInputSourceHistory)
+		printf '%s\n' '[]'
+		;;
+	AppleCurrentKeyboardLayoutInputSourceID)
+		printf '%s\n' 'com.apple.keylayout.Dvorak'
+		;;
+	*)
+		exit 1
+		;;
+	esac
+	exit 0
+fi
+exit 1
 EOF
 	cat >"$fake_bin/zsh" <<'EOF'
 #!/bin/sh
@@ -757,52 +845,10 @@ EOF
 		fail "install_dotfiles.sh disabled-provider Karabiner generation failed"
 	fi
 
-	assert_file_missing "$runtime_file"
 	assert_contains 'macOS IME toggle disabled on this machine because no supported provider was detected' "$log"
 	assert_file_exists "$karabiner_file"
-	assert_not_contains "$removed_toggle_script" "$karabiner_file"
 	assert_karabiner_provider_shape "disabled" "$karabiner_file"
-}
-
-test_dotfiles_linux_install_leaves_obsolete_toggle_ime_script_alone() {
-	local tmp_home fake_bin log manifest superpowers_repo toggle_script toggle_hash
-	tmp_home=$(make_temp_dir)
-	fake_bin=$(make_temp_dir)
-	log="$tmp_home/install-dotfiles.log"
-	manifest="$tmp_home/.local/state/dotfiles/dotfiles-manifest.tsv"
-	toggle_script="$tmp_home/sh-script/toggle_ime.sh"
-	superpowers_repo=$(make_fake_superpowers_repo)
-	trap "rm -rf '$tmp_home' '$fake_bin' '$superpowers_repo'" RETURN
-
-	mkdir -p "$(dirname "$toggle_script")" "$(dirname "$manifest")"
-	printf '%s\n' '#!/bin/sh' 'legacy linux toggle' >"$toggle_script"
-	toggle_hash="$(
-		HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" bash -c '
-			source "$1"
-			file_fingerprint "$2"
-		' _ "$REPO_ROOT/lib/utils.sh" "$toggle_script"
-	)"
-	cat >"$manifest" <<EOF
-file	$toggle_script	$toggle_hash
-EOF
-
-	cat >"$fake_bin/uname" <<'EOF'
-#!/bin/sh
-printf '%s\n' "Linux"
-EOF
-	cat >"$fake_bin/keychain" <<'EOF'
-#!/bin/sh
-exit 0
-EOF
-	chmod +x "$fake_bin/uname" "$fake_bin/keychain"
-
-	if ! run_dotfiles_install "$tmp_home" "$fake_bin" "$superpowers_repo" "$log"; then
-		cat "$log" >&2
-		fail "install_dotfiles.sh should ignore obsolete toggle_ime.sh during Linux installs"
-	fi
-
-	assert_file_exists "$toggle_script"
-	assert_contains "$toggle_script" "$manifest"
+	assert_not_contains 'Wide character in print' "$log"
 }
 
 test_dotfiles_wetype_karabiner_patching_fails_closed_on_malformed_click_rule() {
@@ -3674,10 +3720,9 @@ run_test "Dotfiles manifest and SSH include block" test_dotfiles_manifest_and_ss
 run_test "Dotfiles falls back for macOS IME detection without jq or python" test_dotfiles_macos_ime_detection_falls_back_without_jq_or_python
 run_test "Dotfiles empty macOS IME fallback still installs" test_dotfiles_macos_ime_detection_empty_fallback_still_installs
 run_test "Dotfiles warns when macOS IME provider is disabled" test_dotfiles_warns_when_macos_ime_provider_is_disabled
-run_test "Dotfiles generates apple_pair Karabiner control-space toggle" test_dotfiles_generates_apple_pair_karabiner_control_space_toggle
-run_test "Dotfiles generates wetype Karabiner without shell toggle" test_dotfiles_generates_wetype_karabiner_without_shell_toggle
+run_test "Dotfiles generates apple_pair Karabiner profile" test_dotfiles_generates_apple_pair_karabiner_profile
+run_test "Dotfiles generates wetype Karabiner profile from HIToolbox state" test_dotfiles_generates_wetype_karabiner_profile_from_hitoolbox_state
 run_test "Dotfiles generates disabled Karabiner without IME rules" test_dotfiles_generates_disabled_karabiner_without_ime_rules
-run_test "Dotfiles Linux install leaves obsolete toggle_ime.sh alone" test_dotfiles_linux_install_leaves_obsolete_toggle_ime_script_alone
 run_test "Dotfiles wetype Karabiner patching fails closed on malformed click rule" test_dotfiles_wetype_karabiner_patching_fails_closed_on_malformed_click_rule
 run_test "superpowers clone does not retry GitHub SSH failures" test_superpowers_clone_does_not_retry_github_ssh_failures
 run_test "superpowers pull does not retry GitHub SSH failures" test_superpowers_pull_does_not_retry_github_ssh_failures

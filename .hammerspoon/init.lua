@@ -7,9 +7,6 @@ hs.application.enableSpotlightForNameSearches(true)
 -- 加载模块（KeyBinds 内部已显式 require 所有依赖）
 require('modules.reload')
 require('modules.systemInfo')
-local keyBinds = require('config.KeyBinds')
+require('config.KeyBinds')
 
 hs.notify.new({ title = 'Hammerspoon', informativeText = 'Ready to rock 🤘' }):send()
-
-_G.dotfilesRuntime = _G.dotfilesRuntime or {}
-_G.dotfilesRuntime.keyBinds = keyBinds

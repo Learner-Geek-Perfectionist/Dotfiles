@@ -12,13 +12,81 @@ MACOS_KARABINER_APPLE_BASELINE_KEY_CODE="spacebar"
 MACOS_KARABINER_APPLE_BASELINE_MODIFIER="left_control"
 MACOS_KARABINER_DISABLED_CAPS_RULE_DESCRIPTION="Keep caps lock as left_shift fallback"
 
+macos_read_hitoolbox_provider_state_json() {
+	local hitoolbox_plist="$1"
+	local enabled_sources_json="[]"
+	local selected_sources_json="[]"
+	local history_sources_json="[]"
+	local current_layout_id=""
+	local current_layout_json="null"
+
+	if command -v python3 &>/dev/null; then
+		if python3 - "$hitoolbox_plist" <<'PY' 2>/dev/null
+import json
+import plistlib
+import sys
+
+with open(sys.argv[1], "rb") as handle:
+    data = plistlib.load(handle)
+
+subset = {
+    "AppleCurrentKeyboardLayoutInputSourceID": data.get("AppleCurrentKeyboardLayoutInputSourceID"),
+    "AppleEnabledInputSources": data.get("AppleEnabledInputSources", []),
+    "AppleInputSourceHistory": data.get("AppleInputSourceHistory", []),
+    "AppleSelectedInputSources": data.get("AppleSelectedInputSources", []),
+}
+
+print(json.dumps(subset, ensure_ascii=False))
+PY
+		then
+			return 0
+		fi
+	fi
+
+	enabled_sources_json="$(
+		plutil -extract AppleEnabledInputSources json -o - "$hitoolbox_plist" 2>/dev/null || printf '[]'
+	)"
+	selected_sources_json="$(
+		plutil -extract AppleSelectedInputSources json -o - "$hitoolbox_plist" 2>/dev/null || printf '[]'
+	)"
+	history_sources_json="$(
+		plutil -extract AppleInputSourceHistory json -o - "$hitoolbox_plist" 2>/dev/null || printf '[]'
+	)"
+	current_layout_id="$(
+		plutil -extract AppleCurrentKeyboardLayoutInputSourceID raw -o - "$hitoolbox_plist" 2>/dev/null || true
+	)"
+
+	if [[ -n "$current_layout_id" ]]; then
+		current_layout_json="$(
+			printf '%s' "$current_layout_id" | sed 's/\\/\\\\/g; s/"/\\"/g; 1s/^/"/; $s/$/"/'
+		)"
+	fi
+
+	printf '{"AppleCurrentKeyboardLayoutInputSourceID":%s,"AppleEnabledInputSources":%s,"AppleInputSourceHistory":%s,"AppleSelectedInputSources":%s}\n' \
+		"${current_layout_json:-null}" \
+		"$enabled_sources_json" \
+		"$history_sources_json" \
+		"$selected_sources_json"
+}
+
 macos_extract_input_source_ids() {
-	local enabled_sources_json="$1"
+	local hitoolbox_json="$1"
 	local parsed_ids=""
 
 	if command -v jq &>/dev/null; then
 		if parsed_ids="$(
-			jq -r '.[] | .["InputSourceID"] // empty' <<<"$enabled_sources_json" 2>/dev/null
+			jq -r '
+				def source_values:
+					.. | objects | .["InputSourceID"]?, .["Input Mode"]? | select(. != null and . != "");
+				if type == "array" then
+					source_values
+				elif type == "object" then
+					.["AppleCurrentKeyboardLayoutInputSourceID"]?,
+					source_values
+				else
+					empty
+				end
+			' <<<"$hitoolbox_json" 2>/dev/null
 		)"; then
 			printf '%s\n' "$parsed_ids"
 			return 0
@@ -31,24 +99,36 @@ macos_extract_input_source_ids() {
 import json
 import sys
 
-for item in json.load(sys.stdin):
-    value = item.get("InputSourceID")
-    if value:
-        print(value)
-' <<<"$enabled_sources_json" 2>/dev/null
+def emit_ids(node):
+    if isinstance(node, dict):
+        current_layout = node.get("AppleCurrentKeyboardLayoutInputSourceID")
+        if current_layout:
+            print(current_layout)
+        for key in ("InputSourceID", "Input Mode"):
+            value = node.get(key)
+            if value:
+                print(value)
+        for value in node.values():
+            emit_ids(value)
+    elif isinstance(node, list):
+        for item in node:
+            emit_ids(item)
+
+emit_ids(json.load(sys.stdin))
+' <<<"$hitoolbox_json" 2>/dev/null
 		)"; then
 			printf '%s\n' "$parsed_ids"
 			return 0
 		fi
 	fi
 
-	grep -o '"InputSourceID"[[:space:]]*:[[:space:]]*"[^"]*"' <<<"$enabled_sources_json" \
-		| sed 's/^"InputSourceID"[[:space:]]*:[[:space:]]*"//; s/"$//' \
+	grep -oE '"(InputSourceID|Input Mode|AppleCurrentKeyboardLayoutInputSourceID)"[[:space:]]*:[[:space:]]*"[^"]*"' <<<"$hitoolbox_json" \
+		| sed 's/^.*:[[:space:]]*"//; s/"$//' \
 		|| true
 }
 
 macos_select_ime_provider() {
-	local enabled_sources_json="$1"
+	local hitoolbox_json="$1"
 	local input_source_ids
 	local wetype_source_id=""
 	local english_source_id=""
@@ -58,7 +138,7 @@ macos_select_ime_provider() {
 	local english_candidate
 
 	input_source_ids="$(
-		macos_extract_input_source_ids "$enabled_sources_json"
+		macos_extract_input_source_ids "$hitoolbox_json"
 	)"
 
 	while IFS= read -r input_source_id; do
@@ -122,6 +202,7 @@ open my $fh, '<', $target or die "failed to open $target: $!";
 local $/;
 my $json = <$fh>;
 close $fh;
+binmode STDOUT, ':encoding(UTF-8)';
 
 my $data = decode_json($json);
 my $rules = $data->{profiles}[0]{complex_modifications}{rules};

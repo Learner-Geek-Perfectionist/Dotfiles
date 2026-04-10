@@ -36,18 +36,22 @@ assert_macos_ime_provider_contract() {
 
 test_macos_ime_toggle_setup() {
 	local wetype_only_fixture
+	local wetype_input_mode_fixture
 	local system_pair_only_fixture
 	local system_pair_us_fixture
 	local system_pair_both_english_fixture
+	local system_pair_current_layout_fixture
 	local mixed_install_fixture
 	local english_only_fixture
 	local chinese_only_fixture
 	local empty_fixture
 
 	wetype_only_fixture='[{"InputSourceKind":"Keyboard Input Method","Bundle ID":"com.tencent.inputmethod.wetype"},{"InputSourceKind":"Keyboard Layout","InputSourceID":"com.tencent.inputmethod.wetype.pinyin"}]'
+	wetype_input_mode_fixture='{"AppleCurrentKeyboardLayoutInputSourceID":"com.apple.keylayout.US","AppleEnabledInputSources":[{"InputSourceKind":"Input Mode","Bundle ID":"com.apple.inputmethod.SCIM","Input Mode":"com.apple.inputmethod.SCIM.ITABC"}],"AppleInputSourceHistory":[{"InputSourceKind":"Input Mode","Bundle ID":"com.tencent.inputmethod.wetype","Input Mode":"com.tencent.inputmethod.wetype.pinyin"},{"InputSourceKind":"Keyboard Layout","KeyboardLayout Name":"ABC","KeyboardLayout ID":252}],"AppleSelectedInputSources":[{"InputSourceKind":"Input Mode","Bundle ID":"com.tencent.inputmethod.wetype","Input Mode":"com.tencent.inputmethod.wetype.pinyin"}]}'
 	system_pair_only_fixture='[{"InputSourceKind":"Keyboard Layout","InputSourceID":"com.apple.keylayout.ABC"},{"InputSourceKind":"Keyboard Input Method","InputSourceID":"com.apple.inputmethod.SCIM.ITABC"}]'
 	system_pair_us_fixture='[{"InputSourceKind":"Keyboard Layout","InputSourceID":"com.apple.keylayout.US"},{"InputSourceKind":"Keyboard Input Method","InputSourceID":"com.apple.inputmethod.SCIM.ITABC"}]'
 	system_pair_both_english_fixture='[{"InputSourceKind":"Keyboard Layout","InputSourceID":"com.apple.keylayout.US"},{"InputSourceKind":"Keyboard Layout","InputSourceID":"com.apple.keylayout.ABC"},{"InputSourceKind":"Keyboard Input Method","InputSourceID":"com.apple.inputmethod.SCIM.ITABC"}]'
+	system_pair_current_layout_fixture='{"AppleCurrentKeyboardLayoutInputSourceID":"com.apple.keylayout.US","AppleEnabledInputSources":[{"InputSourceKind":"Input Mode","Bundle ID":"com.apple.inputmethod.SCIM","Input Mode":"com.apple.inputmethod.SCIM.ITABC"}],"AppleSelectedInputSources":[{"InputSourceKind":"Input Mode","Bundle ID":"com.apple.PressAndHold"}]}'
 	mixed_install_fixture='[{"InputSourceKind":"Keyboard Layout","InputSourceID":"com.apple.keylayout.ABC"},{"InputSourceKind":"Keyboard Input Method","InputSourceID":"com.apple.inputmethod.SCIM.ITABC"},{"InputSourceKind":"Keyboard Input Method","Bundle ID":"com.tencent.inputmethod.wetype"},{"InputSourceKind":"Keyboard Layout","InputSourceID":"com.tencent.inputmethod.wetype.pinyin"}]'
 	english_only_fixture='[{"InputSourceKind":"Keyboard Layout","InputSourceID":"com.apple.keylayout.US"}]'
 	chinese_only_fixture='[{"InputSourceKind":"Keyboard Input Method","InputSourceID":"com.apple.inputmethod.SCIM.ITABC"}]'
@@ -60,6 +64,13 @@ test_macos_ime_toggle_setup() {
 		'' \
 		'' \
 		"$wetype_only_fixture"
+	assert_macos_ime_provider_contract \
+		"wetype input mode from selected/history" \
+		wetype \
+		'com.tencent.inputmethod.wetype.pinyin' \
+		'com.apple.keylayout.US' \
+		'com.apple.inputmethod.SCIM.ITABC' \
+		"$wetype_input_mode_fixture"
 	assert_macos_ime_provider_contract \
 		"system pair only" \
 		apple_pair \
@@ -81,6 +92,13 @@ test_macos_ime_toggle_setup() {
 		'com.apple.keylayout.ABC' \
 		'com.apple.inputmethod.SCIM.ITABC' \
 		"$system_pair_both_english_fixture"
+	assert_macos_ime_provider_contract \
+		"system pair uses current keyboard layout source id" \
+		apple_pair \
+		'' \
+		'com.apple.keylayout.US' \
+		'com.apple.inputmethod.SCIM.ITABC' \
+		"$system_pair_current_layout_fixture"
 	assert_macos_ime_provider_contract \
 		"mixed install" \
 		wetype \

@@ -255,7 +255,7 @@ main() {
 
 	# VSCode/Cursor 配置（只复制 settings.json 和 keybindings.json，避免覆盖用户的其它配置）
 	if [[ "$(uname)" == "Darwin" ]]; then
-		local enabled_input_sources_json provider_info provider
+			local hitoolbox_provider_state_json provider_info provider
 
 		# macOS: ~/Library/Application Support/
 		[[ -n "$vscode_cmd" ]] && copy_path "Library/Application Support/Code/User/settings.json" "Library/Application Support/Code/User/settings.json"
@@ -267,12 +267,12 @@ main() {
 		copy_path ".hammerspoon" ".hammerspoon"
 		# shellcheck source=./lib_macos_ime_toggle.sh
 		source "$SCRIPT_DIR/lib_macos_ime_toggle.sh"
-		enabled_input_sources_json="$(
-			plutil -extract AppleEnabledInputSources json -o - "$HOME/Library/Preferences/com.apple.HIToolbox.plist" 2>/dev/null || printf '[]'
-		)"
-		provider_info="$(
-			macos_select_ime_provider "$enabled_input_sources_json"
-		)"
+			hitoolbox_provider_state_json="$(
+				macos_read_hitoolbox_provider_state_json "$HOME/Library/Preferences/com.apple.HIToolbox.plist"
+			)"
+			provider_info="$(
+				macos_select_ime_provider "$hitoolbox_provider_state_json"
+			)"
 		provider="$(
 			awk -F= '$1=="provider"{print $2}' <<<"$provider_info"
 		)"

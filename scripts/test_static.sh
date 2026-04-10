@@ -256,6 +256,21 @@ run_macos_ime_toggle_setup_checks() {
 	bash scripts/test_macos_ime_toggle_setup.sh
 }
 
+run_hammerspoon_cleanup_checks() {
+	cd "$REPO_ROOT"
+
+	[[ ! -e .hammerspoon/modules/inputMethod.lua ]] || fail "obsolete .hammerspoon/modules/inputMethod.lua should be removed"
+	[[ ! -e .hammerspoon/.DS_Store ]] || fail "repository junk file .hammerspoon/.DS_Store should be removed"
+}
+
+run_ime_migration_cleanup_checks() {
+	cd "$REPO_ROOT"
+
+	if rg -n "remove_obsolete_managed_dotfiles_path|remove_obsolete_macos_ime_helper_chain" scripts/install_dotfiles.sh >/dev/null; then
+		fail "obsolete IME migration cleanup helpers should be removed from install_dotfiles.sh"
+	fi
+}
+
 run_shellcheck() {
 	cd "$REPO_ROOT"
 	if ! command -v shellcheck &>/dev/null; then
@@ -277,6 +292,8 @@ run_test "Install clone does not retry non-SSH failures" run_install_clone_does_
 run_test "Python syntax" run_python_checks
 run_test "Lua syntax" run_lua_checks
 run_test "macOS IME toggle setup" run_macos_ime_toggle_setup_checks
+run_test "Hammerspoon cleanup" run_hammerspoon_cleanup_checks
+run_test "IME migration cleanup" run_ime_migration_cleanup_checks
 run_test "ShellCheck" run_shellcheck
 
 section "Done"

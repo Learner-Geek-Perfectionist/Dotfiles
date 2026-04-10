@@ -39,50 +39,6 @@ sync_directory_contents() {
 	cp -PRf "$src/." "$dest/"
 }
 
-manifest_recorded_hash_for_path() {
-	local path="$1"
-
-	[[ -n "${DOTFILES_MANIFEST_TMP:-}" && -f "${DOTFILES_MANIFEST_TMP:-}" ]] || return 1
-	awk -F'\t' -v path="$path" 'NF >= 3 && $2 == path { print $3; exit }' "$DOTFILES_MANIFEST_TMP"
-}
-
-prune_manifest_path() {
-	local path="$1"
-
-	[[ -n "${DOTFILES_MANIFEST_TMP:-}" && -f "${DOTFILES_MANIFEST_TMP:-}" ]] || return 1
-	awk -F'\t' -v path="$path" '!(NF >= 2 && $2 == path)' "$DOTFILES_MANIFEST_TMP" >"$DOTFILES_MANIFEST_TMP.filtered"
-	mv "$DOTFILES_MANIFEST_TMP.filtered" "$DOTFILES_MANIFEST_TMP"
-	dotfiles_manifest_flush
-}
-
-remove_obsolete_managed_dotfiles_path() {
-	local path="$1" recorded_hash current_hash
-
-	recorded_hash="$(manifest_recorded_hash_for_path "$path" 2>/dev/null || true)"
-	[[ -n "$recorded_hash" ]] || return 0
-
-	if [[ ! -e "$path" && ! -L "$path" ]]; then
-		prune_manifest_path "$path"
-		return 0
-	fi
-
-	current_hash="$(file_fingerprint "$path" 2>/dev/null || true)"
-	[[ -n "$current_hash" && "$current_hash" == "$recorded_hash" ]] || return 0
-
-	rm -f "$path"
-	prune_manifest_path "$path"
-}
-
-remove_obsolete_macos_ime_helper_chain() {
-	remove_obsolete_managed_dotfiles_path "$HOME/.hammerspoon/config/inputMethodRuntime.lua"
-	remove_obsolete_managed_dotfiles_path "$HOME/.hammerspoon/modules/inputMethodHelper.lua"
-	remove_obsolete_managed_dotfiles_path "$HOME/.hammerspoon/modules/inputMethodProvider.lua"
-}
-
-remove_obsolete_toggle_ime_script() {
-	remove_obsolete_managed_dotfiles_path "$HOME/sh-script/toggle_ime.sh"
-}
-
 copy_path() {
 	local src="$DOTFILES_DIR/$1"
 	local dest="$HOME/$2"
@@ -288,7 +244,6 @@ main() {
 	copy_path ".config/zsh" ".config/zsh"
 	copy_path ".config/kitty" ".config/kitty"
 	copy_path ".config/ripgrep" ".config/ripgrep"
-	remove_obsolete_toggle_ime_script
 
 	# direnv 配置（替换 __HOME__ 为实际路径）
 	if [[ -f "$DOTFILES_DIR/.config/direnv/direnv.toml" ]]; then
@@ -310,7 +265,6 @@ main() {
 		# macOS 专属
 		copy_path ".config/karabiner" ".config/karabiner"
 		copy_path ".hammerspoon" ".hammerspoon"
-		remove_obsolete_macos_ime_helper_chain
 		# shellcheck source=./lib_macos_ime_toggle.sh
 		source "$SCRIPT_DIR/lib_macos_ime_toggle.sh"
 		enabled_input_sources_json="$(

@@ -400,6 +400,16 @@ install_lsp_servers() {
 
 	print_section "步骤 ${step_num}: 🔧 安装 LSP Servers 及工具"
 
+	# Node CLI: macOS 由 brew 提供 node，Linux 由 pixi 提供 nodejs；
+	# 具体 CLI 统一交给 npm global 管理。
+	if [[ -f "$dotfiles_dir/scripts/install_node_clis.sh" ]]; then
+		bash "$dotfiles_dir/scripts/install_node_clis.sh"
+	fi
+
+	# Linux rootless npm global prefix 使用 ~/.local，需要让后续脚本在当前安装
+	# 进程里也能立刻看到新装出来的 claude/codex 等命令。
+	export PATH="$HOME/.local/bin:$PATH"
+
 	# Kotlin/Native (包管理器不提供，从 GitHub Release 下载)
 	if [[ -f "$dotfiles_dir/scripts/install_kotlin_native.sh" ]]; then
 		bash "$dotfiles_dir/scripts/install_kotlin_native.sh"

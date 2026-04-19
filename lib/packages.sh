@@ -13,7 +13,6 @@ brew_casks=(
 	kitty
 	orbstack
 	github@beta
-	claude-code
 
 	# JetBrains IDE
 	intellij-idea

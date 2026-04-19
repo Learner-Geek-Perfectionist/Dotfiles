@@ -2,13 +2,13 @@
 # shellcheck disable=SC2088
 # Claude Code 安装脚本
 # 1) 安装 LSP 二进制（rust-analyzer, gopls, kotlin-ls 等）
-# 2) 安装 Claude Code CLI（原生安装器）
+# 2) 读取已安装的 Claude CLI（由 scripts/install_node_clis.sh 统一负责）
 # 3) 关闭启动时更新提示（写入 ~/.claude.json）
 # 4) 添加插件 marketplace
 # 5) 安装 LSP 插件和 skill 插件
 # 6) 安装独立 Skill（study-master 等，在线 clone 安装）
 #
-# macOS 通过 brew cask 安装 CLI（见 lib/packages.sh），此脚本仅负责 Linux 安装 + 全平台插件配置
+# 此脚本不再负责 Claude CLI 本体安装，只负责 Claude 专属配置与非 npm LSP 工具链
 
 set -euo pipefail
 
@@ -29,6 +29,10 @@ trap 'rm -f "$HOME/.claude/settings.json.tmp" "$HOME/.claude.json.tmp"' EXIT
 OS=""
 ARCH=""
 
+# npm global 在 Linux rootless 模式下落到 ~/.local/bin；Claude 旧安装方式也可能
+# 把命令放在 ~/.claude/bin。显式补 PATH，避免依赖交互 shell 启动文件。
+export PATH="$HOME/.local/bin:$HOME/.claude/bin:$PATH"
+
 # LSP 安装目录
 LSP_DIR="$HOME/.local/share/lsp"
 LSP_BIN="$HOME/.local/bin"
@@ -46,6 +50,7 @@ MARKETPLACES=(
 	anthropics/skills
 	obra/superpowers-marketplace
 	jarrodwatts/claude-hud
+	openai/codex-plugin-cc
 )
 
 # LSP 插件 (plugin@marketplace)
@@ -69,6 +74,7 @@ TOOL_PLUGINS=(
 	commit-commands@claude-plugins-official
 	code-simplifier@claude-plugins-official
 	claude-hud@claude-hud
+	codex@openai-codex
 )
 
 # Skill 插件 (plugin@marketplace)
@@ -138,37 +144,6 @@ install_gopls() {
 	else
 		print_warn "gopls 安装失败"
 	fi
-}
-
-# 3. npm LSP servers (Both platforms)
-install_npm_lsps() {
-	if ! command -v npm &>/dev/null; then
-		print_warn "npm 未找到，跳过 npm LSP servers"
-		return 0
-	fi
-
-	print_info "安装 npm LSP servers..."
-
-	# 命令名:安装包（命令名用于检测是否已安装，安装包可含多个空格分隔）
-	local npm_lsps=(
-		"typescript-language-server:typescript-language-server typescript"
-		"intelephense:intelephense"
-	)
-
-	for entry in "${npm_lsps[@]}"; do
-		local cmd_name="${entry%%:*}"
-		local packages="${entry#*:}"
-		if command -v "$cmd_name" &>/dev/null; then
-			print_success "$cmd_name 已安装"
-		else
-			print_info "安装 $cmd_name..."
-			if npm install -g $packages &>/dev/null; then
-				print_success "$cmd_name 安装完成"
-			else
-				print_warn "$cmd_name 安装失败"
-			fi
-		fi
-	done
 }
 
 # 4. csharp-ls (Both platforms)
@@ -348,22 +323,8 @@ install_cli() {
 		return 0
 	fi
 
-	if [[ "$OS" == "macos" ]]; then
-		# macOS 由 brew cask 安装。未安装时跳过 Claude 专属配置，不阻断主安装流程。
-		print_warn "Claude Code CLI 未安装，跳过 Claude 插件/MCP 配置；如需启用请先运行 brew install --cask claude-code"
-		return 0
-	fi
-
-	# Linux: 使用原生安装器
-	print_info "安装 Claude Code CLI (原生安装器)..."
-	if curl -fsSL https://claude.ai/install.sh | sh; then
-		# 确保新安装的 claude 在 PATH 中
-		export PATH="$HOME/.local/bin:$HOME/.claude/bin:$PATH"
-		print_success "Claude Code CLI 安装完成"
-	else
-		print_warn "Claude Code CLI 安装失败，跳过 Claude 插件/MCP 配置"
-		return 0
-	fi
+	print_warn "Claude Code CLI 未安装，跳过 Claude 插件/MCP 配置；请先运行完整 install.sh 或 scripts/install_node_clis.sh"
+	return 0
 }
 
 # ========================================
@@ -995,7 +956,6 @@ main() {
 	# 1) 安装 LSP 二进制
 	ensure_lsp_dirs
 	install_rust_analyzer
-	install_npm_lsps
 	install_csharp_ls
 	install_kotlin_ls
 	# gopls / lua-ls / jdtls 仅 Linux（macOS 通过 brew 安装）

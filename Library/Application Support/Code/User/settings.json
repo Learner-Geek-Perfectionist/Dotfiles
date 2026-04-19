@@ -38,8 +38,13 @@
         "zh-hans": true
     },
     "workbench.editor.enablePreview": false,
+    "workbench.editor.enablePreviewFromQuickOpen": false,
     "workbench.editor.wrapTabs": true,
     "workbench.editor.tabSizing": "shrink",
+    "workbench.editor.autoLockGroups": {
+        "terminalEditor": true,
+        "mainThreadWebview-markdown.preview": true
+    },
     "files.associations": {
         "**/ripgrep/ignore": "ignore"
     },
@@ -91,6 +96,7 @@
     "ruff.enable": true,
     "ruff.lint.enable": true,
     "ruff.format.enable": true,
+    "ruff.format.preview": true,
     // ======================= AutoCorrect 中英文排版 =======================
     "autocorrect.enable": true,
     "autocorrect.enableLint": true,

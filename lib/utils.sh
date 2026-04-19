@@ -611,6 +611,18 @@ dotfiles_manifest_file() {
 	echo "$(dotfiles_state_dir)/dotfiles-manifest.tsv"
 }
 
+node_cli_npm_state_file() {
+	echo "$(dotfiles_state_dir)/node-cli-npm-global.tsv"
+}
+
+linux_npm_global_prefix() {
+	echo "$HOME/.local"
+}
+
+linux_npm_global_bin_dir() {
+	echo "$(linux_npm_global_prefix)/bin"
+}
+
 bb_browser_config_file() {
 	echo "$HOME/.config/dotfiles/bb-browser.json"
 }

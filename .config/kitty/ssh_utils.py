@@ -86,6 +86,29 @@ def _extract_cwd_of_child(window):
     return cwd if cwd else None
 
 
+def _extract_foreground_process_cwd(window):
+    try:
+        foreground_processes = window.child.foreground_processes
+    except (AttributeError, OSError):
+        return None
+
+    if not foreground_processes:
+        return None
+
+    # Kitty 会把前台进程链按“helper -> 主 TUI” 的顺序暴露出来，末尾通常才是
+    # 真正持有用户工作目录的交互程序（如 claude/codex）。倒序取第一个非空 cwd，
+    # 可以避开 pyright/mcp 等 helper 抢占 cwd 的情况。
+    for process in reversed(foreground_processes):
+        cwd = process.get('cwd') if isinstance(process, dict) else None
+        if not cwd:
+            continue
+        if isinstance(cwd, (bytes, memoryview)):
+            cwd = bytes(cwd).decode('utf-8', errors='replace')
+        return str(cwd)
+
+    return None
+
+
 def _extract_user_var(window, key):
     try:
         user_vars = window.user_vars
@@ -112,7 +135,10 @@ def _resolve_repeat_source_window(boss, window):
     # 新开的标签页可能先获得焦点，但此时还没有任何可信的工作目录元数据。
     # 这种情况下沿着记录下来的源窗口链一路回溯，直到找到一个已经稳定上报
     # 工作目录的窗口；如果链断了，就停止回溯。
-    while _extract_last_reported_cwd(current_window) is None:
+    while (
+        _extract_last_reported_cwd(current_window) is None
+        and _extract_foreground_process_cwd(current_window) is None
+    ):
         source_window_id = _extract_user_var(current_window, _SMART_SOURCE_WINDOW_ID_VAR)
         if source_window_id is None:
             break
@@ -366,6 +392,7 @@ def smart_launch(boss, launch_type, target_window_id=None):
 
     cwd = _extract_last_reported_cwd(window)
     local_cwd = _extract_cwd_of_child(window)
+    foreground_cwd = _extract_foreground_process_cwd(window)
     ssh_shaped = _window_looks_ssh_shaped(window, ssh_kitten_cmdline=ssh_kitten_cmdline)
     remote_clone_allowed = (
         trusted_destination is not None
@@ -394,8 +421,13 @@ def smart_launch(boss, launch_type, target_window_id=None):
             prefer_known_local_cwd=True,
         )
     else:
-        # 纯本地窗口直接使用 kitty 原生的 `current` 语义。
-        launch_args = _build_native_current_launch_args(launch_type, window)
+        # 对 claude/codex 这类长生命周期 TUI，kitty 的 `current` 可能落到
+        # helper 进程或旧 shell 的 cwd。只要能拿到前台主进程的 cwd，就直接
+        # 显式传给 launch；拿不到时再回退到原生 `current`。
+        if foreground_cwd is not None:
+            launch_args = _build_local_launch_args(launch_type, window, explicit_cwd=foreground_cwd)
+        else:
+            launch_args = _build_native_current_launch_args(launch_type, window)
 
     launch_args = _with_source_window_var(launch_args, window)
     opts, remaining = parse_launch_args(launch_args)

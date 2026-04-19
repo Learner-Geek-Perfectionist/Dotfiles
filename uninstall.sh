@@ -40,6 +40,7 @@ CLAUDE_MANAGED_MARKETPLACES=(
 	anthropics/skills
 	obra/superpowers-marketplace
 	jarrodwatts/claude-hud
+	openai/codex-plugin-cc
 )
 
 CLAUDE_MANAGED_PLUGINS=(
@@ -58,6 +59,7 @@ CLAUDE_MANAGED_PLUGINS=(
 	commit-commands@claude-plugins-official
 	code-simplifier@claude-plugins-official
 	claude-hud@claude-hud
+	codex@openai-codex
 	example-skills@anthropic-agent-skills
 	superpowers@superpowers-marketplace
 )
@@ -360,6 +362,64 @@ remove_bb_browser() {
 	remove_managed_claude_bb_browser_mcp_if_present
 }
 
+remove_managed_node_clis() {
+	local state_file prefix
+	local removed=0 skipped=0 failed=0
+	state_file="$(node_cli_npm_state_file)"
+
+	[[ -f "$state_file" ]] || return 0
+
+	if ! command -v npm &>/dev/null; then
+		print_warn "检测到 Node CLI 托管状态，但当前无 npm，跳过 Node CLI 卸载"
+		return 0
+	fi
+
+	prefix=""
+	while IFS=$'\t' read -r kind value extra; do
+		[[ -n "$kind" ]] || continue
+		if [[ "$kind" == "prefix" ]]; then
+			prefix="$value"
+			break
+		fi
+	done <"$state_file"
+
+	[[ -n "$prefix" ]] || prefix="$(npm prefix -g 2>/dev/null || npm config get prefix 2>/dev/null || true)"
+	[[ -n "$prefix" ]] || {
+		print_warn "无法解析 npm prefix，跳过 Node CLI 卸载"
+		return 0
+	}
+
+	local package preexisting
+	while IFS=$'\t' read -r kind package preexisting; do
+		[[ "$kind" == "package" ]] || continue
+		[[ "$package" == "bb-browser" ]] && continue
+
+		if [[ "$preexisting" == "1" ]]; then
+			skipped=$((skipped + 1))
+			continue
+		fi
+
+		if npm --prefix "$prefix" uninstall -g "$package" >/dev/null 2>&1; then
+			print_dim "✓ Node CLI 已卸载: $package"
+			removed=$((removed + 1))
+		else
+			print_warn "Node CLI 卸载失败: $package"
+			failed=$((failed + 1))
+		fi
+	done <"$state_file"
+
+	if [[ $failed -eq 0 ]]; then
+		rm_path "$state_file"
+		prune_empty_parents "$(dirname "$state_file")"
+	fi
+
+	if [[ $failed -eq 0 ]]; then
+		print_success "Node CLI: 卸载 $removed, 保留预装 $skipped"
+	else
+		print_warn "Node CLI: 卸载 $removed, 保留预装 $skipped, 失败 $failed"
+	fi
+}
+
 remove_dotfiles_ssh_include_block() {
 	local ssh_config="$HOME/.ssh/config"
 	local start_marker end_marker tmp
@@ -579,7 +639,7 @@ remove_claude() {
 	remove_managed_claude_bb_browser_mcp_if_present
 
 	print_success "Claude Code 配置已清理"
-	print_dim "💡 Claude Code CLI 本身未卸载，如需卸载请运行: npm uninstall -g @anthropic-ai/claude-code"
+	print_dim "💡 Claude Code CLI 本身未在此步骤卸载；如需清理 Dotfiles 托管的 Node CLI，请运行 uninstall.sh --dotfiles"
 	print_dim "💡 共享语言工具链（LSP / Kotlin/Native / npm/go/dotnet 全局工具）已保留，避免影响其它编辑器和工作流"
 }
 
@@ -588,6 +648,7 @@ remove_dotfiles() {
 
 	remove_dotfiles_superpowers
 	remove_bb_browser
+	remove_managed_node_clis
 	remove_manifested_dotfiles
 	strip_toml_section_in_place "$HOME/.codex/config.toml" "[mcp_servers.bb-browser]"
 	remove_dotfiles_ssh_include_block

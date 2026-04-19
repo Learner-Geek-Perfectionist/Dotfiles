@@ -2870,6 +2870,93 @@ EOF
 	assert_contains "跳过 Claude 插件/MCP 配置" "$log"
 }
 
+test_install_node_clis_linux_uses_home_local_prefix() {
+	local tmp_home fake_bin log npm_log state_file
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install-node-clis-linux.log"
+	npm_log="$tmp_home/npm-node-clis-linux.log"
+	state_file="$tmp_home/.local/state/dotfiles/node-cli-npm-global.tsv"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	cat >"$fake_bin/uname" <<'EOF'
+#!/bin/sh
+if [ "$1" = "-s" ]; then
+  echo Linux
+else
+  echo x86_64
+fi
+EOF
+	cat >"$fake_bin/npm" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >>"$npm_log"
+exit 0
+EOF
+	chmod +x "$fake_bin/uname" "$fake_bin/npm"
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" DOTFILES_LOG="$log" \
+		bash "$REPO_ROOT/scripts/install_node_clis.sh" >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "install_node_clis.sh Linux test failed"
+	fi
+
+	assert_file_exists "$tmp_home/.npmrc"
+	assert_contains "prefix=$tmp_home/.local" "$tmp_home/.npmrc"
+	assert_file_exists "$state_file"
+	assert_contains $'prefix\t'"$tmp_home/.local" "$state_file"
+	assert_contains "install -g @anthropic-ai/claude-code@latest" "$npm_log"
+	assert_contains "install -g @openai/codex@latest" "$npm_log"
+	assert_contains "install -g @mermaid-js/mermaid-cli@latest" "$npm_log"
+	assert_contains "install -g bb-browser@latest" "$npm_log"
+	assert_contains "install -g typescript-language-server@latest" "$npm_log"
+	assert_contains "install -g typescript@latest" "$npm_log"
+	assert_contains "install -g intelephense@latest" "$npm_log"
+}
+
+test_install_node_clis_macos_keeps_default_prefix() {
+	local tmp_home fake_bin log npm_log state_file
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install-node-clis-macos.log"
+	npm_log="$tmp_home/npm-node-clis-macos.log"
+	state_file="$tmp_home/.local/state/dotfiles/node-cli-npm-global.tsv"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	cat >"$fake_bin/uname" <<'EOF'
+#!/bin/sh
+if [ "$1" = "-s" ]; then
+  echo Darwin
+else
+  echo arm64
+fi
+EOF
+	cat >"$fake_bin/npm" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >>"$npm_log"
+if [ "\$1" = "prefix" ] && [ "\$2" = "-g" ]; then
+  echo /opt/homebrew
+  exit 0
+fi
+if [ "\$1" = "config" ] && [ "\$2" = "get" ] && [ "\$3" = "prefix" ]; then
+  echo /opt/homebrew
+  exit 0
+fi
+exit 0
+EOF
+	chmod +x "$fake_bin/uname" "$fake_bin/npm"
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" DOTFILES_LOG="$log" \
+		bash "$REPO_ROOT/scripts/install_node_clis.sh" >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "install_node_clis.sh macOS test failed"
+	fi
+
+	assert_file_missing "$tmp_home/.npmrc"
+	assert_file_exists "$state_file"
+	assert_contains $'prefix\t/opt/homebrew' "$state_file"
+	assert_contains "install -g @anthropic-ai/claude-code@latest" "$npm_log"
+}
+
 test_claude_optional_on_linux_when_install_fails() {
 	local tmp_home fake_bin log
 	tmp_home=$(make_temp_dir)
@@ -2909,7 +2996,43 @@ EOF
 		fail "install_claude_code.sh should be optional on Linux"
 	fi
 
-	assert_contains "Claude Code CLI 安装失败，跳过 Claude 插件/MCP 配置" "$log"
+	assert_contains "Claude Code CLI 未安装，跳过 Claude 插件/MCP 配置" "$log"
+}
+
+test_dotfiles_uninstall_removes_managed_node_clis() {
+	local tmp_home fake_bin log npm_log state_file
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/uninstall-node-clis.log"
+	npm_log="$tmp_home/npm-uninstall-node-clis.log"
+	state_file="$tmp_home/.local/state/dotfiles/node-cli-npm-global.tsv"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	cat >"$fake_bin/npm" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >>"$npm_log"
+exit 0
+EOF
+	chmod +x "$fake_bin/npm"
+
+	mkdir -p "$(dirname "$state_file")"
+	cat >"$state_file" <<EOF
+prefix	$tmp_home/.local
+package	@anthropic-ai/claude-code	0
+package	@openai/codex	1
+package	@mermaid-js/mermaid-cli	0
+EOF
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		bash "$REPO_ROOT/uninstall.sh" --dotfiles --force >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "uninstall.sh managed node cli cleanup failed"
+	fi
+
+	assert_contains "uninstall -g @anthropic-ai/claude-code" "$npm_log"
+	assert_contains "uninstall -g @mermaid-js/mermaid-cli" "$npm_log"
+	assert_not_contains "@openai/codex" "$npm_log"
+	assert_file_missing "$state_file"
 }
 
 test_dotfiles_uninstall_removes_wrapper_integrations() {
@@ -3332,13 +3455,31 @@ if scenario == "ssh-helper-before-prompt-or-cwd":
 if scenario == "ssh-prompt-before-cwd":
     window.at_prompt = True
 if scenario == "ssh-connecting-realpath":
-    window.cwd_of_child = "/private/tmp"
+	window.cwd_of_child = "/private/tmp"
 if scenario == "missing-all-cwd":
-    window.cwd_of_child = None
+	window.cwd_of_child = None
+if scenario == "local-foreground-stack":
+	window.screen.last_reported_cwd = None
+	window.cwd_of_child = "/Users/local/path"
+	window.child.foreground_processes = [
+		{
+			"cmdline": [
+				"node",
+				"/opt/homebrew/Cellar/pyright/1.1.408/libexec/lib/node_modules/pyright/dist/main.js",
+			],
+			"cwd": "/opt/homebrew/Cellar/pyright/1.1.408/libexec/lib/node_modules/pyright/dist",
+		},
+		{
+			"cmdline": [
+				"claude",
+			],
+			"cwd": "/Users/work/current-project",
+		},
+	]
 
 if scenario == "burst-local":
-    source_window = Window()
-    source_window.id = 42
+	source_window = Window()
+	source_window.id = 42
     source_window.cwd_of_child = "/tmp"
     source_window.screen = type("Screen", (), {"last_reported_cwd": "file:///tmp"})()
     source_window.child = Child()
@@ -3351,13 +3492,35 @@ if scenario == "burst-local":
     active_window.screen = type("Screen", (), {"last_reported_cwd": None})()
     active_window.child = Child()
     active_window.child.foreground_processes = []
-    active_window.user_vars = {"smart_launch_source_window_id": "42"}
-    window_id_map = {42: source_window, 43: active_window}
-    target_window_id = 43
+	active_window.user_vars = {"smart_launch_source_window_id": "42"}
+	window_id_map = {42: source_window, 43: active_window}
+	target_window_id = 43
+
+if scenario == "burst-local-foreground-cwd":
+	source_window = Window()
+	source_window.id = 42
+	source_window.cwd_of_child = "/Users/previous/project"
+	source_window.screen = type("Screen", (), {"last_reported_cwd": "file:///Users/previous/project"})()
+	source_window.child = Child()
+	source_window.child.foreground_processes = [{"cmdline": ["codex"], "cwd": "/Users/previous/project"}]
+	source_window.user_vars = {}
+
+	active_window = Window()
+	active_window.id = 43
+	active_window.cwd_of_child = "/Users/previous/project"
+	active_window.screen = type("Screen", (), {"last_reported_cwd": None})()
+	active_window.child = Child()
+	active_window.child.foreground_processes = [
+		{"cmdline": ["node", "/opt/homebrew/Cellar/pyright/1.1.408/libexec/lib/node_modules/pyright/dist/main.js"], "cwd": "/opt/homebrew/Cellar/pyright/1.1.408/libexec/lib/node_modules/pyright/dist"},
+		{"cmdline": ["claude"], "cwd": "/Users/work/current-project"},
+	]
+	active_window.user_vars = {"smart_launch_source_window_id": "42"}
+	window_id_map = {42: source_window, 43: active_window}
+	target_window_id = 43
 
 if scenario == "burst-ssh":
-    source_window = Window()
-    source_window.id = 42
+	source_window = Window()
+	source_window.id = 42
     source_window.cwd_of_child = "/private/tmp"
     source_window.screen = type("Screen", (), {"last_reported_cwd": "kitty-shell-cwd://orb/tmp"})()
     source_window.child = Child()
@@ -3549,6 +3712,16 @@ if "kitten" in data["args"] or "ssh" in data["args"]:
 PY
 }
 
+test_kitty_smart_launch_prefers_last_foreground_process_cwd_for_local_tui() {
+	local tmp_dir output_file
+	tmp_dir=$(make_temp_dir)
+	output_file="$tmp_dir/local-foreground-stack-launch.json"
+	trap 'rm -rf "${tmp_dir:-}"' RETURN
+
+	run_kitty_ssh_utils_case local-foreground-stack "" "$output_file"
+	assert_kitty_local_fallback_matches "$output_file" "/Users/work/current-project"
+}
+
 test_kitty_smart_launch_skips_ssh_when_session_not_established() {
 	local tmp_dir output_file
 	tmp_dir=$(make_temp_dir)
@@ -3738,6 +3911,31 @@ if data["args"] != expected_args:
 PY
 }
 
+test_kitty_smart_launch_treats_foreground_process_cwd_as_stable_during_rapid_repeats() {
+	local tmp_dir output_file
+	tmp_dir=$(make_temp_dir)
+	output_file="$tmp_dir/burst-local-foreground-cwd-launch.json"
+	trap 'rm -rf "${tmp_dir:-}"' RETURN
+
+	run_kitty_ssh_utils_case burst-local-foreground-cwd "" "$output_file"
+
+	python3 - <<PY
+import json
+import pathlib
+
+data = json.loads(pathlib.Path("$output_file").read_text())
+expected_args = [
+    "--type=tab",
+    "--source-window=id:43",
+    "--var",
+    "smart_launch_source_window_id=43",
+    "--cwd=/Users/work/current-project",
+]
+if data["args"] != expected_args:
+    raise SystemExit(f"Unexpected burst-local foreground args: {data['args']!r}")
+PY
+}
+
 test_kitty_smart_launch_reuses_previous_stable_ssh_source_during_rapid_repeats() {
 	local tmp_dir output_file
 	tmp_dir=$(make_temp_dir)
@@ -3798,14 +3996,18 @@ run_test "Claude runtime config preserves existing state" test_claude_runtime_co
 run_test "Git config identity migrates to local include" test_gitconfig_identity_migrates_to_local
 run_test "Dotfiles hook-free fallback" test_dotfiles_hook_free_fallback
 run_test "Codex config preserves subprojects" test_codex_config_preserves_projects_and_keeps_home_subprojects
+run_test "Node CLI installer uses ~/.local prefix on Linux" test_install_node_clis_linux_uses_home_local_prefix
+run_test "Node CLI installer keeps default npm prefix on macOS" test_install_node_clis_macos_keeps_default_prefix
 run_test "Pixi prefers managed install" test_pixi_prefers_managed_install_over_system_binary
 run_test "Claude optional on macOS" test_claude_optional_on_macos_when_missing
 run_test "Claude optional on Linux" test_claude_optional_on_linux_when_install_fails
+run_test "Dotfiles uninstall removes managed Node CLIs" test_dotfiles_uninstall_removes_managed_node_clis
 run_test "Dotfiles uninstall removes wrapper integrations" test_dotfiles_uninstall_removes_wrapper_integrations
 run_test "Claude known_hosts preserves symlink" test_claude_known_hosts_preserves_symlink
 run_test "GitHub release lookup uses GITHUB_TOKEN" test_github_latest_release_uses_github_token
 run_test "GitHub update check reports rate limit actionably" test_check_github_update_reports_rate_limit_actionably
 run_test "kitty smart launch uses native current cwd for local windows" test_kitty_smart_launch_uses_native_current_cwd_for_local_windows
+run_test "kitty smart launch prefers last foreground process cwd for local TUI" test_kitty_smart_launch_prefers_last_foreground_process_cwd_for_local_tui
 run_test "kitty smart launch skips ssh when session not established" test_kitty_smart_launch_skips_ssh_when_session_not_established
 run_test "kitty smart launch clones when remote cwd matches local path" test_kitty_smart_launch_clones_when_remote_cwd_matches_local_path
 run_test "kitty smart launch treats different FQDNs with same shortname as remote" test_kitty_smart_launch_treats_different_fqdns_with_same_shortname_as_remote
@@ -3822,6 +4024,7 @@ run_test "kitty smart launch falls back to local when remote cwd is missing" tes
 run_test "kitty smart launch fails closed without cwd when ssh metadata is missing" test_kitty_smart_launch_fails_closed_without_cwd_when_ssh_metadata_is_missing
 run_test "kitty smart launch realpath-matches local cwd while connecting" test_kitty_smart_launch_skips_ssh_when_connecting_paths_match_via_realpath
 run_test "kitty smart launch reuses previous stable local source during rapid repeats" test_kitty_smart_launch_reuses_previous_stable_local_source_during_rapid_repeats
+run_test "kitty smart launch treats foreground process cwd as stable during rapid repeats" test_kitty_smart_launch_treats_foreground_process_cwd_as_stable_during_rapid_repeats
 run_test "kitty smart launch reuses previous stable ssh source during rapid repeats" test_kitty_smart_launch_reuses_previous_stable_ssh_source_during_rapid_repeats
 
 section "Done"

@@ -31,6 +31,16 @@
     {
         "key": "ctrl+shift+-",
         "command": "-workbench.action.navigateForward"
+    },
+    // ======================= Markdown 预览 =======================
+    {
+        "key": "cmd+k v",
+        "command": "-markdown.showPreviewToSide",
+        "when": "editorLangId =~ /^(markdown|prompt|instructions|chatagent|skill)$/ && !notebookEditorFocused"
+    },
+    {
+        "key": "cmd+k v",
+        "command": "markdown.showLockedPreviewToSide",
+        "when": "editorLangId =~ /^(markdown|prompt|instructions|chatagent|skill)$/ && !notebookEditorFocused"
     }
 ]
-

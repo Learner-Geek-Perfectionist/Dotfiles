@@ -433,6 +433,7 @@ main() {
 	if [[ -n "$managed_prefix" ]]; then
 		managed_bb_browser="$managed_prefix/bin/bb-browser"
 	fi
+	managed_root="$(managed_npm_root || true)"
 	managed_bb_browser_backup=""
 	if [[ -n "$preexisting_bb_browser" && "$preexisting_bb_browser" == "$managed_bb_browser" ]]; then
 		managed_bb_browser_backup="$(backup_artifact "$preexisting_bb_browser")"
@@ -451,10 +452,15 @@ main() {
 		preexisting_xiaohongshu_search_path="$XIAOHONGSHU_SEARCH_PATH"
 	fi
 
-	print_info "安装 bb-browser (via npm)..."
-	if ! npm install -g bb-browser@latest >>"$DOTFILES_LOG" 2>&1; then
-		print_warn "bb-browser 安装失败"
-		return 0
+	if [[ -n "$managed_root" && -n "$managed_bb_browser" && -x "$managed_bb_browser" && -d "$managed_root/bb-browser" ]]; then
+		print_dim "bb-browser 已由 npm global 提供，跳过重新安装"
+	else
+		print_info "安装 bb-browser (via npm)..."
+		if ! npm install -g bb-browser@latest >>"$DOTFILES_LOG" 2>&1; then
+			print_warn "bb-browser 安装失败"
+			return 0
+		fi
+		managed_root="$(managed_npm_root || true)"
 	fi
 
 	preexisting_shim_marker=0
@@ -508,7 +514,6 @@ main() {
 		return 1
 	fi
 
-	managed_root="$(managed_npm_root || true)"
 	if ! apply_managed_dist_patches "$managed_root"; then
 		rollback_install_attempt "$managed_prefix" "$preexisting_bb_browser" "$managed_bb_browser" "$managed_bb_browser_backup" \
 			"$preexisting_shim_marker" "$preexisting_wrapper_marker" "$preexisting_xiaohongshu_search_marker" \

@@ -214,6 +214,8 @@ refresh_zinit_completions() {
 	# ZINIT_SYNC=1 同步加载，确保所有插件安装完成再退出。
 	if _run_and_log zsh -c "ZINIT_SYNC=1 source '$HOME/.zshrc'"; then
 		print_success "Zinit 插件安装完成"
+	else
+		print_warn "Zinit 插件安装失败，请检查日志"
 	fi
 }
 

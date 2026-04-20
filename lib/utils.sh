@@ -267,6 +267,7 @@ is_remote_server() {
 # ========================================
 
 normalize_update_mode() {
+	# Keep in sync with the bootstrap copy in install.sh.
 	case "${1:-fast}" in
 	fast | upgrade | force)
 		printf '%s\n' "${1:-fast}"
@@ -397,7 +398,7 @@ check_github_update() {
 	local_ver=$(get_local_version "$install_dir")
 
 	if dotfiles_update_mode_is_fast && [[ -n "$local_ver" ]]; then
-		_GITHUB_LATEST="$local_ver"
+		unset _GITHUB_LATEST _GITHUB_API_STATUS _GITHUB_API_MESSAGE
 		print_fast_mode_skip "$name" "$local_ver"
 		print_dim "快速模式跳过更新检查"
 		return 1

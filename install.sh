@@ -76,6 +76,7 @@ print_error() { _log "ERROR" "✗" "$RED" "$1"; }
 print_header() { _log "INFO" "" "$BLUE" "$1"; }
 
 normalize_update_mode() {
+	# Keep in sync with the runtime copy in lib/utils.sh.
 	case "${1:-fast}" in
 	fast | upgrade | force)
 		printf '%s\n' "${1:-fast}"

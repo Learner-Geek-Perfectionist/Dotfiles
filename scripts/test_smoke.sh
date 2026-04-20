@@ -970,6 +970,47 @@ EOF
 	assert_contains "ZINIT_SYNC=1 source '$tmp_home/.zshrc'" "$zsh_calls"
 }
 
+test_dotfiles_warns_when_zinit_plugin_sync_fails() {
+	local tmp_home fake_bin log superpowers_repo
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install-dotfiles.log"
+	superpowers_repo=$(make_fake_superpowers_repo)
+	trap "rm -rf '$tmp_home' '$fake_bin' '$superpowers_repo'" RETURN
+
+	mkdir -p "$tmp_home/.local/share/zinit/zinit.git"
+	: >"$tmp_home/.local/share/zinit/zinit.git/zinit.zsh"
+
+	cat >"$fake_bin/zsh" <<'EOF'
+#!/bin/sh
+cmd="$2"
+case "$cmd" in
+  *"zinit cclear"*)
+    exit 0
+    ;;
+  *"ZINIT_SYNC=1 source '$HOME/.zshrc'"*)
+    exit 23
+    ;;
+  *)
+    exit 0
+    ;;
+esac
+EOF
+	cat >"$fake_bin/keychain" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$fake_bin/zsh" "$fake_bin/keychain"
+
+	if ! run_dotfiles_install "$tmp_home" "$fake_bin" "$superpowers_repo" "$log"; then
+		cat "$log" >&2
+		fail "install_dotfiles.sh zinit sync warning test failed"
+	fi
+
+	assert_contains "Zinit completions 已清理" "$log"
+	assert_contains "Zinit 插件安装失败" "$log"
+}
+
 test_bb_browser_install_uses_latest_and_deploys_wrapper() {
 	local tmp_home fake_bin log npm_log state_file shim_path
 	tmp_home=$(make_temp_dir)
@@ -3113,6 +3154,30 @@ EOF
 	assert_file_missing "$state_file"
 }
 
+test_dotfiles_uninstall_clears_node_cli_state_when_prefix_is_gone() {
+	local tmp_home fake_bin log state_file
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/uninstall-node-clis-missing-prefix.log"
+	state_file="$tmp_home/.local/state/dotfiles/node-cli-npm-global.tsv"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	mkdir -p "$(dirname "$state_file")"
+	cat >"$state_file" <<EOF
+prefix	$tmp_home/.local/missing-prefix
+package	@anthropic-ai/claude-code	0
+EOF
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		bash "$REPO_ROOT/uninstall.sh" --dotfiles --force >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "uninstall.sh missing-prefix state cleanup failed"
+	fi
+
+	assert_file_missing "$state_file"
+	assert_contains "Node CLI 托管状态" "$log"
+}
+
 test_dotfiles_uninstall_removes_wrapper_integrations() {
 	local tmp_home fake_bin log remove_log shim_path wrapper_path state_file codex_config mcp_state_file
 	tmp_home=$(make_temp_dir)
@@ -3323,6 +3388,33 @@ EOF
 	assert_contains "快速模式跳过更新检查" "$log"
 }
 
+test_check_github_update_fast_mode_does_not_reuse_local_version_as_remote() {
+	local tmp_home fake_bin log install_dir result_file
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install.log"
+	install_dir="$tmp_home/install-dir"
+	result_file="$tmp_home/github-latest.txt"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	mkdir -p "$install_dir"
+	printf 'v1.2.3\n' >"$install_dir/.version"
+
+	cat >"$fake_bin/curl" <<'EOF'
+#!/bin/sh
+exit 99
+EOF
+	chmod +x "$fake_bin/curl"
+
+	if env HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		DOTFILES_LOG_DIR="$tmp_home/logdir" DOTFILES_LOG="$log" \
+		bash -c ". \"$REPO_ROOT/lib/utils.sh\"; status=0; check_github_update 'Kotlin/Native' owner/repo \"$install_dir\" || status=\$?; printf '%s\n' \"\${_GITHUB_LATEST-unset}\" >\"$result_file\"; exit \"\$status\""; then
+		fail "check_github_update should skip in fast mode when local version exists"
+	fi
+
+	assert_contains "unset" "$result_file"
+}
+
 test_install_node_clis_fast_mode_skips_installed_packages() {
 	local tmp_home fake_bin log npm_log state_file
 	tmp_home=$(make_temp_dir)
@@ -3449,6 +3541,96 @@ EOF
 	assert_file_missing "$plugin_update_log"
 	assert_file_missing "$marketplace_update_log"
 	assert_contains "快速模式跳过" "$log"
+}
+
+test_install_claude_code_hides_superpowers_deprecated_commands() {
+	local tmp_home fake_bin log add_json_log remove_log plugin_install_log plugin_update_log marketplace_update_log
+	local plugin_list_output mcp_list_output known_marketplaces repo_dir skill_src superpowers_dir hidden_dir
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install-claude-hide-superpowers.log"
+	add_json_log="$tmp_home/claude-mcp-add-json.json"
+	remove_log="$tmp_home/claude-mcp-remove.log"
+	plugin_install_log="$tmp_home/claude-plugin-install.log"
+	plugin_update_log="$tmp_home/claude-plugin-update.log"
+	marketplace_update_log="$tmp_home/claude-marketplace-update.log"
+	known_marketplaces="$tmp_home/.claude/plugins/known_marketplaces.json"
+	repo_dir="$tmp_home/.claude/vendor/agent-study-skills"
+	skill_src="$repo_dir/study-master-skill"
+	superpowers_dir="$tmp_home/.claude/plugins/cache/superpowers-marketplace/superpowers/5.0.7"
+	hidden_dir="$superpowers_dir/.dotfiles-hidden-commands"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	plugin_list_output=$'pyright-lsp@claude-plugins-official\ntypescript-lsp@claude-plugins-official\ngopls-lsp@claude-plugins-official\nrust-analyzer-lsp@claude-plugins-official\njdtls-lsp@claude-plugins-official\nclangd-lsp@claude-plugins-official\ncsharp-lsp@claude-plugins-official\nphp-lsp@claude-plugins-official\nkotlin-lsp@claude-plugins-official\nswift-lsp@claude-plugins-official\nlua-lsp@claude-plugins-official\ngithub@claude-plugins-official\ncommit-commands@claude-plugins-official\ncode-simplifier@claude-plugins-official\nclaude-hud@claude-hud\ncodex@openai-codex\nexample-skills@anthropic-agent-skills\nsuperpowers@superpowers-marketplace'
+	mcp_list_output=$'tavily: stdio\nfetch: stdio\nexa: http\nopen-websearch: stdio\nbb-browser: stdio'
+
+	write_fake_claude_cli_with_update_logs "$fake_bin" "$plugin_list_output" "$mcp_list_output" "$add_json_log" "$remove_log" "$plugin_install_log" "$plugin_update_log" "$marketplace_update_log"
+
+	cat >"$fake_bin/uname" <<'EOF'
+#!/bin/sh
+if [ "$1" = "-s" ]; then
+  echo Darwin
+else
+  echo arm64
+fi
+EOF
+	cat >"$fake_bin/rust-analyzer" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/csharp-ls" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/curl" <<'EOF'
+#!/bin/sh
+printf '{"tag_name":"v1.3.13"}\n200'
+EOF
+	chmod +x "$fake_bin/uname" "$fake_bin/rust-analyzer" "$fake_bin/csharp-ls" "$fake_bin/curl"
+
+	mkdir -p "$(dirname "$known_marketplaces")"
+	cat >"$known_marketplaces" <<'EOF'
+[
+  {"source":{"repo":"anthropics/claude-plugins-official"}},
+  {"source":{"repo":"anthropics/skills"}},
+  {"source":{"repo":"obra/superpowers-marketplace"}},
+  {"source":{"repo":"jarrodwatts/claude-hud"}},
+  {"source":{"repo":"openai/codex-plugin-cc"}}
+]
+EOF
+
+	mkdir -p "$tmp_home/.local/share/lsp/kotlin-language-server"
+	printf 'v1.3.13\n' >"$tmp_home/.local/share/lsp/kotlin-language-server/.version"
+
+	git init "$repo_dir" >/dev/null 2>&1
+	git -C "$repo_dir" remote add origin "https://github.com/Learner-Geek-Perfectionist/agent-study-skills.git"
+	mkdir -p "$skill_src/hooks"
+	cat >"$skill_src/SKILL.md" <<'EOF'
+# study-master
+EOF
+	cat >"$skill_src/hooks/check-study_master.sh" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$skill_src/hooks/check-study_master.sh"
+
+	mkdir -p "$superpowers_dir/commands"
+	printf 'deprecated brainstorm\n' >"$superpowers_dir/commands/brainstorm.md"
+	printf 'deprecated write-plan\n' >"$superpowers_dir/commands/write-plan.md"
+	printf 'deprecated execute-plan\n' >"$superpowers_dir/commands/execute-plan.md"
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" DOTFILES_LOG="$log" \
+		bash "$REPO_ROOT/scripts/install_claude_code.sh" >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "install_claude_code.sh should hide deprecated superpowers commands"
+	fi
+
+	assert_file_missing "$superpowers_dir/commands/brainstorm.md"
+	assert_file_missing "$superpowers_dir/commands/write-plan.md"
+	assert_file_missing "$superpowers_dir/commands/execute-plan.md"
+	assert_file_exists "$hidden_dir/brainstorm.md"
+	assert_file_exists "$hidden_dir/write-plan.md"
+	assert_file_exists "$hidden_dir/execute-plan.md"
 }
 
 test_install_vscode_ext_fast_mode_skips_github_vsix_release_lookup_when_installed() {
@@ -4288,6 +4470,7 @@ run_test "superpowers clone does not retry GitHub SSH failures" test_superpowers
 run_test "superpowers pull does not retry GitHub SSH failures" test_superpowers_pull_does_not_retry_github_ssh_failures
 run_test "Dotfiles deploys bb-browser shell plugin" test_dotfiles_deploys_bb_browser_shell_plugin
 run_test "Dotfiles pre-cleans stale zinit completions" test_dotfiles_precleans_zinit_stale_completions
+run_test "Dotfiles warns when zinit plugin sync fails" test_dotfiles_warns_when_zinit_plugin_sync_fails
 run_test "bb-browser install uses latest and deploys wrapper" test_bb_browser_install_uses_latest_and_deploys_wrapper
 run_test "bb-browser install patches managed mcp dist only" test_bb_browser_install_patches_managed_mcp_dist_file_only
 run_test "bb-browser dist patch supports mcp cdpArgs variant without cli.js" test_bb_browser_dist_patch_supports_mcp_spawn_with_cdp_args_without_cli_js
@@ -4318,13 +4501,16 @@ run_test "Pixi prefers managed install" test_pixi_prefers_managed_install_over_s
 run_test "Claude optional on macOS" test_claude_optional_on_macos_when_missing
 run_test "Claude optional on Linux" test_claude_optional_on_linux_when_install_fails
 run_test "Dotfiles uninstall removes managed Node CLIs" test_dotfiles_uninstall_removes_managed_node_clis
+run_test "Dotfiles uninstall clears missing Node CLI state" test_dotfiles_uninstall_clears_node_cli_state_when_prefix_is_gone
 run_test "Dotfiles uninstall removes wrapper integrations" test_dotfiles_uninstall_removes_wrapper_integrations
 run_test "Claude known_hosts preserves symlink" test_claude_known_hosts_preserves_symlink
 run_test "GitHub release lookup uses GITHUB_TOKEN" test_github_latest_release_uses_github_token
 run_test "GitHub update check reports rate limit actionably" test_check_github_update_reports_rate_limit_actionably
 run_test "GitHub update check skips remote lookup in fast mode" test_check_github_update_fast_mode_skips_remote_lookup_with_local_version
+run_test "GitHub update fast mode does not leak local version into remote state" test_check_github_update_fast_mode_does_not_reuse_local_version_as_remote
 run_test "Node CLI installer skips installed packages in fast mode" test_install_node_clis_fast_mode_skips_installed_packages
 run_test "Claude installer skips plugin updates in fast mode" test_install_claude_code_fast_mode_skips_plugin_and_marketplace_updates
+run_test "Claude installer hides deprecated superpowers commands" test_install_claude_code_hides_superpowers_deprecated_commands
 run_test "VSCode installer skips GitHub VSIX release lookup in fast mode" test_install_vscode_ext_fast_mode_skips_github_vsix_release_lookup_when_installed
 run_test "kitty smart launch uses native current cwd for local windows" test_kitty_smart_launch_uses_native_current_cwd_for_local_windows
 run_test "kitty smart launch prefers last foreground process cwd for local TUI" test_kitty_smart_launch_prefers_last_foreground_process_cwd_for_local_tui

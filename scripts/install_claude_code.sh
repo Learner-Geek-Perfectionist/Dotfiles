@@ -482,6 +482,31 @@ sync_plugins() {
 	fi
 }
 
+hide_superpowers_deprecated_commands() {
+	local plugin_base="$HOME/.claude/plugins/cache/superpowers-marketplace/superpowers"
+	local version_dir commands_dir hidden_dir command_file moved=0
+
+	[[ -d "$plugin_base" ]] || return 0
+
+	for version_dir in "$plugin_base"/*; do
+		[[ -d "$version_dir" ]] || continue
+		commands_dir="$version_dir/commands"
+		[[ -d "$commands_dir" ]] || continue
+		hidden_dir="$version_dir/.dotfiles-hidden-commands"
+
+		for command_file in brainstorm.md write-plan.md execute-plan.md; do
+			[[ -f "$commands_dir/$command_file" ]] || continue
+			mkdir -p "$hidden_dir"
+			mv "$commands_dir/$command_file" "$hidden_dir/$command_file"
+			moved=$((moved + 1))
+		done
+	done
+
+	if [[ $moved -gt 0 ]]; then
+		print_success "superpowers deprecated slash commands 已隐藏 ($moved)"
+	fi
+}
+
 # ========================================
 # 配置 Claude 运行时偏好（写入 ~/.claude.json）
 # ========================================
@@ -1042,6 +1067,7 @@ main() {
 
 	# 8) 安装 Skill 插件
 	sync_plugins "Skill " "${SKILL_PLUGINS[@]}"
+	hide_superpowers_deprecated_commands
 	enable_plugins "${SKILL_PLUGINS[@]}"
 
 	# 9) 安装 study-master Skill（独立 GitHub 仓库，在线 clone 安装）

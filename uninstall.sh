@@ -369,11 +369,6 @@ remove_managed_node_clis() {
 
 	[[ -f "$state_file" ]] || return 0
 
-	if ! command -v npm &>/dev/null; then
-		print_warn "检测到 Node CLI 托管状态，但当前无 npm，跳过 Node CLI 卸载"
-		return 0
-	fi
-
 	prefix=""
 	while IFS=$'\t' read -r kind value extra; do
 		[[ -n "$kind" ]] || continue
@@ -383,9 +378,22 @@ remove_managed_node_clis() {
 		fi
 	done <"$state_file"
 
+	if ! command -v npm &>/dev/null; then
+		if [[ -n "$prefix" && ! -d "$prefix" ]]; then
+			rm_path "$state_file"
+			prune_empty_parents "$(dirname "$state_file")"
+			print_warn "检测到 Node CLI 托管状态，但当前无 npm；记录的 prefix 已不存在，已清理托管状态"
+		else
+			print_warn "检测到 Node CLI 托管状态，但当前无 npm，跳过 Node CLI 卸载"
+		fi
+		return 0
+	fi
+
 	[[ -n "$prefix" ]] || prefix="$(npm prefix -g 2>/dev/null || npm config get prefix 2>/dev/null || true)"
 	[[ -n "$prefix" ]] || {
-		print_warn "无法解析 npm prefix，跳过 Node CLI 卸载"
+		rm_path "$state_file"
+		prune_empty_parents "$(dirname "$state_file")"
+		print_warn "无法解析 npm prefix，已清理 Node CLI 托管状态"
 		return 0
 	}
 

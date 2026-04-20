@@ -20,12 +20,12 @@ for _, key in ipairs(cfg.windowsConfig) do
     end)
 end
 
--- HyperKey + ` / Cmd + ` 切换 App 窗口（覆盖系统默认行为，将目标窗口拉到当前屏幕）
+-- HyperKey + ` / Cmd + ` 都走自定义切窗；Cmd + ` 仍保留跨屏搬窗语义。
 hs.hotkey.bind(cfg.HyperKey, '`', function()
-    winMgmt.switchFocusedAppWindow()
+    winMgmt.switchFocusedAppWindow({ moveToFocusedScreen = true })
 end)
 hs.hotkey.bind({ "cmd" }, '`', function()
-    winMgmt.switchFocusedAppWindow()
+    winMgmt.switchFocusedAppWindow({ moveToFocusedScreen = true })
 end)
 
 -- HyperKey + L，用于锁屏

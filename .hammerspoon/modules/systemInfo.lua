@@ -86,9 +86,31 @@ local function getRootVolumes()
     return fallback or " 0%"
 end
 
+local function readNetworkCounters(interfaceName)
+    if not interfaceName or interfaceName == "" then
+        return 0, 0
+    end
+
+    local command = string.format(
+        "/usr/sbin/netstat -ibn -I %q | /usr/bin/awk 'NR == 2 {print $7, $10; exit}'",
+        interfaceName
+    )
+    local output, ok, _type, rc = hs.execute(command)
+    if not output or not ok or rc ~= 0 then
+        return 0, 0
+    end
+
+    local down, up = output:match("(%d+)%s+(%d+)")
+    return tonumber(down) or 0, tonumber(up) or 0
+end
+
 local function init()
     -- 每次 init 刷新网络接口（H-007: 网络切换后不失效）
     interface = hs.network.primaryInterfaces()
+    if obj.last_interface ~= interface then
+        obj.last_interface = interface
+        obj.macAddress = nil
+    end
 
     menuData = {}
 
@@ -155,21 +177,25 @@ local function init()
         end
 
         -- MAC
-        -- local mac = hs.execute("ifconfig " .. interface .. " | grep ether | awk '{print $2}'")
-        local okMac, macAddress, _ = hs.osascript.applescript("primary Ethernet address of (system info)")
-        if okMac then
+        -- MAC 地址仅在接口变化后重取，避免每次 init 都阻塞一次 AppleScript。
+        if not obj.macAddress then
+            local okMac, macAddress, _ = hs.osascript.applescript("primary Ethernet address of (system info)")
+            if okMac and macAddress then
+                obj.macAddress = macAddress
+            end
+        end
+        if obj.macAddress then
             table.insert(menuData, {
-                title = "MAC: " .. macAddress,
+                title = "MAC: " .. obj.macAddress,
                 tooltip = "Copy MAC to clipboard",
                 fn = function()
-                    hs.pasteboard.setContents(macAddress)
+                    hs.pasteboard.setContents(obj.macAddress)
                 end,
             })
         end
 
         if not obj.last_down and not obj.last_up then
-            obj.last_down = hs.execute("netstat -ibn | grep -e " .. interface .. " -m 1 | awk '{print $7}'")
-            obj.last_up = hs.execute("netstat -ibn | grep -e " .. interface .. " -m 1 | awk '{print $10}'")
+            obj.last_down, obj.last_up = readNetworkCounters(interface)
         end
     else
         obj.last_down = 0
@@ -208,8 +234,7 @@ end
 
 local function scan()
     if interface then
-        obj.current_down = hs.execute("netstat -ibn | grep -e " .. interface .. " -m 1 | awk '{print $7}'")
-        obj.current_up = hs.execute("netstat -ibn | grep -e " .. interface .. " -m 1 | awk '{print $10}'")
+        obj.current_down, obj.current_up = readNetworkCounters(interface)
     else
         obj.current_down = 0
         obj.current_up = 0

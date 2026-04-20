@@ -2,6 +2,43 @@
 
 local M = {}
 
+local function collectStandardWindows(app)
+    if not app then
+        return {}
+    end
+
+    local standardWindows = {}
+    for _, window in ipairs(app:allWindows() or {}) do
+        if window:isStandard() then
+            table.insert(standardWindows, window)
+        end
+    end
+
+    table.sort(standardWindows, function(left, right)
+        return left:id() < right:id()
+    end)
+
+    return standardWindows
+end
+
+local function nextIndex(items, currentId, idGetter)
+    if not items or #items == 0 then
+        return nil
+    end
+
+    idGetter = idGetter or function(item)
+        return item
+    end
+
+    for index, item in ipairs(items) do
+        if idGetter(item) == currentId then
+            return (index % #items) + 1
+        end
+    end
+
+    return 1
+end
+
 function M.moveToPosition(position)
     local win = hs.window.focusedWindow()
     if not win then
@@ -28,32 +65,41 @@ function M.moveToPosition(position)
     end
 end
 
-function M.switchFocusedAppWindow()
+function M.switchFocusedAppWindow(opts)
+    opts = opts or {}
+
     local currApp = hs.application.frontmostApplication()
+    if not currApp then
+        return
+    end
 
-    local currWins = hs.fnutils.filter(currApp:allWindows(), function(x)
-        return x:isStandard()
+    local currWins = collectStandardWindows(currApp)
+    if #currWins <= 1 then
+        return
+    end
+
+    local focusedWin = currApp:focusedWindow()
+    local nextWinIdx = nextIndex(currWins, focusedWin and focusedWin:id(), function(win)
+        return win:id()
     end)
-    if #currWins > 0 then
-        local allWinIds = hs.fnutils.map(currWins, function(y)
-            return y:id()
-        end)
-        table.sort(allWinIds)
+    local nextWin = nextWinIdx and currWins[nextWinIdx]
+    if not nextWin then
+        return
+    end
 
-        local focusedWin = currApp:focusedWindow()
+    if opts.moveToFocusedScreen ~= false then
         local targetScreen = focusedWin and focusedWin:screen()
             or hs.mouse.getCurrentScreen()
             or hs.screen.mainScreen()
-
-        local currWinIdx = hs.fnutils.indexOf(allWinIds, focusedWin and focusedWin:id())
-        local nextWinIdx = currWinIdx and (currWinIdx % #allWinIds) + 1 or 1
-
-        local nextWin = hs.window.get(allWinIds[nextWinIdx])
         if targetScreen and nextWin:screen() ~= targetScreen then
             nextWin:moveToScreen(targetScreen, false, true)
         end
-        nextWin:focus()
     end
+
+    nextWin:focus()
 end
+
+M._collectStandardWindows = collectStandardWindows
+M._nextIndex = nextIndex
 
 return M

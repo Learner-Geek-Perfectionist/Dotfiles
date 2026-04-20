@@ -12,12 +12,6 @@ local function assertEqual(actual, expected, message)
     end
 end
 
-local function assertNil(actual, message)
-    if actual ~= nil then
-        error(string.format("%s: expected nil, got %s", message, tostring(actual)))
-    end
-end
-
 local function assertTrue(actual, message)
     if not actual then
         error(message)
@@ -31,13 +25,7 @@ local function readFile(path)
     return content
 end
 
-local keyConfig = require("config.keyConfig")
 local windowManagement = require("modules.windowManagement")
-
-assertNil(keyConfig.enableCustomCmdBacktick, "cmd+` no longer needs a config flag")
-assertTrue(not io.open(repoRoot .. "/.hammerspoon/modules/windowManagementHelpers.lua", "r"), "windowManagement helper file has been removed")
-assertTrue(not io.open(repoRoot .. "/.hammerspoon/modules/systemInfoHelpers.lua", "r"), "systemInfo helper file has been removed")
-assertTrue(not readFile(repoRoot .. "/.hammerspoon/config/KeyBinds.lua"):find("enableCustomCmdBacktick", 1, true), "KeyBinds no longer branches on cmd+` config")
 
 local fakeApp = {
     allWindows = function()
@@ -55,11 +43,26 @@ local fakeApp = {
 }
 assertEqual(type(windowManagement._collectStandardWindows), "function", "windowManagement exposes its collection helper for regression tests")
 assertEqual(type(windowManagement._nextIndex), "function", "windowManagement exposes its index helper for regression tests")
+assertTrue(not readFile(repoRoot .. "/.hammerspoon/config/KeyBinds.lua"):find("moveToFocusedScreen", 1, true), "KeyBinds uses the default cross-screen switch behavior without redundant args")
+assertTrue(readFile(repoRoot .. "/.hammerspoon/modules/systemInfo.lua"):find("math.max(0, obj.current_down - obj.last_down)", 1, true), "systemInfo clamps negative download deltas")
+assertTrue(readFile(repoRoot .. "/.hammerspoon/modules/systemInfo.lua"):find("math.max(0, obj.current_up - obj.last_up)", 1, true), "systemInfo clamps negative upload deltas")
 
 local collected = windowManagement._collectStandardWindows(fakeApp)
 assertEqual(#collected, 2, "window collection uses all app windows, not only visible ones")
 assertEqual(collected[1]:id(), 20, "window collection sorts windows by id")
 assertEqual(collected[2]:id(), 30, "window collection preserves the remaining standard window")
+
+local collectedWithNilId = windowManagement._collectStandardWindows({
+    allWindows = function()
+        return {
+            { id = function() return nil end, isStandard = function() return true end },
+            { id = function() return 20 end, isStandard = function() return true end },
+        }
+    end,
+})
+assertEqual(#collectedWithNilId, 2, "window collection keeps standard windows even when one id is missing")
+assertEqual(collectedWithNilId[1]:id(), nil, "missing ids sort safely to the front")
+assertEqual(collectedWithNilId[2]:id(), 20, "non-nil ids remain available after safe sort")
 
 assertEqual(windowManagement._nextIndex({ 101, 202, 303 }, 101), 2, "cycles to the next window")
 assertEqual(windowManagement._nextIndex({ 101, 202, 303 }, 303), 1, "wraps to the first window")

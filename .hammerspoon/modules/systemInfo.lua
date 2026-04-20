@@ -106,6 +106,7 @@ end
 
 local function init()
     -- 每次 init 刷新网络接口（H-007: 网络切换后不失效）
+    -- hs.network.primaryInterfaces() 返回 IPv4 / IPv6；这里只取第一个返回值作为 v4 主接口。
     interface = hs.network.primaryInterfaces()
     if obj.last_interface ~= interface then
         obj.last_interface = interface
@@ -243,8 +244,8 @@ local function scan()
     obj.cpu_used = getCpu()
     obj.disk_used = getRootVolumes()
     obj.mem_used = getVmStats()
-    obj.down_bytes = obj.current_down - obj.last_down
-    obj.up_bytes = obj.current_up - obj.last_up
+    obj.down_bytes = math.max(0, obj.current_down - obj.last_down)
+    obj.up_bytes = math.max(0, obj.current_up - obj.last_up)
 
     obj.down_speed = format_speed(obj.down_bytes)
     obj.up_speed = format_speed(obj.up_bytes)

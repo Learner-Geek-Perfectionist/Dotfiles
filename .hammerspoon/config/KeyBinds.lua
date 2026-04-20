@@ -22,10 +22,10 @@ end
 
 -- HyperKey + ` / Cmd + ` 都走自定义切窗；Cmd + ` 仍保留跨屏搬窗语义。
 hs.hotkey.bind(cfg.HyperKey, '`', function()
-    winMgmt.switchFocusedAppWindow({ moveToFocusedScreen = true })
+    winMgmt.switchFocusedAppWindow()
 end)
 hs.hotkey.bind({ "cmd" }, '`', function()
-    winMgmt.switchFocusedAppWindow({ moveToFocusedScreen = true })
+    winMgmt.switchFocusedAppWindow()
 end)
 
 -- HyperKey + L，用于锁屏

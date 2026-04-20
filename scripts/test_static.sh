@@ -260,7 +260,26 @@ run_hammerspoon_cleanup_checks() {
 	cd "$REPO_ROOT"
 
 	[[ ! -e .hammerspoon/modules/inputMethod.lua ]] || fail "obsolete .hammerspoon/modules/inputMethod.lua should be removed"
+	[[ ! -e .hammerspoon/modules/systemInfoHelpers.lua ]] || fail "obsolete .hammerspoon/modules/systemInfoHelpers.lua should be removed"
+	[[ ! -e .hammerspoon/modules/windowManagementHelpers.lua ]] || fail "obsolete .hammerspoon/modules/windowManagementHelpers.lua should be removed"
 	[[ ! -e .hammerspoon/.DS_Store ]] || fail "repository junk file .hammerspoon/.DS_Store should be removed"
+	if rg -n "enableCustomCmdBacktick|moveToFocusedScreen" .hammerspoon/config/KeyBinds.lua .hammerspoon/config/keyConfig.lua >/dev/null; then
+		fail "obsolete Hammerspoon cmd+backtick compatibility branches should be removed"
+	fi
+}
+
+run_hammerspoon_regression_checks() {
+	cd "$REPO_ROOT"
+
+	if ! command -v lua &>/dev/null; then
+		if [[ "${CI:-}" == "true" ]]; then
+			fail "lua is required in CI"
+		fi
+		warn "lua not found, skipping Hammerspoon regression checks"
+		return 0
+	fi
+
+	lua scripts/test_hammerspoon_helpers.lua
 }
 
 run_ime_migration_cleanup_checks() {
@@ -293,6 +312,7 @@ run_test "Python syntax" run_python_checks
 run_test "Lua syntax" run_lua_checks
 run_test "macOS IME toggle setup" run_macos_ime_toggle_setup_checks
 run_test "Hammerspoon cleanup" run_hammerspoon_cleanup_checks
+run_test "Hammerspoon regressions" run_hammerspoon_regression_checks
 run_test "IME migration cleanup" run_ime_migration_cleanup_checks
 run_test "ShellCheck" run_shellcheck
 

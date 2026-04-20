@@ -14,8 +14,9 @@ local function collectStandardWindows(app)
         end
     end
 
+    -- Use window ids to keep app-internal cycling stable across focus changes.
     table.sort(standardWindows, function(left, right)
-        return left:id() < right:id()
+        return (left:id() or 0) < (right:id() or 0)
     end)
 
     return standardWindows
@@ -65,9 +66,7 @@ function M.moveToPosition(position)
     end
 end
 
-function M.switchFocusedAppWindow(opts)
-    opts = opts or {}
-
+function M.switchFocusedAppWindow()
     local currApp = hs.application.frontmostApplication()
     if not currApp then
         return
@@ -87,13 +86,11 @@ function M.switchFocusedAppWindow(opts)
         return
     end
 
-    if opts.moveToFocusedScreen ~= false then
-        local targetScreen = focusedWin and focusedWin:screen()
-            or hs.mouse.getCurrentScreen()
-            or hs.screen.mainScreen()
-        if targetScreen and nextWin:screen() ~= targetScreen then
-            nextWin:moveToScreen(targetScreen, false, true)
-        end
+    local targetScreen = focusedWin and focusedWin:screen()
+        or hs.mouse.getCurrentScreen()
+        or hs.screen.mainScreen()
+    if targetScreen and nextWin:screen() ~= targetScreen then
+        nextWin:moveToScreen(targetScreen, false, true)
     end
 
     nextWin:focus()

@@ -196,6 +196,27 @@ _deploy_superpowers_skills() {
 	fi
 }
 
+refresh_zinit_completions() {
+	local zinit_bootstrap="$HOME/.local/share/zinit/zinit.git/zinit.zsh"
+	local zcompdump="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/.zcompdump"
+
+	# zinit 的 completions 目录是派生状态；插件上游删掉 completion 文件后，
+	# 旧 symlink 可能残留，下一次 compinit 全量扫描才暴露成 no such file 错误。
+	# 部署阶段先用 zinit cclear 清理坏/未知 completion，再重建插件和 compdump。
+	if [[ -f "$zinit_bootstrap" ]]; then
+		if _run_and_log zsh -c "source '$zinit_bootstrap' && zinit cclear && rm -f '$zcompdump'"; then
+			print_success "Zinit completions 已清理"
+		else
+			print_warn "Zinit completions 清理失败，继续安装插件"
+		fi
+	fi
+
+	# ZINIT_SYNC=1 同步加载，确保所有插件安装完成再退出。
+	if _run_and_log zsh -c "ZINIT_SYNC=1 source '$HOME/.zshrc'"; then
+		print_success "Zinit 插件安装完成"
+	fi
+}
+
 ensure_ssh_include_block() {
 	local ssh_config="$HOME/.ssh/config"
 	local start_marker end_marker tmp
@@ -346,10 +367,7 @@ main() {
 	_echo_blank
 	print_info "🔌 安装 Zinit 插件..."
 	if command -v zsh &>/dev/null; then
-		# ZINIT_SYNC=1 同步加载，确保所有插件安装完成再退出
-		if _run_and_log zsh -c "ZINIT_SYNC=1 source '$HOME/.zshrc'"; then
-			print_success "Zinit 插件安装完成"
-		fi
+		refresh_zinit_completions
 	else
 		print_warn "未找到 zsh，跳过 zinit 插件安装"
 	fi

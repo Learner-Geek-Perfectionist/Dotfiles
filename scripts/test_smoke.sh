@@ -919,6 +919,57 @@ EOF
 	assert_contains "$tmp_home/.config/zsh/plugins/bb-browser.zsh" "$manifest"
 }
 
+test_dotfiles_precleans_zinit_stale_completions() {
+	local tmp_home fake_bin log superpowers_repo zsh_calls stale_link
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install-dotfiles.log"
+	zsh_calls="$tmp_home/zsh-calls.log"
+	superpowers_repo=$(make_fake_superpowers_repo)
+	stale_link="$tmp_home/.local/share/zinit/completions/_stale_completion"
+	trap "rm -rf '$tmp_home' '$fake_bin' '$superpowers_repo'" RETURN
+
+	mkdir -p "$tmp_home/.local/share/zinit/zinit.git" "$tmp_home/.local/share/zinit/completions"
+	: >"$tmp_home/.local/share/zinit/zinit.git/zinit.zsh"
+	ln -s /definitely/missing "$stale_link"
+
+	cat >"$fake_bin/zsh" <<'EOF'
+#!/bin/sh
+cmd="$2"
+printf '%s\n' "$cmd" >>"$HOME/zsh-calls.log"
+case "$cmd" in
+  *"zinit cclear"* )
+    rm -f "$HOME/.local/share/zinit/completions/_stale_completion"
+    exit 0
+    ;;
+  *"ZINIT_SYNC=1 source '$HOME/.zshrc'"* )
+    if [ -L "$HOME/.local/share/zinit/completions/_stale_completion" ]; then
+      echo "stale completion still present before zshrc sync" >&2
+      exit 17
+    fi
+    exit 0
+    ;;
+  * )
+    exit 0
+    ;;
+esac
+EOF
+	cat >"$fake_bin/keychain" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$fake_bin/zsh" "$fake_bin/keychain"
+
+	if ! run_dotfiles_install "$tmp_home" "$fake_bin" "$superpowers_repo" "$log"; then
+		cat "$log" >&2
+		fail "install_dotfiles.sh stale zinit completion cleanup failed"
+	fi
+
+	assert_file_missing "$stale_link"
+	assert_contains "zinit cclear" "$zsh_calls"
+	assert_contains "ZINIT_SYNC=1 source '$tmp_home/.zshrc'" "$zsh_calls"
+}
+
 test_bb_browser_install_uses_latest_and_deploys_wrapper() {
 	local tmp_home fake_bin log npm_log state_file shim_path
 	tmp_home=$(make_temp_dir)
@@ -4236,6 +4287,7 @@ run_test "Dotfiles wetype Karabiner patching fails closed on malformed click rul
 run_test "superpowers clone does not retry GitHub SSH failures" test_superpowers_clone_does_not_retry_github_ssh_failures
 run_test "superpowers pull does not retry GitHub SSH failures" test_superpowers_pull_does_not_retry_github_ssh_failures
 run_test "Dotfiles deploys bb-browser shell plugin" test_dotfiles_deploys_bb_browser_shell_plugin
+run_test "Dotfiles pre-cleans stale zinit completions" test_dotfiles_precleans_zinit_stale_completions
 run_test "bb-browser install uses latest and deploys wrapper" test_bb_browser_install_uses_latest_and_deploys_wrapper
 run_test "bb-browser install patches managed mcp dist only" test_bb_browser_install_patches_managed_mcp_dist_file_only
 run_test "bb-browser dist patch supports mcp cdpArgs variant without cli.js" test_bb_browser_dist_patch_supports_mcp_spawn_with_cdp_args_without_cli_js

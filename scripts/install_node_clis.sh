@@ -141,6 +141,12 @@ write_state_file() {
 	} >"$STATE_FILE"
 }
 
+previous_state_entry() {
+	local package="$1"
+	[[ -f "$STATE_FILE" ]] || return 1
+	awk -F '\t' -v package="$package" '$1 == "package" && $2 == package { print $0; exit }' "$STATE_FILE"
+}
+
 run_npm_global_install() {
 	local install_target="$1"
 
@@ -153,7 +159,7 @@ run_npm_global_install() {
 
 install_node_clis() {
 	local managed_prefix managed_root
-	local installed=0 updated=0 failed=0
+	local installed=0 updated=0 skipped=0 failed=0
 	local state_entries=()
 
 	managed_prefix="$(npm_prefix_for_state)"
@@ -176,6 +182,15 @@ install_node_clis() {
 			preexisting_marker=1
 		fi
 
+		if dotfiles_update_mode_is_fast && [[ "$preexisting_marker" == "1" ]]; then
+			print_fast_mode_skip "$package"
+			skipped=$((skipped + 1))
+			local existing_entry
+			existing_entry="$(previous_state_entry "$package" || true)"
+			[[ -n "$existing_entry" ]] && state_entries+=("$existing_entry")
+			continue
+		fi
+
 		if run_npm_global_install "$install_target"; then
 			if [[ "$preexisting_marker" == "1" ]]; then
 				updated=$((updated + 1))
@@ -194,9 +209,9 @@ install_node_clis() {
 	fi
 
 	if [[ $failed -eq 0 ]]; then
-		print_success "Node CLI: 新增 $installed, 更新 $updated"
+		print_success "Node CLI: 新增 $installed, 更新 $updated, 跳过 $skipped"
 	else
-		print_warn "Node CLI: 新增 $installed, 更新 $updated, 失败 $failed"
+		print_warn "Node CLI: 新增 $installed, 更新 $updated, 跳过 $skipped, 失败 $failed"
 	fi
 }
 

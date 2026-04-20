@@ -23,6 +23,7 @@ PIXI_ONLY="${PIXI_ONLY:-false}"
 DOTFILES_ONLY="${DOTFILES_ONLY:-false}"
 VSCODE_ONLY="${VSCODE_ONLY:-false}"
 LSP_ONLY="${LSP_ONLY:-false}"
+DOTFILES_UPDATE_MODE="${DOTFILES_UPDATE_MODE:-fast}"
 
 # 日志目录（日志文件名在参数解析后生成，包含安装模式）
 DOTFILES_LOG_DIR="/tmp/dotfiles-$(whoami)"
@@ -73,6 +74,17 @@ print_success() { _log "INFO" "✓" "$GREEN" "$1"; }
 print_warn() { _log "WARN" "⚠" "$YELLOW" "$1"; }
 print_error() { _log "ERROR" "✗" "$RED" "$1"; }
 print_header() { _log "INFO" "" "$BLUE" "$1"; }
+
+normalize_update_mode() {
+	case "${1:-fast}" in
+	fast | upgrade | force)
+		printf '%s\n' "${1:-fast}"
+		;;
+	*)
+		printf 'fast\n'
+		;;
+	esac
+}
 
 _string_display_width() {
 	local msg="$1"
@@ -173,6 +185,8 @@ Dotfiles 安装脚本 v${DOTFILES_VERSION}
     --lsp-only       仅安装 LSP Servers
     --skip-dotfiles  跳过 Dotfiles 配置
     --skip-vscode    跳过 VSCode 插件安装
+    --upgrade        检查上游新版本并按需更新
+    --force-update   强制刷新/重装受管组件
     -h, --help       显示帮助
 EOF
 }
@@ -562,6 +576,16 @@ main() {
 			SKIP_VSCODE="true"
 			shift
 			;;
+		--upgrade)
+			DOTFILES_UPDATE_MODE="upgrade"
+			export DOTFILES_UPDATE_MODE
+			shift
+			;;
+		--force-update)
+			DOTFILES_UPDATE_MODE="force"
+			export DOTFILES_UPDATE_MODE
+			shift
+			;;
 		--help | -h)
 			show_help
 			exit 0
@@ -573,6 +597,9 @@ main() {
 			;;
 		esac
 	done
+
+	DOTFILES_UPDATE_MODE="$(normalize_update_mode "$DOTFILES_UPDATE_MODE")"
+	export DOTFILES_UPDATE_MODE
 
 	# 设置日志
 	setup_logging
@@ -612,6 +639,7 @@ main() {
 	else
 		print_dim "安装方式: Pixi + Dotfiles (Rootless)"
 	fi
+	print_dim "更新模式: $(normalize_update_mode "$DOTFILES_UPDATE_MODE")"
 	_echo_blank
 
 	# *_ONLY 模式统一处理（不分平台）

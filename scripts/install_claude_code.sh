@@ -99,6 +99,13 @@ ensure_lsp_dirs() {
 # 1. rust-analyzer (Both platforms)
 # 优先使用 rustup，无 rustup 时从 GitHub Releases 下载预编译二进制
 install_rust_analyzer() {
+	if dotfiles_update_mode_is_fast && command -v rust-analyzer &>/dev/null; then
+		local version
+		version=$(rust-analyzer --version 2>/dev/null | head -1)
+		print_fast_mode_skip "rust-analyzer" "${version:-已安装}"
+		return 0
+	fi
+
 	# 方式 1: rustup（macOS brew 安装的 rust 自带 rustup）
 	if command -v rustup &>/dev/null; then
 		print_info "安装 rust-analyzer (via rustup)..."
@@ -134,6 +141,13 @@ install_rust_analyzer() {
 
 # 2. gopls (Linux only — 由 main() 按平台调用)
 install_gopls() {
+	if dotfiles_update_mode_is_fast && command -v gopls &>/dev/null; then
+		local version
+		version=$(gopls version 2>/dev/null | head -1)
+		print_fast_mode_skip "gopls" "${version:-已安装}"
+		return 0
+	fi
+
 	print_info "安装 gopls..."
 	if ! command -v go &>/dev/null; then
 		print_warn "go 未找到，跳过 gopls"
@@ -147,7 +161,21 @@ install_gopls() {
 }
 
 # 4. csharp-ls (Both platforms)
+csharp_ls_installed() {
+	if command -v csharp-ls &>/dev/null; then
+		return 0
+	fi
+
+	command -v dotnet &>/dev/null || return 1
+	dotnet tool list -g 2>/dev/null | awk 'NR > 2 { print $1 }' | grep -qx 'csharp-ls'
+}
+
 install_csharp_ls() {
+	if dotfiles_update_mode_is_fast && csharp_ls_installed; then
+		print_fast_mode_skip "csharp-ls"
+		return 0
+	fi
+
 	print_info "安装 csharp-ls..."
 	if ! command -v dotnet &>/dev/null; then
 		print_warn "dotnet 未找到，跳过 csharp-ls"
@@ -398,6 +426,11 @@ add_marketplaces() {
 }
 
 update_marketplaces() {
+	if dotfiles_update_mode_is_fast; then
+		print_success "Marketplace 已安装，快速模式跳过更新"
+		return 0
+	fi
+
 	print_info "同步插件 Marketplace..."
 
 	local output
@@ -421,6 +454,10 @@ sync_plugins() {
 	local installed=0 updated=0 failed=0
 	for plugin in "${plugins[@]}"; do
 		if is_plugin_installed "$plugin"; then
+			if dotfiles_update_mode_is_fast; then
+				print_fast_mode_skip "$plugin"
+				continue
+			fi
 			if claude plugin update "$plugin" &>/dev/null; then
 				updated=$((updated + 1))
 			else
@@ -562,6 +599,11 @@ sync_study_master_repo() {
 	local repo_dir="$2"
 
 	if [[ -d "$repo_dir/.git" ]]; then
+		if dotfiles_update_mode_is_fast; then
+			print_fast_mode_skip "study-master 源仓库"
+			return 0
+		fi
+
 		local origin normalized_origin normalized_repo_url
 		origin=$(git -C "$repo_dir" remote get-url origin 2>/dev/null || true)
 		normalized_origin=$(normalize_git_remote "$origin" 2>/dev/null || true)

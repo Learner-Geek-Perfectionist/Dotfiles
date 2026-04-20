@@ -199,12 +199,19 @@ main() {
 				local tag="${item#*|}"
 				local ext_lower
 				ext_lower=$(echo "$ext" | tr '[:upper:]' '[:lower:]')
+				if dotfiles_update_mode_is_force; then
+					to_install+=("$item")
+					continue
+				fi
 				if [[ "$tag" == github-vsix:* ]]; then
-					# GitHub VSIX：比较已安装版本与最新 Release，一致则跳过
 					local repo="${tag#github-vsix:}"
-					local local_ver
+					local local_ver=""
 					local_ver=$(echo "$installed_ver" | grep -i "^${ext_lower}@" | cut -d@ -f2)
 					if [[ -n "$local_ver" ]]; then
+						if dotfiles_update_mode_is_fast; then
+							skipped+=("$ext")
+							continue
+						fi
 						local latest_tag=""
 						github_latest_release_lookup "$repo" 2>/dev/null || true
 						latest_tag="$_GITHUB_LATEST"

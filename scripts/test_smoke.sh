@@ -2969,7 +2969,7 @@ exit 1
 EOF
 	chmod +x "$fake_bin/uname" "$fake_bin/npm" "$fake_bin/brew"
 
-	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" DOTFILES_LOG="$log" \
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" DOTFILES_LOG="$log" DOTFILES_UPDATE_MODE="upgrade" \
 		bash "$REPO_ROOT/scripts/install_node_clis.sh" >"$log" 2>&1; then
 		cat "$log" >&2
 		fail "install_node_clis.sh macOS test failed"
@@ -3241,6 +3241,243 @@ EOF
 	assert_contains "GitHub API 匿名配额已耗尽" "$log"
 	assert_contains "GH_TOKEN" "$log"
 	assert_contains "GITHUB_TOKEN" "$log"
+}
+
+test_check_github_update_fast_mode_skips_remote_lookup_with_local_version() {
+	local tmp_home fake_bin log install_dir curl_log
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install.log"
+	install_dir="$tmp_home/install-dir"
+	curl_log="$tmp_home/curl.log"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	mkdir -p "$install_dir"
+	printf 'v1.2.3\n' >"$install_dir/.version"
+
+	cat >"$fake_bin/curl" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >>"$curl_log"
+printf '{"tag_name":"v9.9.9"}\n200'
+EOF
+	chmod +x "$fake_bin/curl"
+
+	if env HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		DOTFILES_LOG_DIR="$tmp_home/logdir" DOTFILES_LOG="$log" \
+		bash -c ". \"$REPO_ROOT/lib/utils.sh\"; check_github_update 'Kotlin/Native' owner/repo \"$install_dir\""; then
+		fail "check_github_update should skip in fast mode when local version exists"
+	fi
+
+	assert_file_missing "$curl_log"
+	assert_contains "快速模式跳过更新检查" "$log"
+}
+
+test_install_node_clis_fast_mode_skips_installed_packages() {
+	local tmp_home fake_bin log npm_log state_file
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install-node-clis-fast.log"
+	npm_log="$tmp_home/npm-node-clis-fast.log"
+	state_file="$tmp_home/.local/state/dotfiles/node-cli-npm-global.tsv"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	mkdir -p "$tmp_home/.local/lib/node_modules/@anthropic-ai/claude-code"
+	mkdir -p "$tmp_home/.local/lib/node_modules/typescript"
+	mkdir -p "$(dirname "$state_file")"
+	cat >"$state_file" <<EOF
+prefix	$tmp_home/.local
+package	@anthropic-ai/claude-code	0
+package	typescript	0
+EOF
+
+	cat >"$fake_bin/uname" <<'EOF'
+#!/bin/sh
+if [ "$1" = "-s" ]; then
+  echo Linux
+else
+  echo x86_64
+fi
+EOF
+	cat >"$fake_bin/npm" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >>"$npm_log"
+exit 0
+EOF
+	chmod +x "$fake_bin/uname" "$fake_bin/npm"
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" DOTFILES_LOG="$log" \
+		bash "$REPO_ROOT/scripts/install_node_clis.sh" >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "install_node_clis.sh fast-mode test failed"
+	fi
+
+	assert_not_contains "install -g @anthropic-ai/claude-code@latest" "$npm_log"
+	assert_not_contains "install -g typescript@latest" "$npm_log"
+	assert_contains "install -g @openai/codex@latest" "$npm_log"
+	assert_contains $'package\t@anthropic-ai/claude-code\t0' "$state_file"
+	assert_contains $'package\ttypescript\t0' "$state_file"
+	assert_contains "快速模式跳过" "$log"
+}
+
+test_install_claude_code_fast_mode_skips_plugin_and_marketplace_updates() {
+	local tmp_home fake_bin log add_json_log remove_log plugin_install_log plugin_update_log marketplace_update_log
+	local plugin_list_output mcp_list_output known_marketplaces repo_dir skill_src
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install-claude-fast.log"
+	add_json_log="$tmp_home/claude-mcp-add-json.json"
+	remove_log="$tmp_home/claude-mcp-remove.log"
+	plugin_install_log="$tmp_home/claude-plugin-install.log"
+	plugin_update_log="$tmp_home/claude-plugin-update.log"
+	marketplace_update_log="$tmp_home/claude-marketplace-update.log"
+	known_marketplaces="$tmp_home/.claude/plugins/known_marketplaces.json"
+	repo_dir="$tmp_home/.claude/vendor/agent-study-skills"
+	skill_src="$repo_dir/study-master-skill"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	plugin_list_output=$'pyright-lsp@claude-plugins-official\ntypescript-lsp@claude-plugins-official\ngopls-lsp@claude-plugins-official\nrust-analyzer-lsp@claude-plugins-official\njdtls-lsp@claude-plugins-official\nclangd-lsp@claude-plugins-official\ncsharp-lsp@claude-plugins-official\nphp-lsp@claude-plugins-official\nkotlin-lsp@claude-plugins-official\nswift-lsp@claude-plugins-official\nlua-lsp@claude-plugins-official\ngithub@claude-plugins-official\ncommit-commands@claude-plugins-official\ncode-simplifier@claude-plugins-official\nclaude-hud@claude-hud\ncodex@openai-codex\nexample-skills@anthropic-agent-skills\nsuperpowers@superpowers-marketplace'
+	mcp_list_output=$'tavily: stdio\nfetch: stdio\nexa: http\nopen-websearch: stdio\nbb-browser: stdio'
+
+	write_fake_claude_cli_with_update_logs "$fake_bin" "$plugin_list_output" "$mcp_list_output" "$add_json_log" "$remove_log" "$plugin_install_log" "$plugin_update_log" "$marketplace_update_log"
+
+	cat >"$fake_bin/uname" <<'EOF'
+#!/bin/sh
+if [ "$1" = "-s" ]; then
+  echo Darwin
+else
+  echo arm64
+fi
+EOF
+	cat >"$fake_bin/rust-analyzer" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/csharp-ls" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	cat >"$fake_bin/curl" <<'EOF'
+#!/bin/sh
+printf '{"tag_name":"v1.3.13"}\n200'
+EOF
+	chmod +x "$fake_bin/uname" "$fake_bin/rust-analyzer" "$fake_bin/csharp-ls" "$fake_bin/curl"
+
+	mkdir -p "$(dirname "$known_marketplaces")"
+	cat >"$known_marketplaces" <<'EOF'
+[
+  {"source":{"repo":"anthropics/claude-plugins-official"}},
+  {"source":{"repo":"anthropics/skills"}},
+  {"source":{"repo":"obra/superpowers-marketplace"}},
+  {"source":{"repo":"jarrodwatts/claude-hud"}},
+  {"source":{"repo":"openai/codex-plugin-cc"}}
+]
+EOF
+
+	mkdir -p "$tmp_home/.local/share/lsp/kotlin-language-server"
+	printf 'v1.3.13\n' >"$tmp_home/.local/share/lsp/kotlin-language-server/.version"
+
+	git init "$repo_dir" >/dev/null 2>&1
+	git -C "$repo_dir" remote add origin "https://github.com/Learner-Geek-Perfectionist/agent-study-skills.git"
+	mkdir -p "$skill_src/hooks"
+	cat >"$skill_src/SKILL.md" <<'EOF'
+# study-master
+EOF
+	cat >"$skill_src/hooks/check-study_master.sh" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+	chmod +x "$skill_src/hooks/check-study_master.sh"
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" DOTFILES_LOG="$log" \
+		bash "$REPO_ROOT/scripts/install_claude_code.sh" >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "install_claude_code.sh fast-mode plugin test failed"
+	fi
+
+	assert_file_missing "$plugin_install_log"
+	assert_file_missing "$plugin_update_log"
+	assert_file_missing "$marketplace_update_log"
+	assert_contains "快速模式跳过" "$log"
+}
+
+test_install_vscode_ext_fast_mode_skips_github_vsix_release_lookup_when_installed() {
+	local tmp_home fake_bin log curl_log
+	local installed_with_versions installed_without_versions cursor_with_versions cursor_without_versions
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/install-vscode-fast.log"
+	curl_log="$tmp_home/curl.log"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	installed_with_versions=$'ms-ceintl.vscode-language-pack-zh-hans@1.0.0\nxaver.clang-format@1.0.0\nrust-lang.rust-analyzer@1.0.0\nfill-labs.dependi@1.0.0\ntamasfe.even-better-toml@1.0.0\ngolang.go@1.0.0\ncharliermarsh.ruff@1.0.0\nvscjava.vscode-java-pack@1.0.0\nfwcd.kotlin@1.0.0\nsumneko.lua@1.0.0\nmkhl.shfmt@1.0.0\nbierner.markdown-mermaid@1.0.0\nmhutchie.git-graph@1.0.0\nms-azuretools.vscode-docker@1.0.0\nhuacnlee.autocorrect@1.0.0\nms-vscode.cpptools@1.0.0\nms-vscode.cpptools-extension-pack@1.0.0\nms-vscode.cmake-tools@1.0.0\nvadimcn.vscode-lldb@1.0.0\nms-python.python@1.0.0\nms-python.vscode-pylance@1.0.0\nms-python.debugpy@1.0.0\nms-vscode-remote.remote-ssh@1.0.0\nms-vscode-remote.remote-ssh-edit@1.0.0\nms-vscode.remote-explorer@1.0.0\nms-vscode-remote.remote-containers@1.0.0\nxin.claude-code-ref@1.0.0'
+	installed_without_versions=$(printf '%s\n' "$installed_with_versions" | cut -d@ -f1)
+	cursor_with_versions=$'ms-ceintl.vscode-language-pack-zh-hans@1.0.0\nxaver.clang-format@1.0.0\nrust-lang.rust-analyzer@1.0.0\nfill-labs.dependi@1.0.0\ntamasfe.even-better-toml@1.0.0\ngolang.go@1.0.0\ncharliermarsh.ruff@1.0.0\nvscjava.vscode-java-pack@1.0.0\nfwcd.kotlin@1.0.0\nsumneko.lua@1.0.0\nmkhl.shfmt@1.0.0\nbierner.markdown-mermaid@1.0.0\nmhutchie.git-graph@1.0.0\nms-azuretools.vscode-docker@1.0.0\nanysphere.cpptools@1.0.0\nanysphere.cursorpyright@1.0.0\nanysphere.remote-ssh@1.0.0\nanysphere.remote-containers@1.0.0\nhuacnlee.autocorrect@1.0.0\nxin.claude-code-ref@1.0.0'
+	cursor_without_versions=$(printf '%s\n' "$cursor_with_versions" | cut -d@ -f1)
+
+cat >"$fake_bin/code" <<EOF
+#!/bin/sh
+case "\$1" in
+  --help)
+    echo 'Visual Studio Code'
+    exit 0
+    ;;
+  --list-extensions)
+    if [ "\${2:-}" = "--show-versions" ]; then
+      cat <<'INNER'
+$installed_with_versions
+INNER
+    else
+      cat <<'INNER'
+$installed_without_versions
+INNER
+    fi
+    exit 0
+    ;;
+  --install-extension)
+    exit 0
+    ;;
+esac
+exit 0
+EOF
+cat >"$fake_bin/cursor" <<EOF
+#!/bin/sh
+case "\$1" in
+  --help)
+    echo 'Cursor'
+    exit 0
+    ;;
+  --list-extensions)
+    if [ "\${2:-}" = "--show-versions" ]; then
+      cat <<'INNER'
+$cursor_with_versions
+INNER
+    else
+      cat <<'INNER'
+$cursor_without_versions
+INNER
+    fi
+    exit 0
+    ;;
+  --install-extension)
+    exit 0
+    ;;
+esac
+exit 0
+EOF
+	cat >"$fake_bin/curl" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >>"$curl_log"
+printf '{"tag_name":"v9.9.9"}\n200'
+EOF
+	chmod +x "$fake_bin/code" "$fake_bin/cursor" "$fake_bin/curl"
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" DOTFILES_LOG="$log" \
+		bash "$REPO_ROOT/scripts/install_vscode_ext.sh" >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "install_vscode_ext.sh fast-mode VSIX test failed"
+	fi
+
+	assert_file_missing "$curl_log"
 }
 
 run_kitty_ssh_utils_case() {
@@ -4033,6 +4270,10 @@ run_test "Dotfiles uninstall removes wrapper integrations" test_dotfiles_uninsta
 run_test "Claude known_hosts preserves symlink" test_claude_known_hosts_preserves_symlink
 run_test "GitHub release lookup uses GITHUB_TOKEN" test_github_latest_release_uses_github_token
 run_test "GitHub update check reports rate limit actionably" test_check_github_update_reports_rate_limit_actionably
+run_test "GitHub update check skips remote lookup in fast mode" test_check_github_update_fast_mode_skips_remote_lookup_with_local_version
+run_test "Node CLI installer skips installed packages in fast mode" test_install_node_clis_fast_mode_skips_installed_packages
+run_test "Claude installer skips plugin updates in fast mode" test_install_claude_code_fast_mode_skips_plugin_and_marketplace_updates
+run_test "VSCode installer skips GitHub VSIX release lookup in fast mode" test_install_vscode_ext_fast_mode_skips_github_vsix_release_lookup_when_installed
 run_test "kitty smart launch uses native current cwd for local windows" test_kitty_smart_launch_uses_native_current_cwd_for_local_windows
 run_test "kitty smart launch prefers last foreground process cwd for local TUI" test_kitty_smart_launch_prefers_last_foreground_process_cwd_for_local_tui
 run_test "kitty smart launch skips ssh when session not established" test_kitty_smart_launch_skips_ssh_when_session_not_established

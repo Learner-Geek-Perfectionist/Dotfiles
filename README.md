@@ -19,7 +19,11 @@ bash install.sh --pixi-only       # 仅 Pixi 包管理器（Linux）
 bash install.sh --vscode-only     # 仅 VSCode/Cursor 插件
 bash install.sh --lsp-only        # 仅 LSP 服务器
 bash install.sh --skip-vscode     # 跳过 VSCode 插件
+bash install.sh --upgrade         # 检查上游新版本并按需更新
+bash install.sh --force-update    # 强制刷新/重装受管组件
 ```
+
+默认安装使用 `fast` 更新模式：已安装且可复用的工具、插件、GitHub Release 资源会直接跳过，避免每次重跑 `install.sh` 都重复联网检查和重装。
 
 ## 功能概览
 

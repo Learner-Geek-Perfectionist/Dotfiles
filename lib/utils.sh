@@ -263,6 +263,48 @@ is_remote_server() {
 }
 
 # ========================================
+# 安装更新模式
+# ========================================
+
+normalize_update_mode() {
+	case "${1:-fast}" in
+	fast | upgrade | force)
+		printf '%s\n' "${1:-fast}"
+		;;
+	*)
+		printf 'fast\n'
+		;;
+	esac
+}
+
+dotfiles_update_mode() {
+	DOTFILES_UPDATE_MODE="$(normalize_update_mode "${DOTFILES_UPDATE_MODE:-fast}")"
+	export DOTFILES_UPDATE_MODE
+	printf '%s\n' "$DOTFILES_UPDATE_MODE"
+}
+
+dotfiles_update_mode_is_fast() {
+	[[ "$(dotfiles_update_mode)" == "fast" ]]
+}
+
+dotfiles_update_mode_is_upgrade() {
+	[[ "$(dotfiles_update_mode)" == "upgrade" ]]
+}
+
+dotfiles_update_mode_is_force() {
+	[[ "$(dotfiles_update_mode)" == "force" ]]
+}
+
+print_fast_mode_skip() {
+	local name="$1" detail="${2:-}"
+	if [[ -n "$detail" ]]; then
+		print_success "$name 已安装 (${detail})，快速模式跳过"
+	else
+		print_success "$name 已安装，快速模式跳过"
+	fi
+}
+
+# ========================================
 # GitHub Release 版本管理
 # ========================================
 
@@ -351,6 +393,15 @@ github_latest_release() {
 # 返回: 0=有更新 1=已最新或检查失败（调用方应 return 0 跳过安装）
 check_github_update() {
 	local name="$1" repo="$2" install_dir="$3"
+	local local_ver
+	local_ver=$(get_local_version "$install_dir")
+
+	if dotfiles_update_mode_is_fast && [[ -n "$local_ver" ]]; then
+		_GITHUB_LATEST="$local_ver"
+		print_fast_mode_skip "$name" "$local_ver"
+		print_dim "快速模式跳过更新检查"
+		return 1
+	fi
 
 	github_latest_release_lookup "$repo" || true
 	if [[ -z "$_GITHUB_LATEST" ]]; then
@@ -358,11 +409,14 @@ check_github_update() {
 		return 1
 	fi
 
-	local local_ver
-	local_ver=$(get_local_version "$install_dir")
-	if [[ "$local_ver" == "$_GITHUB_LATEST" ]]; then
+	if [[ "$local_ver" == "$_GITHUB_LATEST" ]] && ! dotfiles_update_mode_is_force; then
 		print_success "$name 已是最新版本 ($_GITHUB_LATEST)"
 		return 1
+	fi
+
+	if dotfiles_update_mode_is_force && [[ -n "$local_ver" && "$local_ver" == "$_GITHUB_LATEST" ]]; then
+		print_dim "强制更新模式: ${local_ver} -> $_GITHUB_LATEST"
+		return 0
 	fi
 
 	print_dim "版本: ${local_ver:-无} -> $_GITHUB_LATEST"

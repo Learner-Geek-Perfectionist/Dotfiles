@@ -2914,11 +2914,12 @@ EOF
 }
 
 test_install_node_clis_macos_keeps_default_prefix() {
-	local tmp_home fake_bin log npm_log state_file
+	local tmp_home fake_bin log npm_log brew_log state_file
 	tmp_home=$(make_temp_dir)
 	fake_bin=$(make_temp_dir)
 	log="$tmp_home/install-node-clis-macos.log"
 	npm_log="$tmp_home/npm-node-clis-macos.log"
+	brew_log="$tmp_home/brew-node-clis-macos.log"
 	state_file="$tmp_home/.local/state/dotfiles/node-cli-npm-global.tsv"
 	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
 
@@ -2940,10 +2941,33 @@ fi
 if [ "\$1" = "config" ] && [ "\$2" = "get" ] && [ "\$3" = "prefix" ]; then
   echo /opt/homebrew
   exit 0
-fi
-exit 0
+	fi
+	exit 0
 EOF
-	chmod +x "$fake_bin/uname" "$fake_bin/npm"
+	cat >"$fake_bin/brew" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >>"$brew_log"
+case "\$1 \$2 \$3" in
+  "list --cask codex")
+    exit 0
+    ;;
+  "list --formula typescript"|"list --formula typescript-language-server")
+    exit 0
+    ;;
+esac
+case "\$1 \$2 \$3" in
+  "uninstall --cask codex")
+    exit 0
+    ;;
+esac
+case "\$1 \$2" in
+  "uninstall typescript"|"uninstall typescript-language-server")
+    exit 0
+    ;;
+esac
+exit 1
+EOF
+	chmod +x "$fake_bin/uname" "$fake_bin/npm" "$fake_bin/brew"
 
 	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" DOTFILES_LOG="$log" \
 		bash "$REPO_ROOT/scripts/install_node_clis.sh" >"$log" 2>&1; then
@@ -2954,6 +2978,9 @@ EOF
 	assert_file_missing "$tmp_home/.npmrc"
 	assert_file_exists "$state_file"
 	assert_contains $'prefix\t/opt/homebrew' "$state_file"
+	assert_contains "uninstall --cask codex" "$brew_log"
+	assert_contains "uninstall typescript" "$brew_log"
+	assert_contains "uninstall typescript-language-server" "$brew_log"
 	assert_contains "install -g @anthropic-ai/claude-code@latest" "$npm_log"
 }
 

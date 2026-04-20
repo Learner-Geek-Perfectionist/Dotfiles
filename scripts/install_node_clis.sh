@@ -25,6 +25,41 @@ package_install_command() {
 	printf '%s@latest\n' "$package"
 }
 
+run_brew_command() {
+	if [[ -n "${DOTFILES_LOG:-}" ]]; then
+		"$@" >>"$DOTFILES_LOG" 2>&1
+	else
+		"$@" >/dev/null 2>&1
+	fi
+}
+
+release_macos_homebrew_node_cli_conflicts() {
+	local brew_bin
+	brew_bin="$(command -v brew 2>/dev/null || true)"
+	[[ -n "$brew_bin" ]] || return 0
+
+	if run_brew_command "$brew_bin" list --cask codex; then
+		print_info "检测到 Homebrew 管理的 codex，改由 npm 接管..."
+		if run_brew_command "$brew_bin" uninstall --cask codex; then
+			print_dim "✓ Homebrew 已移除: codex (cask)"
+		else
+			print_warn "Homebrew 卸载失败: codex (cask)"
+		fi
+	fi
+
+	local formula
+	for formula in typescript typescript-language-server; do
+		if run_brew_command "$brew_bin" list --formula "$formula"; then
+			print_info "检测到 Homebrew 管理的 ${formula}，改由 npm 接管..."
+			if run_brew_command "$brew_bin" uninstall "$formula"; then
+				print_dim "✓ Homebrew 已移除: ${formula}"
+			else
+				print_warn "Homebrew 卸载失败: ${formula}"
+			fi
+		fi
+	done
+}
+
 sync_linux_npm_prefix() {
 	local desired_prefix npmrc tmp
 
@@ -67,6 +102,8 @@ ensure_npm_ready() {
 
 	if [[ "$OS" == "linux" ]]; then
 		sync_linux_npm_prefix
+	elif [[ "$OS" == "macos" ]]; then
+		release_macos_homebrew_node_cli_conflicts
 	fi
 
 	return 0

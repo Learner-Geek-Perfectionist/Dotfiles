@@ -678,62 +678,6 @@ linux_npm_global_bin_dir() {
 	echo "$(linux_npm_global_prefix)/bin"
 }
 
-bb_browser_config_file() {
-	echo "$HOME/.config/dotfiles/bb-browser.json"
-}
-
-bb_browser_state_file() {
-	echo "$HOME/.local/state/dotfiles/bb-browser.env"
-}
-
-bb_browser_shim_path() {
-	echo "$HOME/.local/bin/bb-browser"
-}
-
-bb_browser_shim_backup_file() {
-	echo "$(dotfiles_state_dir)/bb-browser.preexisting"
-}
-
-bb_browser_wrapper_path() {
-	echo "$HOME/.local/bin/bb-browser-user"
-}
-
-bb_browser_wrapper_backup_file() {
-	echo "$(dotfiles_state_dir)/bb-browser-user.preexisting"
-}
-
-bb_browser_sites_dir() {
-	echo "$HOME/.bb-browser/bb-sites"
-}
-
-bb_browser_xiaohongshu_search_file() {
-	echo "$(bb_browser_sites_dir)/xiaohongshu/search.js"
-}
-
-bb_browser_xiaohongshu_search_backup_file() {
-	echo "$(dotfiles_state_dir)/bb-browser-xiaohongshu-search.preexisting"
-}
-
-bb_browser_daemon_runtime_dir() {
-	echo "$HOME/.bb-browser"
-}
-
-bb_browser_daemon_token_file() {
-	echo "$(bb_browser_daemon_runtime_dir)/daemon.token"
-}
-
-bb_browser_daemon_pid_file() {
-	echo "$(bb_browser_daemon_runtime_dir)/daemon.pid"
-}
-
-bb_browser_daemon_log_file() {
-	echo "/tmp/bb-browser-daemon-wrapper.log"
-}
-
-claude_bb_browser_mcp_state_file() {
-	echo "$(dotfiles_state_dir)/claude-bb-browser-mcp.env"
-}
-
 dotfiles_ssh_include_block_start() {
 	echo "# >>> Dotfiles SSH Include >>>"
 }

@@ -14,13 +14,8 @@
     ".config/zsh/plugins/zinit.zsh",
     ".config/zsh/plugins/age-tokens.zsh",
     ".config/zsh/plugins/double-esc-clear.zsh",
-    ".config/zsh/plugins/bb-browser.zsh",
     ".config/zsh/fzf/fzf-preview.sh",
     ".config/ripgrep/config"
-  ],
-  ".config/zsh/plugins/bb-browser.zsh": [
-    ".zshrc",
-    "scripts/bb-browser-user.sh"
   ],
   ".config/zsh/plugins/zinit.zsh": [
     ".zshrc",
@@ -40,7 +35,6 @@
     "scripts/install_dotfiles.sh",
     "scripts/install_vscode_ext.sh",
     "scripts/install_claude_code.sh",
-    "scripts/install_bb_browser.sh",
     "scripts/install_pixi.sh",
     "scripts/install_kotlin_native.sh",
     "scripts/install_macos.sh"
@@ -55,9 +49,7 @@
   ],
   "lib/utils.sh": [
     "install.sh",
-    "uninstall.sh",
-    "scripts/install_bb_browser.sh",
-    "scripts/bb-browser-user.sh"
+    "uninstall.sh"
   ],
   "scripts/install_dotfiles.sh": [
     "install.sh",
@@ -68,23 +60,6 @@
   ],
   "scripts/install_claude_code.sh": [
     "install.sh"
-  ],
-  "scripts/install_bb_browser.sh": [
-    "install.sh",
-    "uninstall.sh",
-    "lib/utils.sh",
-    "scripts/bb-browser-user.sh",
-    "scripts/deploy_codex_config.sh",
-    "scripts/patch_bb_browser_dist.mjs",
-    "scripts/bb-browser-sites/xiaohongshu/search.js"
-  ],
-  "scripts/bb-browser-user.sh": [
-    "scripts/install_bb_browser.sh",
-    "lib/utils.sh",
-    ".config/zsh/plugins/bb-browser.zsh"
-  ],
-  "scripts/bb-browser-sites/xiaohongshu/search.js": [
-    "scripts/install_bb_browser.sh"
   ],
   "scripts/install_pixi.sh": [
     "install.sh",

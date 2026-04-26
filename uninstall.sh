@@ -69,7 +69,6 @@ CLAUDE_MANAGED_MCPS=(
 	fetch
 	open-websearch
 	exa
-	bb-browser
 )
 
 show_help() {
@@ -155,63 +154,6 @@ remove_manifested_dotfiles() {
 	fi
 }
 
-read_bb_browser_install_state() {
-	local state_file="$1"
-	[[ -f "$state_file" ]] || return 0
-
-	(
-		set +u
-		# shellcheck disable=SC1090
-		source "$state_file"
-		printf '%s\n' \
-			"${PREEXISTING_BB_BROWSER:-}" \
-			"${PREEXISTING_SHIM:-}" \
-			"${PREEXISTING_SHIM_BACKUP_PATH:-}" \
-			"${PREEXISTING_WRAPPER:-}" \
-			"${PREEXISTING_WRAPPER_BACKUP_PATH:-}" \
-			"${REAL_BB_BROWSER_PATH:-}" \
-			"${PREEXISTING_XIAOHONGSHU_SEARCH:-}" \
-			"${PREEXISTING_XIAOHONGSHU_SEARCH_BACKUP_PATH:-}"
-	)
-}
-
-bb_browser_daemon_command_matches_pid() {
-	local pid="$1" command_line
-	[[ "$pid" =~ ^[0-9]+$ ]] || return 1
-
-	command_line="$(ps -p "$pid" -o command= 2>/dev/null || true)"
-	[[ "$command_line" == *"bb-browser/dist/daemon.js"* ]]
-}
-
-bb_browser_daemon_pid_list() {
-	ps -x -o pid= -o command= 2>/dev/null | awk '/[n]ode .*bb-browser\/dist\/daemon\.js/ { print $1 }'
-}
-
-stop_bb_browser_daemon() {
-	local pid_file token_file pid stopped_pid
-	pid_file="$(bb_browser_daemon_pid_file)"
-	token_file="$(bb_browser_daemon_token_file)"
-
-	if [[ -f "$pid_file" ]]; then
-		pid="$(cat "$pid_file" 2>/dev/null || true)"
-		if bb_browser_daemon_command_matches_pid "$pid"; then
-			kill "$pid" >/dev/null 2>&1 || true
-			stopped_pid="$pid"
-		fi
-	fi
-
-	while IFS= read -r pid; do
-		[[ -n "$pid" && "$pid" != "${stopped_pid:-}" ]] || continue
-		bb_browser_daemon_command_matches_pid "$pid" || continue
-		kill "$pid" >/dev/null 2>&1 || true
-	done < <(bb_browser_daemon_pid_list)
-
-	rm_path "$pid_file"
-	prune_empty_parents "$(dirname "$pid_file")"
-	rm_path "$token_file"
-	prune_empty_parents "$(dirname "$token_file")"
-}
-
 strip_toml_section_in_place() {
 	local file="$1" section_header="$2" tmp
 
@@ -236,130 +178,6 @@ remove_claude_mcp_if_present() {
 	if echo "$mcp_list" | grep -Eq "^[[:space:]]*${mcp}:"; then
 		claude mcp remove "$mcp" --scope user &>/dev/null && print_dim "✓ MCP: $mcp 已移除"
 	fi
-}
-
-remove_managed_claude_bb_browser_mcp_if_present() {
-	local state_file mcp_list
-	state_file="$(claude_bb_browser_mcp_state_file)"
-
-	[[ -f "$state_file" ]] || return 0
-	command -v claude &>/dev/null || {
-		rm_path "$state_file"
-		prune_empty_parents "$(dirname "$state_file")"
-		return 0
-	}
-
-	mcp_list=$(claude mcp list 2>/dev/null || true)
-	if echo "$mcp_list" | grep -Eq '^[[:space:]]*bb-browser:'; then
-		claude mcp remove "bb-browser" --scope user &>/dev/null && print_dim "✓ MCP: bb-browser 已移除"
-	fi
-
-	rm_path "$state_file"
-	prune_empty_parents "$(dirname "$state_file")"
-}
-
-restore_bb_browser_wrapper() {
-	local wrapper_path="$1" wrapper_backup_path="$2"
-
-	if [[ -n "$wrapper_backup_path" && -e "$wrapper_backup_path" ]]; then
-		mkdir -p "$(dirname "$wrapper_path")"
-		cp -p "$wrapper_backup_path" "$wrapper_path"
-		rm_path "$wrapper_backup_path"
-		prune_empty_parents "$(dirname "$wrapper_backup_path")"
-		return 0
-	fi
-
-	print_warn "检测到预装 bb-browser wrapper，但未找到备份；保留当前 wrapper: $wrapper_path"
-}
-
-restore_bb_browser_managed_file() {
-	local target_path="$1" backup_path="$2" label="$3"
-
-	if [[ -n "$backup_path" && -e "$backup_path" ]]; then
-		mkdir -p "$(dirname "$target_path")"
-		cp -p "$backup_path" "$target_path"
-		rm_path "$backup_path"
-		prune_empty_parents "$(dirname "$backup_path")"
-		return 0
-	fi
-
-	print_warn "检测到预装 ${label}，但未找到备份；保留当前文件: $target_path"
-}
-
-remove_bb_browser() {
-	local state_file config_file shim_path shim_backup_path wrapper_path wrapper_backup_path xiaohongshu_search_path xiaohongshu_search_backup_path
-	local preexisting_bb_browser preexisting_shim preexisting_wrapper preexisting_xiaohongshu_search real_bb_browser_path target_prefix
-	state_file="$(bb_browser_state_file)"
-	config_file="$(bb_browser_config_file)"
-	shim_path="$(bb_browser_shim_path)"
-	shim_backup_path="$(bb_browser_shim_backup_file)"
-	wrapper_path="$(bb_browser_wrapper_path)"
-	wrapper_backup_path="$(bb_browser_wrapper_backup_file)"
-	xiaohongshu_search_path="$(bb_browser_xiaohongshu_search_file)"
-	xiaohongshu_search_backup_path="$(bb_browser_xiaohongshu_search_backup_file)"
-	stop_bb_browser_daemon
-	rm_path "$config_file"
-	prune_empty_parents "$(dirname "$config_file")"
-
-	if [[ -f "$state_file" ]]; then
-		{
-			IFS= read -r preexisting_bb_browser || true
-			IFS= read -r preexisting_shim || true
-			IFS= read -r shim_backup_path || true
-			IFS= read -r preexisting_wrapper || true
-			IFS= read -r wrapper_backup_path || true
-			IFS= read -r real_bb_browser_path || true
-			IFS= read -r preexisting_xiaohongshu_search || true
-			IFS= read -r xiaohongshu_search_backup_path || true
-		} < <(read_bb_browser_install_state "$state_file" || true)
-		[[ -n "$shim_backup_path" ]] || shim_backup_path="$(bb_browser_shim_backup_file)"
-		[[ -n "$wrapper_backup_path" ]] || wrapper_backup_path="$(bb_browser_wrapper_backup_file)"
-		[[ -n "$xiaohongshu_search_backup_path" ]] || xiaohongshu_search_backup_path="$(bb_browser_xiaohongshu_search_backup_file)"
-		if [[ "$preexisting_bb_browser" == "0" && -n "$real_bb_browser_path" ]]; then
-			target_prefix="$(dirname "$(dirname "$real_bb_browser_path")")"
-			if [[ -n "$target_prefix" && "$target_prefix" != "/" ]]; then
-				if command -v npm &>/dev/null; then
-					npm --prefix "$target_prefix" uninstall -g bb-browser >/dev/null 2>&1 || true
-				fi
-			fi
-		fi
-
-		if [[ "$preexisting_shim" == "1" ]]; then
-			restore_bb_browser_managed_file "$shim_path" "$shim_backup_path" "bb-browser 命令 shim"
-		else
-			rm_path "$shim_path"
-			prune_empty_parents "$(dirname "$shim_path")"
-			rm_path "$shim_backup_path"
-			prune_empty_parents "$(dirname "$shim_backup_path")"
-		fi
-
-		if [[ "$preexisting_wrapper" == "1" ]]; then
-			restore_bb_browser_wrapper "$wrapper_path" "$wrapper_backup_path"
-		else
-			rm_path "$wrapper_path"
-			prune_empty_parents "$(dirname "$wrapper_path")"
-			rm_path "$wrapper_backup_path"
-			prune_empty_parents "$(dirname "$wrapper_backup_path")"
-		fi
-
-		if [[ "$preexisting_xiaohongshu_search" == "1" ]]; then
-			restore_bb_browser_managed_file "$xiaohongshu_search_path" "$xiaohongshu_search_backup_path" "小红书 adapter"
-		else
-			rm_path "$xiaohongshu_search_path"
-			prune_empty_parents "$(dirname "$xiaohongshu_search_path")"
-			rm_path "$xiaohongshu_search_backup_path"
-			prune_empty_parents "$(dirname "$xiaohongshu_search_backup_path")"
-		fi
-	else
-		rm_path "$shim_path"
-		prune_empty_parents "$(dirname "$shim_path")"
-		rm_path "$wrapper_path"
-		prune_empty_parents "$(dirname "$wrapper_path")"
-	fi
-
-	rm_path "$state_file"
-	prune_empty_parents "$(dirname "$state_file")"
-	remove_managed_claude_bb_browser_mcp_if_present
 }
 
 remove_managed_node_clis() {
@@ -400,8 +218,6 @@ remove_managed_node_clis() {
 	local package preexisting
 	while IFS=$'\t' read -r kind package preexisting; do
 		[[ "$kind" == "package" ]] || continue
-		[[ "$package" == "bb-browser" ]] && continue
-
 		if [[ "$preexisting" == "1" ]]; then
 			skipped=$((skipped + 1))
 			continue
@@ -581,27 +397,12 @@ remove_pixi() {
 remove_claude() {
 	print_info "🤖 删除 Claude Code 用户配置（仅限 Dotfiles 管理的 Claude 项）..."
 
-	# 1) study-master Skill + Hooks
-	rm_path ~/.claude/skills/study-master
-	rm_path ~/.claude/hooks/check-study_master.sh
-	rm_path ~/.claude/vendor/agent-study-skills
-	rmdir ~/.claude/vendor 2>/dev/null || true
-
 	# 清理 settings.json 中的 Dotfiles 管理项，避免误删用户自定义配置
 	local settings_file="$HOME/.claude/settings.json"
 	if [[ -f "$settings_file" ]] && command -v jq &>/dev/null; then
-		local hook_cmd='bash "$HOME/.claude/hooks/check-study_master.sh"'
 		local managed_plugins_json
 		managed_plugins_json=$(printf '%s\n' "${CLAUDE_MANAGED_PLUGINS[@]}" | jq -R . | jq -s .)
-		jq --arg cmd "$hook_cmd" --argjson managed_plugins "$managed_plugins_json" '
-			if .hooks.PostToolUse then
-				.hooks.PostToolUse |= map(
-					.hooks |= map(select(.command != $cmd))
-				) |
-				.hooks.PostToolUse |= map(select(.hooks | length > 0)) |
-				if (.hooks.PostToolUse | length) == 0 then del(.hooks.PostToolUse) else . end |
-				if (.hooks | length) == 0 then del(.hooks) else . end
-			else . end |
+		jq --argjson managed_plugins "$managed_plugins_json" '
 			if (.enabledPlugins | type) == "object" then
 				.enabledPlugins |= with_entries(select(.key as $k | $managed_plugins | index($k) | not)) |
 				if (.enabledPlugins | length) == 0 then del(.enabledPlugins) else . end
@@ -615,7 +416,7 @@ remove_claude() {
 		print_dim "✓ 已定向清理 settings.json 中的 Dotfiles 管理项"
 	fi
 
-	# 2) 实际卸载 Dotfiles 安装的 Claude 插件和 Marketplace
+	# 1) 实际卸载 Dotfiles 安装的 Claude 插件和 Marketplace
 	if command -v claude &>/dev/null; then
 		local plugin
 		for plugin in "${CLAUDE_MANAGED_PLUGINS[@]}"; do
@@ -628,7 +429,7 @@ remove_claude() {
 		done
 	fi
 
-	# 3) claude-hud 配置及旧版 wrapper 脚本
+	# 2) claude-hud 配置及旧版 wrapper 脚本
 	rm_path ~/.claude/plugins/claude-hud/config.json
 	rm_path ~/.claude/plugins/claude-hud/hud-wrapper.sh
 	rm_path ~/.claude/plugins/claude-hud/hud-proxy.mjs
@@ -640,11 +441,9 @@ remove_claude() {
 	if command -v claude &>/dev/null; then
 		local mcp
 		for mcp in "${CLAUDE_MANAGED_MCPS[@]}"; do
-			[[ "$mcp" == "bb-browser" ]] && continue
 			remove_claude_mcp_if_present "$mcp"
 		done
 	fi
-	remove_managed_claude_bb_browser_mcp_if_present
 
 	print_success "Claude Code 配置已清理"
 	print_dim "💡 Claude Code CLI 本身未在此步骤卸载；如需清理 Dotfiles 托管的 Node CLI，请运行 uninstall.sh --dotfiles"
@@ -655,10 +454,8 @@ remove_dotfiles() {
 	print_info "🗑️ 删除 Dotfiles..."
 
 	remove_dotfiles_superpowers
-	remove_bb_browser
 	remove_managed_node_clis
 	remove_manifested_dotfiles
-	strip_toml_section_in_place "$HOME/.codex/config.toml" "[mcp_servers.bb-browser]"
 	remove_dotfiles_ssh_include_block
 
 	# 清理 Git LFS 配置

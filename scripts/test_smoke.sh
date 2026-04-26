@@ -40,7 +40,6 @@ serialized = json.dumps(data, sort_keys=True)
 def fail(message):
     raise SystemExit(message)
 
-
 def click_rule_matches(rule, from_key, to_key, to_if_alone_kind):
     manipulators = rule.get("manipulators", [])
     if len(manipulators) != 1:
@@ -77,13 +76,11 @@ def click_rule_matches(rule, from_key, to_key, to_if_alone_kind):
         return "to_if_alone" not in manipulator
     fail(f"unexpected click rule kind {to_if_alone_kind!r}")
 
-
 def unique_click_rule(rule_kind, from_key, to_key, to_if_alone_kind):
     matches = [item for item in rules if click_rule_matches(item, from_key, to_key, to_if_alone_kind)]
     if len(matches) != 1:
         fail(f"expected exactly one {rule_kind} IME click rule for {from_key}")
     return matches[0]
-
 
 def fallback_rule():
     matches = []
@@ -108,7 +105,6 @@ def fallback_rule():
     if len(matches) == 0:
         return None
     fail("expected exactly one plain caps fallback rule")
-
 
 stale_symbols = tuple(
     "".join(parts)
@@ -333,36 +329,6 @@ esac
 exit 0
 EOF
 	chmod +x "$fake_bin/claude"
-}
-
-write_fake_study_master_git() {
-	local fake_bin="$1" expected_repo="$2" clone_content="$3" pull_content="$4" git_log="$5"
-	cat >"$fake_bin/git" <<EOF
-#!/bin/sh
-if [ "\$1" = "clone" ] && [ "\$2" = "--depth" ] && [ "\$3" = "1" ] && [ "\$4" = "$expected_repo" ]; then
-  dest="\$5"
-  mkdir -p "\$dest/.git" "\$dest/study-master-skill/hooks"
-  printf '%s\n' '$clone_content' >"\$dest/study-master-skill/SKILL.md"
-  printf '#!/bin/sh\nexit 0\n' >"\$dest/study-master-skill/hooks/check-study_master.sh"
-  mkdir -p "$(dirname "$git_log")"
-  printf 'clone %s\n' "\$dest" >>"$git_log"
-  exit 0
-fi
-if [ "\$1" = "-C" ] && [ "\$3" = "remote" ] && [ "\$4" = "get-url" ] && [ "\$5" = "origin" ]; then
-  printf '%s\n' "$expected_repo"
-  exit 0
-fi
-if [ "\$1" = "-C" ] && [ "\$3" = "pull" ] && [ "\$4" = "--ff-only" ]; then
-  repo_dir="\$2"
-  printf '%s\n' '$pull_content' >"\$repo_dir/study-master-skill/SKILL.md"
-  printf '#!/bin/sh\nexit 0\n' >"\$repo_dir/study-master-skill/hooks/check-study_master.sh"
-  mkdir -p "$(dirname "$git_log")"
-  printf 'pull %s\n' "\$repo_dir" >>"$git_log"
-  exit 0
-fi
-exit 1
-EOF
-	chmod +x "$fake_bin/git"
 }
 
 test_superpowers_clone_does_not_retry_github_ssh_failures() {
@@ -890,35 +856,6 @@ PY
 	assert_contains "expected exactly one IME click rule for left_shift" "$log"
 }
 
-test_dotfiles_deploys_bb_browser_shell_plugin() {
-	local tmp_home fake_bin log manifest superpowers_repo
-	tmp_home=$(make_temp_dir)
-	fake_bin=$(make_temp_dir)
-	log="$tmp_home/install-dotfiles.log"
-	manifest="$tmp_home/.local/state/dotfiles/dotfiles-manifest.tsv"
-	superpowers_repo=$(make_fake_superpowers_repo)
-	trap "rm -rf '$tmp_home' '$fake_bin' '$superpowers_repo'" RETURN
-
-	cat >"$fake_bin/zsh" <<'EOF'
-#!/bin/sh
-exit 0
-EOF
-	cat >"$fake_bin/keychain" <<'EOF'
-#!/bin/sh
-exit 0
-EOF
-	chmod +x "$fake_bin/zsh" "$fake_bin/keychain"
-
-	if ! run_dotfiles_install "$tmp_home" "$fake_bin" "$superpowers_repo" "$log"; then
-		cat "$log" >&2
-		fail "install_dotfiles.sh failed"
-	fi
-
-	assert_file_exists "$tmp_home/.config/zsh/plugins/bb-browser.zsh"
-	assert_contains 'source "${HOME}/.config/zsh/plugins/bb-browser.zsh"' "$tmp_home/.zshrc"
-	assert_contains "$tmp_home/.config/zsh/plugins/bb-browser.zsh" "$manifest"
-}
-
 test_dotfiles_precleans_zinit_stale_completions() {
 	local tmp_home fake_bin log superpowers_repo zsh_calls stale_link
 	tmp_home=$(make_temp_dir)
@@ -1009,1644 +946,6 @@ EOF
 
 	assert_contains "Zinit completions 已清理" "$log"
 	assert_contains "Zinit 插件安装失败" "$log"
-}
-
-test_bb_browser_install_uses_latest_and_deploys_wrapper() {
-	local tmp_home fake_bin log npm_log state_file shim_path
-	tmp_home=$(make_temp_dir)
-	fake_bin=$(make_temp_dir)
-	log="$tmp_home/install-bb-browser.log"
-	npm_log="$tmp_home/npm.log"
-	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
-	shim_path="$tmp_home/.local/bin/bb-browser"
-	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
-
-	mkdir -p "$tmp_home/.config/google-chrome" "$tmp_home/.config/microsoft-edge"
-cat >"$fake_bin/npm" <<EOF
-#!/bin/sh
-printf '%s\n' "\$*" >>"$npm_log"
-if [ "\$1" = "root" ] && [ "\$2" = "-g" ]; then
-  printf '%s\n' "$tmp_home/fake-node-modules"
-  exit 0
-fi
-if [ "\$1" = "install" ] && [ "\$2" = "-g" ] && [ "\$3" = "bb-browser@latest" ]; then
-  cat >"$fake_bin/bb-browser" <<'INNER'
-#!/bin/sh
-case "\$1" in
-  --version) echo 'bb-browser 9.9.9' ;;
-  --mcp)
-    cat >/dev/null
-    printf '%s\n' '{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{}},"serverInfo":{"name":"bb-browser","version":"9.9.9"}}}'
-    printf '%s\n' '{"jsonrpc":"2.0","id":2,"result":{"tools":[]}}'
-    exit 0
-    ;;
-  *) exit 0 ;;
-esac
-INNER
-  chmod +x "$fake_bin/bb-browser"
-  mkdir -p "$tmp_home/fake-node-modules/bb-browser/dist"
-  : >"$tmp_home/fake-node-modules/bb-browser/dist/daemon.js"
-fi
-exit 0
-EOF
-	cat >"$fake_bin/node" <<'EOF'
-#!/bin/sh
-exit 0
-EOF
-	cat >"$fake_bin/curl" <<'EOF'
-#!/bin/sh
-url=""
-for arg in "$@"; do
-  url="$arg"
-done
-case "$url" in
-  http://127.0.0.1:19825/json/version)
-    printf '%s\n' '{}'
-    exit 0
-    ;;
-  http://127.0.0.1:19824/status)
-    printf '%s\n' '{"running":true}'
-    exit 0
-    ;;
-esac
-exit 22
-EOF
-	cat >"$fake_bin/google-chrome" <<'EOF'
-#!/bin/sh
-exit 0
-EOF
-	cat >"$fake_bin/microsoft-edge" <<'EOF'
-#!/bin/sh
-exit 0
-EOF
-	cat >"$fake_bin/uname" <<'EOF'
-#!/bin/sh
-echo 'Linux'
-EOF
-	chmod +x "$fake_bin/npm" "$fake_bin/node" "$fake_bin/curl" "$fake_bin/google-chrome" "$fake_bin/microsoft-edge" "$fake_bin/uname"
-
-	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
-		BB_BROWSER_CDP_URL="http://127.0.0.1:19825" \
-		bash "$REPO_ROOT/scripts/install_bb_browser.sh" >"$log" 2>&1; then
-		cat "$log" >&2
-		fail "install_bb_browser.sh failed"
-	fi
-
-	assert_executable "$shim_path"
-	assert_executable "$tmp_home/.local/bin/bb-browser-user"
-	assert_file_exists "$state_file"
-	assert_contains "install" "$npm_log"
-	assert_contains "bb-browser@latest" "$npm_log"
-	assert_contains "PREEXISTING_BB_BROWSER=0" "$state_file"
-	assert_contains "REAL_BB_BROWSER_PATH=$fake_bin/bb-browser" "$state_file"
-}
-
-test_bb_browser_install_patches_managed_mcp_dist_file_only() {
-	local tmp_home fake_bin log npm_log state_file mcp_file real_node
-	tmp_home=$(make_temp_dir)
-	fake_bin=$(make_temp_dir)
-	log="$tmp_home/install-bb-browser-patch.log"
-	npm_log="$tmp_home/npm-patch.log"
-	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
-	mcp_file="$tmp_home/fake-node-modules/bb-browser/dist/mcp.js"
-	real_node="$(command -v node)"
-	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
-
-	mkdir -p "$tmp_home/.config/google-chrome" "$tmp_home/.config/microsoft-edge"
-cat >"$fake_bin/npm" <<EOF
-#!/bin/sh
-printf '%s\n' "\$*" >>"$npm_log"
-if [ "\$1" = "root" ] && [ "\$2" = "-g" ]; then
-  printf '%s\n' "$tmp_home/fake-node-modules"
-  exit 0
-fi
-if [ "\$1" = "install" ] && [ "\$2" = "-g" ] && [ "\$3" = "bb-browser@latest" ]; then
-  cat >"$fake_bin/bb-browser" <<'INNER'
-#!/bin/sh
-case "\$1" in
-  --version) echo 'bb-browser 9.9.9' ;;
-  --mcp)
-    cat >/dev/null
-    printf '%s\n' '{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{}},"serverInfo":{"name":"bb-browser","version":"9.9.9"}}}'
-    printf '%s\n' '{"jsonrpc":"2.0","id":2,"result":{"tools":[]}}'
-    exit 0
-    ;;
-  *) exit 0 ;;
-esac
-INNER
-  chmod +x "$fake_bin/bb-browser"
-  mkdir -p "$tmp_home/fake-node-modules/bb-browser/dist"
-  : >"$tmp_home/fake-node-modules/bb-browser/dist/daemon.js"
-  cat >"$mcp_file" <<'INNER'
-import { execFile, spawn } from "child_process";
-import { existsSync } from "fs";
-import { dirname, resolve } from "path";
-var sessionOpenedTabs = /* @__PURE__ */ new Set();
-async function isDaemonRunning() {
-  try {
-    const controller = new AbortController();
-    const t = setTimeout(() => controller.abort(), 2000);
-    const res = await fetch(\`\${DAEMON_BASE_URL}/status\`, { signal: controller.signal });
-    clearTimeout(t);
-    return res.ok;
-  } catch { return false; }
-}
-async function ensureDaemon() {
-  if (await isDaemonRunning()) return;
-  const child = spawn(process.execPath, [getDaemonPath()], {
-    detached: true,
-    stdio: "ignore",
-    env: { ...process.env }
-  });
-  child.unref();
-}
-async function sendCommand(request) {
-  await ensureDaemon();
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), COMMAND_TIMEOUT);
-  const response = await fetch(\`\${DAEMON_BASE_URL}/command\`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(request),
-    signal: controller.signal
-  });
-  clearTimeout(timeoutId);
-  return await response.json();
-}
-INNER
-fi
-exit 0
-EOF
-	cat >"$fake_bin/node" <<EOF
-#!/bin/sh
-case "\$1" in
-  "$REPO_ROOT/scripts/patch_bb_browser_dist.mjs")
-    exec "$real_node" "\$@"
-    ;;
-  -e)
-    exit 0
-    ;;
-esac
-exit 0
-EOF
-	cat >"$fake_bin/curl" <<'EOF'
-#!/bin/sh
-url=""
-for arg in "$@"; do
-  url="$arg"
-done
-case "$url" in
-  http://127.0.0.1:19825/json/version)
-    printf '%s\n' '{}'
-    exit 0
-    ;;
-  http://127.0.0.1:19824/status)
-    printf '%s\n' '{"running":true}'
-    exit 0
-    ;;
-esac
-exit 22
-EOF
-	cat >"$fake_bin/google-chrome" <<'EOF'
-#!/bin/sh
-exit 0
-EOF
-	cat >"$fake_bin/microsoft-edge" <<'EOF'
-#!/bin/sh
-exit 0
-EOF
-	cat >"$fake_bin/uname" <<'EOF'
-#!/bin/sh
-echo 'Linux'
-EOF
-	chmod +x "$fake_bin/npm" "$fake_bin/node" "$fake_bin/curl" "$fake_bin/google-chrome" "$fake_bin/microsoft-edge" "$fake_bin/uname"
-
-	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
-		BB_BROWSER_CDP_URL="http://127.0.0.1:19825" \
-		bash "$REPO_ROOT/scripts/install_bb_browser.sh" >"$log" 2>&1; then
-		cat "$log" >&2
-		fail "install_bb_browser.sh patch case failed"
-	fi
-
-	assert_executable "$tmp_home/.local/bin/bb-browser-user"
-	assert_file_exists "$state_file"
-	assert_contains 'import { readFile } from "fs/promises";' "$mcp_file"
-	assert_contains 'var MCP_DAEMON_BASE_URL = DAEMON_BASE_URL.replace("://localhost:", "://127.0.0.1:");' "$mcp_file"
-	assert_contains 'if (res.status === 401 && cachedDaemonToken && !retrying) {' "$mcp_file"
-	assert_contains 'Authorization: `Bearer ${token}`' "$mcp_file"
-	assert_contains '// If bb-browser already uses daemon.json config, it has native token/host support.' "$REPO_ROOT/scripts/patch_bb_browser_dist.mjs"
-}
-
-test_bb_browser_dist_patch_supports_mcp_spawn_with_cdp_args_without_cli_js() {
-	local tmp_dir dist_dir mcp_file output_file
-	tmp_dir=$(make_temp_dir)
-	dist_dir="$tmp_dir/dist"
-	mcp_file="$dist_dir/mcp.js"
-	output_file="$tmp_dir/patch-output.log"
-	trap 'rm -rf "${tmp_dir:-}"' RETURN
-
-	mkdir -p "$dist_dir"
-	cat >"$mcp_file" <<'EOF'
-import { execFile, spawn } from "child_process";
-import { existsSync } from "fs";
-import { fileURLToPath } from "url";
-import { dirname, resolve } from "path";
-var sessionOpenedTabs = /* @__PURE__ */ new Set();
-function getDaemonPath() {
-  const currentDir = dirname(fileURLToPath(import.meta.url));
-  const sameDirPath = resolve(currentDir, "daemon.js");
-  if (existsSync(sameDirPath)) return sameDirPath;
-  return resolve(currentDir, "../../daemon/dist/index.js");
-}
-async function isDaemonRunning() {
-  try {
-    const controller = new AbortController();
-    const t = setTimeout(() => controller.abort(), 2e3);
-    const res = await fetch(`${DAEMON_BASE_URL}/status`, { signal: controller.signal });
-    clearTimeout(t);
-    return res.ok;
-  } catch {
-    return false;
-  }
-}
-async function ensureDaemon() {
-  if (await isDaemonRunning()) return;
-  let cdpArgs = [];
-  try {
-    const cliPath = getCliPath();
-    await new Promise((resolve2, reject) => {
-      execFile(process.execPath, [cliPath, "daemon", "status", "--json"], { timeout: 15e3 }, (err, stdout) => {
-        if (err) reject(err);
-        else resolve2(stdout);
-      });
-    });
-    if (await isDaemonRunning()) return;
-  } catch {
-    const { readFile } = await import("fs/promises");
-    const os = await import("os");
-    const path = await import("path");
-    try {
-      const portFile = path.join(os.default.homedir(), ".bb-browser", "browser", "cdp-port");
-      const port = (await readFile(portFile, "utf8")).trim();
-      if (port) cdpArgs = ["--cdp-port", port];
-    } catch {
-    }
-  }
-  const child = spawn(process.execPath, [getDaemonPath(), ...cdpArgs], {
-    detached: true,
-    stdio: "ignore",
-    env: { ...process.env }
-  });
-  child.unref();
-}
-async function sendCommand(request) {
-  await ensureDaemon();
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), COMMAND_TIMEOUT);
-  try {
-    const response = await fetch(`${DAEMON_BASE_URL}/command`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(request),
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
-    return await response.json();
-  } catch (error) {
-    clearTimeout(timeoutId);
-    throw error;
-  }
-}
-EOF
-
-	if ! node "$REPO_ROOT/scripts/patch_bb_browser_dist.mjs" "$dist_dir" >"$output_file" 2>&1; then
-		cat "$output_file" >&2
-		fail "patch_bb_browser_dist.mjs failed on mcp cdpArgs variant without cli.js"
-	fi
-
-	assert_contains 'patched 1 file(s)' "$output_file"
-	assert_contains 'var MCP_DAEMON_BASE_URL = DAEMON_BASE_URL.replace("://localhost:", "://127.0.0.1:");' "$mcp_file"
-	assert_contains 'const child = spawn(process.execPath, [getDaemonPath(), "--host", "127.0.0.1", ...cdpArgs], {' "$mcp_file"
-	assert_contains 'const response = await daemonFetch(`${MCP_DAEMON_BASE_URL}/command`' "$mcp_file"
-}
-
-test_managed_xiaohongshu_search_template_corrects_stale_search_context() {
-	local template_path first_result first_title first_url
-	template_path="$REPO_ROOT/scripts/bb-browser-sites/xiaohongshu/search.js"
-	assert_file_exists "$template_path"
-
-	first_result="$(
-		node - "$template_path" <<'NODE'
-const fs = require("fs");
-
-const templatePath = process.argv[2];
-const raw = fs.readFileSync(templatePath, "utf8");
-const fnSource = raw.replace(/\/\*[\s\S]*?\*\/\s*/, "");
-const adapterFn = eval(`(${fnSource})`);
-
-function makeStoreFeed(title, author = "作者", likes = "1") {
-  return {
-    id: title,
-    xsecToken: `tok-${title}`,
-    noteCard: {
-      displayTitle: title,
-      type: "normal",
-      user: { nickname: author },
-      interactInfo: { likedCount: likes },
-    },
-  };
-}
-
-function makeResp(title, author = "作者", likes = "1") {
-  return {
-    success: true,
-    data: {
-      has_more: true,
-      items: [
-        {
-          id: `id-${title}`,
-          xsec_token: `xt-${title}`,
-          note_card: {
-            display_title: title,
-            type: "normal",
-            user: { nickname: author },
-            interact_info: { liked_count: likes },
-          },
-        },
-      ],
-    },
-  };
-}
-
-(async () => {
-  const originalSetTimeout = globalThis.setTimeout;
-  const originalDocument = globalThis.document;
-  const originalXHR = globalThis.XMLHttpRequest;
-
-  try {
-    globalThis.setTimeout = (fn) => {
-      fn();
-      return 0;
-    };
-
-    const searchStore = {
-      searchValue: "AI agent",
-      hasMore: true,
-      feeds: [makeStoreFeed("AI标题", "AI作者", "99")],
-      searchContext: { keyword: "AI agent", page: 7, searchId: "old-search-id" },
-      rootSearchId: "old-search-id",
-      resetSearchNoteStore() {
-        this.feeds = [];
-      },
-      resetSearchRelatedInfo() {},
-      setRootSearchId(value) {
-        this.rootSearchId = value;
-      },
-      mutateSearchValue(value) {
-        this.searchValue = value;
-      },
-      async loadMore() {
-        const xhr = new XMLHttpRequest();
-        xhr.open("POST", "//edith.xiaohongshu.com/api/sns/web/v1/search/notes");
-        xhr.send(JSON.stringify({
-          keyword: this.searchContext.keyword,
-          page: this.searchContext.page,
-          page_size: 20,
-          search_id: this.searchContext.searchId,
-          sort: "general",
-          note_type: 0,
-          ext_flags: [],
-          geo: "",
-          image_formats: ["jpg", "webp", "avif"],
-        }));
-      },
-    };
-
-    globalThis.document = {
-      querySelector(selector) {
-        if (selector !== "#app") return null;
-        return {
-          __vue_app__: {
-            config: {
-              globalProperties: {
-                $pinia: {
-                  _s: new Map([["search", searchStore]]),
-                },
-              },
-            },
-          },
-        };
-      },
-    };
-
-    class MockXHR {
-      constructor() {
-        this.listeners = {};
-        this.readyState = 0;
-        this.responseText = "";
-        this.__url = "";
-      }
-      open(method, url) {
-        this.__url = url;
-      }
-      addEventListener(type, fn) {
-        this.listeners[type] ||= [];
-        this.listeners[type].push(fn);
-      }
-      send(body) {
-        const parsed = JSON.parse(body);
-        const response = parsed.keyword === "美食" && parsed.page === 1
-          ? makeResp("家常菜", "弘学美食日记", "4081")
-          : makeResp("AI标题", "AI作者", "99");
-
-        searchStore.feeds = response.data.items.map((item) => ({
-          id: item.id,
-          xsecToken: item.xsec_token,
-          noteCard: {
-            displayTitle: item.note_card.display_title,
-            type: item.note_card.type,
-            user: { nickname: item.note_card.user.nickname },
-            interactInfo: { likedCount: item.note_card.interact_info.liked_count },
-          },
-        }));
-        searchStore.searchContext.keyword = parsed.keyword;
-        searchStore.searchContext.page = parsed.page;
-        searchStore.searchContext.searchId = parsed.search_id;
-        this.readyState = 4;
-        this.responseText = JSON.stringify(response);
-        for (const fn of this.listeners.loadend || []) {
-          fn.call(this);
-        }
-      }
-    }
-
-    globalThis.XMLHttpRequest = MockXHR;
-
-    const result = await adapterFn({ keyword: "美食" });
-    process.stdout.write([
-      result.notes?.[0]?.title || "",
-      result.notes?.[0]?.url || "",
-    ].join("\t"));
-  } finally {
-    globalThis.setTimeout = originalSetTimeout;
-    globalThis.document = originalDocument;
-    globalThis.XMLHttpRequest = originalXHR;
-  }
-})().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
-NODE
-	)"
-
-	first_title="${first_result%%	*}"
-	first_url="${first_result#*	}"
-
-	assert_equal "家常菜" "$first_title" "managed xiaohongshu template stale context result"
-	[[ "$first_url" == *"https://www.xiaohongshu.com/explore/id-家常菜"* ]] || fail "Expected openable note URL, got '$first_url'"
-	[[ "$first_url" == *"xsec_token=xt-%E5%AE%B6%E5%B8%B8%E8%8F%9C"* ]] || fail "Expected xsec_token in note URL, got '$first_url'"
-	[[ "$first_url" == *"xsec_source=pc_search"* ]] || fail "Expected xsec_source in note URL, got '$first_url'"
-}
-
-test_bb_browser_install_discovers_browser_and_launches_cdp() {
-	local tmp_home fake_bin log npm_log chrome_log edge_log fetch_log daemon_log pkill_log ready_file daemon_ready_file config_file state_file wrapper_path token_file version_output
-	tmp_home=$(make_temp_dir)
-	fake_bin=$(make_temp_dir)
-	log="$tmp_home/install-bb-browser-discovery.log"
-	npm_log="$tmp_home/npm-discovery.log"
-	chrome_log="$tmp_home/google-chrome.log"
-	edge_log="$tmp_home/microsoft-edge.log"
-	fetch_log="$tmp_home/node-fetch.log"
-	daemon_log="$tmp_home/daemon.log"
-	pkill_log="$tmp_home/pkill.log"
-	ready_file="$tmp_home/.cdp-ready-19825"
-	daemon_ready_file="$tmp_home/.daemon-ready"
-	config_file="$tmp_home/.config/dotfiles/bb-browser.json"
-	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
-	wrapper_path="$tmp_home/.local/bin/bb-browser-user"
-	token_file="$tmp_home/.bb-browser/daemon.token"
-	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
-
-	mkdir -p "$(dirname "$config_file")" "$tmp_home/.config/google-chrome" "$tmp_home/.config/microsoft-edge"
-	cat >"$config_file" <<'EOF'
-{"browser":"microsoft-edge","port":24444,"profileDirectory":"Profile 9"}
-EOF
-
-cat >"$fake_bin/npm" <<EOF
-#!/bin/sh
-printf '%s\n' "\$*" >>"$npm_log"
-if [ "\$1" = "root" ] && [ "\$2" = "-g" ]; then
-  printf '%s\n' "$tmp_home/fake-node-modules"
-  exit 0
-fi
-if [ "\$1" = "install" ] && [ "\$2" = "-g" ] && [ "\$3" = "bb-browser@latest" ]; then
-  cat >"$fake_bin/bb-browser" <<'INNER'
-#!/bin/sh
-case "\$1" in
-  --version) echo 'bb-browser 9.9.9' ;;
-  --mcp)
-    cat >/dev/null
-    printf '%s\n' '{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{}},"serverInfo":{"name":"bb-browser","version":"9.9.9"}}}'
-    printf '%s\n' '{"jsonrpc":"2.0","id":2,"result":{"tools":[]}}'
-    exit 0
-    ;;
-  *) exit 0 ;;
-esac
-INNER
-  chmod +x "$fake_bin/bb-browser"
-  mkdir -p "$tmp_home/fake-node-modules/bb-browser/dist"
-  : >"$tmp_home/fake-node-modules/bb-browser/dist/daemon.js"
-fi
-exit 0
-EOF
-	cat >"$fake_bin/node" <<EOF
-#!/bin/sh
-case "\$1" in
-  *daemon.js)
-    printf '%s\n' "\$*" >>"$daemon_log"
-    mkdir -p "$(dirname "$token_file")"
-    : >"$daemon_ready_file"
-    exit 0
-    ;;
-esac
-script="\$2"
-arg="\$3"
-status_url="\$4"
-case "\$script" in
-  *fetch*)
-    printf '%s\n' "\$arg" >>"$fetch_log"
-    case "\$status_url" in
-      http://127.0.0.1:19824/status)
-        [ -f "$daemon_ready_file" ] && exit 0
-        exit 1
-        ;;
-    esac
-    case "\$arg" in
-      http://127.0.0.1:19825|http://127.0.0.1:19825/json/version)
-        [ -f "$ready_file" ] && exit 0
-        exit 1
-        ;;
-    esac
-    exit 1
-    ;;
-  *crypto.randomBytes*)
-    /bin/cat <<'INNER'
-daemon-token
-INNER
-    exit 0
-    ;;
-  *url.hostname*)
-    /bin/cat <<'INNER'
-127.0.0.1
-INNER
-    exit 0
-    ;;
-  *url.port*)
-    /bin/cat <<'INNER'
-19825
-INNER
-    exit 0
-    ;;
-  *config.browser*config.port*config.profileDirectory*)
-    /bin/cat <<'INNER'
-microsoft-edge
-19825
-Default
-INNER
-    exit 0
-    ;;
-esac
-exit 0
-EOF
-	cat >"$fake_bin/google-chrome" <<EOF
-#!/bin/sh
-printf '%s\n' "\$*" >>"$chrome_log"
-exit 0
-EOF
-	cat >"$fake_bin/microsoft-edge" <<EOF
-#!/bin/sh
-printf '%s\n' "\$*" >>"$edge_log"
-port=""
-for arg in "\$@"; do
-  case "\$arg" in
-    --remote-debugging-port=*)
-      port="\${arg#--remote-debugging-port=}"
-      ;;
-  esac
-done
-[ -n "\$port" ] && : >"$ready_file"
-exit 0
-EOF
-	cat >"$fake_bin/uname" <<'EOF'
-#!/bin/sh
-echo 'Linux'
-EOF
-	cat >"$fake_bin/openssl" <<'EOF'
-#!/bin/sh
-printf '%s\n' 'daemon-token'
-EOF
-	cat >"$fake_bin/curl" <<EOF
-#!/bin/sh
-url=""
-for arg in "\$@"; do
-  url="\$arg"
-done
-printf '%s\n' "\$url" >>"$fetch_log"
-case "\$url" in
-  http://127.0.0.1:19824/status)
-    [ -f "$daemon_ready_file" ] || exit 22
-    printf '%s\n' '{"running":true}'
-    exit 0
-    ;;
-  http://127.0.0.1:19825/json/version)
-    [ -f "$ready_file" ] || exit 22
-    printf '%s\n' '{}'
-    exit 0
-    ;;
-esac
-exit 22
-EOF
-	cat >"$fake_bin/pkill" <<EOF
-#!/bin/sh
-	printf '%s\n' "\$*" >>"$pkill_log"
-	exit 0
-EOF
-	chmod +x "$fake_bin/npm" "$fake_bin/node" "$fake_bin/google-chrome" "$fake_bin/microsoft-edge" "$fake_bin/uname" "$fake_bin/openssl" "$fake_bin/curl" "$fake_bin/pkill"
-
-	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
-		bash "$REPO_ROOT/scripts/install_bb_browser.sh" >"$log" 2>&1; then
-		cat "$log" >&2
-		fail "install_bb_browser.sh discovery case failed"
-	fi
-
-	version_output="$(
-		HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
-			bash "$wrapper_path" --version
-	)"
-
-	assert_executable "$wrapper_path"
-	assert_file_exists "$state_file"
-	assert_equal "bb-browser 9.9.9" "$version_output" "wrapper version output"
-	assert_contains "http://127.0.0.1:19825" "$fetch_log"
-	assert_contains "remote-debugging-port=19825" "$edge_log"
-	assert_contains "user-data-dir=$tmp_home/.config/microsoft-edge" "$edge_log"
-	assert_contains "profile-directory=Default" "$edge_log"
-	assert_contains "about:blank" "$edge_log"
-	grep -qF -- "-H 127.0.0.1" "$daemon_log" || fail "Expected '-H 127.0.0.1' in $daemon_log"
-	grep -qF -- "--cdp-host 127.0.0.1" "$daemon_log" || fail "Expected '--cdp-host 127.0.0.1' in $daemon_log"
-	grep -qF -- "--cdp-port 19825" "$daemon_log" || fail "Expected '--cdp-port 19825' in $daemon_log"
-	grep -qF -- "--port 19824" "$daemon_log" || fail "Expected '--port 19824' in $daemon_log"
-	grep -qF -- "--token daemon-token" "$daemon_log" || fail "Expected '--token daemon-token' in $daemon_log"
-	assert_file_exists "$token_file"
-	assert_mode "600" "$token_file"
-	assert_file_missing "$chrome_log"
-	assert_file_missing "$pkill_log"
-}
-
-test_bb_browser_install_keeps_token_private_when_chmod_fails() {
-	local tmp_home fake_bin log npm_log edge_log fetch_log daemon_log ready_file daemon_ready_file config_file token_file wrapper_path version_output
-	tmp_home=$(make_temp_dir)
-	fake_bin=$(make_temp_dir)
-	log="$tmp_home/install-bb-browser-token-mode.log"
-	npm_log="$tmp_home/npm-token-mode.log"
-	edge_log="$tmp_home/microsoft-edge-token-mode.log"
-	fetch_log="$tmp_home/node-fetch-token-mode.log"
-	daemon_log="$tmp_home/daemon-token-mode.log"
-	ready_file="$tmp_home/.cdp-ready-19825"
-	daemon_ready_file="$tmp_home/.daemon-ready"
-	config_file="$tmp_home/.config/dotfiles/bb-browser.json"
-	token_file="$tmp_home/.bb-browser/daemon.token"
-	wrapper_path="$tmp_home/.local/bin/bb-browser-user"
-	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
-
-	mkdir -p "$(dirname "$config_file")" "$tmp_home/.config/microsoft-edge"
-	cat >"$config_file" <<'EOF'
-{"browser":"microsoft-edge","port":24444,"profileDirectory":"Profile 9"}
-EOF
-
-	cat >"$fake_bin/npm" <<EOF
-#!/bin/sh
-printf '%s\n' "\$*" >>"$npm_log"
-if [ "\$1" = "root" ] && [ "\$2" = "-g" ]; then
-  printf '%s\n' "$tmp_home/fake-node-modules"
-  exit 0
-fi
-if [ "\$1" = "install" ] && [ "\$2" = "-g" ] && [ "\$3" = "bb-browser@latest" ]; then
-  cat >"$fake_bin/bb-browser" <<'INNER'
-#!/bin/sh
-case "\$1" in
-  --version) echo 'bb-browser 9.9.9' ;;
-  --mcp)
-    cat >/dev/null
-    printf '%s\n' '{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{}},"serverInfo":{"name":"bb-browser","version":"9.9.9"}}}'
-    printf '%s\n' '{"jsonrpc":"2.0","id":2,"result":{"tools":[]}}'
-    exit 0
-    ;;
-  *) exit 0 ;;
-esac
-INNER
-  /bin/chmod +x "$fake_bin/bb-browser"
-  mkdir -p "$tmp_home/fake-node-modules/bb-browser/dist"
-  : >"$tmp_home/fake-node-modules/bb-browser/dist/daemon.js"
-fi
-exit 0
-EOF
-	cat >"$fake_bin/node" <<EOF
-#!/bin/sh
-case "\$1" in
-  *daemon.js)
-    printf '%s\n' "\$*" >>"$daemon_log"
-    mkdir -p "$(dirname "$token_file")"
-    : >"$daemon_ready_file"
-    exit 0
-    ;;
-esac
-script="\$2"
-arg="\$3"
-status_url="\$4"
-case "\$script" in
-  *fetch*)
-    printf '%s\n' "\$arg" >>"$fetch_log"
-    case "\$status_url" in
-      http://127.0.0.1:19824/status)
-        [ -f "$daemon_ready_file" ] && exit 0
-        exit 1
-        ;;
-    esac
-    case "\$arg" in
-      http://127.0.0.1:19825|http://127.0.0.1:19825/json/version)
-        [ -f "$ready_file" ] && exit 0
-        exit 1
-        ;;
-    esac
-    exit 1
-    ;;
-  *config.browser*config.port*config.profileDirectory*)
-    printf '%s\n%s\n%s\n' 'microsoft-edge' '19825' 'Default'
-    exit 0
-    ;;
-esac
-exit 0
-EOF
-	cat >"$fake_bin/microsoft-edge" <<EOF
-#!/bin/sh
-printf '%s\n' "\$*" >>"$edge_log"
-: >"$ready_file"
-exit 0
-EOF
-	cat >"$fake_bin/uname" <<'EOF'
-#!/bin/sh
-echo 'Linux'
-EOF
-	cat >"$fake_bin/openssl" <<'EOF'
-#!/bin/sh
-printf '%s\n' 'daemon-token'
-EOF
-	cat >"$fake_bin/curl" <<EOF
-#!/bin/sh
-url=""
-for arg in "\$@"; do
-  url="\$arg"
-done
-printf '%s\n' "\$url" >>"$fetch_log"
-case "\$url" in
-  http://127.0.0.1:19824/status)
-    [ -f "$daemon_ready_file" ] || exit 22
-    printf '%s\n' '{"running":true}'
-    exit 0
-    ;;
-  http://127.0.0.1:19825/json/version)
-    [ -f "$ready_file" ] || exit 22
-    printf '%s\n' '{}'
-    exit 0
-    ;;
-esac
-exit 22
-EOF
-	cat >"$fake_bin/chmod" <<EOF
-#!/bin/sh
-last=""
-for arg in "\$@"; do
-  last="\$arg"
-done
-if [ "\$last" = "$token_file" ]; then
-  exit 1
-fi
-exec /bin/chmod "\$@"
-EOF
-	chmod +x "$fake_bin/npm" "$fake_bin/node" "$fake_bin/microsoft-edge" "$fake_bin/uname" "$fake_bin/openssl" "$fake_bin/curl" "$fake_bin/chmod"
-
-	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
-		bash "$REPO_ROOT/scripts/install_bb_browser.sh" >"$log" 2>&1; then
-		cat "$log" >&2
-		fail "install_bb_browser.sh token mode case failed"
-	fi
-
-	version_output="$(
-		HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
-			bash "$wrapper_path" --version
-	)"
-
-	assert_file_exists "$token_file"
-	assert_mode "600" "$token_file"
-	assert_equal "bb-browser 9.9.9" "$version_output" "wrapper version output"
-}
-
-test_bb_browser_install_writes_edge_default_config_and_verifies_mcp() {
-	local tmp_home fake_bin log npm_log edge_log init_log config_file wrapper_path state_file ready_file daemon_ready_file
-	tmp_home=$(make_temp_dir)
-	fake_bin=$(make_temp_dir)
-	log="$tmp_home/install-bb-browser-default-config.log"
-	npm_log="$tmp_home/npm-default-config.log"
-	edge_log="$tmp_home/microsoft-edge-default.log"
-	init_log="$tmp_home/mcp-bootstrap.log"
-	config_file="$tmp_home/.config/dotfiles/bb-browser.json"
-	wrapper_path="$tmp_home/.local/bin/bb-browser-user"
-	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
-	ready_file="$tmp_home/.cdp-ready-19825"
-	daemon_ready_file="$tmp_home/.daemon-ready"
-	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
-
-	mkdir -p "$(dirname "$config_file")" "$tmp_home/.config/microsoft-edge"
-	cat >"$config_file" <<'EOF'
-{"browser":"microsoft-edge","port":19825,"profileDirectory":"Profile bb-browser"}
-EOF
-
-	cat >"$fake_bin/npm" <<EOF
-#!/bin/sh
-printf '%s\n' "\$*" >>"$npm_log"
-if [ "\$1" = "root" ] && [ "\$2" = "-g" ]; then
-  printf '%s\n' "$tmp_home/fake-node-modules"
-  exit 0
-fi
-if [ "\$1" = "install" ] && [ "\$2" = "-g" ] && [ "\$3" = "bb-browser@latest" ]; then
-  cat >"$fake_bin/bb-browser" <<'INNER'
-#!/bin/sh
-case "\$1" in
-  --version) echo 'bb-browser 9.9.9' ;;
-  --mcp)
-    cat >"\${BB_BROWSER_MCP_LOG:-\$HOME/mcp-bootstrap.log}"
-    printf '%s\n' '{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{}},"serverInfo":{"name":"bb-browser","version":"9.9.9"}}}'
-    printf '%s\n' '{"jsonrpc":"2.0","id":2,"result":{"tools":[]}}'
-    exit 0
-    ;;
-  *) exit 0 ;;
-esac
-INNER
-  chmod +x "$fake_bin/bb-browser"
-  mkdir -p "$tmp_home/fake-node-modules/bb-browser/dist"
-  : >"$tmp_home/fake-node-modules/bb-browser/dist/daemon.js"
-  exit 0
-fi
-exit 1
-EOF
-	cat >"$fake_bin/node" <<EOF
-#!/bin/sh
-case "\$1" in
-  *daemon.js)
-    : >"$daemon_ready_file"
-    exit 0
-    ;;
-esac
-script="\$2"
-case "\$script" in
-  *config.browser*config.port*config.profileDirectory*)
-    printf '%s\n%s\n%s\n' 'microsoft-edge' '19825' 'Profile bb-browser'
-    exit 0
-    ;;
-esac
-exit 0
-EOF
-	cat >"$fake_bin/curl" <<EOF
-#!/bin/sh
-url=""
-for arg in "\$@"; do
-  url="\$arg"
-done
-case "\$url" in
-  http://127.0.0.1:19825/json/version)
-    [ -f "$ready_file" ] || exit 22
-    printf '%s\n' '{}'
-    exit 0
-    ;;
-  http://127.0.0.1:19824/status)
-    [ -f "$daemon_ready_file" ] || exit 22
-    printf '%s\n' '{"running":true}'
-    exit 0
-    ;;
-esac
-exit 22
-EOF
-	cat >"$fake_bin/openssl" <<'EOF'
-#!/bin/sh
-printf '%s\n' 'daemon-token'
-EOF
-	cat >"$fake_bin/microsoft-edge" <<EOF
-#!/bin/sh
-printf '%s\n' "\$*" >>"$edge_log"
-: >"$ready_file"
-exit 0
-EOF
-	cat >"$fake_bin/uname" <<'EOF'
-#!/bin/sh
-echo 'Linux'
-EOF
-	chmod +x "$fake_bin/npm" "$fake_bin/node" "$fake_bin/curl" "$fake_bin/openssl" "$fake_bin/microsoft-edge" "$fake_bin/uname"
-
-	if HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
-		BB_BROWSER_MCP_LOG="$init_log" \
-		bash "$REPO_ROOT/scripts/install_bb_browser.sh" >"$log" 2>&1; then
-		:
-	else
-		cat "$log" >&2
-		fail "install_bb_browser.sh default config test failed"
-	fi
-
-	assert_file_exists "$wrapper_path"
-	assert_file_exists "$state_file"
-	assert_file_exists "$config_file"
-	assert_contains '"browser": "microsoft-edge"' "$config_file"
-	assert_contains '"profileDirectory": "Default"' "$config_file"
-	assert_contains '"port": 19825' "$config_file"
-	assert_file_exists "$init_log"
-}
-
-test_bb_browser_wrapper_uses_overridden_loopback_and_daemon_endpoint() {
-	local tmp_home fake_bin log npm_log edge_log fetch_log daemon_log ready_file daemon_ready_file config_file state_file wrapper_path token_file version_output
-	tmp_home=$(make_temp_dir)
-	fake_bin=$(make_temp_dir)
-	log="$tmp_home/install-bb-browser-loopback.log"
-	npm_log="$tmp_home/npm-loopback.log"
-	edge_log="$tmp_home/microsoft-edge-loopback.log"
-	fetch_log="$tmp_home/node-fetch-loopback.log"
-	daemon_log="$tmp_home/daemon-loopback.log"
-	ready_file="$tmp_home/.cdp-ready-19825"
-	daemon_ready_file="$tmp_home/.daemon-ready"
-	config_file="$tmp_home/.config/dotfiles/bb-browser.json"
-	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
-	wrapper_path="$tmp_home/.local/bin/bb-browser-user"
-	token_file="$tmp_home/.bb-browser/daemon.token"
-	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
-
-	mkdir -p "$(dirname "$config_file")" "$tmp_home/.config/microsoft-edge"
-	cat >"$config_file" <<'EOF'
-{"browser":"microsoft-edge","port":24444,"profileDirectory":"Profile 9"}
-EOF
-
-cat >"$fake_bin/npm" <<EOF
-#!/bin/sh
-printf '%s\n' "\$*" >>"$npm_log"
-if [ "\$1" = "root" ] && [ "\$2" = "-g" ]; then
-  printf '%s\n' "$tmp_home/fake-node-modules"
-  exit 0
-fi
-if [ "\$1" = "install" ] && [ "\$2" = "-g" ] && [ "\$3" = "bb-browser@latest" ]; then
-  cat >"$fake_bin/bb-browser" <<'INNER'
-#!/bin/sh
-case "\$1" in
-  --version) echo 'bb-browser 9.9.9' ;;
-  --mcp)
-    cat >/dev/null
-    printf '%s\n' '{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{}},"serverInfo":{"name":"bb-browser","version":"9.9.9"}}}'
-    printf '%s\n' '{"jsonrpc":"2.0","id":2,"result":{"tools":[]}}'
-    exit 0
-    ;;
-  *) exit 0 ;;
-esac
-INNER
-  chmod +x "$fake_bin/bb-browser"
-  mkdir -p "$tmp_home/fake-node-modules/bb-browser/dist"
-  : >"$tmp_home/fake-node-modules/bb-browser/dist/daemon.js"
-fi
-exit 0
-EOF
-	cat >"$fake_bin/node" <<EOF
-#!/bin/sh
-case "\$1" in
-  *daemon.js)
-    printf '%s\n' "\$*" >>"$daemon_log"
-    mkdir -p "$(dirname "$token_file")"
-    : >"$daemon_ready_file"
-    exit 0
-    ;;
-esac
-script="\$2"
-arg="\$3"
-status_url="\$4"
-case "\$script" in
-  *fetch*)
-    printf '%s\n' "\$arg" >>"$fetch_log"
-    case "\$status_url" in
-      http://localhost:24446/status)
-        [ -f "$daemon_ready_file" ] && exit 0
-        exit 1
-        ;;
-    esac
-    case "\$arg" in
-      http://localhost:19825|http://localhost:19825/json/version)
-        [ -f "$ready_file" ] && exit 0
-        exit 1
-        ;;
-    esac
-    exit 1
-    ;;
-  *crypto.randomBytes*)
-    printf '%s\n' 'daemon-token'
-    exit 0
-    ;;
-  *url.hostname*)
-    printf '%s\n' 'localhost'
-    exit 0
-    ;;
-  *url.port*)
-    printf '%s\n' '19825'
-    exit 0
-    ;;
-  *config.browser*config.port*config.profileDirectory*)
-    printf '%s\n%s\n%s\n' 'microsoft-edge' '19825' 'Default'
-    exit 0
-    ;;
-esac
-exit 0
-EOF
-	cat >"$fake_bin/microsoft-edge" <<EOF
-#!/bin/sh
-printf '%s\n' "\$*" >>"$edge_log"
-port=""
-for arg in "\$@"; do
-  case "\$arg" in
-    --remote-debugging-port=*)
-      port="\${arg#--remote-debugging-port=}"
-      ;;
-  esac
-done
-[ -n "\$port" ] && : >"$ready_file"
-exit 0
-EOF
-	cat >"$fake_bin/uname" <<'EOF'
-#!/bin/sh
-echo 'Linux'
-EOF
-	cat >"$fake_bin/openssl" <<'EOF'
-#!/bin/sh
-printf '%s\n' 'daemon-token'
-EOF
-	cat >"$fake_bin/curl" <<EOF
-#!/bin/sh
-url=""
-for arg in "\$@"; do
-  url="\$arg"
-done
-printf '%s\n' "\$url" >>"$fetch_log"
-case "\$url" in
-  http://localhost:24446/status)
-    [ -f "$daemon_ready_file" ] || exit 22
-    printf '%s\n' '{"running":true}'
-    exit 0
-    ;;
-  http://localhost:19825/json/version)
-    [ -f "$ready_file" ] || exit 22
-    printf '%s\n' '{}'
-    exit 0
-    ;;
-esac
-exit 22
-EOF
-	chmod +x "$fake_bin/npm" "$fake_bin/node" "$fake_bin/microsoft-edge" "$fake_bin/uname" "$fake_bin/openssl" "$fake_bin/curl"
-
-	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
-		BB_BROWSER_LOOPBACK_HOST="localhost" \
-		BB_BROWSER_DAEMON_HOST="localhost" \
-		BB_BROWSER_DAEMON_PORT="24446" \
-		bash "$REPO_ROOT/scripts/install_bb_browser.sh" >"$log" 2>&1; then
-		cat "$log" >&2
-		fail "install_bb_browser.sh loopback override case failed"
-	fi
-
-	version_output="$(
-		HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
-			BB_BROWSER_LOOPBACK_HOST="localhost" \
-			BB_BROWSER_DAEMON_HOST="localhost" \
-			BB_BROWSER_DAEMON_PORT="24446" \
-			bash "$wrapper_path" --version
-	)"
-
-	assert_equal "bb-browser 9.9.9" "$version_output" "wrapper version output"
-	assert_contains "http://localhost:19825" "$fetch_log"
-	grep -qF -- "-H localhost" "$daemon_log" || fail "Expected '-H localhost' in $daemon_log"
-	grep -qF -- "--cdp-host localhost" "$daemon_log" || fail "Expected '--cdp-host localhost' in $daemon_log"
-	grep -qF -- "--port 24446" "$daemon_log" || fail "Expected '--port 24446' in $daemon_log"
-	assert_file_exists "$token_file"
-}
-
-test_bb_browser_wrapper_defaults_to_edge_default_profile() {
-	local tmp_home browser profile_dir
-	tmp_home=$(make_temp_dir)
-	trap "rm -rf '$tmp_home'" RETURN
-
-	browser="$(
-		HOME="$tmp_home" PATH="/usr/bin:/bin:/usr/sbin:/sbin" \
-			bash -lc "source '$REPO_ROOT/scripts/bb-browser-user.sh'; configured_browser"
-	)"
-	profile_dir="$(
-		HOME="$tmp_home" PATH="/usr/bin:/bin:/usr/sbin:/sbin" \
-			bash -lc "source '$REPO_ROOT/scripts/bb-browser-user.sh'; configured_profile_directory"
-	)"
-
-	assert_equal "microsoft-edge" "$browser" "default browser"
-	assert_equal "Default" "$profile_dir" "default profile directory"
-}
-
-test_bb_browser_wrapper_doctor_is_side_effect_free() {
-	local tmp_home fake_bin log browser_log daemon_log fetch_log ready_file daemon_ready_file state_file token_file
-	tmp_home=$(make_temp_dir)
-	fake_bin=$(make_temp_dir)
-	log="$tmp_home/bb-browser-doctor.log"
-	browser_log="$tmp_home/microsoft-edge.log"
-	daemon_log="$tmp_home/daemon.log"
-	fetch_log="$tmp_home/node-fetch.log"
-	ready_file="$tmp_home/.cdp-ready-24444"
-	daemon_ready_file="$tmp_home/.daemon-ready"
-	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
-	token_file="$tmp_home/.bb-browser/daemon.token"
-	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
-
-	mkdir -p "$(dirname "$state_file")" "$tmp_home/.config/microsoft-edge" "$tmp_home/fake-node-modules/bb-browser/dist"
-	: >"$tmp_home/fake-node-modules/bb-browser/dist/daemon.js"
-	cat >"$state_file" <<EOF
-PREEXISTING_BB_BROWSER=0
-REAL_BB_BROWSER_PATH=$fake_bin/bb-browser
-EOF
-
-	cat >"$fake_bin/bb-browser" <<'EOF'
-#!/bin/sh
-case "$1" in
-  --version) echo 'bb-browser 9.9.9' ;;
-  *) exit 0 ;;
-esac
-EOF
-	cat >"$fake_bin/npm" <<EOF
-#!/bin/sh
-if [ "\$1" = "root" ] && [ "\$2" = "-g" ]; then
-  printf '%s\n' "$tmp_home/fake-node-modules"
-  exit 0
-fi
-exit 1
-EOF
-	cat >"$fake_bin/node" <<EOF
-#!/bin/sh
-case "\$1" in
-  *daemon.js)
-    printf '%s\n' "\$*" >>"$daemon_log"
-    : >"$daemon_ready_file"
-    exit 0
-    ;;
-esac
-script="\$2"
-arg="\$3"
-status_url="\$4"
-case "\$script" in
-  *fetch*)
-    printf '%s\n' "\$arg" >>"$fetch_log"
-    case "\$status_url" in
-      http://127.0.0.1:19824/status)
-        [ -f "$daemon_ready_file" ] && exit 0
-        exit 1
-        ;;
-    esac
-    case "\$arg" in
-      http://127.0.0.1:24444|http://127.0.0.1:24444/json/version)
-        [ -f "$ready_file" ] && exit 0
-        exit 1
-        ;;
-    esac
-    exit 1
-    ;;
-  *crypto.randomBytes*)
-    printf '%s\n' 'daemon-token'
-    exit 0
-    ;;
-  *url.hostname*)
-    printf '%s\n' '127.0.0.1'
-    exit 0
-    ;;
-  *url.port*)
-    printf '%s\n' '24444'
-    exit 0
-    ;;
-  *config.browser*config.port*config.profileDirectory*)
-    printf '%s\n%s\n%s\n' 'microsoft-edge' '24444' 'Profile bb-browser'
-    exit 0
-    ;;
-esac
-exit 0
-EOF
-	cat >"$fake_bin/microsoft-edge" <<EOF
-#!/bin/sh
-printf '%s\n' "\$*" >>"$browser_log"
-: >"$ready_file"
-exit 0
-EOF
-	cat >"$fake_bin/uname" <<'EOF'
-#!/bin/sh
-echo 'Linux'
-EOF
-	chmod +x "$fake_bin/bb-browser" "$fake_bin/npm" "$fake_bin/node" "$fake_bin/microsoft-edge" "$fake_bin/uname"
-
-	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
-		bash "$REPO_ROOT/scripts/bb-browser-user.sh" doctor >"$log" 2>&1; then
-		cat "$log" >&2
-		fail "bb-browser-user.sh doctor unexpectedly failed"
-	fi
-
-	assert_file_missing "$browser_log"
-	assert_file_missing "$daemon_log"
-	assert_file_missing "$token_file"
-}
-
-test_bb_browser_wrapper_restarts_edge_when_running_without_cdp() {
-	local tmp_home fake_bin wrapper_path state_file config_file edge_log kill_log ready_file daemon_ready_file edge_running_flag version_output
-	tmp_home=$(make_temp_dir)
-	fake_bin=$(make_temp_dir)
-	wrapper_path="$tmp_home/.local/bin/bb-browser-user"
-	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
-	config_file="$tmp_home/.config/dotfiles/bb-browser.json"
-	edge_log="$tmp_home/microsoft-edge-restart.log"
-	kill_log="$tmp_home/pkill.log"
-	ready_file="$tmp_home/.cdp-ready-19825"
-	daemon_ready_file="$tmp_home/.daemon-ready"
-	edge_running_flag="$tmp_home/.edge-running"
-	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
-
-	mkdir -p "$(dirname "$wrapper_path")" "$(dirname "$state_file")" "$(dirname "$config_file")" "$tmp_home/.config/microsoft-edge" "$tmp_home/fake-node-modules/bb-browser/dist"
-	: >"$tmp_home/fake-node-modules/bb-browser/dist/daemon.js"
-	: >"$edge_running_flag"
-	cp "$REPO_ROOT/scripts/bb-browser-user.sh" "$wrapper_path"
-	chmod +x "$wrapper_path"
-	cat >"$config_file" <<'EOF'
-{"browser":"microsoft-edge","port":19825,"profileDirectory":"Default"}
-EOF
-	cat >"$state_file" <<EOF
-PREEXISTING_BB_BROWSER=0
-REAL_BB_BROWSER_PATH=$fake_bin/bb-browser
-EOF
-
-	cat >"$fake_bin/bb-browser" <<'EOF'
-#!/bin/sh
-case "$1" in
-  --version) echo 'bb-browser 9.9.9' ;;
-  *) exit 0 ;;
-esac
-EOF
-	cat >"$fake_bin/npm" <<EOF
-#!/bin/sh
-if [ "\$1" = "root" ] && [ "\$2" = "-g" ]; then
-  printf '%s\n' "$tmp_home/fake-node-modules"
-  exit 0
-fi
-exit 1
-EOF
-	cat >"$fake_bin/node" <<EOF
-#!/bin/sh
-case "\$1" in
-  *daemon.js)
-    : >"$daemon_ready_file"
-    exit 0
-    ;;
-esac
-exit 0
-EOF
-	cat >"$fake_bin/curl" <<EOF
-#!/bin/sh
-url=""
-for arg in "\$@"; do
-  url="\$arg"
-done
-case "\$url" in
-  http://127.0.0.1:19825/json/version)
-    [ -f "$ready_file" ] || exit 22
-    printf '%s\n' '{}'
-    exit 0
-    ;;
-  http://127.0.0.1:19824/status)
-    [ -f "$daemon_ready_file" ] || exit 22
-    printf '%s\n' '{"running":true}'
-    exit 0
-    ;;
-esac
-exit 22
-EOF
-	cat >"$fake_bin/pgrep" <<EOF
-#!/bin/sh
-[ -f "$edge_running_flag" ] && exit 0
-exit 1
-EOF
-	cat >"$fake_bin/pkill" <<EOF
-#!/bin/sh
-printf '%s\n' "\$*" >>"$kill_log"
-rm -f "$edge_running_flag"
-exit 0
-EOF
-	cat >"$fake_bin/microsoft-edge" <<EOF
-#!/bin/sh
-printf '%s\n' "\$*" >>"$edge_log"
-if [ ! -f "$edge_running_flag" ]; then
-  : >"$ready_file"
-fi
-exit 0
-EOF
-	cat >"$fake_bin/openssl" <<'EOF'
-#!/bin/sh
-printf '%s\n' 'daemon-token'
-EOF
-	cat >"$fake_bin/uname" <<'EOF'
-#!/bin/sh
-echo 'Linux'
-EOF
-	chmod +x "$fake_bin/bb-browser" "$fake_bin/npm" "$fake_bin/node" "$fake_bin/curl" "$fake_bin/pgrep" "$fake_bin/pkill" "$fake_bin/microsoft-edge" "$fake_bin/openssl" "$fake_bin/uname"
-
-	version_output="$(
-		HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
-			bash "$wrapper_path" --version
-	)"
-
-	assert_equal "bb-browser 9.9.9" "$version_output" "wrapper version output"
-	assert_contains "microsoft-edge" "$kill_log"
-	assert_contains "remote-debugging-port=19825" "$edge_log"
-	assert_contains "profile-directory=Default" "$edge_log"
-}
-
-test_bb_browser_wrapper_restarts_edge_when_cdp_profile_mismatches() {
-	local tmp_home fake_bin wrapper_path state_file config_file edge_log kill_log ready_file daemon_ready_file edge_running_flag version_output
-	tmp_home=$(make_temp_dir)
-	fake_bin=$(make_temp_dir)
-	wrapper_path="$tmp_home/.local/bin/bb-browser-user"
-	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
-	config_file="$tmp_home/.config/dotfiles/bb-browser.json"
-	edge_log="$tmp_home/microsoft-edge-mismatch.log"
-	kill_log="$tmp_home/pkill-mismatch.log"
-	ready_file="$tmp_home/.cdp-ready-19825"
-	daemon_ready_file="$tmp_home/.daemon-ready"
-	edge_running_flag="$tmp_home/.edge-running"
-	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
-
-	mkdir -p "$(dirname "$wrapper_path")" "$(dirname "$state_file")" "$(dirname "$config_file")" "$tmp_home/.config/microsoft-edge" "$tmp_home/fake-node-modules/bb-browser/dist"
-	: >"$tmp_home/fake-node-modules/bb-browser/dist/daemon.js"
-	: >"$edge_running_flag"
-	: >"$ready_file"
-	cp "$REPO_ROOT/scripts/bb-browser-user.sh" "$wrapper_path"
-	chmod +x "$wrapper_path"
-	cat >"$config_file" <<'EOF'
-{"browser":"microsoft-edge","port":19825,"profileDirectory":"Default"}
-EOF
-	cat >"$state_file" <<EOF
-PREEXISTING_BB_BROWSER=0
-REAL_BB_BROWSER_PATH=$fake_bin/bb-browser
-EOF
-
-	cat >"$fake_bin/bb-browser" <<'EOF'
-#!/bin/sh
-case "$1" in
-  --version) echo 'bb-browser 9.9.9' ;;
-  *) exit 0 ;;
-esac
-EOF
-	cat >"$fake_bin/npm" <<EOF
-#!/bin/sh
-if [ "\$1" = "root" ] && [ "\$2" = "-g" ]; then
-  printf '%s\n' "$tmp_home/fake-node-modules"
-  exit 0
-fi
-exit 1
-EOF
-	cat >"$fake_bin/node" <<EOF
-#!/bin/sh
-case "\$1" in
-  *daemon.js)
-    : >"$daemon_ready_file"
-    exit 0
-    ;;
-esac
-exit 0
-EOF
-	cat >"$fake_bin/curl" <<EOF
-#!/bin/sh
-url=""
-for arg in "\$@"; do
-  url="\$arg"
-done
-case "\$url" in
-  http://127.0.0.1:19825/json/version)
-    [ -f "$ready_file" ] || exit 22
-    printf '%s\n' '{}'
-    exit 0
-    ;;
-  http://127.0.0.1:19824/status)
-    [ -f "$daemon_ready_file" ] || exit 22
-    printf '%s\n' '{"running":true}'
-    exit 0
-    ;;
-esac
-exit 22
-EOF
-	cat >"$fake_bin/pgrep" <<EOF
-#!/bin/sh
-if [ -f "$edge_running_flag" ] && [ "\$1" = "-x" ] && [ "\$2" = "microsoft-edge" ]; then
-  printf '%s\n' '4242'
-  exit 0
-fi
-exit 1
-EOF
-	cat >"$fake_bin/ps" <<EOF
-#!/bin/sh
-if [ "\$1" = "-p" ] && [ "\$2" = "4242" ] && [ "\$3" = "-o" ] && [ "\$4" = "command=" ]; then
-  printf '%s\n' "$fake_bin/microsoft-edge --remote-debugging-port=19825 --user-data-dir=$tmp_home/.config/microsoft-edge --profile-directory=Profile bb-browser about:blank"
-  exit 0
-fi
-exit 1
-EOF
-	cat >"$fake_bin/pkill" <<EOF
-#!/bin/sh
-printf '%s\n' "\$*" >>"$kill_log"
-rm -f "$edge_running_flag" "$ready_file"
-exit 0
-EOF
-	cat >"$fake_bin/microsoft-edge" <<EOF
-#!/bin/sh
-printf '%s\n' "\$*" >>"$edge_log"
-: >"$edge_running_flag"
-: >"$ready_file"
-exit 0
-EOF
-	cat >"$fake_bin/openssl" <<'EOF'
-#!/bin/sh
-printf '%s\n' 'daemon-token'
-EOF
-	cat >"$fake_bin/uname" <<'EOF'
-#!/bin/sh
-echo 'Linux'
-EOF
-	chmod +x "$fake_bin/bb-browser" "$fake_bin/npm" "$fake_bin/node" "$fake_bin/curl" "$fake_bin/pgrep" "$fake_bin/ps" "$fake_bin/pkill" "$fake_bin/microsoft-edge" "$fake_bin/openssl" "$fake_bin/uname"
-
-	version_output="$(
-		HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
-			bash "$wrapper_path" --version
-	)"
-
-	assert_equal "bb-browser 9.9.9" "$version_output" "wrapper version output"
-	assert_contains "microsoft-edge" "$kill_log"
-	assert_contains "remote-debugging-port=19825" "$edge_log"
-	assert_contains "profile-directory=Default" "$edge_log"
-}
-
-test_bb_browser_restarts_daemon_when_cdp_target_changes() {
-	local tmp_home fake_bin daemon_log fetch_log token_file pid_file old_daemon_path old_pid daemon_ready_file
-	tmp_home=$(make_temp_dir)
-	fake_bin=$(make_temp_dir)
-	daemon_log="$tmp_home/daemon-restart.log"
-	fetch_log="$tmp_home/fetch-restart.log"
-	token_file="$tmp_home/.bb-browser/daemon.token"
-	pid_file="$tmp_home/.bb-browser/daemon.pid"
-	old_daemon_path="$tmp_home/fake-node-modules/bb-browser/dist/daemon.js"
-	daemon_ready_file="$tmp_home/.daemon-ready"
-	old_pid=""
-	trap "kill '${old_pid:-}' >/dev/null 2>&1 || true; rm -rf '$tmp_home' '$fake_bin'" RETURN
-
-	mkdir -p "$(dirname "$token_file")" "$(dirname "$old_daemon_path")"
-	: >"$old_daemon_path"
-	printf '%s\n' 'stale-token' >"$token_file"
-	bash -c "exec -a 'node $old_daemon_path -H 127.0.0.1 --cdp-host 127.0.0.1 --cdp-port 16666 --port 19824 --token stale-token' sleep 1000" &
-	old_pid="$!"
-	printf '%s\n' "$old_pid" >"$pid_file"
-
-	cat >"$fake_bin/npm" <<EOF
-#!/bin/sh
-if [ "\$1" = "root" ] && [ "\$2" = "-g" ]; then
-  printf '%s\n' "$tmp_home/fake-node-modules"
-  exit 0
-fi
-exit 1
-EOF
-	cat >"$fake_bin/openssl" <<'EOF'
-#!/bin/sh
-printf '%s\n' 'new-token'
-EOF
-	cat >"$fake_bin/node" <<EOF
-#!/bin/sh
-case "\$1" in
-  *daemon.js)
-    printf '%s\n' "\$*" >>"$daemon_log"
-    : >"$daemon_ready_file"
-    exit 0
-    ;;
-esac
-exit 0
-EOF
-	cat >"$fake_bin/curl" <<EOF
-#!/bin/sh
-url=""
-auth=""
-while [ \$# -gt 0 ]; do
-  case "\$1" in
-    -H)
-      shift
-      auth="\$1"
-      ;;
-    *)
-      url="\$1"
-      ;;
-  esac
-  shift
-done
-printf '%s | %s\n' "\$auth" "\$url" >>"$fetch_log"
-case "\$url" in
-  http://127.0.0.1:19824/status)
-    case "\$auth" in
-      "Authorization: Bearer stale-token")
-        printf '%s\n' '{"running":true}'
-        exit 0
-        ;;
-      "Authorization: Bearer new-token")
-        [ -f "$daemon_ready_file" ] || exit 22
-        printf '%s\n' '{"running":true}'
-        exit 0
-        ;;
-    esac
-    ;;
-esac
-exit 22
-EOF
-	chmod +x "$fake_bin/npm" "$fake_bin/openssl" "$fake_bin/node" "$fake_bin/curl"
-
-	HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
-		bash -c "source '$REPO_ROOT/scripts/bb-browser-user.sh'; ensure_daemon_running 'http://127.0.0.1:24444'"
-
-	grep -qF -- "--cdp-port 24444" "$daemon_log" || fail "Expected daemon restart with new CDP port in $daemon_log"
-	grep -qF -- "--token new-token" "$daemon_log" || fail "Expected daemon restart with new token in $daemon_log"
-	if kill -0 "$old_pid" >/dev/null 2>&1; then
-		fail "Expected stale daemon process to be stopped: $old_pid"
-	fi
-	old_pid=""
-}
-
-test_bb_browser_install_fails_without_supported_browser() {
-	local tmp_home fake_bin managed_prefix log npm_log tool
-	tmp_home=$(make_temp_dir)
-	fake_bin=$(make_temp_dir)
-	managed_prefix=$(make_temp_dir)
-	log="$tmp_home/install-bb-browser-no-browser.log"
-	npm_log="$tmp_home/npm-no-browser.log"
-	trap "rm -rf '$tmp_home' '$fake_bin' '$managed_prefix'" RETURN
-
-	for tool in basename cat chmod cp date dirname mkdir mktemp rm sleep whoami; do
-		ln -s "$(command -v "$tool")" "$fake_bin/$tool"
-	done
-
-	cat >"$fake_bin/npm" <<EOF
-#!/bin/sh
-printf '%s\n' "\$*" >>"$npm_log"
-if [ "\$1" = "prefix" ] && [ "\$2" = "-g" ]; then
-  printf '%s\n' "$managed_prefix"
-  exit 0
-fi
-if [ "\$1" = "install" ] && [ "\$2" = "-g" ] && [ "\$3" = "bb-browser@latest" ]; then
-  mkdir -p "$managed_prefix/bin"
-  cat >"$managed_prefix/bin/bb-browser" <<'INNER'
-#!/bin/sh
-case "\$1" in
-  --version) echo 'bb-browser 9.9.9' ;;
-  *) exit 0 ;;
-esac
-INNER
-  chmod +x "$managed_prefix/bin/bb-browser"
-fi
-if [ "\$1" = "--prefix" ] && [ "\$2" = "$managed_prefix" ] && [ "\$3" = "uninstall" ] && [ "\$4" = "-g" ] && [ "\$5" = "bb-browser" ]; then
-  rm -f "$managed_prefix/bin/bb-browser"
-fi
-exit 0
-EOF
-	cat >"$fake_bin/node" <<'EOF'
-#!/bin/sh
-exit 0
-EOF
-	cat >"$fake_bin/uname" <<'EOF'
-#!/bin/sh
-echo 'Linux'
-EOF
-	chmod +x "$fake_bin/npm" "$fake_bin/node" "$fake_bin/uname"
-
-	if HOME="$tmp_home" PATH="$fake_bin" \
-		/bin/bash "$REPO_ROOT/scripts/install_bb_browser.sh" >"$log" 2>&1; then
-		cat "$log" >&2
-		fail "install_bb_browser.sh unexpectedly succeeded without supported browser"
-	fi
-
-	assert_contains "install" "$npm_log"
-	assert_contains "bb-browser@latest" "$npm_log"
-	assert_contains "未找到受支持浏览器" "$log"
-	assert_file_missing "$tmp_home/.local/bin/bb-browser-user"
-	assert_file_missing "$tmp_home/.local/state/dotfiles/bb-browser.env"
-	assert_file_missing "$managed_prefix/bin/bb-browser"
 }
 
 test_dotfiles_uninstall_preserves_modified_files() {
@@ -2863,7 +1162,6 @@ EOF
 	assert_contains 'env_vars = ["TAVILY_API_KEY"]' "$tmp_home/.codex/config.toml"
 	assert_contains '[mcp_servers.fetch]' "$tmp_home/.codex/config.toml"
 	assert_contains 'args = ["-y", "@kazuph/mcp-fetch"]' "$tmp_home/.codex/config.toml"
-	assert_not_contains '[mcp_servers.bb-browser]' "$tmp_home/.codex/config.toml"
 	assert_not_contains 'args = ["-lc",' "$tmp_home/.codex/config.toml"
 	assert_contains "[projects.\"$external_project\"]" "$tmp_home/.codex/config.toml"
 	assert_contains "[projects.\"$tmp_home\"]" "$tmp_home/.codex/config.toml"
@@ -2999,7 +1297,6 @@ EOF
 	assert_contains "install -g @anthropic-ai/claude-code@latest" "$npm_log"
 	assert_contains "install -g @openai/codex@latest" "$npm_log"
 	assert_contains "install -g @mermaid-js/mermaid-cli@latest" "$npm_log"
-	assert_contains "install -g bb-browser@latest" "$npm_log"
 	assert_contains "install -g typescript-language-server@latest" "$npm_log"
 	assert_contains "install -g typescript@latest" "$npm_log"
 	assert_contains "install -g intelephense@latest" "$npm_log"
@@ -3178,72 +1475,6 @@ EOF
 	assert_contains "Node CLI 托管状态" "$log"
 }
 
-test_dotfiles_uninstall_removes_wrapper_integrations() {
-	local tmp_home fake_bin log remove_log shim_path wrapper_path state_file codex_config mcp_state_file
-	tmp_home=$(make_temp_dir)
-	fake_bin=$(make_temp_dir)
-	log="$tmp_home/uninstall-dotfiles-wrapper-integrations.log"
-	remove_log="$tmp_home/claude-mcp-remove.log"
-	shim_path="$tmp_home/.local/bin/bb-browser"
-	wrapper_path="$tmp_home/.local/bin/bb-browser-user"
-	state_file="$tmp_home/.local/state/dotfiles/bb-browser.env"
-	mcp_state_file="$tmp_home/.local/state/dotfiles/claude-bb-browser-mcp.env"
-	codex_config="$tmp_home/.codex/config.toml"
-	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
-
-	write_fake_claude_cli "$fake_bin" $'bb-browser: stdio\nfetch: stdio' "$tmp_home/claude-mcp-add-json.json" "$remove_log"
-
-	mkdir -p "$(dirname "$shim_path")" "$(dirname "$wrapper_path")" "$(dirname "$state_file")" "$(dirname "$codex_config")"
-	cat >"$shim_path" <<'EOF'
-#!/bin/sh
-exit 0
-EOF
-	chmod +x "$shim_path"
-	cat >"$wrapper_path" <<'EOF'
-#!/bin/sh
-exit 0
-EOF
-	chmod +x "$wrapper_path"
-	cat >"$state_file" <<EOF
-PREEXISTING_BB_BROWSER=1
-PREEXISTING_BB_BROWSER_PATH=/usr/local/bin/bb-browser
-PREEXISTING_SHIM=0
-SHIM_PATH=$shim_path
-WRAPPER_PATH=$wrapper_path
-REAL_BB_BROWSER_PATH=/usr/local/bin/bb-browser
-EOF
-	cat >"$mcp_state_file" <<'EOF'
-DOTFILES_MANAGED=1
-EOF
-	cat >"$codex_config" <<'EOF'
-model = "gpt-5.4"
-
-[mcp_servers.fetch]
-command = "npx"
-args = ["-y", "@kazuph/mcp-fetch"]
-
-[mcp_servers.bb-browser]
-command = "bash"
-args = ["-c", "\"$HOME/.local/bin/bb-browser-user\" --mcp"]
-EOF
-
-	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
-		bash "$REPO_ROOT/uninstall.sh" --dotfiles --force >"$log" 2>&1; then
-		cat "$log" >&2
-		fail "uninstall.sh --dotfiles wrapper integration cleanup failed"
-	fi
-
-	assert_file_missing "$shim_path"
-	assert_file_missing "$wrapper_path"
-	assert_file_missing "$state_file"
-	assert_file_missing "$mcp_state_file"
-	assert_file_exists "$remove_log"
-	assert_contains "bb-browser" "$remove_log"
-	assert_file_exists "$codex_config"
-	assert_contains '[mcp_servers.fetch]' "$codex_config"
-	assert_not_contains '[mcp_servers.bb-browser]' "$codex_config"
-}
-
 test_claude_known_hosts_preserves_symlink() {
 	local tmp_home fake_bin log real_known_hosts
 	tmp_home=$(make_temp_dir)
@@ -3287,8 +1518,7 @@ exit 0
 EOF
 	chmod +x "$fake_bin/claude" "$fake_bin/rustup" "$fake_bin/npm" "$fake_bin/dotnet" "$fake_bin/curl"
 
-	mkdir -p "$tmp_home/.ssh" "$tmp_home/.claude/skills/study-master"
-	printf '# stub\n' >"$tmp_home/.claude/skills/study-master/SKILL.md"
+	mkdir -p "$tmp_home/.ssh"
 	cat >"$tmp_home/.claude.json" <<'EOF'
 {
   "installMethod": "native",
@@ -3479,7 +1709,6 @@ test_install_claude_code_fast_mode_skips_plugin_and_marketplace_updates() {
 	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
 
 	plugin_list_output=$'pyright-lsp@claude-plugins-official\ntypescript-lsp@claude-plugins-official\ngopls-lsp@claude-plugins-official\nrust-analyzer-lsp@claude-plugins-official\njdtls-lsp@claude-plugins-official\nclangd-lsp@claude-plugins-official\ncsharp-lsp@claude-plugins-official\nphp-lsp@claude-plugins-official\nkotlin-lsp@claude-plugins-official\nswift-lsp@claude-plugins-official\nlua-lsp@claude-plugins-official\ngithub@claude-plugins-official\ncommit-commands@claude-plugins-official\ncode-simplifier@claude-plugins-official\nclaude-hud@claude-hud\ncodex@openai-codex\nexample-skills@anthropic-agent-skills\nsuperpowers@superpowers-marketplace'
-	mcp_list_output=$'tavily: stdio\nfetch: stdio\nexa: http\nopen-websearch: stdio\nbb-browser: stdio'
 
 	write_fake_claude_cli_with_update_logs "$fake_bin" "$plugin_list_output" "$mcp_list_output" "$add_json_log" "$remove_log" "$plugin_install_log" "$plugin_update_log" "$marketplace_update_log"
 
@@ -3540,6 +1769,9 @@ EOF
 	assert_file_missing "$plugin_install_log"
 	assert_file_missing "$plugin_update_log"
 	assert_file_missing "$marketplace_update_log"
+	assert_file_missing "$tmp_home/.claude/skills/study-master"
+	assert_file_missing "$tmp_home/.claude/hooks/check-study_master.sh"
+	assert_not_contains 'check-study_master.sh' "$tmp_home/.claude/settings.json"
 	assert_contains "快速模式跳过" "$log"
 }
 
@@ -3562,7 +1794,6 @@ test_install_claude_code_hides_superpowers_deprecated_commands() {
 	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
 
 	plugin_list_output=$'pyright-lsp@claude-plugins-official\ntypescript-lsp@claude-plugins-official\ngopls-lsp@claude-plugins-official\nrust-analyzer-lsp@claude-plugins-official\njdtls-lsp@claude-plugins-official\nclangd-lsp@claude-plugins-official\ncsharp-lsp@claude-plugins-official\nphp-lsp@claude-plugins-official\nkotlin-lsp@claude-plugins-official\nswift-lsp@claude-plugins-official\nlua-lsp@claude-plugins-official\ngithub@claude-plugins-official\ncommit-commands@claude-plugins-official\ncode-simplifier@claude-plugins-official\nclaude-hud@claude-hud\ncodex@openai-codex\nexample-skills@anthropic-agent-skills\nsuperpowers@superpowers-marketplace'
-	mcp_list_output=$'tavily: stdio\nfetch: stdio\nexa: http\nopen-websearch: stdio\nbb-browser: stdio'
 
 	write_fake_claude_cli_with_update_logs "$fake_bin" "$plugin_list_output" "$mcp_list_output" "$add_json_log" "$remove_log" "$plugin_install_log" "$plugin_update_log" "$marketplace_update_log"
 
@@ -3631,6 +1862,9 @@ EOF
 	assert_file_exists "$hidden_dir/brainstorm.md"
 	assert_file_exists "$hidden_dir/write-plan.md"
 	assert_file_exists "$hidden_dir/execute-plan.md"
+	assert_file_missing "$tmp_home/.claude/skills/study-master"
+	assert_file_missing "$tmp_home/.claude/hooks/check-study_master.sh"
+	assert_not_contains 'check-study_master.sh' "$tmp_home/.claude/settings.json"
 }
 
 test_install_vscode_ext_fast_mode_skips_github_vsix_release_lookup_when_installed() {
@@ -3727,16 +1961,13 @@ from urllib.parse import urlparse
 
 captured = {}
 
-
 class FakeConnectionData:
     def __init__(self, hostname):
         self.hostname = hostname
 
-
 def fake_is_kitten_cmdline(argv):
     basename0 = os.path.basename(argv[0]) if argv else ""
     return (basename0 == "kitten" and argv[1:2] == ["ssh"]) or argv[:3] == ["kitty", "+kitten", "ssh"]
-
 
 def fake_get_connection_data(argv, extra_args=()):
     if not fake_is_kitten_cmdline(argv):
@@ -3758,16 +1989,13 @@ def fake_get_connection_data(argv, extra_args=()):
 
     return None
 
-
 def fake_parse_launch_args(args):
     captured["args"] = args
     return args, []
 
-
 def fake_launch(boss, opts, remaining):
     captured["opts"] = opts
     captured["remaining"] = remaining
-
 
 kitty_pkg = types.ModuleType("kitty")
 kitty_pkg.__path__ = []
@@ -3830,14 +2058,11 @@ elif scenario == "ssh-local-interface-ip":
 
     module.socket.getaddrinfo = fake_local_getaddrinfo
 
-
 class Child:
     foreground_processes = []
 
-
 class Screen:
     last_reported_cwd = None
-
 
 class Window:
     id = 42
@@ -3892,7 +2117,6 @@ class Window:
         if scenario == "combined-short-flags":
             return ["kitty", "+kitten", "ssh", "-vp", "2222", "--kitten=cwd=/placeholder", "yumi"]
         return None
-
 
 window = Window()
 active_window = window
@@ -3952,31 +2176,31 @@ if scenario == "ssh-helper-before-prompt-or-cwd":
 if scenario == "ssh-prompt-before-cwd":
     window.at_prompt = True
 if scenario == "ssh-connecting-realpath":
-	window.cwd_of_child = "/private/tmp"
+    window.cwd_of_child = "/private/tmp"
 if scenario == "missing-all-cwd":
-	window.cwd_of_child = None
+    window.cwd_of_child = None
 if scenario == "local-foreground-stack":
-	window.screen.last_reported_cwd = None
-	window.cwd_of_child = "/Users/local/path"
-	window.child.foreground_processes = [
-		{
-			"cmdline": [
-				"node",
-				"/opt/homebrew/Cellar/pyright/1.1.408/libexec/lib/node_modules/pyright/dist/main.js",
-			],
-			"cwd": "/opt/homebrew/Cellar/pyright/1.1.408/libexec/lib/node_modules/pyright/dist",
-		},
-		{
-			"cmdline": [
-				"claude",
-			],
-			"cwd": "/Users/work/current-project",
-		},
-	]
+    window.screen.last_reported_cwd = None
+    window.cwd_of_child = "/Users/local/path"
+    window.child.foreground_processes = [
+        {
+            "cmdline": [
+                "node",
+                "/opt/homebrew/Cellar/pyright/1.1.408/libexec/lib/node_modules/pyright/dist/main.js",
+            ],
+            "cwd": "/opt/homebrew/Cellar/pyright/1.1.408/libexec/lib/node_modules/pyright/dist",
+        },
+        {
+            "cmdline": [
+                "claude",
+            ],
+            "cwd": "/Users/work/current-project",
+        },
+    ]
 
 if scenario == "burst-local":
-	source_window = Window()
-	source_window.id = 42
+    source_window = Window()
+    source_window.id = 42
     source_window.cwd_of_child = "/tmp"
     source_window.screen = type("Screen", (), {"last_reported_cwd": "file:///tmp"})()
     source_window.child = Child()
@@ -3989,35 +2213,35 @@ if scenario == "burst-local":
     active_window.screen = type("Screen", (), {"last_reported_cwd": None})()
     active_window.child = Child()
     active_window.child.foreground_processes = []
-	active_window.user_vars = {"smart_launch_source_window_id": "42"}
-	window_id_map = {42: source_window, 43: active_window}
-	target_window_id = 43
+    active_window.user_vars = {"smart_launch_source_window_id": "42"}
+    window_id_map = {42: source_window, 43: active_window}
+    target_window_id = 43
 
 if scenario == "burst-local-foreground-cwd":
-	source_window = Window()
-	source_window.id = 42
-	source_window.cwd_of_child = "/Users/previous/project"
-	source_window.screen = type("Screen", (), {"last_reported_cwd": "file:///Users/previous/project"})()
-	source_window.child = Child()
-	source_window.child.foreground_processes = [{"cmdline": ["codex"], "cwd": "/Users/previous/project"}]
-	source_window.user_vars = {}
+    source_window = Window()
+    source_window.id = 42
+    source_window.cwd_of_child = "/Users/previous/project"
+    source_window.screen = type("Screen", (), {"last_reported_cwd": "file:///Users/previous/project"})()
+    source_window.child = Child()
+    source_window.child.foreground_processes = [{"cmdline": ["codex"], "cwd": "/Users/previous/project"}]
+    source_window.user_vars = {}
 
-	active_window = Window()
-	active_window.id = 43
-	active_window.cwd_of_child = "/Users/previous/project"
-	active_window.screen = type("Screen", (), {"last_reported_cwd": None})()
-	active_window.child = Child()
-	active_window.child.foreground_processes = [
-		{"cmdline": ["node", "/opt/homebrew/Cellar/pyright/1.1.408/libexec/lib/node_modules/pyright/dist/main.js"], "cwd": "/opt/homebrew/Cellar/pyright/1.1.408/libexec/lib/node_modules/pyright/dist"},
-		{"cmdline": ["claude"], "cwd": "/Users/work/current-project"},
-	]
-	active_window.user_vars = {"smart_launch_source_window_id": "42"}
-	window_id_map = {42: source_window, 43: active_window}
-	target_window_id = 43
+    active_window = Window()
+    active_window.id = 43
+    active_window.cwd_of_child = "/Users/previous/project"
+    active_window.screen = type("Screen", (), {"last_reported_cwd": None})()
+    active_window.child = Child()
+    active_window.child.foreground_processes = [
+        {"cmdline": ["node", "/opt/homebrew/Cellar/pyright/1.1.408/libexec/lib/node_modules/pyright/dist/main.js"], "cwd": "/opt/homebrew/Cellar/pyright/1.1.408/libexec/lib/node_modules/pyright/dist"},
+        {"cmdline": ["claude"], "cwd": "/Users/work/current-project"},
+    ]
+    active_window.user_vars = {"smart_launch_source_window_id": "42"}
+    window_id_map = {42: source_window, 43: active_window}
+    target_window_id = 43
 
 if scenario == "burst-ssh":
-	source_window = Window()
-	source_window.id = 42
+    source_window = Window()
+    source_window.id = 42
     source_window.cwd_of_child = "/private/tmp"
     source_window.screen = type("Screen", (), {"last_reported_cwd": "kitty-shell-cwd://orb/tmp"})()
     source_window.child = Child()
@@ -4036,11 +2260,9 @@ if scenario == "burst-ssh":
     window_id_map = {42: source_window, 43: active_window}
     target_window_id = 43
 
-
 class Boss:
     active_window = active_window
     window_id_map = window_id_map
-
 
 module.smart_launch(Boss(), "tab", target_window_id)
 print(json.dumps({"args": captured["args"], "remaining": captured["remaining"]}))
@@ -4136,14 +2358,12 @@ import types
 repo_root = pathlib.Path("$REPO_ROOT")
 kitty_dir = repo_root / ".config/kitty"
 
-
 def fake_result_handler(**kwargs):
     def decorate(fn):
         fn.no_ui = kwargs.get("no_ui", False)
         return fn
 
     return decorate
-
 
 kittens_pkg = types.ModuleType("kittens")
 kittens_pkg.__path__ = []
@@ -4468,28 +2688,13 @@ run_test "Dotfiles generates disabled Karabiner without IME rules" test_dotfiles
 run_test "Dotfiles wetype Karabiner patching fails closed on malformed click rule" test_dotfiles_wetype_karabiner_patching_fails_closed_on_malformed_click_rule
 run_test "superpowers clone does not retry GitHub SSH failures" test_superpowers_clone_does_not_retry_github_ssh_failures
 run_test "superpowers pull does not retry GitHub SSH failures" test_superpowers_pull_does_not_retry_github_ssh_failures
-run_test "Dotfiles deploys bb-browser shell plugin" test_dotfiles_deploys_bb_browser_shell_plugin
 run_test "Dotfiles pre-cleans stale zinit completions" test_dotfiles_precleans_zinit_stale_completions
 run_test "Dotfiles warns when zinit plugin sync fails" test_dotfiles_warns_when_zinit_plugin_sync_fails
-run_test "bb-browser install uses latest and deploys wrapper" test_bb_browser_install_uses_latest_and_deploys_wrapper
-run_test "bb-browser install patches managed mcp dist only" test_bb_browser_install_patches_managed_mcp_dist_file_only
-run_test "bb-browser dist patch supports mcp cdpArgs variant without cli.js" test_bb_browser_dist_patch_supports_mcp_spawn_with_cdp_args_without_cli_js
-run_test "managed xiaohongshu template corrects stale search context" test_managed_xiaohongshu_search_template_corrects_stale_search_context
 run_test "kitty conf enables native smart hotkeys" test_kitty_conf_enables_native_smart_hotkeys
 run_test "kitty custom kitten entrypoints do not require __file__" test_kitty_custom_kitten_entrypoints_do_not_require___file__
 run_test "kitty smart launcher does not cache ssh utils module" test_kitty_smart_launcher_does_not_cache_ssh_utils_module
 run_test "kitty ssh utils does not keep dead plain ssh helpers" test_kitty_ssh_utils_does_not_keep_dead_plain_ssh_helpers
-run_test "bb-browser install discovers browser and launches CDP" test_bb_browser_install_discovers_browser_and_launches_cdp
-run_test "bb-browser install keeps token private when chmod fails" test_bb_browser_install_keeps_token_private_when_chmod_fails
-run_test "bb-browser install writes Edge Default config and verifies MCP bootstrap" test_bb_browser_install_writes_edge_default_config_and_verifies_mcp
-run_test "bb-browser wrapper uses overridden loopback and daemon endpoint" test_bb_browser_wrapper_uses_overridden_loopback_and_daemon_endpoint
-run_test "bb-browser wrapper defaults to Edge Default profile" test_bb_browser_wrapper_defaults_to_edge_default_profile
 run_test "kitty ssh utils falls back locally when helper cmdline is unavailable" test_kitty_smart_launch_fails_closed_for_kitty_uri_without_helper_cmdline
-run_test "bb-browser wrapper doctor is side-effect free" test_bb_browser_wrapper_doctor_is_side_effect_free
-run_test "bb-browser wrapper restarts ordinary Edge when CDP is absent" test_bb_browser_wrapper_restarts_edge_when_running_without_cdp
-run_test "bb-browser wrapper restarts Edge when live CDP belongs to another profile" test_bb_browser_wrapper_restarts_edge_when_cdp_profile_mismatches
-run_test "bb-browser restarts daemon when CDP target changes" test_bb_browser_restarts_daemon_when_cdp_target_changes
-run_test "bb-browser install fails without supported browser" test_bb_browser_install_fails_without_supported_browser
 run_test "Dotfiles uninstall preserves modified files" test_dotfiles_uninstall_preserves_modified_files
 run_test "Claude runtime config preserves existing state" test_claude_runtime_config_preserves_existing_state
 run_test "Git config identity migrates to local include" test_gitconfig_identity_migrates_to_local
@@ -4502,7 +2707,6 @@ run_test "Claude optional on macOS" test_claude_optional_on_macos_when_missing
 run_test "Claude optional on Linux" test_claude_optional_on_linux_when_install_fails
 run_test "Dotfiles uninstall removes managed Node CLIs" test_dotfiles_uninstall_removes_managed_node_clis
 run_test "Dotfiles uninstall clears missing Node CLI state" test_dotfiles_uninstall_clears_node_cli_state_when_prefix_is_gone
-run_test "Dotfiles uninstall removes wrapper integrations" test_dotfiles_uninstall_removes_wrapper_integrations
 run_test "Claude known_hosts preserves symlink" test_claude_known_hosts_preserves_symlink
 run_test "GitHub release lookup uses GITHUB_TOKEN" test_github_latest_release_uses_github_token
 run_test "GitHub update check reports rate limit actionably" test_check_github_update_reports_rate_limit_actionably

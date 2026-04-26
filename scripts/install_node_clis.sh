@@ -14,7 +14,6 @@ NODE_CLI_PACKAGES=(
 	"@anthropic-ai/claude-code"
 	"@openai/codex"
 	"@mermaid-js/mermaid-cli"
-	"bb-browser"
 	"typescript-language-server"
 	"typescript"
 	"intelephense"

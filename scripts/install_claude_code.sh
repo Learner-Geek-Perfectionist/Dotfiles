@@ -6,7 +6,7 @@
 # 3) 关闭启动时更新提示（写入 ~/.claude.json）
 # 4) 添加插件 marketplace
 # 5) 安装 LSP 插件和 skill 插件
-# 6) 安装独立 Skill（study-master 等，在线 clone 安装）
+# 6) 配置 Claude 专属增强能力（Marketplace / HUD / MCP）
 #
 # 此脚本不再负责 Claude CLI 本体安装，只负责 Claude 专属配置与非 npm LSP 工具链
 
@@ -40,9 +40,6 @@ LSP_BIN="$HOME/.local/bin"
 # Claude Code 插件配置目录
 CLAUDE_PLUGINS_DIR="$HOME/.claude/plugins"
 KNOWN_MARKETPLACES_JSON="$CLAUDE_PLUGINS_DIR/known_marketplaces.json"
-CLAUDE_BB_BROWSER_MCP_STATE_FILE="$(claude_bb_browser_mcp_state_file)"
-CLAUDE_VENDOR_DIR="$HOME/.claude/vendor"
-STUDY_MASTER_REPO_DIR="$CLAUDE_VENDOR_DIR/agent-study-skills"
 
 # 插件 Marketplace 列表 (GitHub owner/repo)
 MARKETPLACES=(
@@ -327,19 +324,6 @@ is_plugin_installed() {
 	claude plugin list 2>/dev/null | grep -qF "$plugin"
 }
 
-claude_bb_browser_mcp_managed() {
-	[[ -f "$CLAUDE_BB_BROWSER_MCP_STATE_FILE" ]] && grep -Eq '^DOTFILES_MANAGED=1$' "$CLAUDE_BB_BROWSER_MCP_STATE_FILE"
-}
-
-record_claude_bb_browser_mcp() {
-	mkdir -p "$(dirname "$CLAUDE_BB_BROWSER_MCP_STATE_FILE")"
-	printf 'DOTFILES_MANAGED=1\n' >"$CLAUDE_BB_BROWSER_MCP_STATE_FILE"
-}
-
-clear_claude_bb_browser_mcp_record() {
-	rm -f "$CLAUDE_BB_BROWSER_MCP_STATE_FILE"
-}
-
 # ========================================
 # 安装 Claude Code CLI
 # ========================================
@@ -616,146 +600,6 @@ enable_plugins() {
 }
 
 # ========================================
-# study-master Skill 安装（独立 GitHub 仓库）
-# ========================================
-
-sync_study_master_repo() {
-	local repo_url="$1"
-	local repo_dir="$2"
-
-	if [[ -d "$repo_dir/.git" ]]; then
-		if dotfiles_update_mode_is_fast; then
-			print_fast_mode_skip "study-master 源仓库"
-			return 0
-		fi
-
-		local origin normalized_origin normalized_repo_url
-		origin=$(git -C "$repo_dir" remote get-url origin 2>/dev/null || true)
-		normalized_origin=$(normalize_git_remote "$origin" 2>/dev/null || true)
-		normalized_repo_url=$(normalize_git_remote "$repo_url" 2>/dev/null || true)
-		if [[ -n "$origin" && "$normalized_origin" != "$normalized_repo_url" ]]; then
-			print_warn "study-master 仓库 origin 不匹配，跳过更新: $repo_dir"
-			return 1
-		fi
-		if git -C "$repo_dir" pull --ff-only >/dev/null 2>&1; then
-			return 0
-		fi
-		print_warn "study-master 仓库更新失败，跳过: $repo_dir"
-		return 1
-	fi
-
-	if [[ -e "$repo_dir" ]]; then
-		print_warn "study-master 源目录已存在且不是 Git 仓库，跳过: $repo_dir"
-		return 1
-	fi
-
-	mkdir -p "$(dirname "$repo_dir")"
-	if git clone --depth 1 "$repo_url" "$repo_dir" >/dev/null 2>&1; then
-		return 0
-	fi
-
-	print_warn "study-master: clone 失败"
-	return 1
-}
-
-# 确保 study-master hooks 已在 settings.json 中注册
-# 独立于文件部署——每次安装都执行，防止 install_dotfiles.sh 的 jq 合并覆盖动态 hooks
-ensure_study_master_hooks() {
-	local settings_file="$1"
-	local hook_matcher="$2"
-	local hook_cmd="$3"
-
-	[[ -f "$settings_file" ]] && command -v jq &>/dev/null || return 0
-
-	# 已注册则跳过
-	if jq -e --arg m "$hook_matcher" --arg cmd "$hook_cmd" \
-		'.hooks.PostToolUse // [] | any(.matcher == $m and (.hooks | any(.command == $cmd)))' \
-		"$settings_file" &>/dev/null; then
-		return 0
-	fi
-
-	# 注册 hook
-	# jq 逻辑: 确保 .hooks.PostToolUse 路径存在 → matcher 已有则追加 command，否则新建条目
-	jq --arg m "$hook_matcher" --arg cmd "$hook_cmd" '
-		.hooks //= {} |
-		.hooks.PostToolUse //= [] |
-		if (.hooks.PostToolUse | any(.matcher == $m)) then
-			(.hooks.PostToolUse[] | select(.matcher == $m)).hooks += [{"type":"command","command":$cmd,"timeout":10}]
-		else
-			.hooks.PostToolUse += [{"matcher":$m,"hooks":[{"type":"command","command":$cmd,"timeout":10}]}]
-		end
-	' "$settings_file" > "$settings_file.tmp"
-	if [[ -s "$settings_file.tmp" ]]; then
-		mv "$settings_file.tmp" "$settings_file"
-		print_dim "  study-master hooks 已注册"
-	else
-		rm -f "$settings_file.tmp"
-		print_warn "  study-master hooks 注册失败"
-	fi
-}
-
-# 在线 clone 仓库，手动部署文件并注册 hooks
-# 不使用上游 install.sh（其 hook 注册路径和格式有误）
-install_study_master_skill() {
-	local repo="Learner-Geek-Perfectionist/agent-study-skills"
-	local repo_url="https://github.com/${repo}.git"
-	local repo_dir="$STUDY_MASTER_REPO_DIR"
-	local skill_dir="$HOME/.claude/skills/study-master"
-	local hooks_dir="$HOME/.claude/hooks"
-	local settings_file="$HOME/.claude/settings.json"
-	local hook_matcher="Write|Edit"
-	local hook_cmd='bash "$HOME/.claude/hooks/check-study_master.sh"'
-	local had_skill=false
-
-	[[ -f "$skill_dir/SKILL.md" ]] && had_skill=true
-
-	if ! sync_study_master_repo "$repo_url" "$repo_dir"; then
-		ensure_study_master_hooks "$settings_file" "$hook_matcher" "$hook_cmd"
-		return 0
-	fi
-
-	local src="$repo_dir/study-master-skill"
-	if [[ ! -f "$src/SKILL.md" ]]; then
-		print_warn "study-master 源目录缺少 SKILL.md，跳过: $src"
-		ensure_study_master_hooks "$settings_file" "$hook_matcher" "$hook_cmd"
-		return 0
-	fi
-
-	# 1) 部署 Skill 文件
-	mkdir -p "$skill_dir"
-	cp "$src/SKILL.md" "$skill_dir/"
-	print_dim "  Skill: $skill_dir/SKILL.md"
-
-	# 2) 部署 Hook 脚本
-	if [[ -d "$src/hooks" ]]; then
-		mkdir -p "$hooks_dir"
-		for file in "$src/hooks"/*; do
-			[[ -f "$file" ]] || continue
-			cp "$file" "$hooks_dir/"
-			chmod +x "$hooks_dir/$(basename "$file")"
-		done
-		print_dim "  Hooks: $(ls "$src/hooks" | tr '\n' ' ')"
-	fi
-
-	# 清理上游 install.sh 遗留的错误配置
-	local dead_settings="$HOME/.claude/settings/settings.json"
-	if [[ -f "$dead_settings" ]]; then
-		rm -f "$dead_settings"
-		rmdir "$HOME/.claude/settings" 2>/dev/null || true
-		print_dim "  已清理无效的 ~/.claude/settings/settings.json"
-	fi
-
-	if [[ "$had_skill" == true ]]; then
-		print_success "study-master Skill 已更新"
-	else
-		print_success "study-master Skill 安装完成"
-	fi
-
-	# 2) 确保 hooks 已注册（每次都检查，防止被 settings.json 合并覆盖）
-	ensure_study_master_hooks "$settings_file" "$hook_matcher" "$hook_cmd"
-}
-
-# ========================================
 # Claude HUD StatusLine 配置
 # ========================================
 
@@ -965,50 +809,6 @@ EOF
 		fi
 	fi
 
-	# 4) bb-browser MCP（通过本地 wrapper 的非登录 shell 启动，避免 bash -lc）
-	local bb_browser_wrapper="$HOME/.local/bin/bb-browser-user"
-	if [[ ! -x "$bb_browser_wrapper" ]]; then
-		if claude_bb_browser_mcp_managed && echo "$mcp_list" | grep -Eq '^[[:space:]]*bb-browser:'; then
-			if claude mcp remove bb-browser --scope user &>/dev/null; then
-				print_dim "✓ MCP: bb-browser 已移除（wrapper 缺失）"
-				clear_claude_bb_browser_mcp_record
-			else
-				print_warn "MCP bb-browser 清理失败（wrapper 缺失）"
-				failed=$((failed + 1))
-			fi
-		elif claude_bb_browser_mcp_managed; then
-			clear_claude_bb_browser_mcp_record
-			print_info "bb-browser wrapper 缺失，已清理 Dotfiles MCP 归属记录"
-		else
-			print_info "未检测到 bb-browser wrapper，跳过 Claude bb-browser MCP 配置"
-			skipped=$((skipped + 1))
-		fi
-	elif echo "$mcp_list" | grep -Eq '^[[:space:]]*bb-browser:'; then
-		skipped=$((skipped + 1))
-	else
-		local output bb_browser_json
-		bb_browser_json=$(cat <<EOF
-{
-	"type": "stdio",
-	"command": "bash",
-	"args": ["-c", "\"$bb_browser_wrapper\" --mcp"]
-}
-EOF
-)
-		if output="$(claude mcp add-json bb-browser "$bb_browser_json" --scope user 2>&1)"; then
-			record_claude_bb_browser_mcp
-			print_success "MCP: bb-browser"
-			installed=$((installed + 1))
-		else
-			if [[ "$output" == *"already exists"* ]]; then
-				skipped=$((skipped + 1))
-			else
-				print_warn "MCP bb-browser 安装失败: $output"
-				failed=$((failed + 1))
-			fi
-		fi
-	fi
-
 	print_install_summary "MCP Servers" "$installed" "$skipped" "$failed"
 }
 
@@ -1070,13 +870,10 @@ main() {
 	hide_superpowers_deprecated_commands
 	enable_plugins "${SKILL_PLUGINS[@]}"
 
-	# 9) 安装 study-master Skill（独立 GitHub 仓库，在线 clone 安装）
-	install_study_master_skill
-
-	# 10) 配置 claude-hud statusLine（等价于 /claude-hud:setup）
+	# 9) 配置 claude-hud statusLine（等价于 /claude-hud:setup）
 	setup_claude_hud
 
-	# 11) 配置 MCP Servers（搜索增强：Tavily + Fetch + Open-WebSearch）
+	# 10) 配置 MCP Servers（搜索增强：Tavily + Fetch + Open-WebSearch）
 	install_mcp_servers
 
 	print_success "Claude Code 配置完成"

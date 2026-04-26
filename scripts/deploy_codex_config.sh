@@ -12,7 +12,6 @@ DOTFILES_DIR="$(dirname "$SCRIPT_DIR")"
 src="${1:-$DOTFILES_DIR/.codex/config.toml}"
 dest="${2:-$HOME/.codex/config.toml}"
 trust_path="${3:-$HOME}"
-bb_browser_wrapper_path="${BB_BROWSER_WRAPPER_PATH:-$HOME/.local/bin/bb-browser-user}"
 
 [[ -f "$src" ]] || exit 0
 
@@ -22,21 +21,7 @@ tmp_output="$(mktemp)"
 tmp_projects="$(mktemp)"
 trap 'rm -f "$tmp_output" "$tmp_projects"' EXIT
 
-strip_bb_browser_mcp_block() {
-	local file="$1" tmp
-	tmp="$(mktemp)"
-	awk '
-		$0 == "[mcp_servers.bb-browser]" { skip = 1; next }
-		/^\[/ { skip = 0 }
-		!skip { print }
-	' "$file" >"$tmp"
-	mv "$tmp" "$file"
-}
-
 cp -f "$src" "$tmp_output"
-if [[ ! -x "$bb_browser_wrapper_path" ]]; then
-	strip_bb_browser_mcp_block "$tmp_output"
-fi
 
 if [[ -f "$dest" ]]; then
 	awk -v trust_path="$trust_path" '

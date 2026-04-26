@@ -118,7 +118,7 @@ with open(sys.argv[2], 'w') as f: json.dump(d, f, indent=4, ensure_ascii=False)
 
 # 部署 Claude Code settings.json（jq 合并：静态设置覆盖，动态字段保留）
 # repo 的 hooks 是项目级（如 check-file-deps.sh），不应提升到全局配置
-# 合并时排除 repo hooks，仅保留 home 已有的用户级 hooks（如 study-master）
+# 合并时排除 repo hooks，仅保留 home 已有的用户级 hooks
 _deploy_claude_settings() {
 	local claude_src="$DOTFILES_DIR/.claude/settings.json"
 	local claude_dest="$HOME/.claude/settings.json"

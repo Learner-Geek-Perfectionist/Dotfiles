@@ -121,10 +121,12 @@ zinit light zsh-users/zsh-completions
 
 # ── wait'0b'：补全系统激活 ──
 
-# 对文件候选做“普通文件在前、dotfiles 在后”，并保留 zsh 已生成的顺序。
+# 对文件候选做稳定分桶，并保留 zsh 已生成的顺序。
+# 默认保持“普通文件在前、dotfiles 在后”；ls/eza 补全额外做“目录在前、文件在后”，
+# 这样 `ls foo/<Tab>` 的候选更接近 `cd foo/<Tab>` 的阅读顺序。
 # 这里依赖 `file-sort modification` 先让标准文件补全按 mtime 产出候选，
-# 然后在 fzf-tab 捕获到的原始 `_ftb_compcap` 上做稳定分桶，并对文件补全临时
-# 关闭 fzf 自己的匹配分数排序，避免输入 query 后又把 dotfiles 顶回前面。
+# 然后在 fzf-tab 捕获到的原始 `_ftb_compcap` 上重排，并对文件补全临时关闭
+# fzf 自己的匹配分数排序，避免输入 query 后又打乱桶内顺序。
 # 注意：这里直接依赖 fzf-tab 当前内部协议（`_ftb_compcap` 用 `\2` / `\0`
 # 分隔，且文件候选带 `realdir` 键、插入词存于 `word`。`realdir` 在当前目录补全时
 # 可能是空串，因此要判断键是否存在，不能判断值是否非空）；升级 fzf-tab 时要一并复查。
@@ -133,11 +135,15 @@ _ftb_reorder_file_candidates() {
 	functions[-ftb-generate-complist-orig]=$(<"$FZF_TAB_HOME/lib/-ftb-generate-complist")
 	functions[-ftb-fzf-orig]=$(<"$FZF_TAB_HOME/lib/-ftb-fzf")
 	-ftb-generate-complist() {
+		local -a _dir_ndot=() _file_ndot=() _dir_dot=() _file_dot=()
 		local -a _ndot=() _dot=()
 		local -a _prev_sort=()
-		local _ctx_sort_line _cap _meta
+		local _ctx_sort_line _cap _meta _path
 		local -A _v
 		local -i _all_files=1 _has_compcap=$(( $#_ftb_compcap != 0 )) _had_exact_sort=0
+		local -i _ls_like_context=0
+
+		[[ $_ftb_curcontext == *:ls:* || $_ftb_curcontext == *:eza:* ]] && _ls_like_context=1
 
 		for _cap in "${_ftb_compcap[@]}"; do
 			_meta=${_cap#*$'\2'}
@@ -146,7 +152,20 @@ _ftb_reorder_file_candidates() {
 				_all_files=0
 				break
 			fi
-			if [[ ${_v[word]} == .* ]]; then
+			if (( _ls_like_context )); then
+				_path=${_v[realdir]}${(Q)_v[word]}
+				if [[ ${_v[word]} == .* ]]; then
+					if [[ -d $_path ]]; then
+						_dir_dot+=("$_cap")
+					else
+						_file_dot+=("$_cap")
+					fi
+				elif [[ -d $_path ]]; then
+					_dir_ndot+=("$_cap")
+				else
+					_file_ndot+=("$_cap")
+				fi
+			elif [[ ${_v[word]} == .* ]]; then
 				_dot+=("$_cap")
 			else
 				_ndot+=("$_cap")
@@ -155,7 +174,11 @@ _ftb_reorder_file_candidates() {
 
 		if (( _has_compcap && _all_files )); then
 			typeset -gi _ftb_file_completion_preserve_order=1
-			_ftb_compcap=("${_ndot[@]}" "${_dot[@]}")
+			if (( _ls_like_context )); then
+				_ftb_compcap=("${_dir_ndot[@]}" "${_file_ndot[@]}" "${_dir_dot[@]}" "${_file_dot[@]}")
+			else
+				_ftb_compcap=("${_ndot[@]}" "${_dot[@]}")
+			fi
 			_ctx_sort_line=$(zstyle -L ":completion:$_ftb_curcontext" sort)
 			if [[ -n $_ctx_sort_line ]]; then
 				_had_exact_sort=1
@@ -262,6 +285,11 @@ _ice wait'0b' atinit'
     zstyle ":fzf-tab:complete:cd:*" popup-pad 30 0
     zstyle ":fzf-tab:complete:code:*" fzf-preview "eza -1 --color=always \$realpath"
     zstyle ":fzf-tab:complete:code:*" popup-pad 30 0
+    # ls/eza 会同时补选项与路径；路径时展示目录/文件预览，选项时仅回显字面值。
+    zstyle ":fzf-tab:complete:ls:*" fzf-preview "[[ -n \$realpath ]] || { printf '%s\\n' \"\$word\"; exit 0; }; if [[ -d \$realpath ]]; then eza -1 --color=always -- \"\$realpath\"; else \"$HOME/.config/zsh/fzf/fzf-preview.sh\" \"\$realpath\"; fi"
+    zstyle ":fzf-tab:complete:ls:*" popup-pad 30 0
+    zstyle ":fzf-tab:complete:eza:*" fzf-preview "[[ -n \$realpath ]] || { printf '%s\\n' \"\$word\"; exit 0; }; if [[ -d \$realpath ]]; then eza -1 --color=always -- \"\$realpath\"; else \"$HOME/.config/zsh/fzf/fzf-preview.sh\" \"\$realpath\"; fi"
+    zstyle ":fzf-tab:complete:eza:*" popup-pad 30 0
     # fzf-tab 的候选流本身带 ANSI 颜色；直接调二进制，绕过我们清洗管道 ANSI 的 fzf() 包装。
     zstyle ":fzf-tab:*" fzf-command "command fzf"
     # fzf-tab 会把当前输入作为 fzf query；加 -i 避免大写输入触发 smart-case，

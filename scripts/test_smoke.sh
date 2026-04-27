@@ -12,6 +12,7 @@ source "$REPO_ROOT/scripts/lib_macos_ime_toggle.sh"
 run_dotfiles_install() {
 	local tmp_home="$1" fake_bin="$2" superpowers_repo="$3" log="$4"
 	HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" DOTFILES_DIR="$REPO_ROOT" \
+		CODEX_LATEST_MODEL_URL="${CODEX_LATEST_MODEL_URL-}" \
 		SUPERPOWERS_REPO_URL="$superpowers_repo" bash "$REPO_ROOT/scripts/install_dotfiles.sh" >"$log" 2>&1
 }
 
@@ -458,7 +459,7 @@ EOF
 	assert_symlink "$tmp_home/.agents/skills/superpowers"
 	assert_file_exists "$tmp_home/.codex/superpowers/skills/using-superpowers/SKILL.md"
 	assert_contains '"autoUpdates": false' "$tmp_home/.claude.json"
-	assert_contains 'model = "gpt-5.4"' "$tmp_home/.codex/config.toml"
+	assert_contains 'model = "gpt-5.5"' "$tmp_home/.codex/config.toml"
 	assert_contains '[mcp_servers.github]' "$tmp_home/.codex/config.toml"
 	assert_contains 'bearer_token_env_var = "GITHUB_PERSONAL_ACCESS_TOKEN"' "$tmp_home/.codex/config.toml"
 	assert_file_exists "$tmp_home/.ssh/config"
@@ -1314,11 +1315,12 @@ test_codex_config_installs_without_computer_use_cache() {
 	codex_dest="$tmp_home/.codex/config.toml"
 	trap "rm -rf '$tmp_home'" RETURN
 
-	if ! HOME="$tmp_home" bash "$REPO_ROOT/scripts/deploy_codex_config.sh" "$REPO_ROOT/.codex/config.toml" "$codex_dest" "$tmp_home"; then
+	if ! HOME="$tmp_home" CODEX_LATEST_MODEL_URL="" bash "$REPO_ROOT/scripts/deploy_codex_config.sh" "$REPO_ROOT/.codex/config.toml" "$codex_dest" "$tmp_home"; then
 		fail "deploy_codex_config.sh should succeed without computer-use cache"
 	fi
 
 	assert_file_exists "$codex_dest"
+	assert_contains '# Shared Codex CLI / Codex.app configuration baseline.' "$codex_dest"
 	assert_contains '[marketplaces.openai-bundled]' "$codex_dest"
 	assert_contains "source = \"$tmp_home/.codex/.tmp/bundled-marketplaces/openai-bundled\"" "$codex_dest"
 	assert_contains "[projects.\"$tmp_home\"]" "$codex_dest"
@@ -1363,7 +1365,8 @@ EOF
 		fail "install_dotfiles.sh codex merge failed"
 	fi
 
-	assert_contains 'model = "gpt-5.4"' "$tmp_home/.codex/config.toml"
+	assert_contains 'model = "gpt-5.5"' "$tmp_home/.codex/config.toml"
+	assert_contains '# Shared Codex CLI / Codex.app configuration baseline.' "$tmp_home/.codex/config.toml"
 	assert_contains '[mcp_servers.openaiDeveloperDocs]' "$tmp_home/.codex/config.toml"
 	assert_contains 'url = "https://developers.openai.com/mcp"' "$tmp_home/.codex/config.toml"
 	assert_contains '[mcp_servers.github]' "$tmp_home/.codex/config.toml"
@@ -1383,6 +1386,60 @@ EOF
 	assert_contains "[projects.\"$external_project\"]" "$tmp_home/.codex/config.toml"
 	assert_contains "[projects.\"$tmp_home\"]" "$tmp_home/.codex/config.toml"
 	assert_contains "[projects.\"$child_project\"]" "$tmp_home/.codex/config.toml"
+}
+
+test_codex_config_uses_latest_model_guide_when_available() {
+	local tmp_home fake_bin codex_dest curl_log
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	codex_dest="$tmp_home/.codex/config.toml"
+	curl_log="$tmp_home/curl.log"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	cat >"$fake_bin/curl" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >"$curl_log"
+	cat <<'INNER'
+---
+latestModelInfo:
+  model: gpt-9.9
+  migrationGuide: /api/docs/guides/upgrading-to-gpt-9p9.md
+  promptingGuide: /api/docs/guides/prompt-guidance.md
+---
+INNER
+EOF
+	chmod +x "$fake_bin/curl"
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		CODEX_LATEST_MODEL_URL="https://example.test/latest-model.md" \
+		bash "$REPO_ROOT/scripts/deploy_codex_config.sh" "$REPO_ROOT/.codex/config.toml" "$codex_dest" "$tmp_home"; then
+		fail "deploy_codex_config.sh should resolve the latest model from the guide"
+	fi
+
+	assert_contains 'model = "gpt-9.9"' "$codex_dest"
+	assert_contains "https://example.test/latest-model.md" "$curl_log"
+}
+
+test_codex_config_falls_back_when_latest_model_lookup_fails() {
+	local tmp_home fake_bin codex_dest
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	codex_dest="$tmp_home/.codex/config.toml"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	cat >"$fake_bin/curl" <<'EOF'
+#!/bin/sh
+exit 1
+EOF
+	chmod +x "$fake_bin/curl"
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+		CODEX_LATEST_MODEL_URL="https://example.test/latest-model.md" \
+		bash "$REPO_ROOT/scripts/deploy_codex_config.sh" "$REPO_ROOT/.codex/config.toml" "$codex_dest" "$tmp_home"; then
+		fail "deploy_codex_config.sh should fall back when latest model lookup fails"
+	fi
+
+	assert_contains 'model = "gpt-5.5"' "$codex_dest"
 }
 
 test_pixi_prefers_managed_install_over_system_binary() {
@@ -2928,8 +2985,10 @@ run_test "Dotfiles uninstall preserves modified files" test_dotfiles_uninstall_p
 run_test "Claude runtime config preserves existing state" test_claude_runtime_config_preserves_existing_state
 run_test "Git config identity migrates to local include" test_gitconfig_identity_migrates_to_local
 run_test "Dotfiles hook-free fallback" test_dotfiles_hook_free_fallback
-run_test "Codex config installs without computer-use cache" test_codex_config_installs_without_computer_use_cache
-run_test "Codex config preserves subprojects" test_codex_config_preserves_projects_and_keeps_home_subprojects
+run_test "Codex shared config installs without computer-use cache" test_codex_config_installs_without_computer_use_cache
+run_test "Codex shared config preserves subprojects" test_codex_config_preserves_projects_and_keeps_home_subprojects
+run_test "Codex shared config uses latest model guide when available" test_codex_config_uses_latest_model_guide_when_available
+run_test "Codex shared config falls back when latest model lookup fails" test_codex_config_falls_back_when_latest_model_lookup_fails
 run_test "Node CLI installer uses ~/.local prefix on Linux" test_install_node_clis_linux_uses_home_local_prefix
 run_test "Node CLI installer keeps default npm prefix on macOS" test_install_node_clis_macos_keeps_default_prefix
 run_test "Pixi prefers managed install" test_pixi_prefers_managed_install_over_system_binary

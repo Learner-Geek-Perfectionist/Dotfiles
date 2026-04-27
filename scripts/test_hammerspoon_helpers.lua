@@ -45,6 +45,7 @@ local fakeApp = {
 assertEqual(type(windowManagement._collectStandardWindows), "function", "windowManagement exposes its collection helper for regression tests")
 assertEqual(type(windowManagement._nextIndex), "function", "windowManagement exposes its index helper for regression tests")
 assertTrue(not readFile(repoRoot .. "/.hammerspoon/config/KeyBinds.lua"):find("moveToFocusedScreen", 1, true), "KeyBinds uses the default cross-screen switch behavior without redundant args")
+assertTrue(readFile(repoRoot .. "/.hammerspoon/init.lua"):find("require%([\"']hs%.ipc[\"']%)"), "Hammerspoon init loads hs.ipc so the hs CLI can talk to the running app")
 assertTrue(readFile(repoRoot .. "/.hammerspoon/modules/systemInfo.lua"):find("math.max(0, obj.current_down - obj.last_down)", 1, true), "systemInfo clamps negative download deltas")
 assertTrue(readFile(repoRoot .. "/.hammerspoon/modules/systemInfo.lua"):find("math.max(0, obj.current_up - obj.last_up)", 1, true), "systemInfo clamps negative upload deltas")
 
@@ -159,7 +160,56 @@ local appToggler, getHeadlessAppTogglerResult = createHeadlessAppTogglerFixture(
 appToggler.toggle("com.example.Headless")
 local reopenedCommand, activated = getHeadlessAppTogglerResult()
 assertTrue(activated, "headless running app is activated before reopening")
-assertEqual(reopenedCommand, "/usr/bin/open -b com.example.Headless", "running app with only system windows is reopened")
+assertEqual(reopenedCommand, "/usr/bin/env -u NO_COLOR /usr/bin/open -b 'com.example.Headless'", "running app with only system windows is reopened without inherited NO_COLOR")
+
+local function createMissingAppLaunchFixture()
+    local openedCommand = nil
+    local launchOrFocusCalled = false
+    local fakeScreen = {}
+
+    hs = {
+        application = {
+            get = function()
+                return nil
+            end,
+            launchOrFocusByBundleID = function()
+                launchOrFocusCalled = true
+            end,
+        },
+        execute = function(command)
+            openedCommand = command
+        end,
+        mouse = {
+            getCurrentScreen = function()
+                return fakeScreen
+            end,
+        },
+        screen = {
+            mainScreen = function()
+                return fakeScreen
+            end,
+        },
+        timer = {
+            doAfter = function() end,
+        },
+        window = {
+            focusedWindow = function()
+                return nil
+            end,
+        },
+    }
+
+    package.loaded["modules.AppToggler"] = nil
+    return require("modules.AppToggler"), function()
+        return openedCommand, launchOrFocusCalled
+    end
+end
+
+local missingAppToggler, getMissingAppLaunchResult = createMissingAppLaunchFixture()
+missingAppToggler.toggle("net.kovidgoyal.kitty")
+local openedCommand, launchOrFocusCalled = getMissingAppLaunchResult()
+assertEqual(openedCommand, "/usr/bin/env -u NO_COLOR /usr/bin/open -b 'net.kovidgoyal.kitty'", "missing app launch strips inherited NO_COLOR")
+assertTrue(not launchOrFocusCalled, "missing app launch avoids Hammerspoon launchOrFocus inherited environment")
 
 local function createAgentAppAlertFixture()
     local alertMessage = nil

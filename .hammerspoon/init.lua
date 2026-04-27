@@ -1,5 +1,7 @@
 -- init.lua — Hammerspoon 入口
 
+require('hs.ipc')
+
 -- 禁用窗口动画（让窗口立即到位）
 hs.window.animationDuration = 0
 hs.application.enableSpotlightForNameSearches(true)

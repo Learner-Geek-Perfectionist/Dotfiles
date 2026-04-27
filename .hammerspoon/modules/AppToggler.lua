@@ -33,8 +33,12 @@ local function getStandardWindow(app)
     end)
 end
 
-local function reopenApp(bundleID)
-    hs.execute("/usr/bin/open -b " .. bundleID, true)
+local function shellQuote(value)
+    return "'" .. tostring(value):gsub("'", "'\\''") .. "'"
+end
+
+local function openApp(bundleID)
+    hs.execute("/usr/bin/env -u NO_COLOR /usr/bin/open -b " .. shellQuote(bundleID), true)
 end
 
 local function prepareWindowForFocus(win, targetScreen)
@@ -105,7 +109,7 @@ local function focusAppWindowOnScreen(bundleID, targetScreen, retries, reopenAtt
 
     if not reopenAttempted then
         -- 某些应用只剩系统级窗口而没有标准窗口；补发 reopen 事件拉起可聚焦窗口。
-        reopenApp(bundleID)
+        openApp(bundleID)
         reopenAttempted = true
     end
 
@@ -133,7 +137,7 @@ function M.toggle(bundleID)
         return
     end
 
-    hs.application.launchOrFocusByBundleID(bundleID)
+    openApp(bundleID)
     focusAppWindowOnScreen(bundleID, targetScreen, 15, false, false)
 end
 

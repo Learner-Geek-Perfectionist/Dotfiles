@@ -1,6 +1,6 @@
 #!/bin/bash
-# 部署 Codex CLI 配置：
-# 1) 以仓库内 config.toml 为基线
+# 部署 Codex 共享配置（Codex CLI / Codex.app）：
+# 1) 以仓库内 config.toml 作为 ~/.codex/config.toml 的共享基线
 # 2) 保留本机已有的 [projects."..."] 项（仅去重当前 HOME 项）
 # 3) 自动确保当前 HOME 被标记为 trusted
 
@@ -15,6 +15,53 @@ trust_path="${3:-$HOME}"
 
 [[ -f "$src" ]] || exit 0
 
+default_latest_model_url="https://developers.openai.com/api/docs/guides/latest-model.md"
+if [[ ${CODEX_LATEST_MODEL_URL+x} ]]; then
+	latest_model_url="$CODEX_LATEST_MODEL_URL"
+else
+	latest_model_url="$default_latest_model_url"
+fi
+
+extract_template_model() {
+	awk -F'"' '
+		/^model[[:space:]]*=/ {
+			print $2
+			exit
+		}
+	' "$1"
+}
+
+resolve_latest_model() {
+	local url="$1" guide model
+
+	[[ -n "$url" ]] || return 1
+	command -v curl >/dev/null 2>&1 || return 1
+
+	guide="$(
+		curl -fsSL --connect-timeout 3 --max-time 10 "$url" 2>/dev/null
+	)" || return 1
+
+	model="$(
+		printf '%s\n' "$guide" | awk '
+			/^latestModelInfo:[[:space:]]*$/ { in_block = 1; next }
+			in_block && /^[^[:space:]]/ { in_block = 0 }
+			in_block && /^[[:space:]]+model:[[:space:]]*/ {
+				sub(/^[[:space:]]+model:[[:space:]]*/, "", $0)
+				sub(/[[:space:]]+#.*$/, "", $0)
+				gsub(/["'"'"'`]/, "", $0)
+				gsub(/^[[:space:]]+|[[:space:]]+$/, "", $0)
+				if ($0 != "") {
+					print $0
+					exit
+				}
+			}
+		'
+	)"
+
+	[[ -n "$model" ]] || return 1
+	printf '%s\n' "$model"
+}
+
 mkdir -p "$(dirname "$dest")"
 
 tmp_output="$(mktemp)"
@@ -25,7 +72,16 @@ trap 'rm -f "$tmp_output" "$tmp_projects" "$tmp_replaced" "$tmp_notify"' EXIT
 
 cp -f "$src" "$tmp_output"
 
+resolved_model="$(extract_template_model "$tmp_output")"
+if latest_model="$(resolve_latest_model "$latest_model_url")"; then
+	resolved_model="$latest_model"
+fi
+
 while IFS= read -r line || [[ -n "$line" ]]; do
+	if [[ "$line" =~ ^model[[:space:]]*= ]]; then
+		printf 'model = "%s"\n' "$resolved_model"
+		continue
+	fi
 	printf '%s\n' "${line//\{\{HOME\}\}/$HOME}"
 done <"$tmp_output" >"$tmp_replaced"
 mv "$tmp_replaced" "$tmp_output"

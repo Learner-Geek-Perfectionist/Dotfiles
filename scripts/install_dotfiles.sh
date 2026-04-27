@@ -333,7 +333,7 @@ main() {
 	# Claude Code 配置
 	_deploy_claude_settings
 	_deploy_claude_runtime_config
-	# Codex CLI 配置
+	# Codex（CLI / App）共享配置
 	_deploy_codex_config
 	_deploy_superpowers_skills
 	# SSH 配置：通过 Include 浅合并，避免覆盖机器本地的 Host 定义

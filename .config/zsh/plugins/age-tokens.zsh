@@ -9,14 +9,19 @@ if (( ! ${+AGE_SSH_KEY} )); then
 fi
 
 # 启动时自动加载加密的 tokens
-if (( $+commands[age] )) && [[ -f "$AGE_TOKENS" && -f "$AGE_SSH_KEY" ]]; then
-  local _age_out
-  if _age_out=$(age -d -i "$AGE_SSH_KEY" "$AGE_TOKENS" 2>/dev/null); then
-    [[ -n "$_age_out" ]] && eval "$_age_out"
-  else
-    print -P "%F{yellow}[age-tokens] 解密失败，tokens 未加载%f" >&2
+() {
+  emulate -L zsh
+  setopt local_options no_xtrace
+
+  if (( $+commands[age] )) && [[ -f "$AGE_TOKENS" && -f "$AGE_SSH_KEY" ]]; then
+    local _age_out
+    if _age_out=$(age -d -i "$AGE_SSH_KEY" "$AGE_TOKENS" 2>/dev/null); then
+      [[ -n "$_age_out" ]] && eval "$_age_out"
+    else
+      print -P "%F{yellow}[age-tokens] 解密失败，tokens 未加载%f" >&2
+    fi
   fi
-fi
+}
 
 # 编辑 tokens 的便捷函数
 edit-tokens() {

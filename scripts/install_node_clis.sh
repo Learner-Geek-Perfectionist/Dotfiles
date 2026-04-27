@@ -90,7 +90,9 @@ sync_linux_npm_prefix() {
 	mv "$tmp" "$npmrc"
 	export npm_config_prefix="$desired_prefix"
 	export NPM_CONFIG_PREFIX="$desired_prefix"
-	export PATH="$(linux_npm_global_bin_dir):$PATH"
+	local npm_global_bin
+	npm_global_bin="$(linux_npm_global_bin_dir)"
+	export PATH="$npm_global_bin:$PATH"
 }
 
 ensure_npm_ready() {

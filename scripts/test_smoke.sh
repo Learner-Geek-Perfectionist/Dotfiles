@@ -948,6 +948,199 @@ EOF
 	assert_contains "Zinit 插件安装失败" "$log"
 }
 
+test_zsh_open_wrapper_preserves_codex_deep_links() {
+	local tmp_home fake_bin open_log codex_url bundle_id first_call second_call
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	open_log="$tmp_home/open.log"
+	codex_url="codex://threads/019dcc72-81d8-7e41-bb02-cdd44b6cba4a"
+	bundle_id="com.openai.codex"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	cp "$REPO_ROOT/.zshenv" "$tmp_home/.zshenv"
+	cp "$REPO_ROOT/.zprofile" "$tmp_home/.zprofile"
+	cp "$REPO_ROOT/.zshrc" "$tmp_home/.zshrc"
+
+	cat >"$fake_bin/open" <<'EOF'
+#!/bin/sh
+printf '%s\n' "$*" >>"$HOME/open.log"
+exit 0
+EOF
+	chmod +x "$fake_bin/open"
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" TERM="xterm-256color" \
+		zsh -ic "open -b $bundle_id -u '$codex_url'; open '$tmp_home/.zshrc'" >/dev/null 2>&1; then
+		fail "zsh open wrapper regression fixture failed"
+	fi
+
+	assert_file_exists "$open_log"
+	first_call=$(sed -n '1p' "$open_log")
+	second_call=$(sed -n '2p' "$open_log")
+
+	assert_equal "-b $bundle_id -u $codex_url" "$first_call" "deep-link open call"
+	assert_equal "-R $tmp_home/.zshrc" "$second_call" "path reveal open call"
+}
+
+test_zshrc_does_not_reload_zinit_plugins_when_resourced() {
+	local tmp_home load_count
+	tmp_home=$(make_temp_dir)
+	load_count="$tmp_home/zinit-load-count"
+	trap "rm -rf '$tmp_home'" RETURN
+
+	cp "$REPO_ROOT/.zshenv" "$tmp_home/.zshenv"
+	cp "$REPO_ROOT/.zshrc" "$tmp_home/.zshrc"
+	mkdir -p "$tmp_home/.config/zsh/plugins"
+
+	cat >"$tmp_home/.config/zsh/plugins/zinit.zsh" <<'EOF'
+#!/bin/zsh
+count=0
+[[ -f "$HOME/zinit-load-count" ]] && count=$(<"$HOME/zinit-load-count")
+count=$((count + 1))
+printf '%s\n' "$count" >"$HOME/zinit-load-count"
+EOF
+
+	if ! HOME="$tmp_home" TERM="xterm-256color" zsh -c 'source ~/.zshrc; source ~/.zshrc' >/dev/null 2>&1; then
+		fail "re-sourcing .zshrc should succeed in the zinit guard fixture"
+	fi
+
+	assert_file_exists "$load_count"
+	assert_equal "1" "$(cat "$load_count")" "zinit plugin load count"
+}
+
+test_zshrc_detects_preloaded_zinit_without_resourcing_plugin_stack() {
+	local tmp_home load_count flag_file
+	tmp_home=$(make_temp_dir)
+	load_count="$tmp_home/zinit-load-count"
+	flag_file="$tmp_home/zinit-guard-flag"
+	trap "rm -rf '$tmp_home'" RETURN
+
+	cp "$REPO_ROOT/.zshenv" "$tmp_home/.zshenv"
+	cp "$REPO_ROOT/.zshrc" "$tmp_home/.zshrc"
+	mkdir -p "$tmp_home/.config/zsh/plugins"
+
+	cat >"$tmp_home/.config/zsh/plugins/zinit.zsh" <<'EOF'
+#!/bin/zsh
+count=0
+[[ -f "$HOME/zinit-load-count" ]] && count=$(<"$HOME/zinit-load-count")
+count=$((count + 1))
+printf '%s\n' "$count" >"$HOME/zinit-load-count"
+EOF
+
+	if ! HOME="$tmp_home" TERM="xterm-256color" zsh -c 'zinit() { :; }; source ~/.zshrc; print -r -- "${DOTFILES_ZINIT_LOADED:-unset}" >"$HOME/zinit-guard-flag"' >/dev/null 2>&1; then
+		fail "preloaded-zinit .zshrc source should succeed"
+	fi
+
+	assert_file_exists "$flag_file"
+	assert_equal "1" "$(cat "$flag_file")" "zinit guard flag"
+	assert_file_missing "$load_count"
+}
+
+test_zsh_history_alias_shows_newest_first_with_timestamps() {
+	local tmp_home log first_line second_line
+	tmp_home=$(make_temp_dir)
+	log="$tmp_home/history.log"
+	trap "rm -rf '$tmp_home'" RETURN
+
+	cp "$REPO_ROOT/.zshenv" "$tmp_home/.zshenv"
+	cp "$REPO_ROOT/.zshrc" "$tmp_home/.zshrc"
+
+	if ! HOME="$tmp_home" PATH="/usr/bin:/bin:/usr/sbin:/sbin" TERM="xterm-256color" zsh -f -c '
+		source "$HOME/.zshenv"
+		alias history="fc -l 1"
+		typeset -g DOTFILES_ZINIT_LOADED=1
+		source "$HOME/.zshrc"
+		print -s -- "older command"
+		print -s -- "newer command"
+		eval history
+	' >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "history alias fixture failed"
+	fi
+
+	first_line=$(sed -n '1p' "$log")
+	second_line=$(sed -n '2p' "$log")
+
+	[[ "$first_line" == *"newer command" ]] || fail "Expected newest history entry first, got: $first_line"
+	[[ "$second_line" == *"older command" ]] || fail "Expected older history entry second, got: $second_line"
+	assert_grep '^[[:space:]]*[0-9]+[[:space:]]+[0-9]{4}-[0-9]{2}-[0-9]{2}[[:space:]][0-9]{2}:[0-9]{2}[[:space:]]+newer command$' "$log"
+}
+
+test_zsh_fzf_wrapper_streams_piped_input_without_prefetch() {
+	local tmp_home fake_bin log fzf_start_line producer_done_line
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/fzf.log"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	cp "$REPO_ROOT/.zshenv" "$tmp_home/.zshenv"
+	cp "$REPO_ROOT/.zshrc" "$tmp_home/.zshrc"
+
+	cat >"$fake_bin/fzf" <<'EOF'
+#!/bin/sh
+if [ "${1:-}" = "--zsh" ]; then
+	exit 0
+fi
+printf '%s\n' "fzf-start" >>"$HOME/fzf.log"
+IFS= read -r first_line || first_line=""
+printf 'first=%s\n' "$first_line" >>"$HOME/fzf.log"
+cat >/dev/null
+EOF
+	chmod +x "$fake_bin/fzf"
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" TERM="xterm-256color" zsh -f -c '
+		source "$HOME/.zshenv"
+		source "$HOME/.zshrc"
+		{
+			print -r -- "producer-first" >>"$HOME/fzf.log"
+			print -r -- $'\''\e[31mfirst\e[0m'\''
+			sleep 1
+			print -r -- "producer-done" >>"$HOME/fzf.log"
+			print -r -- "second"
+		} | fzf >/dev/null
+	' >"$tmp_home/zsh.log" 2>&1; then
+		cat "$tmp_home/zsh.log" >&2
+		fail "fzf streaming fixture failed"
+	fi
+
+	assert_file_exists "$log"
+	fzf_start_line=$(awk '/^fzf-start$/ { print NR; exit }' "$log")
+	producer_done_line=$(awk '/^producer-done$/ { print NR; exit }' "$log")
+
+	[[ -n "$fzf_start_line" ]] || fail "Expected fake fzf to start; log: $(cat "$log")"
+	[[ -n "$producer_done_line" ]] || fail "Expected producer completion marker; log: $(cat "$log")"
+	(( fzf_start_line < producer_done_line )) || fail "fzf should start before producer finishes; log: $(cat "$log")"
+	assert_contains "first=first" "$log"
+}
+
+test_age_tokens_does_not_leak_decrypted_values_under_xtrace() {
+	local tmp_home fake_bin log
+	tmp_home=$(make_temp_dir)
+	fake_bin=$(make_temp_dir)
+	log="$tmp_home/age-tokens.log"
+	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
+
+	mkdir -p "$tmp_home/.ssh"
+	: >"$tmp_home/.ssh/id_ed25519"
+	: >"$tmp_home/.ssh/id_ed25519.pub"
+	: >"$tmp_home/.tokens.sh.age"
+
+	cat >"$fake_bin/age" <<'EOF'
+#!/bin/sh
+cat <<'INNER'
+export TEST_AGE_SECRET="super-secret"
+INNER
+EOF
+	chmod +x "$fake_bin/age"
+
+	if ! HOME="$tmp_home" PATH="$fake_bin:/usr/bin:/bin:/usr/sbin:/sbin" zsh -c \
+		'setopt xtrace; source "'"$REPO_ROOT"'/.config/zsh/plugins/age-tokens.zsh"' >"$log" 2>&1; then
+		cat "$log" >&2
+		fail "age-tokens xtrace fixture failed"
+	fi
+
+	assert_not_contains 'TEST_AGE_SECRET="super-secret"' "$log"
+}
+
 test_dotfiles_uninstall_preserves_modified_files() {
 	local tmp_home fake_bin install_log uninstall_log superpowers_repo
 	tmp_home=$(make_temp_dir)
@@ -1115,6 +1308,23 @@ EOF
 	assert_not_contains "PostToolUse" "$tmp_home/.claude/settings.json"
 }
 
+test_codex_config_installs_without_computer_use_cache() {
+	local tmp_home codex_dest
+	tmp_home=$(make_temp_dir)
+	codex_dest="$tmp_home/.codex/config.toml"
+	trap "rm -rf '$tmp_home'" RETURN
+
+	if ! HOME="$tmp_home" bash "$REPO_ROOT/scripts/deploy_codex_config.sh" "$REPO_ROOT/.codex/config.toml" "$codex_dest" "$tmp_home"; then
+		fail "deploy_codex_config.sh should succeed without computer-use cache"
+	fi
+
+	assert_file_exists "$codex_dest"
+	assert_contains '[marketplaces.openai-bundled]' "$codex_dest"
+	assert_contains "source = \"$tmp_home/.codex/.tmp/bundled-marketplaces/openai-bundled\"" "$codex_dest"
+	assert_contains "[projects.\"$tmp_home\"]" "$codex_dest"
+	assert_not_contains 'notify = [' "$codex_dest"
+}
+
 test_codex_config_preserves_projects_and_keeps_home_subprojects() {
 	local tmp_home fake_bin log external_project child_project superpowers_repo
 	tmp_home=$(make_temp_dir)
@@ -1126,6 +1336,8 @@ test_codex_config_preserves_projects_and_keeps_home_subprojects() {
 	trap "rm -rf '$tmp_home' '$fake_bin' '$superpowers_repo'" RETURN
 
 	mkdir -p "$tmp_home/.codex"
+	mkdir -p "$tmp_home/.codex/plugins/cache/openai-bundled/computer-use/1.0.999/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS"
+	: >"$tmp_home/.codex/plugins/cache/openai-bundled/computer-use/1.0.999/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient"
 	cat >"$tmp_home/.codex/config.toml" <<EOF
 model = "legacy"
 
@@ -1163,6 +1375,11 @@ EOF
 	assert_contains '[mcp_servers.fetch]' "$tmp_home/.codex/config.toml"
 	assert_contains 'args = ["-y", "@kazuph/mcp-fetch"]' "$tmp_home/.codex/config.toml"
 	assert_not_contains 'args = ["-lc",' "$tmp_home/.codex/config.toml"
+	assert_contains "notify = [\"$tmp_home/.codex/plugins/cache/openai-bundled/computer-use/1.0.999/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient\", \"turn-ended\"]" "$tmp_home/.codex/config.toml"
+	assert_contains '[marketplaces.openai-bundled]' "$tmp_home/.codex/config.toml"
+	assert_contains "source = \"$tmp_home/.codex/.tmp/bundled-marketplaces/openai-bundled\"" "$tmp_home/.codex/config.toml"
+	assert_contains '[plugins."browser-use@openai-bundled"]' "$tmp_home/.codex/config.toml"
+	assert_contains '[plugins."computer-use@openai-bundled"]' "$tmp_home/.codex/config.toml"
 	assert_contains "[projects.\"$external_project\"]" "$tmp_home/.codex/config.toml"
 	assert_contains "[projects.\"$tmp_home\"]" "$tmp_home/.codex/config.toml"
 	assert_contains "[projects.\"$child_project\"]" "$tmp_home/.codex/config.toml"
@@ -1709,6 +1926,7 @@ test_install_claude_code_fast_mode_skips_plugin_and_marketplace_updates() {
 	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
 
 	plugin_list_output=$'pyright-lsp@claude-plugins-official\ntypescript-lsp@claude-plugins-official\ngopls-lsp@claude-plugins-official\nrust-analyzer-lsp@claude-plugins-official\njdtls-lsp@claude-plugins-official\nclangd-lsp@claude-plugins-official\ncsharp-lsp@claude-plugins-official\nphp-lsp@claude-plugins-official\nkotlin-lsp@claude-plugins-official\nswift-lsp@claude-plugins-official\nlua-lsp@claude-plugins-official\ngithub@claude-plugins-official\ncommit-commands@claude-plugins-official\ncode-simplifier@claude-plugins-official\nclaude-hud@claude-hud\ncodex@openai-codex\nexample-skills@anthropic-agent-skills\nsuperpowers@superpowers-marketplace'
+	mcp_list_output=""
 
 	write_fake_claude_cli_with_update_logs "$fake_bin" "$plugin_list_output" "$mcp_list_output" "$add_json_log" "$remove_log" "$plugin_install_log" "$plugin_update_log" "$marketplace_update_log"
 
@@ -1794,6 +2012,7 @@ test_install_claude_code_hides_superpowers_deprecated_commands() {
 	trap "rm -rf '$tmp_home' '$fake_bin'" RETURN
 
 	plugin_list_output=$'pyright-lsp@claude-plugins-official\ntypescript-lsp@claude-plugins-official\ngopls-lsp@claude-plugins-official\nrust-analyzer-lsp@claude-plugins-official\njdtls-lsp@claude-plugins-official\nclangd-lsp@claude-plugins-official\ncsharp-lsp@claude-plugins-official\nphp-lsp@claude-plugins-official\nkotlin-lsp@claude-plugins-official\nswift-lsp@claude-plugins-official\nlua-lsp@claude-plugins-official\ngithub@claude-plugins-official\ncommit-commands@claude-plugins-official\ncode-simplifier@claude-plugins-official\nclaude-hud@claude-hud\ncodex@openai-codex\nexample-skills@anthropic-agent-skills\nsuperpowers@superpowers-marketplace'
+	mcp_list_output=""
 
 	write_fake_claude_cli_with_update_logs "$fake_bin" "$plugin_list_output" "$mcp_list_output" "$add_json_log" "$remove_log" "$plugin_install_log" "$plugin_update_log" "$marketplace_update_log"
 
@@ -2345,6 +2564,10 @@ PY
 test_kitty_conf_enables_native_smart_hotkeys() {
 	assert_contains "map cmd+n kitten ./smart_window.py" "$REPO_ROOT/.config/kitty/kitty.conf"
 	assert_contains "map cmd+e kitten ./smart_tab.py" "$REPO_ROOT/.config/kitty/kitty.conf"
+	assert_contains "copy_on_select yes" "$REPO_ROOT/.config/kitty/kitty.conf"
+	assert_contains "mouse_map left             press       grabbed,ungrabbed mouse_selection normal" "$REPO_ROOT/.config/kitty/kitty.conf"
+	assert_contains "mouse_map left             doublepress grabbed,ungrabbed mouse_selection word" "$REPO_ROOT/.config/kitty/kitty.conf"
+	assert_contains "mouse_map left             triplepress grabbed,ungrabbed mouse_selection line" "$REPO_ROOT/.config/kitty/kitty.conf"
 	assert_not_contains "# map cmd+n kitten ./smart_window.py" "$REPO_ROOT/.config/kitty/kitty.conf"
 	assert_not_contains "# map cmd+e kitten ./smart_tab.py" "$REPO_ROOT/.config/kitty/kitty.conf"
 }
@@ -2690,6 +2913,12 @@ run_test "superpowers clone does not retry GitHub SSH failures" test_superpowers
 run_test "superpowers pull does not retry GitHub SSH failures" test_superpowers_pull_does_not_retry_github_ssh_failures
 run_test "Dotfiles pre-cleans stale zinit completions" test_dotfiles_precleans_zinit_stale_completions
 run_test "Dotfiles warns when zinit plugin sync fails" test_dotfiles_warns_when_zinit_plugin_sync_fails
+run_test "zsh open wrapper preserves Codex deep links" test_zsh_open_wrapper_preserves_codex_deep_links
+run_test "zshrc does not reload zinit plugins when re-sourced" test_zshrc_does_not_reload_zinit_plugins_when_resourced
+run_test "zshrc detects preloaded zinit without re-sourcing plugin stack" test_zshrc_detects_preloaded_zinit_without_resourcing_plugin_stack
+run_test "zsh history alias shows newest first with timestamps" test_zsh_history_alias_shows_newest_first_with_timestamps
+run_test "zsh fzf wrapper streams piped input without prefetch" test_zsh_fzf_wrapper_streams_piped_input_without_prefetch
+run_test "age-tokens does not leak decrypted values under xtrace" test_age_tokens_does_not_leak_decrypted_values_under_xtrace
 run_test "kitty conf enables native smart hotkeys" test_kitty_conf_enables_native_smart_hotkeys
 run_test "kitty custom kitten entrypoints do not require __file__" test_kitty_custom_kitten_entrypoints_do_not_require___file__
 run_test "kitty smart launcher does not cache ssh utils module" test_kitty_smart_launcher_does_not_cache_ssh_utils_module
@@ -2699,6 +2928,7 @@ run_test "Dotfiles uninstall preserves modified files" test_dotfiles_uninstall_p
 run_test "Claude runtime config preserves existing state" test_claude_runtime_config_preserves_existing_state
 run_test "Git config identity migrates to local include" test_gitconfig_identity_migrates_to_local
 run_test "Dotfiles hook-free fallback" test_dotfiles_hook_free_fallback
+run_test "Codex config installs without computer-use cache" test_codex_config_installs_without_computer_use_cache
 run_test "Codex config preserves subprojects" test_codex_config_preserves_projects_and_keeps_home_subprojects
 run_test "Node CLI installer uses ~/.local prefix on Linux" test_install_node_clis_linux_uses_home_local_prefix
 run_test "Node CLI installer keeps default npm prefix on macOS" test_install_node_clis_macos_keeps_default_prefix

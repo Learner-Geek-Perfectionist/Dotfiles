@@ -87,8 +87,6 @@ setopt hist_expire_dups_first   # 历史满时优先删除重复
 setopt hist_ignore_dups         # 不记录重复命令
 setopt hist_verify              # 展开历史后让用户确认再执行
 setopt share_history            # 多终端共享历史
-# history 命令显示全部历史（zsh 内置只显示最近 16 条）
-alias history='fc -l 1'
 
 # 尾部空格使 sudo 后面的词继续展开 alias（如 sudo ll → sudo eza ...）
 alias sudo='sudo '

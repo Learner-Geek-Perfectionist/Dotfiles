@@ -188,7 +188,7 @@ remove_managed_node_clis() {
 	[[ -f "$state_file" ]] || return 0
 
 	prefix=""
-	while IFS=$'\t' read -r kind value extra; do
+	while IFS=$'\t' read -r kind value _; do
 		[[ -n "$kind" ]] || continue
 		if [[ "$kind" == "prefix" ]]; then
 			prefix="$value"

@@ -19,9 +19,52 @@ mkdir -p "$(dirname "$dest")"
 
 tmp_output="$(mktemp)"
 tmp_projects="$(mktemp)"
-trap 'rm -f "$tmp_output" "$tmp_projects"' EXIT
+tmp_replaced="$(mktemp)"
+tmp_notify="$(mktemp)"
+trap 'rm -f "$tmp_output" "$tmp_projects" "$tmp_replaced" "$tmp_notify"' EXIT
 
 cp -f "$src" "$tmp_output"
+
+while IFS= read -r line || [[ -n "$line" ]]; do
+	printf '%s\n' "${line//\{\{HOME\}\}/$HOME}"
+done <"$tmp_output" >"$tmp_replaced"
+mv "$tmp_replaced" "$tmp_output"
+
+computer_use_notify_client=""
+computer_use_cache_dir="$HOME/.codex/plugins/cache/openai-bundled/computer-use"
+if [[ -d "$computer_use_cache_dir" ]]; then
+	computer_use_notify_client="$(
+		find "$computer_use_cache_dir" \
+			-path '*/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient' \
+			-type f 2>/dev/null | sort | tail -n 1
+	)"
+fi
+
+if [[ -n "$computer_use_notify_client" ]]; then
+	computer_use_notify_client="${computer_use_notify_client//\\/\\\\}"
+	computer_use_notify_client="${computer_use_notify_client//\"/\\\"}"
+	awk -v notify_path="$computer_use_notify_client" '
+		BEGIN { inserted = 0 }
+		/^notify[[:space:]]*=/ {
+			if (!inserted) {
+				printf "notify = [\"%s\", \"turn-ended\"]\n", notify_path
+				inserted = 1
+			}
+			next
+		}
+		!inserted && /^\[/ {
+			printf "\nnotify = [\"%s\", \"turn-ended\"]\n\n", notify_path
+			inserted = 1
+		}
+		{ print }
+		END {
+			if (!inserted) {
+				printf "\nnotify = [\"%s\", \"turn-ended\"]\n", notify_path
+			}
+		}
+	' "$tmp_output" >"$tmp_notify"
+	mv "$tmp_notify" "$tmp_output"
+fi
 
 if [[ -f "$dest" ]]; then
 	awk -v trust_path="$trust_path" '

@@ -32,6 +32,8 @@ fi
 HISTFILE="$ZSH_CACHE_DIR/.zsh_history"
 HISTSIZE=10000000
 SAVEHIST=10000000
+# history 直接适配 `history | fzf`：全部历史、最新在前、带 ISO 时间。
+alias history='fc -lir 1'
 
 setopt interactive_comments # 注释行不报错
 setopt no_nomatch           # 通配符 * 匹配不到文件也不报错
@@ -47,6 +49,31 @@ setopt rm_star_silent       # 取消 zsh 的安全防护功能（默认对 rm -r
 # ============================================
 
 # typeset -U path/fpath 已在 .zshenv 中设置（确保整个加载链去重）
+
+configure_open_reveal_wrapper() {
+	(( $+commands[open] )) || return 0
+	unalias open 2>/dev/null
+
+	open() {
+		emulate -L zsh
+		local arg
+
+		if (( $# == 0 )); then
+			command open
+			return
+		fi
+
+		# 仅对纯路径参数保留 Finder reveal；显式选项和 deep link 必须原样透传。
+		for arg in "$@"; do
+			if [[ "$arg" == -* || "$arg" == *://* ]]; then
+				command open "$@"
+				return
+			fi
+		done
+
+		command open -R "$@"
+	}
+}
 
 if [[ "$OSTYPE" == darwin* ]]; then
 	path=(
@@ -70,7 +97,7 @@ if [[ "$OSTYPE" == darwin* ]]; then
 	export HOMEBREW_NO_ENV_HINTS=1
 	alias cl=clion
 	alias py=pycharm
-	alias open='open -R'
+	configure_open_reveal_wrapper
 
 else
 	path=(
@@ -93,8 +120,9 @@ else
 	fi
 
 	# OrbStack Linux 支持 open 命令打开 macOS Finder
-	[[ -d "/opt/orbstack-guest" ]] && (( $+commands[open] )) && alias open='open -R'  # $+commands[open]: open 命令是否可用
+	[[ -d "/opt/orbstack-guest" ]] && configure_open_reveal_wrapper
 fi
+unfunction configure_open_reveal_wrapper 2>/dev/null
 
 # 生成 GNU 风格 LS_COLORS，供 completion/fzf-tab 与 ls 类工具共享完整颜色规则。
 # 仅在用户未显式设置时初始化，优先使用 Homebrew coreutils 的 gdircolors。
@@ -115,7 +143,13 @@ fi
 # 插件加载（PATH 已就绪，插件可安全检测命令是否存在）
 # ============================================
 [[ -f "${HOME}/.config/zsh/plugins/platform.zsh" ]] && source "${HOME}/.config/zsh/plugins/platform.zsh"
-[[ -f "${HOME}/.config/zsh/plugins/zinit.zsh" ]] && source "${HOME}/.config/zsh/plugins/zinit.zsh"
+if [[ -f "${HOME}/.config/zsh/plugins/zinit.zsh" && -z "${DOTFILES_ZINIT_LOADED:-}" ]]; then
+	# `source ~/.zshrc` 时避免重复初始化 zle/widget 插件；完整刷新请用 `reload`。
+	if (( ! ${+functions[zinit]} )); then
+		source "${HOME}/.config/zsh/plugins/zinit.zsh"
+	fi
+	typeset -g DOTFILES_ZINIT_LOADED=1
+fi
 [[ -f "${HOME}/.config/zsh/plugins/double-esc-clear.zsh" ]] && source "${HOME}/.config/zsh/plugins/double-esc-clear.zsh"
 # ============================================
 # 凭证与密钥
@@ -189,17 +223,13 @@ fd() {
 	"${pre[@]}" =fd --color=always "${_fd_opts[@]}" "$@" 2>/dev/null  # =fd: 展开为 fd 的绝对路径（绕过本函数自身的递归）
 }
 
-# fzf 包装函数：透明处理管道输入（用 always 块替代 trap，避免覆盖 shell 已有 trap）
+# fzf 包装函数：流式清洗管道输入，避免 `history | fzf` 等场景等待上游全量结束。
 fzf() {
 	if [ -p /dev/stdin ]; then
-		local tmp=$(mktemp)
-		{
-			# 清除常见 ANSI 控制序列，避免 fzf 读取到颜色码或终端控制指令。
-			command perl -pe 's/\e\[[0-?]*[ -\/]*[@-~]//g; s/\e\][^\a]*(?:\a|\e\\\\)//g; s/\e[P^_][^\e]*(?:\e\\\\)//g; s/\e[@-_]//g' > "$tmp"
-			env -u NO_COLOR command fzf "$@" < "$tmp"
-		} always {
-			rm -f "$tmp"
-		}
+		# 清除常见 ANSI 控制序列，避免 fzf 读取到颜色码或终端控制指令。
+		env -u NO_COLOR command fzf "$@" < <(
+			command perl -pe 's/\e\[[0-?]*[ -\/]*[@-~]//g; s/\e\][^\a]*(?:\a|\e\\\\)//g; s/\e[P^_][^\e]*(?:\e\\\\)//g; s/\e[@-_]//g'
+		)
 	else
 		env -u NO_COLOR command fzf "$@"
 	fi

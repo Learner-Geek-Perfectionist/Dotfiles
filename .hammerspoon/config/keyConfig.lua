@@ -12,7 +12,7 @@ M.keyConfig = {
     { 'q', 'com.tencent.qq' },                  -- "Q" for "QQ"
     { 'd', 'com.hnc.Discord' },                 -- "D" for "Discord"
     { 'm', 'party.mihomo.app' },                -- "M" for "Mihomo Party"
-    { 'c', 'com.anthropic.claudefordesktop' },  -- "C" for "Claude"
+    { 'c', 'com.openai.codex' },                -- "C" for "Codex"
     { 'i', 'com.jetbrains.intellij' },          -- "I" for "IntelliJ IDEA"
     { 'a', 'com.google.android.studio' },       -- "A" for "Android Studio"
     { 'p', 'com.jetbrains.pycharm' },           -- "P" for "Pycharm"

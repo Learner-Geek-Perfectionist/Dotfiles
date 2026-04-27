@@ -53,3 +53,13 @@ env_vars = ["TAVILY_API_KEY"]
 [mcp_servers.fetch]
 command = "npx"
 args = ["-y", "@kazuph/mcp-fetch"]
+
+[marketplaces.openai-bundled]
+source_type = "local"
+source = "{{HOME}}/.codex/.tmp/bundled-marketplaces/openai-bundled"
+
+[plugins."browser-use@openai-bundled"]
+enabled = true
+
+[plugins."computer-use@openai-bundled"]
+enabled = true

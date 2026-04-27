@@ -2,6 +2,17 @@
 
 local M = {}
 
+local toggleHints = {
+    ["com.mac.utility.clipboard.paste"] = "uPaste",
+}
+
+local function showToggleHint(bundleID)
+    local message = toggleHints[bundleID]
+    if message and hs.alert and hs.alert.show then
+        hs.alert.show(message)
+    end
+end
+
 local function getTargetScreen()
     local focusedWin = hs.window.focusedWindow()
     if focusedWin then
@@ -9,25 +20,6 @@ local function getTargetScreen()
     end
 
     return hs.mouse.getCurrentScreen() or hs.screen.mainScreen()
-end
-
-local function appHasSystemWindow(app)
-    if not app then
-        return false
-    end
-
-    local pid = app:pid()
-    if not pid then
-        return false
-    end
-
-    for _, win in ipairs(hs.window.list(true)) do
-        if win.pid == pid then
-            return true
-        end
-    end
-
-    return false
 end
 
 local function getStandardWindow(app)
@@ -111,8 +103,8 @@ local function focusAppWindowOnScreen(bundleID, targetScreen, retries, reopenAtt
         end
     end
 
-    if not reopenAttempted and not appHasSystemWindow(app) then
-        -- 某些应用处于“进程仍在，但没有任何窗口”的状态；补发 reopen 事件拉起窗口。
+    if not reopenAttempted then
+        -- 某些应用只剩系统级窗口而没有标准窗口；补发 reopen 事件拉起可聚焦窗口。
         reopenApp(bundleID)
         reopenAttempted = true
     end
@@ -126,6 +118,8 @@ local function focusAppWindowOnScreen(bundleID, targetScreen, retries, reopenAtt
 end
 
 function M.toggle(bundleID)
+    showToggleHint(bundleID)
+
     local app = hs.application.get(bundleID)
     if app and app:isFrontmost() and getStandardWindow(app) then
         app:hide()

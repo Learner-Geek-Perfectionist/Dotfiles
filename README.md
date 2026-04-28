@@ -87,6 +87,7 @@ bash install.sh --force-update    # 强制刷新/重装受管组件
 - 微信输入法前提：在微信输入法设置里开启“单击 `Shift` 切换中英文”。
 - 如果机器没有已启用的微信输入法输入源，但已加入 macOS 自带英文和中文输入源，则单击 `Shift` / `Caps` 会发送 `Control-Space`。
 - Apple 输入法前提：macOS 系统设置中的输入法切换快捷键必须配置为 `Control-Space`。
+- Parallels macOS 虚拟机前台时，这组 `Shift` / `Caps` 规则会自动让路，让虚拟机收到原始按键。
 - 混装机器上如果你手动切到 Apple 输入法，这组键不会帮你切 Apple 中英文；这是为了保持热路径最短而做的明确边界。
 
 ### 应用切换（Hammerspoon · HyperKey + 字母）

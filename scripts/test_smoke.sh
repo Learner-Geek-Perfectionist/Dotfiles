@@ -41,6 +41,16 @@ serialized = json.dumps(data, sort_keys=True)
 def fail(message):
     raise SystemExit(message)
 
+PARALLELS_MACVM_UNLESS = [
+    {
+        "type": "frontmost_application_unless",
+        "bundle_identifiers": ["^com\\.parallels\\.macvm$"],
+    }
+]
+
+def has_parallels_macvm_unless(manipulator):
+    return manipulator.get("conditions") == PARALLELS_MACVM_UNLESS
+
 def click_rule_matches(rule, from_key, to_key, to_if_alone_kind):
     manipulators = rule.get("manipulators", [])
     if len(manipulators) != 1:
@@ -50,6 +60,8 @@ def click_rule_matches(rule, from_key, to_key, to_if_alone_kind):
         return False
     from_ = manipulator.get("from", {})
     if from_.get("key_code") != from_key:
+        return False
+    if not has_parallels_macvm_unless(manipulator):
         return False
     if from_.get("modifiers", {}).get("optional") != ["any"]:
         return False
@@ -99,6 +111,8 @@ def fallback_rule():
         if manipulator.get("to_if_alone"):
             continue
         if "parameters" in manipulator:
+            continue
+        if not has_parallels_macvm_unless(manipulator):
             continue
         matches.append(item)
     if len(matches) == 1:
@@ -162,8 +176,18 @@ if provider == "apple_pair":
     if fallback_rule() is not None:
         fail("apple_pair should not keep a plain caps fallback rule")
 elif provider == "wetype":
-    unique_click_rule("wetype", "left_shift", "left_shift", "key_code")
-    unique_click_rule("wetype", "right_shift", "right_shift", "key_code")
+    if any(
+        click_rule_matches(item, "left_shift", "left_shift", kind)
+        for item in rules
+        for kind in ("control_space", "key_code")
+    ):
+        fail("wetype should leave physical left_shift untouched")
+    if any(
+        click_rule_matches(item, "right_shift", "right_shift", kind)
+        for item in rules
+        for kind in ("control_space", "key_code")
+    ):
+        fail("wetype should leave physical right_shift untouched")
     unique_click_rule("wetype", "caps_lock", "left_shift", "key_code")
     if fallback_rule() is not None:
         fail("wetype should not keep a plain caps fallback rule")
@@ -204,6 +228,8 @@ elif provider == "disabled":
         fail("disabled provider fallback should not keep to_if_alone")
     if "parameters" in manipulator:
         fail("disabled provider fallback should not keep parameters")
+    if not has_parallels_macvm_unless(manipulator):
+        fail("disabled provider fallback should let Parallels VM receive raw caps_lock")
 else:
     fail(f"unexpected provider {provider!r}")
 PY

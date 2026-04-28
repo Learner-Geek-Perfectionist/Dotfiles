@@ -298,6 +298,11 @@ for my $index (0 .. $#{$rules}) {
 			my ($manipulator) = @{ $rule->{manipulators} // [] };
 			die "failed to find wetype click rule for $from_key in $target" unless manipulator_matches_click_shape($manipulator, $from_key, ($from_key eq 'caps_lock' ? 'left_shift' : $from_key), 'control_space');
 
+			if ($from_key ne 'caps_lock') {
+				$rewritten_click_rules{$from_key} = 1;
+				next;
+			}
+
 			$manipulator->{to_if_alone}[0] = { key_code => 'left_shift' };
 			$rewritten_click_rules{$from_key} = 1;
 		}

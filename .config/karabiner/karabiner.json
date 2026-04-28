@@ -59,6 +59,14 @@
             "description": "Use left shift for click-only IME toggle",
             "manipulators": [
               {
+                "conditions": [
+                  {
+                    "bundle_identifiers": [
+                      "^com\\.parallels\\.macvm$"
+                    ],
+                    "type": "frontmost_application_unless"
+                  }
+                ],
                 "description": "Change left_shift to left_shift",
                 "from": {
                   "key_code": "left_shift",
@@ -93,6 +101,14 @@
             "description": "Use right shift for click-only IME toggle",
             "manipulators": [
               {
+                "conditions": [
+                  {
+                    "bundle_identifiers": [
+                      "^com\\.parallels\\.macvm$"
+                    ],
+                    "type": "frontmost_application_unless"
+                  }
+                ],
                 "description": "Change right_shift to right_shift",
                 "from": {
                   "key_code": "right_shift",
@@ -127,6 +143,14 @@
             "description": "Use caps lock for click-only IME toggle",
             "manipulators": [
               {
+                "conditions": [
+                  {
+                    "bundle_identifiers": [
+                      "^com\\.parallels\\.macvm$"
+                    ],
+                    "type": "frontmost_application_unless"
+                  }
+                ],
                 "description": "Change Caps to left_shift",
                 "from": {
                   "key_code": "caps_lock",

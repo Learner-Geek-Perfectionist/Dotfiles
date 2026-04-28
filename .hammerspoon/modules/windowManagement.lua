@@ -2,6 +2,10 @@
 
 local M = {}
 
+local PARALLELS_MACVM_BUNDLE_ID = "com.parallels.macvm"
+local hyperArrowEventtap = nil
+local hyperArrowPositions = nil
+
 local function collectStandardWindows(app)
     if not app then
         return {}
@@ -40,10 +44,97 @@ local function nextIndex(items, currentId, idGetter)
     return 1
 end
 
-function M.moveToPosition(position)
-    local win = hs.window.focusedWindow()
+local function windowContainsPoint(window, point)
+    if not window or not point then
+        return false
+    end
+
+    local frame = window:frame()
+    return point.x >= frame.x
+        and point.x <= frame.x + frame.w
+        and point.y >= frame.y
+        and point.y <= frame.y + frame.h
+end
+
+local function firstVisibleStandardWindow(app)
+    for _, window in ipairs(collectStandardWindows(app)) do
+        if window:isVisible() then
+            return window
+        end
+    end
+
+    return nil
+end
+
+local function parallelsWindowUnderMouse()
+    local app = hs.application.get(PARALLELS_MACVM_BUNDLE_ID)
+    if not app then
+        return nil
+    end
+
+    local point = hs.mouse.absolutePosition()
+    for _, window in ipairs(collectStandardWindows(app)) do
+        if window:isVisible() and windowContainsPoint(window, point) then
+            return window
+        end
+    end
+
+    if app:isFrontmost() then
+        return firstVisibleStandardWindow(app)
+    end
+
+    return nil
+end
+
+local function hyperArrowPositionsByKeyCode()
+    if hyperArrowPositions then
+        return hyperArrowPositions
+    end
+
+    local map = hs.keycodes and hs.keycodes.map or {}
+    local positions = {}
+    if map.left then
+        positions[map.left] = "left"
+    end
+    if map.right then
+        positions[map.right] = "right"
+    end
+    if map.up then
+        positions[map.up] = "up"
+    end
+    if map.down then
+        positions[map.down] = "down"
+    end
+    hyperArrowPositions = positions
+    return hyperArrowPositions
+end
+
+local function hasHyperFlagsOnly(flags)
+    return flags
+        and flags.ctrl
+        and flags.alt
+        and flags.cmd
+        and not flags.shift
+end
+
+local function handleHyperArrowEvent(event)
+    if not hasHyperFlagsOnly(event:getFlags()) then
+        return false
+    end
+
+    local position = hyperArrowPositionsByKeyCode()[event:getKeyCode()]
+    if not position then
+        return false
+    end
+
+    M.moveToPositionFromShortcut(position)
+    return true
+end
+
+function M.moveToPosition(position, win)
+    win = win or hs.window.focusedWindow()
     if not win then
-        return
+        return false
     end
 
     local screen = win:screen()
@@ -64,6 +155,25 @@ function M.moveToPosition(position)
         local newY = max.y + (max.h - newHeight) / 2
         win:setFrame({ x = newX, y = newY, w = newWidth, h = newHeight })
     end
+
+    return true
+end
+
+function M.moveToPositionFromShortcut(position)
+    return M.moveToPosition(
+        position,
+        parallelsWindowUnderMouse() or hs.window.focusedWindow()
+    )
+end
+
+function M.startHyperArrowEventtap()
+    if hyperArrowEventtap then
+        return hyperArrowEventtap
+    end
+
+    hyperArrowEventtap = hs.eventtap.new({ hs.eventtap.event.types.keyDown }, handleHyperArrowEvent)
+    hyperArrowEventtap:start()
+    return hyperArrowEventtap
 end
 
 function M.switchFocusedAppWindow()
@@ -98,5 +208,6 @@ end
 
 M._collectStandardWindows = collectStandardWindows
 M._nextIndex = nextIndex
+M._windowContainsPoint = windowContainsPoint
 
 return M

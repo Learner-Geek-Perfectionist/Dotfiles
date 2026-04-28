@@ -13,12 +13,8 @@ for _, appMapping in ipairs(cfg.keyConfig) do
     end)
 end
 
--- 遍历映射并绑定 windows-position 快捷键
-for _, key in ipairs(cfg.windowsConfig) do
-    hs.hotkey.bind(cfg.HyperKey, key, function()
-        winMgmt.moveToPosition(key)
-    end)
-end
+-- Hyper + arrows need eventtap so Ctrl-Up/Down cannot be stolen by Mission Control.
+winMgmt.startHyperArrowEventtap()
 
 -- HyperKey + ` / Cmd + ` 都走自定义切窗；Cmd + ` 仍保留跨屏搬窗语义。
 hs.hotkey.bind(cfg.HyperKey, '`', function()

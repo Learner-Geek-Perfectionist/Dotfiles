@@ -145,6 +145,16 @@ def assert_right_remap(manipulator, from_key):
 assert_right_remap(right_rule["manipulators"][0], "right_command")
 assert_right_remap(right_rule["manipulators"][1], "right_option")
 
+arrow_keys = {"left_arrow", "right_arrow", "up_arrow", "down_arrow"}
+for rule in rules:
+    for manipulator in rule.get("manipulators", []):
+        from_ = manipulator.get("from", {})
+        source_key = from_.get("key_code")
+        if source_key in arrow_keys:
+            fail(f"Karabiner should leave {source_key} to the Hammerspoon eventtap")
+        if any("shell_command" in to_entry for to_entry in manipulator.get("to", [])):
+            fail("Karabiner config should not depend on shell_command helpers")
+
 if provider == "apple_pair":
     unique_click_rule("apple_pair", "left_shift", "left_shift", "control_space")
     unique_click_rule("apple_pair", "right_shift", "right_shift", "control_space")
